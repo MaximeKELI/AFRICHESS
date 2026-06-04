@@ -78,3 +78,43 @@ class TacticalTrainingView(APIView):
         count = min(int(request.query_params.get("count", 10)), 20)
         puzzles = Puzzle.objects.filter(difficulty=difficulty).order_by("?")[:count]
         return Response(PuzzleSerializer(puzzles, many=True).data)
+
+
+class PuzzleLeaderboardView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        from django.db.models import Count
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        rows = (
+            PuzzleAttempt.objects.filter(solved=True)
+            .values("user_id")
+            .annotate(solved_count=Count("id"))
+            .order_by("-solved_count")[:50]
+        )
+        out = []
+        for i, row in enumerate(rows, 1):
+            try:
+                u = User.objects.get(pk=row["user_id"])
+                out.append(
+                    {
+                        "rank": i,
+                        "username": u.username,
+                        "display_name": u.display_name or u.username,
+                        "solved_count": row["solved_count"],
+                    }
+                )
+            except User.DoesNotExist:
+                continue
+        return Response(out)
+
+
+class PuzzleRushView(APIView):
+    """Lot de 5 puzzles — mode rush."""
+
+    def get(self, request):
+        count = min(int(request.query_params.get("count", 5)), 10)
+        puzzles = Puzzle.objects.order_by("?")[:count]
+        return Response(PuzzleSerializer(puzzles, many=True).data)

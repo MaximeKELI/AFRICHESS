@@ -99,6 +99,12 @@ class CompleteLessonView(APIView):
         prog, _ = UserProgress.objects.get_or_create(user=request.user, course=course)
         already = lesson_id in (prog.completed_lesson_ids or [])
         progress = update_course_progress(request.user, course, lesson.id)
+        if progress.progress_percent >= 100:
+            from .models import Badge, UserBadge
+
+            badge = Badge.objects.filter(code="course_first").first()
+            if badge:
+                UserBadge.objects.get_or_create(user=request.user, badge=badge)
         xp_gained = 0
         if not already:
             profile = get_or_create_profile(request.user)
