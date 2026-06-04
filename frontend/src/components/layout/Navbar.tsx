@@ -25,7 +25,9 @@ export function Navbar() {
           <Link href="/play" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.play")}</Link>
           <Link href="/learning" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.learn")}</Link>
           <Link href="/puzzles" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.puzzles")}</Link>
+          <Link href="/live" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.live")}</Link>
           <Link href="/friends" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.friends")}</Link>
+          <Link href="/clubs" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.clubs")}</Link>
           <Link href="/tournaments" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.tournaments")}</Link>
           <Link href="/leaderboard" className="hover:text-africhess-gold transition-colors">{t(locale, "leaderboard.african")}</Link>
           <Link href="/community" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.community")}</Link>
