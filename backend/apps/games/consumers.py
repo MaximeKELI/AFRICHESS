@@ -149,6 +149,61 @@ class ChessConsumer(AsyncWebsocketConsumer):
             return False
 
     @database_sync_to_async
+    def _can_spectate(self):
+        try:
+            game = Game.objects.get(id=self.game_id)
+            return game.status == Game.Status.ACTIVE and not game.is_vs_ai
+        except Game.DoesNotExist:
+            return False
+
+    async def _handle_draw_offer(self):
+        result = await self._draw_offer()
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {"type": "broadcast_draw", "payload": result},
+        )
+
+    async def _handle_draw_accept(self):
+        payload = await self._draw_accept()
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {"type": "broadcast_game_over", "payload": payload},
+        )
+
+    async def _handle_draw_decline(self):
+        await self._draw_decline()
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {"type": "broadcast_draw", "payload": {"declined": True}},
+        )
+
+    async def broadcast_draw(self, event):
+        await self._send_event("proposition_nulle", event["payload"])
+
+    @database_sync_to_async
+    def _draw_offer(self):
+        from .game_actions import offer_draw
+
+        game = Game.objects.get(id=self.game_id)
+        return offer_draw(game, self.user)
+
+    @database_sync_to_async
+    def _draw_accept(self):
+        from .game_actions import accept_draw
+
+        game = Game.objects.get(id=self.game_id)
+        accept_draw(game, self.user)
+        game.refresh_from_db()
+        return build_ws_payload(game, {"game_over": True})
+
+    @database_sync_to_async
+    def _draw_decline(self):
+        from .game_actions import decline_draw
+
+        game = Game.objects.get(id=self.game_id)
+        decline_draw(game, self.user)
+
+    @database_sync_to_async
     def _set_connected(self, connected: bool):
         try:
             game = Game.objects.get(id=self.game_id)
