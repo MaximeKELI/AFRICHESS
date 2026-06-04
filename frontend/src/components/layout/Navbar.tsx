@@ -54,8 +54,8 @@ export function Navbar() {
           <button
             onClick={() => setLowBandwidth(!lowBandwidth)}
             className="p-2 rounded-lg hover:bg-white/10"
-            title="Low bandwidth mode"
-            aria-label="Low bandwidth"
+            title={lowBandwidth ? "Mode fluide activé" : "Activer le mode fluide (plus rapide)"}
+            aria-label="Mode fluide"
           >
             {lowBandwidth ? <WifiOff size={18} /> : <Wifi size={18} />}
           </button>

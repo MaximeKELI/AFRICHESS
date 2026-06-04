@@ -11,9 +11,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
     if (Cookies.get("access_token")) {
       fetchProfile();
     }
+  }, [fetchProfile]);
+
+  useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
+  }, [darkMode]);
+
+  useEffect(() => {
     document.documentElement.classList.toggle("low-bandwidth", lowBandwidth);
-  }, [fetchProfile, darkMode, lowBandwidth]);
+  }, [lowBandwidth]);
 
   return <>{children}</>;
 }

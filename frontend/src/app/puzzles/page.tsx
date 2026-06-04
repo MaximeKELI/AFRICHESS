@@ -8,7 +8,6 @@ import { puzzlesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
 import { getPuzzleStreak, recordPuzzleSolved } from "@/lib/puzzleStreak";
-import { motion } from "framer-motion";
 
 interface Puzzle {
   id: number;
@@ -239,7 +238,7 @@ export default function PuzzlesPage() {
       )}
 
       {tab !== "leaderboard" && puzzle && display ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} key={puzzle.id}>
+        <div key={puzzle.id}>
           <div className="flex flex-wrap gap-2 mb-4">
             <span className="px-3 py-1 rounded-full bg-africhess-green/20 text-sm capitalize">
               {puzzle.difficulty}
@@ -313,7 +312,7 @@ export default function PuzzlesPage() {
             )}
           </div>
           {result && <p className="mt-4 text-lg font-semibold">{result}</p>}
-        </motion.div>
+        </div>
       ) : tab !== "leaderboard" ? (
         <p>Chargement du problème…</p>
       ) : null}

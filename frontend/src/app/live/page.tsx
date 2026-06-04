@@ -18,7 +18,7 @@ export default function LiveGamesPage() {
     const load = () =>
       gamesApi.live().then(({ data }) => setGames(Array.isArray(data) ? data : []));
     load();
-    const id = setInterval(load, 8000);
+    const id = setInterval(load, 15000);
     return () => clearInterval(id);
   }, []);
 

@@ -32,10 +32,15 @@ export function NotificationBell() {
   };
 
   useEffect(() => {
+    if (!user) return;
     load();
-    const id = setInterval(load, 60000);
-    return () => clearInterval(id);
   }, [user]);
+
+  useEffect(() => {
+    if (!user || !open) return;
+    const id = setInterval(load, 120000);
+    return () => clearInterval(id);
+  }, [user, open]);
 
   useNotificationsWebSocket(
     Boolean(user),

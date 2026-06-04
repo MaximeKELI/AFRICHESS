@@ -29,7 +29,6 @@ import {
   clearActiveGame,
 } from "@/lib/gameStorage";
 import { openingNameFromMoves } from "@/lib/openings";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { GameChat } from "@/components/social/GameChat";
 import {
@@ -504,13 +503,7 @@ function PlayContent() {
           </div>
 
           {status && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-sm text-africhess-gold"
-            >
-              {status}
-            </motion.p>
+            <p className="text-sm text-africhess-gold">{status}</p>
           )}
         </div>
       </div>
