@@ -5,7 +5,7 @@ import { Chessboard } from "react-chessboard";
 import { Chess, Square } from "chess.js";
 import { motion } from "framer-motion";
 import { playChessSound, preloadChessSounds, soundForMove } from "@/lib/chessSounds";
-import { accentRgba, getBoardTheme } from "@/lib/boardThemes";
+import { accentRgba, getBoardTheme, getThemedSquareStyles } from "@/lib/boardThemes";
 import { useAuthStore } from "@/store/auth";
 import { usePreferencesStore } from "@/store/preferences";
 
