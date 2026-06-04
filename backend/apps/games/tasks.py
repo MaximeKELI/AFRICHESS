@@ -1,5 +1,7 @@
 """Tâches Celery — matchmaking automatique et forfeits."""
 
+from datetime import timedelta
+
 from celery import shared_task
 from django.utils import timezone
 
@@ -16,7 +18,7 @@ def pair_matchmaking_queues():
 @shared_task
 def forfeit_disconnected_games():
     """Victoire si adversaire déconnecté > 90 secondes."""
-    cutoff = timezone.now() - timezone.timedelta(seconds=90)
+    cutoff = timezone.now() - timedelta(seconds=90)
     for room in GameRoom.objects.select_related("game").filter(
         game__status=Game.Status.ACTIVE,
         game__is_vs_ai=False,
