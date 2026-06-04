@@ -22,6 +22,7 @@ export const authApi = {
   register: (data: Record<string, string>) =>
     api.post("/users/register/", data),
   profile: () => api.get("/users/profile/"),
+  updateProfile: (data: Record<string, string>) => api.patch("/users/profile/", data),
 };
 
 export const gamesApi = {

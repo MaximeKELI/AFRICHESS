@@ -8,6 +8,8 @@ interface User {
   username: string;
   display_name: string;
   avatar?: string;
+  avatar_preset?: string;
+  chess_level?: string;
   country: string;
   stats?: {
     games_played: number;
@@ -31,6 +33,8 @@ interface AuthState {
     password: string;
     password_confirm: string;
     country: string;
+    avatar_preset?: string;
+    chess_level?: string;
   }) => Promise<void>;
   logout: () => void;
   fetchProfile: () => Promise<void>;
@@ -86,6 +90,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         password: data.password,
         password_confirm: data.password_confirm,
         country: data.country,
+        avatar_preset: data.avatar_preset ?? "avatar-1",
+        chess_level: data.chess_level ?? "intermediate",
       });
       await get().login(data.username.trim(), data.password);
     } catch (error) {

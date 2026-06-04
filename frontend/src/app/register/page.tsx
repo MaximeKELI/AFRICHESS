@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
+import { AvatarPicker } from "@/components/profile/AvatarPicker";
+import { LevelPicker } from "@/components/profile/LevelPicker";
+import type { AvatarId, ChessLevelId } from "@/lib/avatars";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -12,6 +15,8 @@ export default function RegisterPage() {
     password: "",
     password_confirm: "",
     country: "SN",
+    avatar_preset: "avatar-1" as AvatarId,
+    chess_level: "intermediate" as ChessLevelId,
   });
   const [error, setError] = useState("");
   const { register, isLoading } = useAuthStore();
@@ -43,9 +48,23 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto px-4 py-16">
-      <h1 className="font-display text-3xl font-bold mb-8 text-center">Rejoindre AFRICHESS</h1>
-      <form onSubmit={handleSubmit} className="glass-card p-8 space-y-4">
+    <div className="max-w-lg mx-auto px-4 py-12">
+      <h1 className="font-display text-3xl font-bold mb-2 text-center">Rejoindre AFRICHESS</h1>
+      <p className="text-center opacity-70 mb-8 text-sm">Créez votre profil de joueur africain</p>
+
+      <form onSubmit={handleSubmit} className="glass-card p-8 space-y-6">
+        <AvatarPicker
+          value={form.avatar_preset}
+          onChange={(avatar_preset) => setForm({ ...form, avatar_preset })}
+        />
+
+        <LevelPicker
+          value={form.chess_level}
+          onChange={(chess_level) => setForm({ ...form, chess_level })}
+        />
+
+        <hr className="border-white/10" />
+
         <input
           type="text"
           placeholder="Nom d'utilisateur"
@@ -100,9 +119,9 @@ export default function RegisterPage() {
           <option value="GH">Ghana</option>
           <option value="CI">Côte d&apos;Ivoire</option>
           <option value="CM">Cameroun</option>
-          <option value="XX">France / Autre</option>
           <option value="XX">Autre</option>
         </select>
+
         {error && (
           <p className="text-africhess-terracotta text-sm" role="alert">
             {error}
