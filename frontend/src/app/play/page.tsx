@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, Suspense } from "react";
+import { useState, useCallback, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { gamesApi } from "@/lib/api";
@@ -18,10 +18,15 @@ function PlayContent() {
   const [orientation, setOrientation] = useState<"white" | "black">("white");
   const [status, setStatus] = useState<string>("");
   const [searching, setSearching] = useState(false);
-  const defaultDifficulty = levelToAiDifficulty(user?.chess_level);
-  const [difficulty, setDifficulty] = useState(defaultDifficulty);
+  const [difficulty, setDifficulty] = useState(5);
   const playerColor = orientation === "white" ? "w" : "b";
   const levelLabel = CHESS_LEVELS.find((l) => l.id === user?.chess_level)?.label;
+
+  useEffect(() => {
+    if (user?.chess_level) {
+      setDifficulty(levelToAiDifficulty(user.chess_level));
+    }
+  }, [user?.chess_level]);
 
   const startAI = async () => {
     try {

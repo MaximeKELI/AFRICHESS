@@ -5,6 +5,7 @@ const nextConfig = {
   output: 'standalone',
   images: {
     remotePatterns: [{ protocol: 'http', hostname: 'localhost' }],
+    unoptimized: true,
   },
 };
 
