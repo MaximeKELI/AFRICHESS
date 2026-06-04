@@ -7,5 +7,10 @@ class UsersConfig(AppConfig):
     label = "users"
 
     def ready(self):
-        # Import once; dispatch_uid prevents duplicate handlers on reload
         import apps.users.signals  # noqa: F401
+        try:
+            from apps.users.social_setup import ensure_oauth_apps
+
+            ensure_oauth_apps()
+        except Exception:
+            pass
