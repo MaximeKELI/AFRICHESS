@@ -18,16 +18,22 @@ class NotificationPushWsTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="notif1", password="x")
 
-    @patch("apps.notifications.services.get_channel_layer")
+    @patch("channels.layers.get_channel_layer")
     def test_push_notification_ws_group_send(self, mock_layer_fn):
         layer = MagicMock()
         mock_layer_fn.return_value = layer
-        n = Notification.objects.create(
+        n = Notification(
             user=self.user,
             type=Notification.Type.SYSTEM,
             title="Test",
             body="Hello",
         )
+        with patch("apps.notifications.signals.push_notification_ws") as mock_sig:
+            n.save()
+            mock_sig.assert_called_once()
+        from apps.notifications.services import push_notification_ws
+
+        push_notification_ws(n)
         layer.group_send.assert_called_once()
         args = layer.group_send.call_args[0]
         self.assertEqual(args[0], f"user_{self.user.id}_notifications")
