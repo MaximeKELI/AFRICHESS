@@ -123,11 +123,11 @@ class EngineLimitTests(TestCase):
         self.assertIsInstance(limit, chess.engine.Limit)
         self.assertGreaterEqual(limit.depth or 0, 28)
 
-    def test_limit_for_club_uses_uci_range(self):
+    def test_limit_for_club_within_uci_cap(self):
         from apps.games.elo_config import STOCKFISH_UCI_MAX_ELO
+        from apps.games.engine import ChessEngineService
 
         svc = ChessEngineService()
         limit = svc._limit_for_elo(1200, difficulty=6)
-        self.assertTrue(
-            1200 <= STOCKFISH_UCI_MAX_ELO
-        )
+        self.assertIsNotNone(limit)
+        self.assertGreaterEqual(STOCKFISH_UCI_MAX_ELO, 1200)
