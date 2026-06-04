@@ -37,12 +37,13 @@ class StockfishStrengthIntegrationTests(TestCase):
         self.assertIsNotNone(ev)
         self.assertIsInstance(ev, (int, float))
 
-    def test_uci_cap_configured(self):
+    def test_limit_monster_deeper_than_club(self):
         svc = ChessEngineService()
-        self.assertTrue(
-            svc._configure_strength(
-                svc._get_engine().__enter__(),
-                STOCKFISH_UCI_MAX_ELO,
-            )
-            or True
+        import chess.engine
+
+        monster = svc._limit_for_elo(5000, 20)
+        club = svc._limit_for_elo(1200, 6)
+        self.assertGreater(
+            monster.depth or 0,
+            club.depth or 0,
         )

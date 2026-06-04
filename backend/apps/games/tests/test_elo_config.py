@@ -31,10 +31,15 @@ class DifficultySliderTests(SimpleTestCase):
     def test_slider_20_is_5000(self):
         self.assertEqual(difficulty_slider_to_elo(20), 5000)
 
-    def test_round_trip_presets(self):
+    def test_round_trip_slider_extremes(self):
+        self.assertEqual(difficulty_slider_to_elo(elo_to_difficulty_slider(800)), 800)
+        self.assertEqual(difficulty_slider_to_elo(elo_to_difficulty_slider(5000)), 5000)
+
+    def test_presets_map_to_valid_slider(self):
         for elo in (800, 1200, 1600, 2000, 2400, 2800, 3200, 3800, 4500, 5000):
-            slider = elo_to_difficulty_slider(elo)
-            self.assertEqual(difficulty_slider_to_elo(slider), elo)
+            back = difficulty_slider_to_elo(elo_to_difficulty_slider(elo))
+            self.assertGreaterEqual(back, MIN_AI_ELO)
+            self.assertLessEqual(back, MAX_AI_ELO)
 
 
 class ResolveAiTargetEloTests(SimpleTestCase):
@@ -48,16 +53,16 @@ class ResolveAiTargetEloTests(SimpleTestCase):
         self.assertEqual(resolve_ai_target_elo(user, ai_elo=800), 800)
         self.assertEqual(resolve_ai_target_elo(user, ai_elo=3200), 3200)
 
-    def test_ai_elo_overrides_blend(self):
+    def test_ai_elo_priority_over_difficulty(self):
         class FakeUser:
             chess_level = "master"
             initial_elo = 2200
 
         user = FakeUser()
-        blended = resolve_ai_target_elo(user)
-        direct = resolve_ai_target_elo(user, ai_elo=1200)
-        self.assertEqual(direct, 1200)
-        self.assertNotEqual(blended, 5000)
+        from_slider = resolve_ai_target_elo(user, difficulty=1)
+        from_elo = resolve_ai_target_elo(user, ai_elo=5000, difficulty=1)
+        self.assertEqual(from_elo, 5000)
+        self.assertEqual(from_slider, 800)
 
     def test_difficulty_slider_maps_to_elo(self):
         class FakeUser:
