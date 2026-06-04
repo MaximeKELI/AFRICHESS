@@ -100,7 +100,7 @@ export default function RegisterPage() {
           <option value="GH">Ghana</option>
           <option value="CI">Côte d&apos;Ivoire</option>
           <option value="CM">Cameroun</option>
-          <option value="FR">France</option>
+          <option value="XX">France / Autre</option>
           <option value="XX">Autre</option>
         </select>
         {error && (

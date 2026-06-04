@@ -59,7 +59,7 @@ export default function PuzzlesPage() {
               <span key={t} className="px-3 py-1 rounded-full bg-white/10 text-sm">{t}</span>
             ))}
           </div>
-          <ChessBoard fen={puzzle.fen} onMove={handleMove} orientation="white" />
+          <ChessBoard fen={puzzle.fen} onMove={handleMove} orientation="white" playerColor="w" />
           <div className="mt-6 flex gap-4">
             <button onClick={submit} className="px-6 py-2 african-gradient text-white rounded-lg font-medium">
               Submit Solution
