@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "target_words_per_lesson": 6000,
+  "courses": [
+    {
+      "slug": "vol1-decouverte",
+      "title": "Volume 1 — Découverte des échecs",
+      "level": "beginner",
+      "order": 1,
+      "description": "Origines, culture africaine, premier contact avec l'échiquier et la mentalité du joueur.",
+      "xp_reward": 120,
+      "lessons": [
+        {"order": 1, "title": "Histoire mondiale et africaine des échecs", "file": "01-histoire-echecs-afrique.md", "xp": 25},
+        {"order": 2, "title": "L'échiquier, les pièces et le but du jeu", "file": "02-echiquier-pieces-objectif.md", "xp": 25},
+        {"order": 3, "title": "Premiers coups et règles essentielles", "file": "03-premiers-coups-regles.md", "xp": 25},
+        {"order": 4, "title": "Éthique, fair-play et esprit compétitif", "file": "04-ethique-fair-play.md", "xp": 25}
+      ]
+    },
+    {
+      "slug": "vol2-notation-regles",
+      "title": "Volume 2 — Notation et règles complètes",
+      "level": "beginner",
+      "order": 2,
+      "description": "Notation algébrique, coups spéciaux, nulles et arbitrage.",
+      "xp_reward": 120,
+      "lessons": [
+        {"order": 1, "title": "Notation algébrique et lecture de parties", "file": "05-notation-algebrique.md", "xp": 25},
+        {"order": 2, "title": "Roque, prise en passant, promotion", "file": "06-coups-speciaux.md", "xp": 25},
+        {"order": 3, "title": "Échec, mat, pat et règles de nulle", "file": "07-mat-pat-nulle.md", "xp": 25},
+        {"order": 4, "title": "Valeur relative des pièces et échanges", "file": "08-valeur-pieces-echanges.md", "xp": 25}
+      ]
+    },
+    {
+      "slug": "vol3-principes-fondamentaux",
+      "title": "Volume 3 — Principes fondamentaux",
+      "level": "beginner",
+      "order": 3,
+      "description": "Centre, développement, roi, pions et plan de début de partie.",
+      "xp_reward": 140,
+      "lessons": [
+        {"order": 1, "title": "Contrôle du centre et cases centrales", "file": "09-centre-et-controle.md", "xp": 30},
+        {"order": 2, "title": "Développement rapide et harmonieux", "file": "10-developpement-pieces.md", "xp": 30},
+        {"order": 3, "title": "Sécurité du roi et structure de pions", "file": "11-roi-structure-pions.md", "xp": 30},
+        {"order": 4, "title": "Construire un plan en ouverture", "file": "12-plan-ouverture.md", "xp": 30}
+      ]
+    },
+    {
+      "slug": "vol4-ouvertures-1",
+      "title": "Volume 4 — Ouvertures (partie 1)",
+      "level": "intermediate",
+      "order": 4,
+      "description": "Systèmes blancs classiques et répertoire de base.",
+      "xp_reward": 160,
+      "lessons": [
+        {"order": 1, "title": "Ouverture italienne et jeu de centre", "file": "13-italienne.md", "xp": 35},
+        {"order": 2, "title": "Espagnole (Ruy López) — idées stratégiques", "file": "14-espagnole.md", "xp": 35},
+        {"order": 3, "title": "Gambit de dame et lignes principales", "file": "15-gambit-dame.md", "xp": 35},
+        {"order": 4, "title": "Systèmes anglais et réti", "file": "16-anglaise-reti.md", "xp": 35}
+      ]
+    },
+    {
+      "slug": "vol5-ouvertures-2",
+      "title": "Volume 5 — Ouvertures (partie 2)",
+      "level": "intermediate",
+      "order": 5,
+      "description": "Défenses noires et répertoire contre 1.e4 et 1.d4.",
+      "xp_reward": 160,
+      "lessons": [
+        {"order": 1, "title": "Défense sicilienne — dragon et najdorf", "file": "17-sicilienne.md", "xp": 35},
+        {"order": 2, "title": "Défense française et caro-kann", "file": "18-francaise-caro.md", "xp": 35},
+        {"order": 3, "title": "Gambit damier et défense slave", "file": "19-damier-slave.md", "xp": 35},
+        {"order": 4, "title": "Indiennes et grünfeld — contre 1.d4", "file": "20-indiennes-grunfeld.md", "xp": 35}
+      ]
+    },
+    {
+      "slug": "vol6-tactique",
+      "title": "Volume 6 — Tactique et calcul",
+      "level": "intermediate",
+      "order": 6,
+      "description": "Motifs tactiques, combinaisons et vision combinatoire.",
+      "xp_reward": 180,
+      "lessons": [
+        {"order": 1, "title": "Fourchettes, doubles et attaques découvertes", "file": "21-fourchettes-doubles.md", "xp": 40},
+        {"order": 2, "title": "Clouages, enfilades et détournements", "file": "22-clouages-enfilades.md", "xp": 40},
+        {"order": 3, "title": "Mats typiques et mat du couloir", "file": "23-mats-typiques.md", "xp": 40},
+        {"order": 4, "title": "Calcul de variantes et combinaisons", "file": "24-calcul-combinaisons.md", "xp": 40}
+      ]
+    },
+    {
+      "slug": "vol7-strategie",
+      "title": "Volume 7 — Stratégie et milieu de jeu",
+      "level": "intermediate",
+      "order": 7,
+      "description": "Structures, cases faibles, pièces majeures et plans longs.",
+      "xp_reward": 180,
+      "lessons": [
+        {"order": 1, "title": "Structures de pions et chaînes", "file": "25-structures-pions.md", "xp": 40},
+        {"order": 2, "title": "Cases faibles et avant-postes", "file": "26-cases-faibles.md", "xp": 40},
+        {"order": 3, "title": "Tours, dames et paires de fous", "file": "27-pieces-majeures.md", "xp": 40},
+        {"order": 4, "title": "Attaque au roi et défense prophylactique", "file": "28-attaque-defense.md", "xp": 40}
+      ]
+    },
+    {
+      "slug": "vol8-finales",
+      "title": "Volume 8 — Finales",
+      "level": "advanced",
+      "order": 8,
+      "description": "Théorie des finales, opposition, finales de pions et pièces.",
+      "xp_reward": 200,
+      "lessons": [
+        {"order": 1, "title": "Opposition, zugzwang et géométrie du roi", "file": "29-opposition-zugzwang.md", "xp": 45},
+        {"order": 2, "title": "Finales roi et pion", "file": "30-finales-pions.md", "xp": 45},
+        {"order": 3, "title": "Finales de tours", "file": "31-finales-tours.md", "xp": 45},
+        {"order": 4, "title": "Finales de dames et pièces mineures", "file": "32-finales-dames.md", "xp": 45}
+      ]
+    },
+    {
+      "slug": "vol9-competition",
+      "title": "Volume 9 — Jeu compétitif",
+      "level": "advanced",
+      "order": 9,
+      "description": "Chrono, tournois, préparation et analyse.",
+      "xp_reward": 200,
+      "lessons": [
+        {"order": 1, "title": "Gestion du temps et rythmes de jeu", "file": "33-gestion-temps.md", "xp": 45},
+        {"order": 2, "title": "Préparation d'ouverture et répertoire", "file": "34-preparation-ouverture.md", "xp": 45},
+        {"order": 3, "title": "Analyse de parties et correction d'erreurs", "file": "35-analyse-parties.md", "xp": 45},
+        {"order": 4, "title": "Psychologie et concentration en tournoi", "file": "36-psychologie-tournoi.md", "xp": 45}
+      ]
+    },
+    {
+      "slug": "vol10-maitrise-africhess",
+      "title": "Volume 10 — Maîtrise et écosystème AFRICHESS",
+      "level": "advanced",
+      "order": 10,
+      "description": "Progression ELO, puzzles, IA, clubs africains et projet de joueur.",
+      "xp_reward": 220,
+      "lessons": [
+        {"order": 1, "title": "Comprendre l'ELO et la progression", "file": "37-elo-progression.md", "xp": 50},
+        {"order": 2, "title": "Entraînement tactique et puzzles", "file": "38-entrainement-puzzles.md", "xp": 50},
+        {"order": 3, "title": "Jouer contre l'ordinateur intelligemment", "file": "39-ia-entrainement.md", "xp": 50},
+        {"order": 4, "title": "Devenir acteur de la scène africaine", "file": "40-scene-africaine-clubs.md", "xp": 50}
+      ]
+    }
+  ]
+}
