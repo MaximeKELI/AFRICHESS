@@ -29,6 +29,7 @@ import {
 import { turnFromFen } from "@/lib/gameDisplayFast";
 import { TimeControlPicker } from "@/components/chess/TimeControlPicker";
 import { playDrawWhistle } from "@/lib/chessSounds";
+import { formatApiError } from "@/lib/errors";
 import {
   saveActiveGame,
   loadActiveGame,
@@ -302,8 +303,13 @@ function PlayContent() {
           ? `Partie lancée — IA ~${data.ai_target_elo} ELO`
           : "Partie lancée vs IA"
       );
-    } catch {
-      setStatus("Échec du lancement. Connectez-vous.");
+    } catch (err) {
+      const msg = formatApiError(err);
+      setStatus(
+        msg.includes("joindre le serveur")
+          ? msg
+          : msg || "Échec du lancement. Redémarrez le backend : docker start africhess-backend-1"
+      );
     }
   };
 

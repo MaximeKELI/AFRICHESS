@@ -34,7 +34,13 @@ export function formatApiError(error: unknown): string {
       if (data.includes("email") || data.includes("username")) {
         return "Compte ou e-mail déjà utilisé — utilisez la page Connexion.";
       }
-      return "Erreur serveur. Réessayez dans un instant.";
+      if (data.includes("is_timed") || data.includes("time_control")) {
+        return (
+          "Base de données à mettre à jour. Lancez : docker exec africhess-backend-1 " +
+          "python manage.py migrate puis redémarrez le backend."
+        );
+      }
+      return "Erreur serveur. Redémarrez le backend (docker start africhess-backend-1).";
     }
     return data;
   }
