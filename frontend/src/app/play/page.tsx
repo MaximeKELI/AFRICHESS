@@ -87,7 +87,13 @@ function PlayContent() {
 
   const startAI = async () => {
     try {
-      const { data } = await gamesApi.createAI({ mode, difficulty, color: orientation });
+      const { data } = await gamesApi.createAI({
+        mode,
+        difficulty,
+        color: orientation,
+        include_comments: aiCommentsEnabled,
+      });
+      setIsVsAi(true);
       setGameId(data.id);
       applyGameResponse(data);
       setStatus(
@@ -123,7 +129,11 @@ function PlayContent() {
     async (uci: string) => {
       if (!gameId) return;
       try {
-        const { data } = await gamesApi.move(gameId, uci);
+        const { data } = await gamesApi.move(
+          gameId,
+          uci,
+          isVsAi && aiCommentsEnabled
+        );
         applyGameResponse(data);
         if (data.status === "completed") {
           setStatus(`Fin de partie : ${data.result || "Terminée"}`);
