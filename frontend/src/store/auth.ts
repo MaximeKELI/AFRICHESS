@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import Cookies from "js-cookie";
 import { authApi } from "@/lib/api";
+import { formatApiError } from "@/lib/errors";
 
 interface User {
   id: number;
@@ -24,7 +25,13 @@ interface AuthState {
   toggleDarkMode: () => void;
   setLowBandwidth: (v: boolean) => void;
   login: (username: string, password: string) => Promise<void>;
-  register: (data: Record<string, string>) => Promise<void>;
+  register: (data: {
+    username: string;
+    email: string;
+    password: string;
+    password_confirm: string;
+    country: string;
+  }) => Promise<void>;
   logout: () => void;
   fetchProfile: () => Promise<void>;
 }
@@ -32,7 +39,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: false,
-  locale: (typeof window !== "undefined" && (localStorage.getItem("locale") as AuthState["locale"])) || "en",
+  locale: (typeof window !== "undefined" && (localStorage.getItem("locale") as AuthState["locale"])) || "fr",
   darkMode: typeof window !== "undefined" && localStorage.getItem("theme") === "dark",
   lowBandwidth: false,
 
@@ -56,10 +63,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (username, password) => {
     set({ isLoading: true });
     try {
-      const { data } = await authApi.login(username, password);
+      const { data } = await authApi.login(username.trim(), password);
+      if (!data.access) {
+        throw new Error("Réponse de connexion invalide.");
+      }
       Cookies.set("access_token", data.access, { expires: 1 });
       Cookies.set("refresh_token", data.refresh, { expires: 7 });
       await get().fetchProfile();
+    } catch (error) {
+      throw new Error(formatApiError(error));
     } finally {
       set({ isLoading: false });
     }
@@ -68,8 +80,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   register: async (data) => {
     set({ isLoading: true });
     try {
-      await authApi.register(data);
-      await get().login(data.username, data.password);
+      await authApi.register({
+        username: data.username.trim(),
+        email: data.email.trim().toLowerCase(),
+        password: data.password,
+        password_confirm: data.password_confirm,
+        country: data.country,
+      });
+      await get().login(data.username.trim(), data.password);
+    } catch (error) {
+      throw new Error(formatApiError(error));
     } finally {
       set({ isLoading: false });
     }

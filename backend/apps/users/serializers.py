@@ -104,5 +104,5 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = User(**validated_data)
         user.set_password(password)
         user.save()
-        UserStats.objects.create(user=user)
+        # UserStats created by post_save signal
         return user
