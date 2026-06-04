@@ -100,8 +100,52 @@ class GameService:
             started_at=timezone.now(),
         )
 
+    def _apply_clock(self, game: Game, mover_is_white: bool, spent_ms: int) -> None:
+        spent = max(0, int(spent_ms))
+        if mover_is_white:
+            game.white_time_ms = max(0, game.white_time_ms - spent) + game.increment_ms
+        else:
+            game.black_time_ms = max(0, game.black_time_ms - spent) + game.increment_ms
+
+    def _ai_clock_tick(self, game: Game, ai_is_white: bool, ms: int = 400) -> None:
+        if ai_is_white:
+            game.white_time_ms = max(0, game.white_time_ms - ms) + game.increment_ms
+        else:
+            game.black_time_ms = max(0, game.black_time_ms - ms) + game.increment_ms
+
     @transaction.atomic
-    def make_move(self, game: Game, user, uci: str, include_comments: bool = False) -> dict:
+    def undo_moves(self, game: Game, user) -> dict:
+        if not game.is_vs_ai or game.status != Game.Status.ACTIVE:
+            return {"error": "Undo only for active AI games"}
+        user_is_white = game.white_player_id == user.id
+        last = game.moves.order_by("-move_number").first()
+        if not last:
+            return {"error": "No moves to undo"}
+
+        n = 2 if last.played_by_white != user_is_white else 1
+        to_remove = list(game.moves.order_by("-move_number")[:n])
+        for m in to_remove:
+            m.delete()
+
+        import chess
+
+        board = chess.Board()
+        for m in game.moves.order_by("move_number"):
+            board.push_uci(m.uci)
+        game.fen = board.fen()
+        game.move_count = game.moves.count()
+        game.save(update_fields=["fen", "move_count"])
+        return {"ok": True, "undone": n}
+
+    @transaction.atomic
+    def make_move(
+        self,
+        game: Game,
+        user,
+        uci: str,
+        include_comments: bool = False,
+        spent_ms: int | None = None,
+    ) -> dict:
         if game.status != Game.Status.ACTIVE:
             return {"error": "Game is not active"}
 
@@ -110,6 +154,20 @@ class GameService:
             return {"error": "Not your turn"}
         if not is_white_turn and game.black_player != user and not game.is_vs_ai:
             return {"error": "Not your turn"}
+
+        if spent_ms is not None:
+            clock = game.white_time_ms if is_white_turn else game.black_time_ms
+            if clock <= 0:
+                return {"error": "Time out"}
+            if spent_ms > clock:
+                spent_ms = clock
+            self._apply_clock(game, is_white_turn, spent_ms)
+            if (is_white_turn and game.white_time_ms <= 0) or (
+                not is_white_turn and game.black_time_ms <= 0
+            ):
+                self._finalize_game_on_timeout(game, winner_white=not is_white_turn)
+                game.save()
+                return {"error": "Time out", "game_over": True}
 
         result = self.engine.apply_move(game.fen, uci)
         if not result:
@@ -177,6 +235,7 @@ class GameService:
                         played_by_white=not is_white_turn,
                         comment=ai_comment,
                     )
+                    self._ai_clock_tick(game, ai_is_white=not is_white_turn)
                     game.fen = nf
                     game.move_count += 1
                     game.save()
@@ -209,6 +268,20 @@ class GameService:
             time_remaining_ms=time_ms,
             comment=comment or "",
         )
+
+    def _finalize_game_on_timeout(self, game: Game, winner_white: bool) -> None:
+        game.result = (
+            Game.Result.WHITE_WIN if winner_white else Game.Result.BLACK_WIN
+        )
+        if game.is_vs_ai:
+            game.winner = game.white_player if winner_white else None
+            if not winner_white:
+                game.winner = game.black_player
+        else:
+            game.winner = game.white_player if winner_white else game.black_player
+        game.status = Game.Status.COMPLETED
+        game.ended_at = timezone.now()
+        game.termination_reason = "timeout"
 
     def _finalize_game(self, game: Game):
         import chess

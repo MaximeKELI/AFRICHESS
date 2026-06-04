@@ -1,3 +1,4 @@
+from django.db import models
 from rest_framework import generics, permissions, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -81,11 +82,37 @@ class MakeMoveView(APIView):
             request.user,
             ser.validated_data["uci"],
             include_comments=ser.validated_data.get("include_comments", False),
+            spent_ms=ser.validated_data.get("spent_ms"),
         )
         if "error" in result:
             return Response(result, status=400)
         game.refresh_from_db()
         return Response(GameSerializer(game).data)
+
+
+class UndoMoveView(APIView):
+    def post(self, request, game_id):
+        try:
+            game = Game.objects.get(id=game_id)
+        except Game.DoesNotExist:
+            return Response({"error": "Game not found"}, status=404)
+        result = GameService().undo_moves(game, request.user)
+        if "error" in result:
+            return Response(result, status=400)
+        game.refresh_from_db()
+        return Response(GameSerializer(game).data)
+
+
+@api_view(["GET"])
+def active_games(request):
+    if not request.user.is_authenticated:
+        return Response({"error": "Authentication required"}, status=401)
+    games = Game.objects.filter(
+        status=Game.Status.ACTIVE,
+    ).filter(
+        models.Q(white_player=request.user) | models.Q(black_player=request.user)
+    )[:5]
+    return Response(GameSerializer(games, many=True).data)
 
 
 class AnalyzeGameView(APIView):
