@@ -78,7 +78,7 @@ function GameClockInner({
   );
 
   return (
-    <div className="space-y-2 w-full max-w-[min(100%,560px)] mx-auto">
+    <div className="space-y-2 w-full">
       {label && (
         <p className="text-center text-xs opacity-60">
           {label}

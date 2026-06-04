@@ -52,7 +52,18 @@ class GameListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Game
-        fields = ["id", "white_player", "black_player", "status", "mode", "result", "created_at", "ended_at"]
+        fields = [
+            "id",
+            "white_player",
+            "black_player",
+            "status",
+            "mode",
+            "result",
+            "is_vs_ai",
+            "ai_target_elo",
+            "created_at",
+            "ended_at",
+        ]
 
 
 class CreateAIGameSerializer(serializers.Serializer):

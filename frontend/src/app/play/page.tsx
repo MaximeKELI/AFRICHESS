@@ -507,7 +507,7 @@ function PlayContent() {
           )}
         </div>
 
-        <div className="w-full xl:w-[min(100%,300px)] shrink-0 space-y-4 order-2">
+        <div className="w-full space-y-4 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:pr-1">
           <GameSidePanel
             moves={panelDisplay.moveRows}
             captured={panelDisplay.captured}
@@ -529,9 +529,8 @@ function PlayContent() {
             <GameAnalysisPanel gameId={gameId} completed={gameCompleted} />
           )}
           {gameId && !isVsAi && <GameChat gameId={gameId} />}
-        </div>
 
-        <div className="w-full xl:w-[260px] shrink-0 space-y-4 order-3">
+          <hr className="border-white/10 hidden lg:block" />
           <div className="glass-card p-4">
             <TimeControlPicker
               isTimed={useClock}

@@ -65,6 +65,28 @@ function ChessBoardInner({
     }
   }, [soundsOn]);
 
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      const w = el.getBoundingClientRect().width;
+      if (w <= 0) return;
+      const desktop =
+        typeof window !== "undefined" &&
+        window.matchMedia("(min-width: 1024px)").matches;
+      const cap = desktop ? Math.min(window.innerWidth * 0.58, 800) : w;
+      setBoardWidth(Math.floor(Math.min(w, cap)));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
   const squareBase = useMemo(() => getThemedSquareStyles(theme), [theme]);
   const pieceAnimMs = lowBandwidth ? 0 : 120;
 

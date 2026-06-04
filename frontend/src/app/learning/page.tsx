@@ -5,6 +5,7 @@ import Link from "next/link";
 import { learningApi } from "@/lib/learningApi";
 import { useAuthStore } from "@/store/auth";
 import { CoachPanel } from "@/components/learning/CoachPanel";
+import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { ProgressRing } from "@/components/learning/ProgressRing";
 import { t } from "@/lib/i18n";
 
@@ -120,6 +121,8 @@ export default function LearningDashboardPage() {
           )}
         </div>
       </div>
+
+      <RecentGamesList />
 
       <div className="grid lg:grid-cols-[1fr_320px] gap-6">
         <div>

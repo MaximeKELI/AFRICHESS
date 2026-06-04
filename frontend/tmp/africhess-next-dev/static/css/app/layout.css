@@ -704,6 +704,9 @@ video {
 .max-h-\[min\(42vh\2c 280px\)\] {
   max-height: min(42vh, 280px);
 }
+.max-h-\[min\(50vh\2c 420px\)\] {
+  max-height: min(50vh, 420px);
+}
 .min-h-\[120px\] {
   min-height: 120px;
 }
@@ -788,6 +791,9 @@ video {
 .max-w-sm {
   max-width: 24rem;
 }
+.max-w-\[min\(100\%\2c 640px\)\] {
+  max-width: min(100%, 640px);
+}
 .flex-1 {
   flex: 1 1 0%;
 }
@@ -815,6 +821,9 @@ video {
      -moz-user-select: none;
           user-select: none;
 }
+.resize {
+  resize: both;
+}
 .list-disc {
   list-style-type: disc;
 }
@@ -841,6 +850,9 @@ video {
 }
 .flex-wrap {
   flex-wrap: wrap;
+}
+.items-start {
+  align-items: flex-start;
 }
 .items-center {
   align-items: center;
@@ -919,6 +931,11 @@ video {
 .overflow-x-hidden {
   overflow-x: hidden;
 }
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .rounded {
   border-radius: 0.25rem;
 }
@@ -986,6 +1003,9 @@ video {
 }
 .border-white\/5 {
   border-color: rgb(255 255 255 / 0.05);
+}
+.border-transparent {
+  border-color: transparent;
 }
 .bg-\[var\(--card\)\] {
   background-color: var(--card);
@@ -1504,6 +1524,9 @@ body {
 .hover\:border-white\/30:hover {
   border-color: rgb(255 255 255 / 0.3);
 }
+.hover\:border-white\/10:hover {
+  border-color: rgb(255 255 255 / 0.1);
+}
 .hover\:bg-africhess-gold\/10:hover {
   background-color: rgb(212 160 23 / 0.1);
 }
@@ -1586,6 +1609,10 @@ body {
     display: flex;
   }
 
+  .md\:max-w-\[min\(100\%\2c 720px\)\] {
+    max-width: min(100%, 720px);
+  }
+
   .md\:grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1631,6 +1658,18 @@ body {
 }
 @media (min-width: 1024px) {
 
+  .lg\:block {
+    display: block;
+  }
+
+  .lg\:max-h-\[calc\(100vh-8rem\)\] {
+    max-height: calc(100vh - 8rem);
+  }
+
+  .lg\:max-w-none {
+    max-width: none;
+  }
+
   .lg\:grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1646,6 +1685,22 @@ body {
   .lg\:grid-cols-\[1fr_320px\] {
     grid-template-columns: 1fr 320px;
   }
+
+  .lg\:grid-cols-\[minmax\(0\2c 1fr\)_minmax\(280px\2c 340px\)\] {
+    grid-template-columns: minmax(0,1fr) minmax(280px,340px);
+  }
+
+  .lg\:gap-6 {
+    gap: 1.5rem;
+  }
+
+  .lg\:overflow-y-auto {
+    overflow-y: auto;
+  }
+
+  .lg\:pr-1 {
+    padding-right: 0.25rem;
+  }
 }
 @media (min-width: 1280px) {
 
@@ -1655,6 +1710,10 @@ body {
 
   .xl\:w-\[260px\] {
     width: 260px;
+  }
+
+  .xl\:grid-cols-\[minmax\(480px\2c 1\.55fr\)_minmax\(300px\2c 380px\)\] {
+    grid-template-columns: minmax(480px,1.55fr) minmax(300px,380px);
   }
 
   .xl\:flex-row {

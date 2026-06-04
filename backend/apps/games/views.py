@@ -32,9 +32,13 @@ class GameListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return Game.objects.filter(
-            models.Q(white_player=user) | models.Q(black_player=user)
-        ).distinct()[:50]
+        return (
+            Game.objects.filter(
+                models.Q(white_player=user) | models.Q(black_player=user)
+            )
+            .distinct()
+            .order_by("-ended_at", "-created_at")[:50]
+        )
 
 
 class GameDetailView(generics.RetrieveAPIView):

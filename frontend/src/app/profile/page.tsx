@@ -9,6 +9,7 @@ import { AvatarPicker } from "@/components/profile/AvatarPicker";
 import { LevelPicker } from "@/components/profile/LevelPicker";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
+import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { AVATARS, CHESS_LEVELS, getAvatarSrc, type AvatarId, type ChessLevelId } from "@/lib/avatars";
 
 export default function ProfilePage() {
@@ -60,7 +61,7 @@ export default function ProfilePage() {
   const levelLabel = CHESS_LEVELS.find((l) => l.id === user.chess_level)?.label ?? "Intermédiaire";
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
       <div className="flex items-center gap-4">
         <div className="relative w-20 h-20 rounded-2xl overflow-hidden ring-2 ring-africhess-gold shrink-0">
           <Image
@@ -110,6 +111,8 @@ export default function ProfilePage() {
         <hr className="border-white/10" />
         <CommentsToggle />
       </div>
+
+      <RecentGamesList />
 
       <div>
         <h2 className="font-semibold mb-4">Classements ELO</h2>
