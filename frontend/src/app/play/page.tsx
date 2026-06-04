@@ -343,6 +343,7 @@ function PlayContent() {
           {gameId && (
             <GameAnalysisPanel gameId={gameId} completed={gameCompleted} />
           )}
+          {gameId && !isVsAi && <GameChat gameId={gameId} />}
         </div>
 
         <div className="space-y-4">
