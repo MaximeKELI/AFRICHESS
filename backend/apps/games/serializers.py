@@ -36,6 +36,7 @@ class GameSerializer(serializers.ModelSerializer):
         fields = [
             "id", "white_player", "black_player", "status", "mode", "result",
             "fen", "pgn", "move_count", "white_time_ms", "black_time_ms",
+            "increment_ms",
             "is_vs_ai", "ai_difficulty", "ai_target_elo", "moves", "analysis",
             "created_at", "started_at", "ended_at",
         ]
@@ -61,3 +62,4 @@ class CreateAIGameSerializer(serializers.Serializer):
 class MakeMoveSerializer(serializers.Serializer):
     uci = serializers.CharField(max_length=10)
     include_comments = serializers.BooleanField(default=False, required=False)
+    spent_ms = serializers.IntegerField(min_value=0, required=False)
