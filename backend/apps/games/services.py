@@ -107,6 +107,7 @@ class GameService:
             black_time_ms=config["initial_ms"],
             increment_ms=config["increment_ms"],
             started_at=timezone.now(),
+            turn_started_at=timezone.now(),
         )
         ensure_game_room(game)
         return game
