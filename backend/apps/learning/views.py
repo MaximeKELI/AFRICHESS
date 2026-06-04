@@ -196,6 +196,8 @@ class DailyPuzzleView(APIView):
 
 
 class AdaptivePuzzlesView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request):
         count = min(int(request.query_params.get("count", 10)), 20)
         data = get_adaptive_puzzles(request.user, count)
@@ -204,6 +206,7 @@ class AdaptivePuzzlesView(APIView):
 
 class SubmitPuzzleAttemptView(APIView):
     """Tentative puzzle + XP et stats learning."""
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
         try:
@@ -240,11 +243,15 @@ class SubmitPuzzleAttemptView(APIView):
 
 
 class CoachTipsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request):
         return Response({"tips": generate_coach_tips(request.user)})
 
 
 class LearningProfileView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request):
         profile = get_or_create_profile(request.user)
         return Response(LearningProfileSerializer(profile).data)
@@ -258,6 +265,7 @@ class BadgeListView(generics.ListAPIView):
 
 class MyBadgesView(generics.ListAPIView):
     serializer_class = UserBadgeSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return UserBadge.objects.filter(user=self.request.user).select_related("badge")
