@@ -249,6 +249,7 @@ export function ChessBoard({
 
   return (
     <motion.div
+      data-testid="chess-board"
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       className="w-full max-w-[min(100%,560px)] aspect-square mx-auto rounded-xl overflow-hidden shadow-2xl"
