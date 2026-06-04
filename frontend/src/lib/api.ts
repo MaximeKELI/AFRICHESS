@@ -107,4 +107,7 @@ export const tournamentsApi = {
     api.get("/tournaments/", { params: { african: african ? "1" : undefined } }),
   get: (slug: string) => api.get(`/tournaments/${slug}/`),
   register: (slug: string) => api.post(`/tournaments/${slug}/register/`),
+  start: (slug: string) => api.post(`/tournaments/${slug}/start/`),
+  standings: (slug: string) => api.get(`/tournaments/${slug}/standings/`),
+  myGame: (slug: string) => api.get(`/tournaments/${slug}/my-game/`),
 };
