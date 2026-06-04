@@ -1,5 +1,7 @@
 /** Thèmes de cases pour l'échiquier (couleurs claires / foncées + accents). */
 
+import type { FloralPattern } from "./boardPatterns";
+
 export type BoardThemeId =
   | "wood"
   | "blue"
@@ -12,7 +14,15 @@ export type BoardThemeId =
   | "african"
   | "ocean"
   | "cream"
-  | "midnight";
+  | "midnight"
+  | "garden-white"
+  | "garden-light"
+  | "garden-full"
+  | "meadow-dark"
+  | "sakura"
+  | "jungle"
+  | "lavender-garden"
+  | "mint-bloom";
 
 export interface BoardTheme {
   id: BoardThemeId;
@@ -27,6 +37,8 @@ export interface BoardTheme {
   legal: string;
   /** Anneau de capture */
   capture: string;
+  /** Motif floral sur certaines cases */
+  floral?: FloralPattern;
 }
 
 export const BOARD_THEMES: BoardTheme[] = [
@@ -150,7 +162,100 @@ export const BOARD_THEMES: BoardTheme[] = [
     legal: "rgba(56, 189, 248, 0.9)",
     capture: "rgba(14, 165, 233, 0.8)",
   },
+  {
+    id: "garden-white",
+    labelFr: "Jardin ♣",
+    dark: "#1B5E34",
+    light: "#A7F3D0",
+    accent: "#22C55E",
+    accentFrom: "rgba(34, 197, 94, 0.35)",
+    legal: "rgba(22, 163, 74, 0.9)",
+    capture: "rgba(21, 128, 61, 0.8)",
+    floral: { onDark: "white", opacity: 0.42 },
+  },
+  {
+    id: "garden-light",
+    labelFr: "Prairie ♣",
+    dark: "#166534",
+    light: "#DCFCE7",
+    accent: "#16A34A",
+    accentFrom: "rgba(22, 163, 74, 0.3)",
+    legal: "rgba(21, 128, 61, 0.85)",
+    capture: "rgba(20, 83, 45, 0.75)",
+    floral: { onLight: "white", opacity: 0.4 },
+  },
+  {
+    id: "garden-full",
+    labelFr: "Verger ♣",
+    dark: "#14532D",
+    light: "#BBF7D0",
+    accent: "#4ADE80",
+    accentFrom: "rgba(74, 222, 128, 0.35)",
+    legal: "rgba(34, 197, 94, 0.9)",
+    capture: "rgba(22, 101, 52, 0.8)",
+    floral: { onDark: "white", onLight: "cream", opacity: 0.38 },
+  },
+  {
+    id: "meadow-dark",
+    labelFr: "Clairière ♣",
+    dark: "#3F6212",
+    light: "#ECFCCB",
+    accent: "#65A30D",
+    accentFrom: "rgba(101, 163, 13, 0.35)",
+    legal: "rgba(77, 124, 15, 0.9)",
+    capture: "rgba(54, 83, 20, 0.8)",
+    floral: { onLight: "black", onDark: "mint", opacity: 0.35 },
+  },
+  {
+    id: "sakura",
+    labelFr: "Sakura ♣",
+    dark: "#9D174D",
+    light: "#FCE7F3",
+    accent: "#EC4899",
+    accentFrom: "rgba(236, 72, 153, 0.35)",
+    legal: "rgba(219, 39, 119, 0.85)",
+    capture: "rgba(157, 23, 77, 0.75)",
+    floral: { onDark: "white", onLight: "rose", opacity: 0.4 },
+  },
+  {
+    id: "jungle",
+    labelFr: "Jungle ♣",
+    dark: "#052E16",
+    light: "#4ADE80",
+    accent: "#FDE047",
+    accentFrom: "rgba(253, 224, 71, 0.35)",
+    legal: "rgba(74, 222, 128, 0.9)",
+    capture: "rgba(34, 197, 94, 0.8)",
+    floral: { onDark: "cream", onLight: "white", opacity: 0.36 },
+  },
+  {
+    id: "lavender-garden",
+    labelFr: "Lavande ♣",
+    dark: "#5B21B6",
+    light: "#EDE9FE",
+    accent: "#A78BFA",
+    accentFrom: "rgba(167, 139, 250, 0.35)",
+    legal: "rgba(139, 92, 246, 0.85)",
+    capture: "rgba(109, 40, 217, 0.75)",
+    floral: { onDark: "white", onLight: "white", opacity: 0.32 },
+  },
+  {
+    id: "mint-bloom",
+    labelFr: "Menthe ♣",
+    dark: "#0F766E",
+    light: "#CCFBF1",
+    accent: "#2DD4BF",
+    accentFrom: "rgba(45, 212, 191, 0.35)",
+    legal: "rgba(20, 184, 166, 0.9)",
+    capture: "rgba(15, 118, 110, 0.8)",
+    floral: { onDark: "white", onLight: "black", opacity: 0.34 },
+  },
 ];
+
+export function getThemedSquareStyles(theme: BoardTheme) {
+  const { buildThemedSquareStyles } = require("./boardPatterns") as typeof import("./boardPatterns");
+  return buildThemedSquareStyles(theme.dark, theme.light, theme.floral);
+}
 
 export const DEFAULT_BOARD_THEME: BoardThemeId = "wood";
 
