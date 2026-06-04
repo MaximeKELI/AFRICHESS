@@ -367,3 +367,53 @@ class MatchmakingService:
     def cleanup_stale(self, minutes=10):
         cutoff = timezone.now() - timedelta(minutes=minutes)
         MatchmakingQueue.objects.filter(joined_at__lt=cutoff).delete()
+
+    def pair_all_waiting(self):
+        """Apparie automatiquement les joueurs en file par mode et ELO."""
+        self.cleanup_stale()
+        modes = (
+            MatchmakingQueue.objects.values_list("mode", flat=True).distinct()
+        )
+        for mode in modes:
+            entries = list(
+                MatchmakingQueue.objects.filter(mode=mode).order_by("joined_at")
+            )
+            used = set()
+            for i, a in enumerate(entries):
+                if a.user_id in used:
+                    continue
+                best = None
+                best_diff = self.ELO_RANGE + 1
+                for j, b in enumerate(entries):
+                    if j <= i or b.user_id in used or b.user_id == a.user_id:
+                        continue
+                    diff = abs(a.elo - b.elo)
+                    if diff <= self.ELO_RANGE and diff < best_diff:
+                        best = b
+                        best_diff = diff
+                if best:
+                    used.add(a.user_id)
+                    used.add(best.user_id)
+                    self.leave_queue(a.user)
+                    self.leave_queue(best.user)
+                    game = GameService().create_friend_game(
+                        white=a.user, black=best.user, mode=mode
+                    )
+                    self._notify_match(a.user_id, best.user_id, game)
+
+    def _notify_match(self, user_a_id, user_b_id, game):
+        try:
+            from asgiref.sync import async_to_sync
+            from channels.layers import get_channel_layer
+
+            layer = get_channel_layer()
+            payload = {
+                "type": "match_found",
+                "game_id": str(game.id),
+                "room_id": str(game.id),
+                "mode": game.mode,
+            }
+            for uid in (user_a_id, user_b_id):
+                async_to_sync(layer.group_send)(f"user_{uid}", payload)
+        except Exception:
+            pass
