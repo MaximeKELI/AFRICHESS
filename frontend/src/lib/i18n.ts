@@ -49,6 +49,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "nav.play": "العب",
     "nav.puzzles": "ألغاز",
     "nav.learn": "تعلم",
+    "nav.live": "مباشر",
+    "nav.clubs": "الأندية",
     "nav.friends": "أصدقاء",
     "nav.tournaments": "بطولات",
     "nav.community": "مجتمع",
