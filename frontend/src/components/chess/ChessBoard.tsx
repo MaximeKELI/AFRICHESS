@@ -171,6 +171,7 @@ export function ChessBoard({
 
   const onDrop = useCallback(
     (sourceSquare: Square, targetSquare: Square) => {
+      preloadChessSounds();
       if (disabled) return false;
       return applyMove(sourceSquare, targetSquare);
     },
