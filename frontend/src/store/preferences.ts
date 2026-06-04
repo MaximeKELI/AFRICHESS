@@ -6,6 +6,7 @@ import {
 } from "@/lib/boardThemes";
 
 const BOARD_THEME_KEY = "board_theme";
+const AI_COMMENTS_KEY = "ai_comments";
 
 function readBoardTheme(): BoardThemeId {
   if (typeof window === "undefined") return DEFAULT_BOARD_THEME;

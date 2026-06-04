@@ -155,6 +155,7 @@ class GameService:
                             ai_move.uci,
                             ai_san,
                             played_by_ai=True,
+                            mover_is_white=not is_white_turn,
                             move_number=game.move_count + 1,
                             eval_before=eval_before,
                             eval_after=eval_after,
