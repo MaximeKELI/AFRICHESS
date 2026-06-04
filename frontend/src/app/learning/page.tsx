@@ -19,6 +19,7 @@ interface Dashboard {
   };
   courses: { id: number; slug: string; title: string; level: string; description: string; lesson_count: number }[];
   progress: { course: number; course_title: string; progress_percent: number }[];
+  // course = id du cours
   badges: { badge: { icon: string; name: string }; earned_at: string }[];
   coach_tips: { category: string; message: string; priority: number }[];
   stats: { games_played: number; puzzles_solved: number; win_rate: number };
@@ -135,7 +136,7 @@ export default function LearningDashboardPage() {
           <h2 className="font-semibold text-lg mb-4">Cours</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             {data.courses.map((c) => {
-              const prog = data.progress.find((p) => p.course_title === c.title);
+              const prog = data.progress.find((p) => p.course === c.id);
               return (
                 <Link
                   key={c.id}

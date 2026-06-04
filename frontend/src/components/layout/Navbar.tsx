@@ -23,6 +23,7 @@ export function Navbar() {
 
         <div className="hidden md:flex items-center gap-6 text-sm font-medium">
           <Link href="/play" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.play")}</Link>
+          <Link href="/learning" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.learn")}</Link>
           <Link href="/puzzles" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.puzzles")}</Link>
           <Link href="/friends" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.friends")}</Link>
           <Link href="/tournaments" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.tournaments")}</Link>
