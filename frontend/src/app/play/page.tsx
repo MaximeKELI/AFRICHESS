@@ -71,51 +71,6 @@ function PlayContent() {
   const gameCompleted = gameData.status === "completed";
   const isLiveHuman = Boolean(gameId && !isVsAi);
 
-  const handleWsUpdate = useCallback(
-    (payload: { game: GameState & { id?: string; moves?: ApiMove[] } }) => {
-      const g = payload.game;
-      applyGameResponse({
-        fen: g.fen,
-        moves: g.moves ?? [],
-        white_time_ms: g.white_time_ms,
-        black_time_ms: g.black_time_ms,
-        increment_ms: g.increment_ms,
-        status: g.status,
-        result: g.result,
-        is_vs_ai: g.is_vs_ai,
-      });
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
-  const { connected: wsConnected, sendMove: wsSendMove } = useGameWebSocket(
-    gameId,
-    isLiveHuman,
-    handleWsUpdate,
-    (payload) => {
-      setStatus(`Fin de partie : ${payload.game.result || "Terminée"}`);
-    }
-  );
-
-  const handleMatchFound = useCallback(
-    (id: string) => {
-      setGameId(id);
-      setIsVsAi(false);
-      setSearching(false);
-      gamesApi.get(id).then(({ data }) => {
-        if (data.white_player?.id === user?.id) setOrientation("white");
-        else if (data.black_player?.id === user?.id) setOrientation("black");
-        applyGameResponse(data);
-        setStatus("Adversaire trouvé — partie en direct !");
-      });
-    },
-    [user?.id]
-  );
-
-  const { searching: wsSearching, search: wsSearch, cancel: wsCancel } =
-    useMatchmakingWebSocket(Boolean(user), mode, handleMatchFound);
-
   const display = useMemo(() => {
     if (gameData.moves && gameData.moves.length > 0) {
       return buildGameDisplayFromMoves("start", gameData.moves);
@@ -182,6 +137,55 @@ function PlayContent() {
     if (data.is_vs_ai !== undefined) setIsVsAi(data.is_vs_ai);
     if (data.status === "completed") clearActiveGame();
   };
+
+  const handleWsUpdate = useCallback(
+    (payload: { game: GameState & { id?: string; moves?: ApiMove[] } }) => {
+      const g = payload.game;
+      applyGameResponse({
+        fen: g.fen,
+        moves: g.moves ?? [],
+        white_time_ms: g.white_time_ms,
+        black_time_ms: g.black_time_ms,
+        increment_ms: g.increment_ms,
+        status: g.status,
+        result: g.result,
+        is_vs_ai: g.is_vs_ai,
+      });
+    },
+    []
+  );
+
+  const { connected: wsConnected, sendMove: wsSendMove } = useGameWebSocket(
+    gameId,
+    isLiveHuman,
+    handleWsUpdate,
+    (payload) => {
+      setStatus(`Fin de partie : ${payload.game.result || "Terminée"}`);
+    }
+  );
+
+  const handleMatchFound = useCallback(
+    (id: string) => {
+      setGameId(id);
+      setIsVsAi(false);
+      setSearching(false);
+      gamesApi.get(id).then(({ data }) => {
+        if (data.white_player?.id === user?.id) setOrientation("white");
+        else if (data.black_player?.id === user?.id) setOrientation("black");
+        applyGameResponse(data);
+        setStatus("Adversaire trouvé — partie en direct !");
+      });
+    },
+    [user?.id]
+  );
+
+  const { searching: wsSearching, search: wsSearch, cancel: wsCancel } =
+    useMatchmakingWebSocket(Boolean(user), mode, handleMatchFound);
+
+  const isMyTurn =
+    gameActive &&
+    ((display.turn === "w" && playerIsWhite) ||
+      (display.turn === "b" && !playerIsWhite));
 
   useEffect(() => {
     if (!user || !gameFromUrl) return;
