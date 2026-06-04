@@ -18,14 +18,14 @@
 
 | # | Fonctionnalité | État |
 |---|----------------|------|
-| 7 | Puzzles+ | Page daily existante ; streak/classement à ajouter |
-| 8 | Tournois | API `tournaments` existante ; UI arène à brancher |
-| 9 | Classement pays | Leaderboard africain ; filtre drapeau à renforcer |
-| 10 | Amis & défis | API social ; page défi à créer |
-| 11 | Chat | WebSocket `games/consumers` ; UI chat à intégrer |
-| 12 | Notifications | App `notifications` ; push in-app à brancher |
-| 14 | Mode entraînement | Choisir ouverture via presets IA (à dédié) |
-| 15 | ELO adaptatif | Logique dans `elo_config` ; historique 10 parties à brancher |
+| 7 | Puzzles+ | Daily + entraînement + série localStorage |
+| 8 | Tournois | Page `/tournaments` + inscription + `seed_tournaments` |
+| 9 | Classement pays | Filtre pays sur classement africain |
+| 10 | Amis & défis | Page `/friends` + `POST /social/friends/challenge/` |
+| 11 | Chat | `GameChat` REST sur `/play` (parties humaines) |
+| 12 | Notifications | Cloche navbar + lien partie |
+| 14 | Mode entraînement | Puzzles training ; ouvertures IA à dédié |
+| 15 | ELO adaptatif | `elo_adapt.py` sur preview IA (10 dernières parties) |
 | 16 | Tests E2E | Tests Django OK ; Playwright à ajouter |
 | 18 | i18n | Fichier `i18n.ts` ; traduire pages Jouer/Profil |
 | 20 | Pièces africaines | Thèmes plateau OK ; pièces SVG custom à dessiner |
