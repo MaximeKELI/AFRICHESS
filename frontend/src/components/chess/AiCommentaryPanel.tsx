@@ -34,11 +34,9 @@ export function AiCommentaryPanel({
     if (lastSpokenKey.current === key) return;
     lastSpokenKey.current = key;
 
-    if (!latest.byAi) return;
-
     const timer = window.setTimeout(() => {
-      speakComment(latest.text, { byAi: true, enabled: true });
-    }, 450);
+      speakComment(latest.text, { byAi: latest.byAi, enabled: true });
+    }, latest.byAi ? 450 : 250);
 
     return () => window.clearTimeout(timer);
   }, [enabled, latest, lowBandwidth]);
@@ -53,8 +51,8 @@ export function AiCommentaryPanel({
   if (!enabled) {
     return (
       <div className={compact ? "text-xs opacity-50" : "text-sm opacity-60"}>
-        Activez les commentaires pour que l&apos;IA commente et lise ses analyses
-        {voiceSupported ? " à voix haute" : ""}.
+        Activez les commentaires : l&apos;IA et le coach parlent en français
+        {voiceSupported ? "" : " (texte seul sur ce navigateur)"}.
       </div>
     );
   }
@@ -113,7 +111,7 @@ export function AiCommentaryPanel({
 
       {comments.length === 0 && (
         <p className="text-xs opacity-50">
-          L&apos;IA commentera chaque coup à l&apos;oral et à l&apos;écrit…
+          L&apos;IA et le coach commenteront chaque coup à l&apos;oral et à l&apos;écrit…
         </p>
       )}
     </div>
