@@ -17,6 +17,7 @@ urlpatterns = [
     path("api/social/", include("apps.social.urls")),
     path("api/tournaments/", include("apps.tournaments.urls")),
     path("api/notifications/", include("apps.notifications.urls")),
+    path("api/learning/", include("apps.learning.urls")),
 ]
 
 if settings.DEBUG:

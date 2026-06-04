@@ -6,3 +6,6 @@ class LearningConfig(AppConfig):
     name = "apps.learning"
     label = "learning"
     verbose_name = "Apprentissage"
+
+    def ready(self):
+        from . import signals  # noqa: F401

@@ -93,16 +93,20 @@ class CompleteLessonView(APIView):
         except Lesson.DoesNotExist:
             return Response({"error": "Leçon introuvable"}, status=404)
 
+        prog, _ = UserProgress.objects.get_or_create(user=request.user, course=course)
+        already = lesson_id in (prog.completed_lesson_ids or [])
         progress = update_course_progress(request.user, course, lesson.id)
-        profile = get_or_create_profile(request.user)
-        if lesson_id not in (profile.lessons_completed and []):
+        xp_gained = 0
+        if not already:
+            profile = get_or_create_profile(request.user)
             profile.lessons_completed += 1
             profile.save(update_fields=["lessons_completed", "updated_at"])
-        add_xp(request.user, lesson.xp_reward)
+            add_xp(request.user, lesson.xp_reward)
+            xp_gained = lesson.xp_reward
 
         return Response({
             "progress": UserProgressSerializer(progress).data,
-            "xp_gained": lesson.xp_reward,
+            "xp_gained": xp_gained,
         })
 
 
