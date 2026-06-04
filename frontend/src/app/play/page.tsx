@@ -142,7 +142,7 @@ function PlayContent() {
         setStatus("Coup invalide");
       }
     },
-    [gameId]
+    [gameId, isVsAi, aiCommentsEnabled]
   );
 
   if (!user) {
@@ -212,6 +212,9 @@ function PlayContent() {
               <option value="white">Blancs</option>
               <option value="black">Noirs</option>
             </select>
+            <div className="mb-3 py-2 border-t border-white/10">
+              <CommentsToggle />
+            </div>
             <button
               onClick={startAI}
               className="w-full py-2 rounded-lg african-gradient text-white font-medium"
