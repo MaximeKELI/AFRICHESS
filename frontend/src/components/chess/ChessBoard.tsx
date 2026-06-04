@@ -5,6 +5,7 @@ import { Chessboard } from "react-chessboard";
 import { Chess, Square } from "chess.js";
 import { motion } from "framer-motion";
 import { playChessSound, preloadChessSounds, soundForMove } from "@/lib/chessSounds";
+import { initAiSpeech } from "@/lib/aiSpeech";
 import { accentRgba, getBoardTheme, getThemedSquareStyles } from "@/lib/boardThemes";
 import { useAuthStore } from "@/store/auth";
 import { usePreferencesStore } from "@/store/preferences";
@@ -152,6 +153,7 @@ export function ChessBoard({
   const onSquareClick = useCallback(
     (square: Square) => {
       preloadChessSounds();
+      initAiSpeech();
       if (disabled) return;
 
       if (selectedSquare && legalTargets.includes(square)) {

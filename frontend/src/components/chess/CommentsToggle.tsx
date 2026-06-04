@@ -16,7 +16,7 @@ export function CommentsToggle() {
       <span className="text-sm">
         <span className="font-medium">Commentaires IA</span>
         <span className="block text-xs opacity-60">
-          L&apos;ordinateur commente ses coups et vous coach
+          Commentaires écrits + lecture vocale (français)
         </span>
       </span>
     </label>
