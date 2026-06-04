@@ -348,20 +348,11 @@ function PlayContent() {
               label={MODE_CLOCK_LABEL[mode] ?? mode}
             />
           )}
-          {isLiveHuman && (
-            <p className="text-xs text-center opacity-60">
-              {wsConnected ? "● En direct (WebSocket)" : "○ Connexion temps réel…"}
-            </p>
-          )}
           <ChessBoard
             fen={display.fen}
             orientation={orientation}
             onMove={handleMove}
-            disabled={
-              !gameId ||
-              gameCompleted ||
-              (isLiveHuman && !isMyTurn)
-            }
+            disabled={!gameId || gameCompleted}
             playerColor={playerColor as "w" | "b"}
             lastMove={display.lastMove}
             playSoundOnFenChange={true}
@@ -444,11 +435,25 @@ function PlayContent() {
             <h2 className="font-semibold mb-3">Joueur en ligne</h2>
             <button
               onClick={findMatch}
-              disabled={searching}
+              disabled={searching || wsSearching}
               className="w-full py-2 rounded-lg border-2 border-africhess-green text-africhess-green font-medium hover:bg-africhess-green/10 disabled:opacity-50"
             >
-              {searching ? "Recherche…" : "Trouver un adversaire"}
+              {searching || wsSearching ? "Recherche…" : "Trouver un adversaire"}
             </button>
+            {(searching || wsSearching) && (
+              <button
+                type="button"
+                onClick={() => {
+                  wsCancel();
+                  gamesApi.leaveQueue().catch(() => {});
+                  setSearching(false);
+                  setStatus("Recherche annulée");
+                }}
+                className="w-full mt-2 py-1 text-xs opacity-60 hover:opacity-100"
+              >
+                Annuler
+              </button>
+            )}
           </div>
 
           <div className="glass-card p-4">
