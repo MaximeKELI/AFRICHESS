@@ -142,6 +142,41 @@ class PostChatMessageView(APIView):
         return Response(ChatMessageSerializer(msg).data, status=201)
 
 
+def _dm_room_id(user_a_id: int, user_b_id: int) -> str:
+    a, b = sorted([user_a_id, user_b_id])
+    return f"{a}_{b}"
+
+
+class DirectMessageListView(APIView):
+    def get(self, request, username):
+        try:
+            other = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+        room_id = _dm_room_id(request.user.id, other.id)
+        msgs = ChatMessage.objects.filter(
+            room_type=ChatMessage.RoomType.DIRECT, room_id=room_id
+        ).select_related("sender").order_by("created_at")[:200]
+        return Response(ChatMessageSerializer(msgs, many=True).data)
+
+    def post(self, request, username):
+        try:
+            other = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+        content = (request.data.get("message") or "").strip()[:500]
+        if not content:
+            return Response({"error": "Empty"}, status=400)
+        room_id = _dm_room_id(request.user.id, other.id)
+        msg = ChatMessage.objects.create(
+            sender=request.user,
+            room_type=ChatMessage.RoomType.DIRECT,
+            room_id=room_id,
+            content=content,
+        )
+        return Response(ChatMessageSerializer(msg).data, status=201)
+
+
 class ChatHistoryView(generics.ListAPIView):
     serializer_class = ChatMessageSerializer
 

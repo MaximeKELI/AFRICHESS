@@ -7,6 +7,11 @@ urlpatterns = [
     path("friends/pending/", views.PendingFriendsView.as_view(), name="friends-pending"),
     path("friends/request/", views.SendFriendRequestView.as_view(), name="friend-request"),
     path("friends/challenge/", views.ChallengeFriendView.as_view(), name="friend-challenge"),
+    path(
+        "messages/<str:username>/",
+        views.DirectMessageListView.as_view(),
+        name="direct-messages",
+    ),
     path("friends/<int:pk>/accept/", views.AcceptFriendView.as_view(), name="friend-accept"),
     path("clubs/", views.ClubListView.as_view(), name="club-list"),
     path("clubs/<slug:slug>/", views.ClubDetailView.as_view(), name="club-detail"),
