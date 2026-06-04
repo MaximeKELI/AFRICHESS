@@ -430,8 +430,8 @@ function PlayContent() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px_260px] gap-6">
-        <div className="space-y-3">
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:gap-6">
+        <div className="w-full min-w-0 flex-1 space-y-3 order-1">
           {isLiveHuman && (
             <p className="text-xs text-center opacity-60">
               {wsConnected ? "● En direct (WebSocket)" : "○ Connexion temps réel…"}
@@ -461,7 +461,7 @@ function PlayContent() {
             clockLabel={clockLabel}
           />
           {isLiveHuman && gameActive && (
-            <div className="flex flex-wrap gap-2 justify-center max-w-[560px] mx-auto">
+            <div className="flex flex-wrap gap-2 justify-center w-full">
               <button
                 type="button"
                 onClick={() => gameId && gamesApi.offerDraw(gameId)}
@@ -491,7 +491,7 @@ function PlayContent() {
                   setStatus("Revanche lancée");
                 })
               }
-              className="w-full max-w-[560px] mx-auto block py-2 text-sm rounded-lg african-gradient text-white"
+              className="w-full block py-2 text-sm rounded-lg african-gradient text-white"
             >
               Revanche
             </button>
@@ -500,14 +500,14 @@ function PlayContent() {
             <button
               type="button"
               onClick={handleUndo}
-              className="w-full max-w-[560px] mx-auto block py-2 text-sm rounded-lg border border-white/20 hover:bg-white/5"
+              className="w-full block py-2 text-sm rounded-lg border border-white/20 hover:bg-white/5"
             >
               ↩ Annuler le dernier coup (ou 2 avec réponse IA)
             </button>
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="w-full xl:w-[min(100%,300px)] shrink-0 space-y-4 order-2">
           <GameSidePanel
             moves={panelDisplay.moveRows}
             captured={panelDisplay.captured}
@@ -531,7 +531,7 @@ function PlayContent() {
           {gameId && !isVsAi && <GameChat gameId={gameId} />}
         </div>
 
-        <div className="space-y-4">
+        <div className="w-full xl:w-[260px] shrink-0 space-y-4 order-3">
           <div className="glass-card p-4">
             <TimeControlPicker
               isTimed={useClock}

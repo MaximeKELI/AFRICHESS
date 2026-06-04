@@ -55,6 +55,8 @@ function ChessBoardInner({
   } | null>(null);
   const prevPliesRef = useRef(0);
   const soundsReadyRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [boardWidth, setBoardWidth] = useState(320);
 
   useEffect(() => {
     if (soundsOn && !soundsReadyRef.current) {
@@ -252,8 +254,9 @@ function ChessBoardInner({
 
   return (
     <div
+      ref={containerRef}
       data-testid="chess-board"
-      className="w-full max-w-[min(100%,560px)] aspect-square mx-auto rounded-xl overflow-hidden shadow-lg"
+      className="w-full aspect-square mx-auto rounded-xl overflow-hidden shadow-lg"
       style={
         lowBandwidth
           ? undefined
@@ -263,6 +266,7 @@ function ChessBoardInner({
       }
     >
       <Chessboard
+        boardWidth={boardWidth}
         position={game.fen()}
         onPieceDrop={onDrop}
         onSquareClick={onSquareClick}

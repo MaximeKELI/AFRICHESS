@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { gamesApi } from "@/lib/api";
+import { formatApiError } from "@/lib/errors";
 
 interface AnalysisData {
   blunders_white: number;
@@ -24,11 +25,16 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
     setError(null);
     try {
       const { data } = await gamesApi.analyze(gameId);
-      if (data.analysis) {
-        setAnalysis(data.analysis);
+      const payload = data?.analysis;
+      if (payload?.best_moves_json?.length) {
+        setAnalysis(payload);
+      } else if (payload) {
+        setError("Aucun coup analysé — vérifiez que la partie contient des coups valides.");
+      } else {
+        setError("Réponse serveur incomplète.");
       }
-    } catch {
-      setError("Analyse indisponible (moteur ou partie vide).");
+    } catch (err: unknown) {
+      setError(formatApiError(err, "Analyse indisponible (moteur ou partie vide)."));
     } finally {
       setLoading(false);
     }

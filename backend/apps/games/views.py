@@ -139,18 +139,28 @@ class AnalyzeGameView(APIView):
             game = Game.objects.get(id=game_id)
         except Game.DoesNotExist:
             return Response({"error": "Game not found"}, status=404)
-        pgn = game.pgn
-        if not pgn and game.moves.exists():
-            parts = []
-            for m in game.moves.order_by("move_number"):
-                parts.append(m.san)
-            pgn = " ".join(parts)
-        if not pgn:
+        move_rows = list(
+            game.moves.order_by("move_number").values_list("uci", "played_by_white")
+        )
+        if not move_rows:
             return Response({"error": "No moves to analyze"}, status=400)
         engine = ChessEngineService()
-        evaluations = engine.analyze_game(pgn)
-        blunders_w = sum(1 for e in evaluations if e.classification == "blunder" and e.move_number % 2 == 1)
-        blunders_b = sum(1 for e in evaluations if e.classification == "blunder" and e.move_number % 2 == 0)
+        evaluations = engine.analyze_game_moves(move_rows)
+        if not evaluations:
+            return Response(
+                {"error": "Analysis failed (engine unavailable or invalid moves)"},
+                status=503,
+            )
+        blunders_w = sum(
+            1
+            for i, e in enumerate(evaluations)
+            if e.classification == "blunder" and move_rows[i][1]
+        )
+        blunders_b = sum(
+            1
+            for i, e in enumerate(evaluations)
+            if e.classification == "blunder" and not move_rows[i][1]
+        )
         analysis, _ = GameAnalysis.objects.update_or_create(
             game=game,
             defaults={

@@ -163,29 +163,58 @@ class ChessEngineService:
             logger.error("Analysis error: %s", e)
         return None
 
-    def analyze_game(self, pgn: str) -> list[MoveEvaluation]:
-        """Full game analysis with blunder detection."""
+    @staticmethod
+    def _moves_from_pgn(pgn: str) -> list[tuple[str, bool]]:
+        game = chess.pgn.read_game(io.StringIO(pgn))
+        if not game:
+            return []
         board = chess.Board()
-        evaluations = []
+        out: list[tuple[str, bool]] = []
+        node = game
+        while node.variations:
+            node = node.variation(0)
+            move = node.move
+            if not move:
+                break
+            out.append((move.uci(), board.turn == chess.WHITE))
+            board.push(move)
+        return out
+
+    def analyze_game(self, pgn: str) -> list[MoveEvaluation]:
+        """Analyse à partir d'un PGN (module apprentissage)."""
+        return self.analyze_game_moves(self._moves_from_pgn(pgn))
+
+    def analyze_game_moves(
+        self, moves: list[tuple[str, bool]]
+    ) -> list[MoveEvaluation]:
+        """Analyse une partie à partir des coups UCI (uci, played_by_white)."""
+        board = chess.Board()
+        evaluations: list[MoveEvaluation] = []
         try:
             with self._get_engine() as engine:
-                game = chess.pgn.read_game(chess.pgn.StringIO(pgn))
-                if not game:
-                    return []
-                node = game
-                while node.variations:
-                    node = node.variation(0)
-                    move = node.move
-                    if not move:
+                for uci, played_by_white in moves:
+                    try:
+                        move = chess.Move.from_uci(uci)
+                    except ValueError:
+                        logger.warning("Invalid UCI in analysis: %s", uci)
                         break
-                    fen_before = board.fen()
-                    info_before = engine.analyse(board, chess.engine.Limit(depth=14))
+                    if move not in board.legal_moves:
+                        logger.warning("Illegal move in analysis: %s", uci)
+                        break
+                    info_before = engine.analyse(
+                        board, chess.engine.Limit(depth=12)
+                    )
                     eval_before = self._score_to_cp(info_before["score"].white())
                     san = board.san(move)
                     board.push(move)
-                    info_after = engine.analyse(board, chess.engine.Limit(depth=14))
+                    info_after = engine.analyse(
+                        board, chess.engine.Limit(depth=12)
+                    )
                     eval_after = self._score_to_cp(info_after["score"].white())
-                    cp_loss = abs(eval_before - (-eval_after if not board.turn else eval_after))
+                    if played_by_white:
+                        cp_loss = max(0, eval_before - eval_after)
+                    else:
+                        cp_loss = max(0, eval_after - eval_before)
                     evaluations.append(
                         MoveEvaluation(
                             uci=move.uci(),
