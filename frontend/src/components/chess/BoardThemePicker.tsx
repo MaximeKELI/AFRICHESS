@@ -60,7 +60,7 @@ function ThemeButton({
 }
 
 export function BoardThemePicker({ compact = false, className }: BoardThemePickerProps) {
-  const { boardTheme, setBoardTheme } = usePreferencesStore();
+  const { boardTheme, setBoardTheme, pieceSet, setPieceSet } = usePreferencesStore();
   const classic = BOARD_THEMES.filter((t) => !t.floral);
   const floral = BOARD_THEMES.filter((t) => t.floral);
 
