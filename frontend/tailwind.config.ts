@@ -17,8 +17,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ["var(--font-display)", "system-ui", "sans-serif"],
-        body: ["var(--font-body)", "system-ui", "sans-serif"],
+        display: ["Georgia", "Cambria", "Times New Roman", "serif"],
+        body: ["system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
       },
       backgroundImage: {
         "african-pattern": "url('/images/pattern-bg.png')",

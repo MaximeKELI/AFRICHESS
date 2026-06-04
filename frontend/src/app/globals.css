@@ -26,7 +26,8 @@ body {
 }
 
 .glass-card {
-  @apply backdrop-blur-md bg-[var(--card)]/80 border border-white/10 rounded-2xl shadow-xl;
+  @apply backdrop-blur-md border border-white/10 rounded-2xl shadow-xl;
+  background-color: color-mix(in srgb, var(--card) 80%, transparent);
 }
 
 .chess-board-light {
