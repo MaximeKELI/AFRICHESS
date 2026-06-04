@@ -21,10 +21,6 @@ class GameListView(generics.ListAPIView):
         ).distinct()[:50]
 
 
-# Fix import
-from django.db import models  # noqa: E402
-
-
 class GameDetailView(generics.RetrieveAPIView):
     serializer_class = GameSerializer
     lookup_field = "id"
