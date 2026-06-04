@@ -57,7 +57,13 @@ export default function LearningDashboardPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold mb-2">{t(locale, "nav.learn")}</h1>
-      <p className="opacity-70 mb-8">Cours, puzzles, analyse et progression — style Chess.com, identité AFRICHESS.</p>
+      <p className="opacity-70 mb-4">
+        Parcours complet : <strong>10 volumes</strong>, <strong>40 documents</strong> (~20 pages chacun),
+        tous les plans du jeu.
+      </p>
+      <p className="text-sm opacity-50 mb-8">
+        Commencez par le Volume 1 si vous débutez. Chaque leçon affiche le temps de lecture estimé.
+      </p>
 
       <div className="grid lg:grid-cols-3 gap-6 mb-8">
         <div className="glass-card p-6 flex items-center gap-4">

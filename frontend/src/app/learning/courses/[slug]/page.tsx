@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { LessonReader } from "@/components/learning/LessonReader";
 import { learningApi } from "@/lib/learningApi";
 import { useAuthStore } from "@/store/auth";
 
@@ -113,9 +114,7 @@ export default function CoursePage() {
                 Voir la vidéo →
               </a>
             )}
-            <div className="prose prose-invert max-w-none text-sm leading-relaxed whitespace-pre-wrap opacity-90">
-              {activeLesson.content}
-            </div>
+            <LessonReader content={activeLesson.content} title={activeLesson.title} />
             {user && (
               <button
                 type="button"
