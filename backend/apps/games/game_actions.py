@@ -4,7 +4,8 @@ from django.utils import timezone
 
 from .models import Game
 from .room_utils import ensure_game_room
-from .services import GameService, MODE_TIME_CONFIG
+from .services import GameService
+from .time_control import resolve_time_fields
 
 
 def offer_draw(game: Game, user) -> dict:
@@ -48,17 +49,22 @@ def decline_draw(game: Game, user) -> dict:
 def create_rematch(game: Game, user) -> Game | None:
     if user.id not in (game.white_player_id, game.black_player_id):
         return None
-    config = MODE_TIME_CONFIG.get(game.mode, MODE_TIME_CONFIG["blitz"])
+    timed, white_ms, black_ms, inc_ms, tcm = resolve_time_fields(
+        game.is_timed,
+        game.time_control_minutes,
+    )
     new_game = Game.objects.create(
         white_player=game.black_player,
         black_player=game.white_player,
         mode=game.mode,
         status=Game.Status.ACTIVE,
-        white_time_ms=config["initial_ms"],
-        black_time_ms=config["initial_ms"],
-        increment_ms=config["increment_ms"],
+        is_timed=timed,
+        time_control_minutes=tcm,
+        white_time_ms=white_ms,
+        black_time_ms=black_ms,
+        increment_ms=inc_ms,
         started_at=timezone.now(),
-        turn_started_at=timezone.now(),
+        turn_started_at=timezone.now() if timed else None,
         rematch_of=game,
     )
     ensure_game_room(new_game)

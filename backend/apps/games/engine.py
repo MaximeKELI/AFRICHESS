@@ -48,8 +48,10 @@ class ChessEngineService:
 
     def _skill_level_for_elo(self, elo: int) -> int:
         """Skill Level 0–20 : plus bas = plus faible (débutants)."""
-        if elo <= 900:
+        if elo <= 500:
             return 0
+        if elo <= 900:
+            return 1
         if elo <= 1100:
             return 2
         if elo <= 1400:
@@ -93,10 +95,10 @@ class ChessEngineService:
         return chess.engine.Limit(depth=depth)
 
     def _maybe_random_weak_move(self, board: chess.Board, elo: int) -> Optional[EngineMove]:
-        """Coup aléatoire légal pour les tout débutants (800–1000 ELO)."""
+        """Coup aléatoire légal pour débutants (0–500 / 500–1000 ELO)."""
         if elo > 1000:
             return None
-        chance = 0.35 if elo <= 900 else 0.2
+        chance = 0.45 if elo <= 500 else 0.28
         if random.random() > chance:
             return None
         legal = list(board.legal_moves)
@@ -128,7 +130,9 @@ class ChessEngineService:
                     and self._configure_strength(engine, elo)
                 )
                 if use_uci:
-                    if elo <= 900:
+                    if elo <= 500:
+                        limit = chess.engine.Limit(time=0.05, depth=3)
+                    elif elo <= 900:
                         limit = chess.engine.Limit(time=0.08, depth=4)
                     elif elo <= 1200:
                         limit = chess.engine.Limit(time=0.15, depth=6)

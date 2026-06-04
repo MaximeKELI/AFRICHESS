@@ -9,6 +9,7 @@ from apps.ratings.services import RatingService
 
 from .anticheat import validate_move_timing
 from .draw_rules import can_claim_threefold_from_game, finalize_repetition_draw
+from .time_control import resolve_time_fields
 from .clock_service import (
     apply_increment_after_move,
     apply_server_clock_before_move,
@@ -42,8 +43,12 @@ class GameService:
         color="white",
         include_comments=False,
         ai_elo=None,
+        is_timed=True,
+        time_minutes=None,
     ):
-        config = MODE_TIME_CONFIG.get(mode, MODE_TIME_CONFIG["blitz"])
+        timed, white_ms, black_ms, inc_ms, tcm = resolve_time_fields(
+            is_timed, time_minutes
+        )
         target_elo = resolve_ai_target_elo(
             user, mode=mode, difficulty=difficulty, ai_elo=ai_elo
         )
@@ -57,11 +62,13 @@ class GameService:
             is_vs_ai=True,
             ai_difficulty=display_difficulty,
             ai_target_elo=target_elo,
-            white_time_ms=config["initial_ms"],
-            black_time_ms=config["initial_ms"],
-            increment_ms=config["increment_ms"],
+            is_timed=timed,
+            time_control_minutes=tcm,
+            white_time_ms=white_ms,
+            black_time_ms=black_ms,
+            increment_ms=inc_ms,
             started_at=timezone.now(),
-            turn_started_at=timezone.now(),
+            turn_started_at=timezone.now() if timed else None,
         )
         if color == "black":
             ai_move = self.engine.get_best_move(
@@ -97,18 +104,29 @@ class GameService:
                     )
         return game
 
-    def create_friend_game(self, white, black, mode="blitz"):
-        config = MODE_TIME_CONFIG.get(mode, MODE_TIME_CONFIG["blitz"])
+    def create_friend_game(
+        self,
+        white,
+        black,
+        mode="blitz",
+        is_timed=True,
+        time_minutes=None,
+    ):
+        timed, white_ms, black_ms, inc_ms, tcm = resolve_time_fields(
+            is_timed, time_minutes
+        )
         game = Game.objects.create(
             white_player=white,
             black_player=black,
             mode=mode,
             status=Game.Status.ACTIVE,
-            white_time_ms=config["initial_ms"],
-            black_time_ms=config["initial_ms"],
-            increment_ms=config["increment_ms"],
+            is_timed=timed,
+            time_control_minutes=tcm,
+            white_time_ms=white_ms,
+            black_time_ms=black_ms,
+            increment_ms=inc_ms,
             started_at=timezone.now(),
-            turn_started_at=timezone.now(),
+            turn_started_at=timezone.now() if timed else None,
         )
         ensure_game_room(game)
         return game
@@ -172,7 +190,7 @@ class GameService:
         if not is_white_turn and game.black_player != user and not game.is_vs_ai:
             return {"error": "Not your turn"}
 
-        if not game.is_vs_ai:
+        if game.is_timed and not game.is_vs_ai:
             apply_server_clock_before_move(game)
             timed_out = check_timeout(game)
             if timed_out == "white":
@@ -183,7 +201,7 @@ class GameService:
                 self._finalize_game_on_timeout(game, winner_white=True)
                 game.save()
                 return {"error": "Time out", "game_over": True}
-        elif spent_ms is not None:
+        elif game.is_timed and spent_ms is not None:
             clock = game.white_time_ms if is_white_turn else game.black_time_ms
             if clock <= 0:
                 return {"error": "Time out"}
@@ -366,18 +384,41 @@ class GameService:
 class MatchmakingService:
     ELO_RANGE = settings.MATCHMAKING_ELO_RANGE
 
-    def join_queue(self, user, mode: str, elo: int):
+    def join_queue(
+        self,
+        user,
+        mode: str,
+        elo: int,
+        is_timed: bool = True,
+        time_minutes: int | None = None,
+    ):
+        _, _, _, _, tcm = resolve_time_fields(is_timed, time_minutes)
         MatchmakingQueue.objects.update_or_create(
             user=user,
-            defaults={"mode": mode, "elo": elo},
+            defaults={
+                "mode": mode,
+                "elo": elo,
+                "is_timed": is_timed,
+                "time_control_minutes": tcm,
+            },
         )
 
     def leave_queue(self, user):
         MatchmakingQueue.objects.filter(user=user).delete()
 
-    def find_match(self, user, mode: str, elo: int):
+    def find_match(
+        self,
+        user,
+        mode: str,
+        elo: int,
+        is_timed: bool = True,
+        time_minutes: int | None = None,
+    ):
+        _, _, _, _, tcm = resolve_time_fields(is_timed, time_minutes)
         candidates = MatchmakingQueue.objects.filter(
             mode=mode,
+            is_timed=is_timed,
+            time_control_minutes=tcm,
             elo__gte=elo - self.ELO_RANGE,
             elo__lte=elo + self.ELO_RANGE,
         ).exclude(user=user).order_by("joined_at")
@@ -390,6 +431,8 @@ class MatchmakingService:
                 white=user,
                 black=opponent,
                 mode=mode,
+                is_timed=is_timed,
+                time_minutes=time_minutes,
             )
         return None
 
@@ -416,6 +459,10 @@ class MatchmakingService:
                 for j, b in enumerate(entries):
                     if j <= i or b.user_id in used or b.user_id == a.user_id:
                         continue
+                    if a.is_timed != b.is_timed:
+                        continue
+                    if a.time_control_minutes != b.time_control_minutes:
+                        continue
                     diff = abs(a.elo - b.elo)
                     if diff <= self.ELO_RANGE and diff < best_diff:
                         best = b
@@ -426,7 +473,11 @@ class MatchmakingService:
                     self.leave_queue(a.user)
                     self.leave_queue(best.user)
                     game = GameService().create_friend_game(
-                        white=a.user, black=best.user, mode=mode
+                        white=a.user,
+                        black=best.user,
+                        mode=mode,
+                        is_timed=a.is_timed,
+                        time_minutes=a.time_control_minutes,
                     )
                     self._notify_match(a.user_id, best.user_id, game)
 

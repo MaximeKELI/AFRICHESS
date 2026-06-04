@@ -307,7 +307,11 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
             return
         event = data.get("event") or data.get("action")
         if event in ("rejoindre_file", "join_queue", "chercher_match"):
-            await self._process_matchmaking(data.get("mode", "blitz"))
+            await self._process_matchmaking(
+                data.get("mode", "blitz"),
+                data.get("is_timed", True),
+                data.get("time_minutes"),
+            )
 
     async def match_found(self, event):
         await self.send(
@@ -323,8 +327,10 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
             )
         )
 
-    async def _process_matchmaking(self, mode: str):
-        result = await self._try_match(mode)
+    async def _process_matchmaking(
+        self, mode: str, is_timed: bool = True, time_minutes=None
+    ):
+        result = await self._try_match(mode, is_timed, time_minutes)
         if result is None:
             await self.send(
                 text_data=json.dumps(
@@ -347,15 +353,19 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(f"user_{opponent_id}", payload)
 
     @database_sync_to_async
-    def _try_match(self, mode: str):
+    def _try_match(self, mode: str, is_timed: bool = True, time_minutes=None):
         from apps.ratings.models import PlayerRating
 
         rating = PlayerRating.objects.filter(user=self.user, mode=mode).first()
         elo = rating.elo if rating else getattr(self.user, "initial_elo", 1200)
         svc = MatchmakingService()
-        game = svc.find_match(self.user, mode, elo)
+        game = svc.find_match(
+            self.user, mode, elo, is_timed=is_timed, time_minutes=time_minutes
+        )
         if not game:
-            svc.join_queue(self.user, mode, elo)
+            svc.join_queue(
+                self.user, mode, elo, is_timed=is_timed, time_minutes=time_minutes
+            )
             return None
         room = ensure_game_room(game)
         opponent_id = (

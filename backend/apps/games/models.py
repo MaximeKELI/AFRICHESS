@@ -48,6 +48,15 @@ class Game(models.Model):
     white_time_ms = models.PositiveIntegerField(default=180000)
     black_time_ms = models.PositiveIntegerField(default=180000)
     increment_ms = models.PositiveIntegerField(default=2000)
+    is_timed = models.BooleanField(
+        default=True,
+        help_text="False = partie sans chronomètre",
+    )
+    time_control_minutes = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text="5, 10, 15, 20, 25 ou 30 si is_timed",
+    )
     is_vs_ai = models.BooleanField(default=False)
     ai_difficulty = models.PositiveSmallIntegerField(default=10)  # 1-20 (affichage)
     ai_target_elo = models.PositiveIntegerField(
@@ -155,6 +164,8 @@ class MatchmakingQueue(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     mode = models.CharField(max_length=20, choices=Game.Mode.choices)
     elo = models.PositiveIntegerField()
+    is_timed = models.BooleanField(default=True)
+    time_control_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

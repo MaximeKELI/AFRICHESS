@@ -31,10 +31,12 @@ export function AiStrengthPicker({ value, onChange }: AiStrengthPickerProps) {
             <div className="flex justify-between items-center gap-2">
               <span className="font-semibold text-sm">{level.label}</span>
               <span className="text-xs font-mono text-africhess-gold shrink-0">
-                {level.elo} ELO
+                {level.range}
               </span>
             </div>
-            <p className="text-xs opacity-60 mt-0.5">{level.description}</p>
+            <p className="text-xs opacity-60 mt-0.5">
+              {level.description} · moteur ~{level.elo}
+            </p>
           </button>
         ))}
       </div>

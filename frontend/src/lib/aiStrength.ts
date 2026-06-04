@@ -1,21 +1,59 @@
-/** Niveaux IA sélectionnables (800 → 5000 ELO). */
+/** Paliers ELO : 0–500, 500–1000, puis par tranches de 500. */
 
 export const AI_LEVELS = [
-  { elo: 800, label: "Débutant", description: "Très facile — coups parfois aléatoires" },
-  { elo: 1200, label: "Club", description: "Adversaire loisir régulier" },
-  { elo: 1600, label: "Confirmé", description: "Bon niveau amateur" },
-  { elo: 2000, label: "Expert", description: "Joueur de tournoi" },
-  { elo: 2400, label: "Maître", description: "Très fort, peu d'erreurs" },
-  { elo: 2800, label: "FM", description: "Maître FIDE" },
-  { elo: 3200, label: "GM", description: "Grand maître" },
-  { elo: 3800, label: "Super GM", description: "Élite mondiale" },
-  { elo: 4500, label: "Moteur", description: "Force moteur, très dur" },
-  { elo: 5000, label: "Monstre", description: "Quasi imbattable" },
+  {
+    elo: 250,
+    label: "Débutant",
+    range: "0 – 500 ELO",
+    description: "Très facile — idéal pour découvrir",
+  },
+  {
+    elo: 750,
+    label: "Novice",
+    range: "500 – 1000 ELO",
+    description: "Adversaire débutant confirmé",
+  },
+  {
+    elo: 1250,
+    label: "Amateur",
+    range: "1000 – 1500 ELO",
+    description: "Niveau club local",
+  },
+  {
+    elo: 1750,
+    label: "Intermédiaire",
+    range: "1500 – 2000 ELO",
+    description: "Bon joueur amateur",
+  },
+  {
+    elo: 2250,
+    label: "Confirmé",
+    range: "2000 – 2500 ELO",
+    description: "Joueur de tournoi",
+  },
+  {
+    elo: 2750,
+    label: "Expert",
+    range: "2500 – 3000 ELO",
+    description: "Très fort, peu d'erreurs",
+  },
+  {
+    elo: 3250,
+    label: "Maître",
+    range: "3000 – 3500 ELO",
+    description: "Niveau maître",
+  },
+  {
+    elo: 4000,
+    label: "Élite",
+    range: "3500+ ELO",
+    description: "Force moteur / super GM",
+  },
 ] as const;
 
 export type AiLevelElo = (typeof AI_LEVELS)[number]["elo"];
 
-export const MIN_AI_ELO = 800;
+export const MIN_AI_ELO = 100;
 export const MAX_AI_ELO = 5000;
 
 export function isAiLevelElo(elo: number): elo is AiLevelElo {
@@ -37,11 +75,11 @@ export function normalizeToPreset(elo: number): AiLevelElo {
 
 export function defaultAiEloForLevel(levelId?: string | null): AiLevelElo {
   const map: Record<string, AiLevelElo> = {
-    beginner: 800,
-    intermediate: 1200,
-    advanced: 1600,
-    expert: 2400,
-    master: 3200,
+    beginner: 250,
+    intermediate: 1250,
+    advanced: 1750,
+    expert: 2250,
+    master: 3250,
   };
-  return map[levelId ?? "intermediate"] ?? 1200;
+  return map[levelId ?? "intermediate"] ?? 1250;
 }

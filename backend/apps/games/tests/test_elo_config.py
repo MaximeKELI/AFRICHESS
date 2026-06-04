@@ -1,4 +1,4 @@
-"""Tests configuration ELO IA (800–5000)."""
+"""Tests configuration ELO IA (100–5000)."""
 from django.test import SimpleTestCase
 
 from apps.games.elo_config import (
@@ -20,13 +20,13 @@ class ClampEloTests(SimpleTestCase):
         self.assertEqual(clamp_elo(2400), 2400)
 
     def test_preset_levels(self):
-        for elo in (800, 1200, 2000, 3200, 4500, 5000):
+        for elo in (100, 250, 800, 1200, 2000, 3200, 4500, 5000):
             self.assertEqual(clamp_elo(elo), elo)
 
 
 class DifficultySliderTests(SimpleTestCase):
-    def test_slider_1_is_800(self):
-        self.assertEqual(difficulty_slider_to_elo(1), 800)
+    def test_slider_1_is_100(self):
+        self.assertEqual(difficulty_slider_to_elo(1), 100)
 
     def test_slider_20_is_5000(self):
         self.assertEqual(difficulty_slider_to_elo(20), 5000)
@@ -62,7 +62,7 @@ class ResolveAiTargetEloTests(SimpleTestCase):
         from_slider = resolve_ai_target_elo(user, difficulty=1)
         from_elo = resolve_ai_target_elo(user, ai_elo=5000, difficulty=1)
         self.assertEqual(from_elo, 5000)
-        self.assertEqual(from_slider, 800)
+        self.assertEqual(from_slider, 100)
 
     def test_difficulty_slider_maps_to_elo(self):
         class FakeUser:
@@ -80,7 +80,8 @@ class EloLabelsTests(SimpleTestCase):
         self.assertIn("Monstre", elo_strength_label(5000))
 
     def test_beginner_label(self):
-        self.assertEqual(elo_strength_label(800), "Débutant")
+        self.assertEqual(elo_strength_label(250), "Débutant (0–500)")
+        self.assertEqual(elo_strength_label(800), "Novice (500–1000)")
 
 
 class StockfishUciCapTests(SimpleTestCase):

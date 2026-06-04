@@ -40,6 +40,8 @@ export const gamesApi = {
     color: string;
     ai_elo: number;
     include_comments?: boolean;
+    is_timed?: boolean;
+    time_minutes?: number | null;
   }) => api.post("/games/ai/", data),
   aiPreview: (mode: string, aiElo: number) =>
     api.get("/games/ai/preview/", { params: { mode, ai_elo: aiElo } }),
@@ -55,7 +57,10 @@ export const gamesApi = {
       spent_ms: opts?.spentMs,
     }),
   undo: (id: string) => api.post(`/games/${id}/undo/`),
-  matchmaking: (mode: string) => api.post("/games/matchmaking/", { mode }),
+  matchmaking: (
+    mode: string,
+    opts?: { is_timed?: boolean; time_minutes?: number | null }
+  ) => api.post("/games/matchmaking/", { mode, ...opts }),
   leaveQueue: () => api.delete("/games/matchmaking/"),
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),
   live: () => api.get("/games/live/"),

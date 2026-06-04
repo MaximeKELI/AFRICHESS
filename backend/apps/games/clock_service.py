@@ -7,7 +7,7 @@ from .models import Game
 
 def apply_server_clock_before_move(game: Game) -> None:
     """Déduit le temps écoulé depuis turn_started_at au joueur au trait."""
-    if not game.turn_started_at or game.is_vs_ai:
+    if not getattr(game, "is_timed", True) or not game.turn_started_at or game.is_vs_ai:
         return
     now = timezone.now()
     elapsed_ms = int((now - game.turn_started_at).total_seconds() * 1000)
@@ -34,6 +34,8 @@ def apply_increment_after_move(game: Game, mover_was_white: bool) -> None:
 
 def check_timeout(game: Game) -> str | None:
     """Retourne 'white' ou 'black' si temps écoulé."""
+    if not getattr(game, "is_timed", True):
+        return None
     if " w " in (game.fen or ""):
         if game.white_time_ms <= 0:
             return "white"

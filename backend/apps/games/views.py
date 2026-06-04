@@ -8,7 +8,13 @@ from apps.ratings.models import PlayerRating
 
 from .engine import ChessEngineService
 from .models import Game, GameAnalysis
-from .serializers import CreateAIGameSerializer, GameListSerializer, GameSerializer, MakeMoveSerializer
+from .serializers import (
+    CreateAIGameSerializer,
+    GameListSerializer,
+    GameSerializer,
+    MakeMoveSerializer,
+    MatchmakingJoinSerializer,
+)
 from .elo_adapt import adapt_ai_elo_from_history
 from .elo_config import elo_strength_label, get_user_elo, resolve_ai_target_elo
 from .game_actions import (
@@ -49,6 +55,8 @@ class CreateAIGameView(APIView):
             color=vd["color"],
             include_comments=vd.get("include_comments", False),
             ai_elo=vd.get("ai_elo"),
+            is_timed=vd.get("is_timed", True),
+            time_minutes=vd.get("time_minutes"),
         )
         return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
 
@@ -159,16 +167,30 @@ class AnalyzeGameView(APIView):
 
 class MatchmakingView(APIView):
     def post(self, request):
-        mode = request.data.get("mode", "blitz")
+        ser = MatchmakingJoinSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        vd = ser.validated_data
+        mode = vd["mode"]
+        is_timed = vd.get("is_timed", True)
+        time_minutes = vd.get("time_minutes")
         rating = PlayerRating.objects.filter(user=request.user, mode=mode).first()
         elo = rating.elo if rating else request.user.initial_elo
         svc = MatchmakingService()
-        game = svc.find_match(request.user, mode, elo)
+        game = svc.find_match(
+            request.user, mode, elo, is_timed=is_timed, time_minutes=time_minutes
+        )
         if game:
             return Response(GameSerializer(game).data, status=201)
-        svc.join_queue(request.user, mode, elo)
+        svc.join_queue(
+            request.user, mode, elo, is_timed=is_timed, time_minutes=time_minutes
+        )
         svc.pair_all_waiting()
-        return Response({"status": "searching", "elo": elo})
+        return Response({
+            "status": "searching",
+            "elo": elo,
+            "is_timed": is_timed,
+            "time_minutes": time_minutes,
+        })
 
     def delete(self, request):
         MatchmakingService().leave_queue(request.user)

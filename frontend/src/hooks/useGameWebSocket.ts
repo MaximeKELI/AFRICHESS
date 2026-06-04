@@ -138,7 +138,8 @@ export function useGameWebSocket(
 export function useMatchmakingWebSocket(
   enabled: boolean,
   mode: string,
-  onMatch: (gameId: string, roomId: string) => void
+  onMatch: (gameId: string, roomId: string) => void,
+  timeOpts?: { isTimed: boolean; timeMinutes: number }
 ) {
   const wsRef = useRef<WebSocket | null>(null);
   const [searching, setSearching] = useState(false);
@@ -157,7 +158,14 @@ export function useMatchmakingWebSocket(
     setSearching(true);
 
     ws.onopen = () => {
-      ws.send(JSON.stringify({ event: "rejoindre_file", mode }));
+      ws.send(
+        JSON.stringify({
+          event: "rejoindre_file",
+          mode,
+          is_timed: timeOpts?.isTimed ?? true,
+          time_minutes: timeOpts?.isTimed ? timeOpts.timeMinutes : null,
+        })
+      );
     };
 
     ws.onmessage = (ev) => {
@@ -173,7 +181,7 @@ export function useMatchmakingWebSocket(
     };
 
     ws.onclose = () => setSearching(false);
-  }, [mode, onMatch]);
+  }, [mode, onMatch, timeOpts?.isTimed, timeOpts?.timeMinutes]);
 
   const cancel = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

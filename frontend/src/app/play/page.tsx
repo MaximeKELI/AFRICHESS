@@ -21,8 +21,13 @@ import {
   type ApiMove,
 } from "@/lib/chessDisplay";
 import { usePreferencesStore } from "@/store/preferences";
-import { MODE_CLOCK_LABEL } from "@/lib/clock";
+import { formatTimeControlLabel } from "@/lib/timeControl";
+import {
+  DEFAULT_TIME_MINUTES,
+  type TimeMinutes,
+} from "@/lib/timeControl";
 import { turnFromFen } from "@/lib/gameDisplayFast";
+import { TimeControlPicker } from "@/components/chess/TimeControlPicker";
 import { playDrawWhistle } from "@/lib/chessSounds";
 import {
   saveActiveGame,
@@ -47,6 +52,8 @@ interface GameState {
   status?: string;
   result?: string;
   termination_reason?: string;
+  is_timed?: boolean;
+  time_control_minutes?: number | null;
   is_vs_ai?: boolean;
   ai_target_elo?: number;
 }
@@ -61,7 +68,9 @@ function PlayContent() {
   const [orientation, setOrientation] = useState<"white" | "black">("white");
   const [status, setStatus] = useState<string>("");
   const [searching, setSearching] = useState(false);
-  const [aiEloChoice, setAiEloChoice] = useState<AiLevelElo>(1200);
+  const [aiEloChoice, setAiEloChoice] = useState<AiLevelElo>(250);
+  const [useClock, setUseClock] = useState(true);
+  const [timeMinutes, setTimeMinutes] = useState<TimeMinutes>(DEFAULT_TIME_MINUTES);
   const [userElo, setUserElo] = useState<number | null>(null);
   const [aiElo, setAiElo] = useState<number | null>(null);
   const [isVsAi, setIsVsAi] = useState(false);
@@ -76,6 +85,15 @@ function PlayContent() {
   const gameActive = gameId && gameData.status === "active";
   const gameCompleted = gameData.status === "completed";
   const isLiveHuman = Boolean(gameId && !isVsAi);
+  const gameIsTimed = gameData.is_timed !== false;
+  const clockLabel = formatTimeControlLabel(
+    gameIsTimed,
+    gameData.time_control_minutes ?? timeMinutes
+  );
+  const timeOpts = useMemo(
+    () => ({ isTimed: useClock, timeMinutes }),
+    [useClock, timeMinutes]
+  );
 
   const panelDisplay = useMemo(() => {
     if (gameData.moves && gameData.moves.length > 0) {
@@ -135,6 +153,8 @@ function PlayContent() {
       status: data.status,
       result: data.result,
       termination_reason: data.termination_reason,
+      is_timed: data.is_timed,
+      time_control_minutes: data.time_control_minutes,
       is_vs_ai: data.is_vs_ai,
       ai_target_elo: data.ai_target_elo,
     });
@@ -203,7 +223,7 @@ function PlayContent() {
   );
 
   const { searching: wsSearching, search: wsSearch, cancel: wsCancel } =
-    useMatchmakingWebSocket(Boolean(user), mode, handleMatchFound);
+    useMatchmakingWebSocket(Boolean(user), mode, handleMatchFound, timeOpts);
 
   const isMyTurn =
     gameActive &&
@@ -264,6 +284,8 @@ function PlayContent() {
         ai_elo: aiEloChoice,
         color: orientation,
         include_comments: aiCommentsEnabled,
+        is_timed: useClock,
+        time_minutes: useClock ? timeMinutes : null,
       });
       setIsVsAi(true);
       setGameId(data.id);
@@ -300,10 +322,9 @@ function PlayContent() {
     async (uci: string) => {
       if (!gameId || gameCompleted) return;
       const poolMs = playerIsWhite ? gameData.white_time_ms : gameData.black_time_ms;
-      const spentMs = Math.min(
-        Date.now() - turnStartRef.current,
-        poolMs ?? 999_999
-      );
+      const spentMs = gameIsTimed
+        ? Math.min(Date.now() - turnStartRef.current, poolMs ?? 999_999)
+        : undefined;
       applyOptimisticUci(uci);
       turnStartRef.current = Date.now();
 
@@ -339,12 +360,25 @@ function PlayContent() {
       wsSendMove,
       applyOptimisticUci,
       applyGameResponse,
+      gameIsTimed,
     ]
   );
 
   const findMatch = async () => {
     setSearching(true);
-    setStatus("Recherche d'un adversaire (WebSocket)…");
+    setStatus(
+      useClock
+        ? `Recherche (${timeMinutes} min)…`
+        : "Recherche sans limite de temps…"
+    );
+    try {
+      await gamesApi.matchmaking(mode, {
+        is_timed: useClock,
+        time_minutes: useClock ? timeMinutes : null,
+      });
+    } catch {
+      /* file HTTP optionnelle ; WS principal */
+    }
     wsSearch();
   };
 
@@ -409,14 +443,16 @@ function PlayContent() {
             onMove={handleMove}
             disabled={!gameId || gameCompleted || movePending || (isLiveHuman && !isMyTurn)}
             playerColor={playerColor as "w" | "b"}
-            showClock={Boolean(gameId)}
-            whiteMs={gameData.white_time_ms ?? 180000}
-            blackMs={gameData.black_time_ms ?? 180000}
+            showClock={Boolean(gameId && gameIsTimed)}
+            whiteMs={gameData.white_time_ms ?? timeMinutes * 60_000}
+            blackMs={gameData.black_time_ms ?? timeMinutes * 60_000}
             clockRunning={Boolean(
-              gameActive && (isVsAi ? isMyTurn && !movePending : true)
+              gameActive &&
+                gameIsTimed &&
+                (isVsAi ? isMyTurn && !movePending : true)
             )}
             incrementMs={gameData.increment_ms ?? 0}
-            clockLabel={MODE_CLOCK_LABEL[mode] ?? mode}
+            clockLabel={clockLabel}
           />
           {isLiveHuman && gameActive && (
             <div className="flex flex-wrap gap-2 justify-center max-w-[560px] mx-auto">
@@ -490,6 +526,15 @@ function PlayContent() {
         </div>
 
         <div className="space-y-4">
+          <div className="glass-card p-4">
+            <TimeControlPicker
+              isTimed={useClock}
+              minutes={timeMinutes}
+              onTimedChange={setUseClock}
+              onMinutesChange={setTimeMinutes}
+            />
+          </div>
+
           <div className="glass-card p-4">
             <h2 className="font-semibold mb-3">Jouer vs l&apos;ordinateur</h2>
             {levelLabel && (

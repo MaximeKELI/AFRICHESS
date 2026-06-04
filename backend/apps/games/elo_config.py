@@ -5,7 +5,7 @@ from apps.users.models import User
 # Aligné sur User.LEVEL_ELO et le frontend CHESS_LEVELS
 LEVEL_ELO = dict(User.LEVEL_ELO)
 
-MIN_AI_ELO = 800
+MIN_AI_ELO = 100
 MAX_AI_ELO = 5000
 # Stockfish UCI_LimitStrength plafonne souvent vers 3190
 STOCKFISH_UCI_MAX_ELO = 3190
@@ -19,7 +19,7 @@ def clamp_elo(elo: int) -> int:
 
 
 def difficulty_slider_to_elo(difficulty: int) -> int:
-    """Curseur 1–20 → ELO linéaire entre 800 et 5000."""
+    """Curseur 1–20 → ELO linéaire entre 100 et 5000."""
     d = min(max(difficulty, 1), DIFFICULTY_STEPS)
     if DIFFICULTY_STEPS <= 1:
         return MIN_AI_ELO
@@ -54,7 +54,9 @@ def elo_strength_label(elo: int) -> str:
         return "Club"
     if e >= 1200:
         return "Intermédiaire"
-    return "Débutant"
+    if e >= 500:
+        return "Novice (500–1000)"
+    return "Débutant (0–500)"
 
 
 def get_user_elo(user, mode: str = "blitz") -> int:
@@ -74,7 +76,7 @@ def resolve_ai_target_elo(
 ) -> int:
     """
     ELO cible de l'IA.
-    - ai_elo : choix direct du joueur (800–5000), prioritaire
+    - ai_elo : choix direct du joueur (100–5000), prioritaire
     - difficulty : curseur 1–20
     - sinon : blend profil joueur
     """
@@ -100,8 +102,8 @@ def elo_to_difficulty_label(elo: int) -> int:
 
 
 LEVEL_TO_DIFFICULTY = {
-    "beginner": 3,
-    "intermediate": 6,
+    "beginner": 1,
+    "intermediate": 5,
     "advanced": 10,
     "expert": 14,
     "master": 17,
