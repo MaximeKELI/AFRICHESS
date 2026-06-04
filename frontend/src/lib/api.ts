@@ -71,14 +71,30 @@ export const puzzlesApi = {
 
 export const socialApi = {
   friends: () => api.get("/social/friends/"),
+  pendingFriends: () => api.get("/social/friends/pending/"),
   requestFriend: (username: string) =>
     api.post("/social/friends/request/", { username }),
+  acceptFriend: (id: number) => api.post(`/social/friends/${id}/accept/`),
+  challengeFriend: (username: string, mode = "blitz") =>
+    api.post("/social/friends/challenge/", { username, mode }),
+  chatHistory: (roomType: string, roomId: string) =>
+    api.get(`/social/chat/${roomType}/${roomId}/`),
+  sendChat: (roomType: string, roomId: string, message: string) =>
+    api.post(`/social/chat/${roomType}/${roomId}/send/`, { message }),
   clubs: (country?: string) =>
     api.get("/social/clubs/", { params: { country } }),
   africanPlayers: () => api.get("/users/featured/african/"),
 };
 
+export const notificationsApi = {
+  list: () => api.get("/notifications/"),
+  markRead: (id: number) => api.post(`/notifications/${id}/read/`),
+  markAllRead: () => api.post("/notifications/read-all/"),
+};
+
 export const tournamentsApi = {
   list: (african?: boolean) =>
     api.get("/tournaments/", { params: { african: african ? "1" : undefined } }),
+  get: (slug: string) => api.get(`/tournaments/${slug}/`),
+  register: (slug: string) => api.post(`/tournaments/${slug}/register/`),
 };
