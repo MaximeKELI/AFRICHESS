@@ -247,9 +247,11 @@ export default function PuzzlesPage() {
             <span className="px-3 py-1 rounded-full bg-africhess-gold/20 text-sm">
               ELO {puzzle.rating}
             </span>
-            {tab === "training" && trainingQueue.length > 0 && (
+            {(tab === "training" || tab === "rush") &&
+              (tab === "training" ? trainingQueue : rushQueue).length > 0 && (
               <span className="px-3 py-1 rounded-full bg-white/10 text-sm">
-                {trainingIndex + 1}/{trainingQueue.length}
+                {(tab === "training" ? trainingIndex : rushIndex) + 1}/
+                {(tab === "training" ? trainingQueue : rushQueue).length}
               </span>
             )}
             {puzzle.themes?.map((t) => (
