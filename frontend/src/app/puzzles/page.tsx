@@ -54,6 +54,31 @@ export default function PuzzlesPage() {
     puzzlesApi.daily().then(({ data }) => setPuzzle(data)).catch(() => setPuzzle(null));
   };
 
+  const loadRush = () => {
+    setResult(null);
+    setUciMoves([]);
+    setStartTime(Date.now());
+    setRushScore(0);
+    puzzlesApi
+      .rush(5)
+      .then(({ data }) => {
+        const list: Puzzle[] = Array.isArray(data) ? data : data.results ?? [];
+        setRushQueue(list);
+        setRushIndex(0);
+        setPuzzle(list[0] ?? null);
+      })
+      .catch(() => setPuzzle(null));
+  };
+
+  const loadLeaderboard = () => {
+    puzzlesApi
+      .leaderboard()
+      .then(({ data }) =>
+        setLeaderboard(Array.isArray(data) ? data : [])
+      )
+      .catch(() => setLeaderboard([]));
+  };
+
   const loadTraining = () => {
     setResult(null);
     setUciMoves([]);
@@ -71,7 +96,9 @@ export default function PuzzlesPage() {
 
   useEffect(() => {
     if (tab === "daily") loadDaily();
-    else loadTraining();
+    else if (tab === "training") loadTraining();
+    else if (tab === "rush") loadRush();
+    else if (tab === "leaderboard") loadLeaderboard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, difficulty]);
 
