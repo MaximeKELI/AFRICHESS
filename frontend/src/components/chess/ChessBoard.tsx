@@ -48,15 +48,24 @@ export function ChessBoard({
   const [legalTargets, setLegalTargets] = useState<Square[]>([]);
   const prevPliesRef = useRef(0);
 
+  const squareBase = useMemo(() => getThemedSquareStyles(theme), [theme]);
+
   const squareStyles = useMemo(() => {
-    const selected: React.CSSProperties = {
-      background: accentRgba(theme.accent, 0.55),
-      boxShadow: `inset 0 0 0 3px ${accentRgba(theme.accent, 0.9)}`,
-    };
-    const lastFrom: React.CSSProperties = { background: theme.accentFrom };
-    const lastTo: React.CSSProperties = {
-      background: accentRgba(theme.accent, 0.4),
-    };
+    const floral = Boolean(theme.floral);
+    const selected: React.CSSProperties = floral
+      ? {
+          boxShadow: `inset 0 0 0 3px ${accentRgba(theme.accent, 0.95)}, inset 0 0 16px ${accentRgba(theme.accent, 0.35)}`,
+        }
+      : {
+          background: accentRgba(theme.accent, 0.55),
+          boxShadow: `inset 0 0 0 3px ${accentRgba(theme.accent, 0.9)}`,
+        };
+    const lastFrom: React.CSSProperties = floral
+      ? { boxShadow: `inset 0 0 14px ${theme.accentFrom}` }
+      : { background: theme.accentFrom };
+    const lastTo: React.CSSProperties = floral
+      ? { boxShadow: `inset 0 0 0 3px ${accentRgba(theme.accent, 0.75)}` }
+      : { background: accentRgba(theme.accent, 0.4) };
     const legalDot: React.CSSProperties = {
       background: `radial-gradient(circle, ${theme.legal} 18%, transparent 19%)`,
       backgroundSize: "100% 100%",
@@ -66,7 +75,7 @@ export function ChessBoard({
       backgroundSize: "100% 100%",
     };
     return { selected, lastFrom, lastTo, legalDot, captureRing };
-  }, [theme]);
+  }, [theme, theme.floral]);
 
   useEffect(() => {
     try {

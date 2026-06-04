@@ -1,7 +1,11 @@
 "use client";
 
 import clsx from "clsx";
-import { BOARD_THEMES, type BoardThemeId } from "@/lib/boardThemes";
+import {
+  BOARD_THEMES,
+  getThemedSquareStyles,
+  type BoardTheme,
+} from "@/lib/boardThemes";
 import { usePreferencesStore } from "@/store/preferences";
 
 interface BoardThemePickerProps {
@@ -9,8 +13,61 @@ interface BoardThemePickerProps {
   className?: string;
 }
 
+function ThemeSwatch({ theme, size }: { theme: BoardTheme; size: "sm" | "md" }) {
+  const { dark, light } = getThemedSquareStyles(theme);
+  const dim = size === "sm" ? "w-9 h-9" : "w-11 h-11";
+  return (
+    <span className={clsx("grid grid-cols-2 overflow-hidden shrink-0 rounded", dim)}>
+      <span style={light} />
+      <span style={dark} />
+      <span style={dark} />
+      <span style={light} />
+    </span>
+  );
+}
+
+function ThemeButton({
+  theme,
+  selected,
+  compact,
+  onSelect,
+}: {
+  theme: BoardTheme;
+  selected: boolean;
+  compact: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      title={theme.labelFr}
+      className={clsx(
+        "flex flex-col items-center gap-1.5 p-2 rounded-lg border-2 transition-all hover:scale-[1.02]",
+        selected
+          ? "border-africhess-gold bg-africhess-gold/10 ring-1 ring-africhess-gold/50"
+          : "border-white/15 hover:border-white/30"
+      )}
+      aria-pressed={selected}
+      aria-label={`Plateau ${theme.labelFr}`}
+    >
+      <ThemeSwatch theme={theme} size={compact ? "sm" : "md"} />
+      <span className={clsx("leading-tight text-center", compact ? "text-[10px]" : "text-xs")}>
+        {theme.labelFr}
+      </span>
+    </button>
+  );
+}
+
 export function BoardThemePicker({ compact = false, className }: BoardThemePickerProps) {
   const { boardTheme, setBoardTheme } = usePreferencesStore();
+  const classic = BOARD_THEMES.filter((t) => !t.floral);
+  const floral = BOARD_THEMES.filter((t) => t.floral);
+
+  const gridClass = clsx(
+    "grid gap-2",
+    compact ? "grid-cols-4" : "grid-cols-3 sm:grid-cols-4"
+  );
 
   return (
     <div className={className}>
@@ -18,53 +75,37 @@ export function BoardThemePicker({ compact = false, className }: BoardThemePicke
         Plateau
       </h3>
       <p className={clsx("opacity-60 mb-3", compact ? "text-xs" : "text-sm")}>
-        Choisissez les couleurs de l&apos;échiquier
+        Classiques ou jardins fleuris (♣)
       </p>
-      <div
-        className={clsx(
-          "grid gap-2",
-          compact ? "grid-cols-4" : "grid-cols-3 sm:grid-cols-4"
-        )}
-      >
-        {BOARD_THEMES.map((theme) => {
-          const selected = boardTheme === theme.id;
-          return (
-            <button
-              key={theme.id}
-              type="button"
-              onClick={() => setBoardTheme(theme.id as BoardThemeId)}
-              title={theme.labelFr}
-              className={clsx(
-                "flex flex-col items-center gap-1.5 p-2 rounded-lg border-2 transition-all hover:scale-[1.02]",
-                selected
-                  ? "border-africhess-gold bg-africhess-gold/10 ring-1 ring-africhess-gold/50"
-                  : "border-white/15 hover:border-white/30"
-              )}
-              aria-pressed={selected}
-              aria-label={`Plateau ${theme.labelFr}`}
-            >
-              <span
-                className={clsx(
-                  "grid grid-cols-2 overflow-hidden shrink-0",
-                  compact ? "w-9 h-9 rounded" : "w-11 h-11 rounded-md"
-                )}
-              >
-                <span style={{ backgroundColor: theme.light }} />
-                <span style={{ backgroundColor: theme.dark }} />
-                <span style={{ backgroundColor: theme.dark }} />
-                <span style={{ backgroundColor: theme.light }} />
-              </span>
-              <span
-                className={clsx(
-                  "leading-tight text-center",
-                  compact ? "text-[10px]" : "text-xs"
-                )}
-              >
-                {theme.labelFr}
-              </span>
-            </button>
-          );
-        })}
+
+      <p className={clsx("opacity-50 mb-2 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs")}>
+        Classiques
+      </p>
+      <div className={clsx(gridClass, "mb-4")}>
+        {classic.map((theme) => (
+          <ThemeButton
+            key={theme.id}
+            theme={theme}
+            compact={compact}
+            selected={boardTheme === theme.id}
+            onSelect={() => setBoardTheme(theme.id)}
+          />
+        ))}
+      </div>
+
+      <p className={clsx("opacity-50 mb-2 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs")}>
+        Fleurs ♣
+      </p>
+      <div className={gridClass}>
+        {floral.map((theme) => (
+          <ThemeButton
+            key={theme.id}
+            theme={theme}
+            compact={compact}
+            selected={boardTheme === theme.id}
+            onSelect={() => setBoardTheme(theme.id)}
+          />
+        ))}
       </div>
     </div>
   );
