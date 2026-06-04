@@ -4,6 +4,7 @@ import { useState, useCallback, Suspense, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
+import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { gamesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { levelToAiDifficulty, CHESS_LEVELS } from "@/lib/avatars";
@@ -198,6 +199,10 @@ function PlayContent() {
             >
               {searching ? "Recherche…" : "Trouver un adversaire"}
             </button>
+          </div>
+
+          <div className="glass-card p-4">
+            <BoardThemePicker compact />
           </div>
 
           {status && (

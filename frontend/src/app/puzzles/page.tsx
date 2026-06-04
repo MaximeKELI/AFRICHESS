@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
+import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { puzzlesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
@@ -73,7 +74,7 @@ export default function PuzzlesPage() {
             ))}
           </div>
 
-          <div className="grid md:grid-cols-[1fr_240px] gap-6">
+          <div className="grid md:grid-cols-[1fr_240px_200px] gap-6">
             <ChessBoard
               fen={display.fen}
               onMove={handleMove}
@@ -89,6 +90,9 @@ export default function PuzzlesPage() {
               isCheck={display.isCheck}
               turn={display.turn}
             />
+            <div className="glass-card p-4 h-fit">
+              <BoardThemePicker compact />
+            </div>
           </div>
 
           <div className="mt-6 flex flex-wrap gap-4">

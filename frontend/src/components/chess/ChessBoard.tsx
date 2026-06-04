@@ -5,7 +5,9 @@ import { Chessboard } from "react-chessboard";
 import { Chess, Square } from "chess.js";
 import { motion } from "framer-motion";
 import { playChessSound, preloadChessSounds, soundForMove } from "@/lib/chessSounds";
+import { accentRgba, getBoardTheme } from "@/lib/boardThemes";
 import { useAuthStore } from "@/store/auth";
+import { usePreferencesStore } from "@/store/preferences";
 
 export interface MoveInfo {
   uci: string;
@@ -27,31 +29,6 @@ interface ChessBoardProps {
   playSoundOnFenChange?: boolean;
 }
 
-const SELECTED_STYLE: React.CSSProperties = {
-  background: "rgba(212, 160, 23, 0.55)",
-  boxShadow: "inset 0 0 0 3px rgba(212, 160, 23, 0.9)",
-};
-
-const LAST_MOVE_FROM: React.CSSProperties = {
-  background: "rgba(212, 160, 23, 0.35)",
-};
-
-const LAST_MOVE_TO: React.CSSProperties = {
-  background: "rgba(27, 122, 61, 0.4)",
-};
-
-const LEGAL_MOVE_DOT: React.CSSProperties = {
-  background:
-    "radial-gradient(circle, rgba(27, 122, 61, 0.85) 18%, transparent 19%)",
-  backgroundSize: "100% 100%",
-};
-
-const LEGAL_CAPTURE_RING: React.CSSProperties = {
-  background:
-    "radial-gradient(circle, transparent 60%, rgba(196, 92, 38, 0.75) 61%, rgba(196, 92, 38, 0.75) 68%, transparent 69%)",
-  backgroundSize: "100% 100%",
-};
-
 export function ChessBoard({
   fen = "start",
   orientation = "white",
@@ -63,11 +40,33 @@ export function ChessBoard({
   playSoundOnFenChange = true,
 }: ChessBoardProps) {
   const { lowBandwidth } = useAuthStore();
+  const boardThemeId = usePreferencesStore((s) => s.boardTheme);
+  const theme = getBoardTheme(boardThemeId);
   const soundsOn = !lowBandwidth;
   const [game, setGame] = useState(() => new Chess(fen === "start" ? undefined : fen));
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [legalTargets, setLegalTargets] = useState<Square[]>([]);
   const prevPliesRef = useRef(0);
+
+  const squareStyles = useMemo(() => {
+    const selected: React.CSSProperties = {
+      background: accentRgba(theme.accent, 0.55),
+      boxShadow: `inset 0 0 0 3px ${accentRgba(theme.accent, 0.9)}`,
+    };
+    const lastFrom: React.CSSProperties = { background: theme.accentFrom };
+    const lastTo: React.CSSProperties = {
+      background: accentRgba(theme.accent, 0.4),
+    };
+    const legalDot: React.CSSProperties = {
+      background: `radial-gradient(circle, ${theme.legal} 18%, transparent 19%)`,
+      backgroundSize: "100% 100%",
+    };
+    const captureRing: React.CSSProperties = {
+      background: `radial-gradient(circle, transparent 60%, ${theme.capture} 61%, ${theme.capture} 68%, transparent 69%)`,
+      backgroundSize: "100% 100%",
+    };
+    return { selected, lastFrom, lastTo, legalDot, captureRing };
+  }, [theme]);
 
   useEffect(() => {
     try {
@@ -182,19 +181,19 @@ export function ChessBoard({
     const styles: Record<string, React.CSSProperties> = {};
 
     if (lastMove) {
-      styles[lastMove.from] = { ...LAST_MOVE_FROM };
-      styles[lastMove.to] = { ...LAST_MOVE_TO };
+      styles[lastMove.from] = { ...squareStyles.lastFrom };
+      styles[lastMove.to] = { ...squareStyles.lastTo };
     }
 
     if (selectedSquare) {
-      styles[selectedSquare] = { ...SELECTED_STYLE };
+      styles[selectedSquare] = { ...squareStyles.selected };
     }
 
     for (const target of legalTargets) {
       const pieceOnTarget = game.get(target);
       styles[target] = pieceOnTarget
-        ? { ...LEGAL_CAPTURE_RING }
-        : { ...LEGAL_MOVE_DOT };
+        ? { ...squareStyles.captureRing }
+        : { ...squareStyles.legalDot };
     }
 
     if (game.inCheck()) {
@@ -208,22 +207,24 @@ export function ChessBoard({
     }
 
     return styles;
-  }, [lastMove, selectedSquare, legalTargets, game]);
+  }, [lastMove, selectedSquare, legalTargets, game, squareStyles]);
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="w-full max-w-[min(100%,560px)] aspect-square mx-auto rounded-xl overflow-hidden shadow-2xl ring-2 ring-africhess-gold/30"
+      className="w-full max-w-[min(100%,560px)] aspect-square mx-auto rounded-xl overflow-hidden shadow-2xl"
+      style={{ boxShadow: `0 25px 50px -12px rgb(0 0 0 / 0.25), 0 0 0 2px ${accentRgba(theme.accent, 0.4)}` }}
     >
       <Chessboard
+        key={boardThemeId}
         position={game.fen()}
         onPieceDrop={onDrop}
         onSquareClick={onSquareClick}
         boardOrientation={orientation}
         customSquareStyles={customSquareStyles}
-        customDarkSquareStyle={{ backgroundColor: "#B58863" }}
-        customLightSquareStyle={{ backgroundColor: "#F0D9B5" }}
+        customDarkSquareStyle={{ backgroundColor: theme.dark }}
+        customLightSquareStyle={{ backgroundColor: theme.light }}
         animationDuration={200}
         arePiecesDraggable={!disabled}
       />

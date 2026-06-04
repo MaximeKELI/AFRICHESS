@@ -7,6 +7,7 @@ import { useAuthStore } from "@/store/auth";
 import { ratingsApi, authApi } from "@/lib/api";
 import { AvatarPicker } from "@/components/profile/AvatarPicker";
 import { LevelPicker } from "@/components/profile/LevelPicker";
+import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { AVATARS, CHESS_LEVELS, getAvatarSrc, type AvatarId, type ChessLevelId } from "@/lib/avatars";
 
 export default function ProfilePage() {
@@ -101,6 +102,10 @@ export default function ProfilePage() {
           {saving ? "Enregistrement…" : "Enregistrer"}
         </button>
         {saved && <p className="text-sm text-africhess-green text-center">Profil mis à jour !</p>}
+      </div>
+
+      <div className="glass-card p-6">
+        <BoardThemePicker />
       </div>
 
       <div>
