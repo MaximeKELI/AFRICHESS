@@ -34,6 +34,26 @@ class Tournament(models.Model):
         return self.name
 
 
+class TournamentParticipant(models.Model):
+    tournament = models.ForeignKey(
+        Tournament, on_delete=models.CASCADE, related_name="standings"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="tournament_standings",
+    )
+    score = models.FloatField(default=0)
+    wins = models.PositiveIntegerField(default=0)
+    draws = models.PositiveIntegerField(default=0)
+    losses = models.PositiveIntegerField(default=0)
+    games_played = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ["tournament", "user"]
+        ordering = ["-score", "-wins"]
+
+
 class TournamentRound(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name="rounds")
     round_number = models.PositiveSmallIntegerField()

@@ -62,6 +62,28 @@ class Game(models.Model):
         related_name="games_won",
     )
     termination_reason = models.CharField(max_length=50, blank=True)
+    tournament = models.ForeignKey(
+        "tournaments.Tournament",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="games",
+    )
+    turn_started_at = models.DateTimeField(null=True, blank=True)
+    draw_offered_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="draw_offers_made",
+    )
+    rematch_of = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rematches",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     started_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
@@ -84,6 +106,8 @@ class GameRoom(models.Model):
     room_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     white_connected = models.BooleanField(default=False)
     black_connected = models.BooleanField(default=False)
+    white_disconnected_at = models.DateTimeField(null=True, blank=True)
+    black_disconnected_at = models.DateTimeField(null=True, blank=True)
     last_activity = models.DateTimeField(auto_now=True)
 
     class Meta:
