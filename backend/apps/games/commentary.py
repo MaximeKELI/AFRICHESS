@@ -104,12 +104,23 @@ def _is_promotion(san: str) -> bool:
     return "=" in san
 
 
+def _eval_gain_for_mover(
+    eval_before: float,
+    eval_after: float,
+    mover_is_white: bool,
+) -> float:
+    """Gain d'évaluation (pions) pour le camp qui vient de jouer."""
+    delta = eval_after - eval_before
+    return delta if mover_is_white else -delta
+
+
 def generate_move_comment(
     fen_before: str,
     uci: str,
     san: str,
     *,
     played_by_ai: bool,
+    mover_is_white: bool,
     move_number: int,
     eval_before: Optional[float] = None,
     eval_after: Optional[float] = None,
