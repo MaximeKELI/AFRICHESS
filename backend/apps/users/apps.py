@@ -7,4 +7,5 @@ class UsersConfig(AppConfig):
     label = "users"
 
     def ready(self):
+        # Import once; dispatch_uid prevents duplicate handlers on reload
         import apps.users.signals  # noqa: F401
