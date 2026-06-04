@@ -49,7 +49,11 @@ class Game(models.Model):
     black_time_ms = models.PositiveIntegerField(default=180000)
     increment_ms = models.PositiveIntegerField(default=2000)
     is_vs_ai = models.BooleanField(default=False)
-    ai_difficulty = models.PositiveSmallIntegerField(default=5)  # 1-10
+    ai_difficulty = models.PositiveSmallIntegerField(default=5)  # 1-10 (affichage)
+    ai_target_elo = models.PositiveIntegerField(
+        default=1200,
+        help_text="ELO UCI de l'IA pour cette partie",
+    )
     winner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

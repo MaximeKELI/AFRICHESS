@@ -7,6 +7,8 @@ import chess
 import chess.engine
 from django.conf import settings
 
+from .elo_config import clamp_elo
+
 logger = logging.getLogger(__name__)
 
 
@@ -29,8 +31,9 @@ class MoveEvaluation:
 
 
 class ChessEngineService:
-    """Wrapper around Stockfish for AI play and analysis."""
+    """Wrapper around Stockfish — joue à un ELO UCI quand possible."""
 
+    # Repli si UCI_LimitStrength indisponible
     DIFFICULTY_DEPTH = {1: 5, 2: 7, 3: 9, 4: 11, 5: 13, 6: 15, 7: 17, 8: 19, 9: 21, 10: 23}
 
     def __init__(self, stockfish_path: Optional[str] = None):
@@ -39,12 +42,35 @@ class ChessEngineService:
     def _get_engine(self):
         return chess.engine.SimpleEngine.popen_uci(self.path)
 
-    def get_best_move(self, fen: str, difficulty: int = 5) -> Optional[EngineMove]:
+    def _configure_strength(self, engine, target_elo: int) -> bool:
+        """Active UCI_LimitStrength + UCI_Elo (Stockfish)."""
+        elo = clamp_elo(target_elo)
+        try:
+            engine.configure({"UCI_LimitStrength": True, "UCI_Elo": elo})
+            return True
+        except chess.engine.EngineError:
+            logger.warning("UCI_Elo non supporté, repli sur profondeur")
+            return False
+
+    def get_best_move(
+        self,
+        fen: str,
+        difficulty: int = 5,
+        target_elo: Optional[int] = None,
+    ) -> Optional[EngineMove]:
         board = chess.Board(fen)
+        elo = clamp_elo(target_elo) if target_elo else None
         depth = self.DIFFICULTY_DEPTH.get(min(max(difficulty, 1), 10), 13)
+
         try:
             with self._get_engine() as engine:
-                result = engine.play(board, chess.engine.Limit(depth=depth))
+                if elo and self._configure_strength(engine, elo):
+                    # Temps court suffit quand la force est limitée par ELO
+                    limit = chess.engine.Limit(time=0.3)
+                else:
+                    limit = chess.engine.Limit(depth=depth)
+
+                result = engine.play(board, limit)
                 if result.move:
                     san = board.san(result.move)
                     return EngineMove(uci=result.move.uci(), san=san)
