@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/auth";
 import { t } from "@/lib/i18n";
 import { getAvatarSrc } from "@/lib/avatars";
 import { Moon, Sun, Wifi, WifiOff } from "lucide-react";
+import { NotificationBell } from "./NotificationBell";
 
 export function Navbar() {
   const { user, locale, setLocale, darkMode, toggleDarkMode, lowBandwidth, setLowBandwidth, logout } = useAuthStore();
@@ -23,6 +24,8 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-6 text-sm font-medium">
           <Link href="/play" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.play")}</Link>
           <Link href="/puzzles" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.puzzles")}</Link>
+          <Link href="/friends" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.friends")}</Link>
+          <Link href="/tournaments" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.tournaments")}</Link>
           <Link href="/leaderboard" className="hover:text-africhess-gold transition-colors">{t(locale, "leaderboard.african")}</Link>
           <Link href="/community" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.community")}</Link>
         </div>

@@ -31,6 +31,7 @@ import {
 import { openingNameFromMoves } from "@/lib/openings";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { GameChat } from "@/components/social/GameChat";
 
 interface GameState {
   fen: string;

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ratingsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { t } from "@/lib/i18n";
+import { AFRICAN_COUNTRIES } from "@/lib/countries";
 
 interface Entry {
   user: { username: string; display_name: string; country: string; title?: string };
