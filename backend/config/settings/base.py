@@ -145,6 +145,14 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "200/hour",
+        "user": "3000/hour",
+    },
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
@@ -191,6 +199,19 @@ K_FACTOR_BULLET = 40
 
 # Matchmaking
 MATCHMAKING_ELO_RANGE = config("MATCHMAKING_ELO_RANGE", default=200, cast=int)
+
+CELERY_BEAT_SCHEDULE = {
+    "pair-matchmaking": {
+        "task": "apps.games.tasks.pair_matchmaking_queues",
+        "schedule": 5.0,
+    },
+    "forfeit-disconnected": {
+        "task": "apps.games.tasks.forfeit_disconnected_games",
+        "schedule": 30.0,
+    },
+}
+
+DISCONNECT_FORFEIT_SECONDS = 90
 
 # Low-bandwidth mode threshold (KB/s hint from client)
 LOW_BANDWIDTH_THRESHOLD = 500
