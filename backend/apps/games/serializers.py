@@ -28,7 +28,7 @@ class GameSerializer(serializers.ModelSerializer):
         fields = [
             "id", "white_player", "black_player", "status", "mode", "result",
             "fen", "pgn", "move_count", "white_time_ms", "black_time_ms",
-            "is_vs_ai", "ai_difficulty", "moves", "analysis",
+            "is_vs_ai", "ai_difficulty", "ai_target_elo", "moves", "analysis",
             "created_at", "started_at", "ended_at",
         ]
 

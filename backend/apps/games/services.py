@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from apps.ratings.services import RatingService
 
+from .elo_config import elo_to_difficulty_label, resolve_ai_target_elo
 from .engine import ChessEngineService
 from .models import Game, MatchmakingQueue, Move
 
@@ -25,21 +26,26 @@ class GameService:
 
     def create_ai_game(self, user, mode="blitz", difficulty=5, color="white"):
         config = MODE_TIME_CONFIG.get(mode, MODE_TIME_CONFIG["blitz"])
+        target_elo = resolve_ai_target_elo(user, mode=mode, difficulty=difficulty)
+        display_difficulty = elo_to_difficulty_label(target_elo)
+
         game = Game.objects.create(
             white_player=user if color == "white" else None,
             black_player=None if color == "white" else user,
             mode=Game.Mode.AI,
             status=Game.Status.ACTIVE,
             is_vs_ai=True,
-            ai_difficulty=difficulty,
+            ai_difficulty=display_difficulty,
+            ai_target_elo=target_elo,
             white_time_ms=config["initial_ms"],
             black_time_ms=config["initial_ms"],
             increment_ms=config["increment_ms"],
             started_at=timezone.now(),
         )
         if color == "black":
-            # AI plays white first
-            ai_move = self.engine.get_best_move(game.fen, difficulty)
+            ai_move = self.engine.get_best_move(
+                game.fen, display_difficulty, target_elo=target_elo
+            )
             if ai_move:
                 self._record_move(game, ai_move.uci, ai_move.san, played_by_white=True)
         return game
@@ -85,7 +91,11 @@ class GameService:
         response = {"move": move, "fen": new_fen, "game_over": is_over}
 
         if game.is_vs_ai and not is_over:
-            ai_move = self.engine.get_best_move(new_fen, game.ai_difficulty)
+            ai_move = self.engine.get_best_move(
+                new_fen,
+                game.ai_difficulty,
+                target_elo=game.ai_target_elo,
+            )
             if ai_move:
                 ai_result = self.engine.apply_move(new_fen, ai_move.uci)
                 if ai_result:

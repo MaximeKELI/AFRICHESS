@@ -31,6 +31,20 @@ export function getLevelElo(levelId?: string | null): number {
   return found?.elo ?? 1200;
 }
 
+/** Curseur 1–10 aligné sur le backend DIFFICULTY_TO_ELO */
+export const DIFFICULTY_TO_ELO: Record<number, number> = {
+  1: 800,
+  2: 950,
+  3: 1100,
+  4: 1200,
+  5: 1350,
+  6: 1600,
+  7: 1750,
+  8: 2000,
+  9: 2150,
+  10: 2200,
+};
+
 /** Map declared level to default AI opponent strength (1–10) */
 export function levelToAiDifficulty(levelId?: string | null): number {
   const map: Record<string, number> = {
@@ -41,4 +55,8 @@ export function levelToAiDifficulty(levelId?: string | null): number {
     master: 10,
   };
   return map[levelId ?? "intermediate"] ?? 4;
+}
+
+export function difficultyToElo(difficulty: number): number {
+  return DIFFICULTY_TO_ELO[Math.min(10, Math.max(1, difficulty))] ?? 1200;
 }

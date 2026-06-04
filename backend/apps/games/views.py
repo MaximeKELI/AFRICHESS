@@ -8,6 +8,7 @@ from apps.ratings.models import PlayerRating
 from .engine import ChessEngineService
 from .models import Game, GameAnalysis
 from .serializers import CreateAIGameSerializer, GameListSerializer, GameSerializer, MakeMoveSerializer
+from .elo_config import get_user_elo, resolve_ai_target_elo
 from .services import GameService, MatchmakingService
 
 
@@ -38,6 +39,24 @@ class CreateAIGameView(APIView):
             color=ser.validated_data["color"],
         )
         return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
+
+
+@api_view(["GET"])
+def ai_strength_preview(request):
+    if not request.user.is_authenticated:
+        return Response({"error": "Authentication required"}, status=401)
+    """Prévisualise l'ELO IA selon le profil et le curseur."""
+    mode = request.query_params.get("mode", "blitz")
+    difficulty = request.query_params.get("difficulty")
+    diff_int = int(difficulty) if difficulty and difficulty.isdigit() else None
+    user_elo = get_user_elo(request.user, mode)
+    ai_elo = resolve_ai_target_elo(request.user, mode=mode, difficulty=diff_int)
+    return Response({
+        "user_elo": user_elo,
+        "ai_target_elo": ai_elo,
+        "chess_level": request.user.chess_level,
+        "mode": mode,
+    })
 
 
 class MakeMoveView(APIView):

@@ -30,6 +30,8 @@ export const gamesApi = {
   get: (id: string) => api.get(`/games/${id}/`),
   createAI: (data: { mode: string; difficulty: number; color: string }) =>
     api.post("/games/ai/", data),
+  aiPreview: (mode: string, difficulty: number) =>
+    api.get("/games/ai/preview/", { params: { mode, difficulty } }),
   move: (id: string, uci: string) => api.post(`/games/${id}/move/`, { uci }),
   matchmaking: (mode: string) => api.post("/games/matchmaking/", { mode }),
   leaveQueue: () => api.delete("/games/matchmaking/"),
