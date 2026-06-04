@@ -32,7 +32,11 @@ import { openingNameFromMoves } from "@/lib/openings";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { GameChat } from "@/components/social/GameChat";
-import { useGameWebSocket, useMatchmakingWebSocket } from "@/hooks/useGameWebSocket";
+import {
+  useGameWebSocket,
+  useMatchmakingWebSocket,
+  type WsGamePayload,
+} from "@/hooks/useGameWebSocket";
 
 interface GameState {
   fen: string;
@@ -138,12 +142,11 @@ function PlayContent() {
     if (data.status === "completed") clearActiveGame();
   };
 
-  const handleWsUpdate = useCallback(
-    (payload: { game: GameState & { id?: string; moves?: ApiMove[] } }) => {
+  const handleWsUpdate = useCallback((payload: WsGamePayload) => {
       const g = payload.game;
       applyGameResponse({
         fen: g.fen,
-        moves: g.moves ?? [],
+        moves: (g.moves ?? []) as ApiMove[],
         white_time_ms: g.white_time_ms,
         black_time_ms: g.black_time_ms,
         increment_ms: g.increment_ms,
@@ -151,9 +154,8 @@ function PlayContent() {
         result: g.result,
         is_vs_ai: g.is_vs_ai,
       });
-    },
-    []
-  );
+    }, []);
+
 
   const { connected: wsConnected, sendMove: wsSendMove } = useGameWebSocket(
     gameId,
