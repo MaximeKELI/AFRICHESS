@@ -29,12 +29,15 @@ class GameService:
         self,
         user,
         mode="blitz",
-        difficulty=5,
+        difficulty=None,
         color="white",
         include_comments=False,
+        ai_elo=None,
     ):
         config = MODE_TIME_CONFIG.get(mode, MODE_TIME_CONFIG["blitz"])
-        target_elo = resolve_ai_target_elo(user, mode=mode, difficulty=difficulty)
+        target_elo = resolve_ai_target_elo(
+            user, mode=mode, difficulty=difficulty, ai_elo=ai_elo
+        )
         display_difficulty = elo_to_difficulty_label(target_elo)
 
         game = Game.objects.create(

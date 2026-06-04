@@ -30,12 +30,12 @@ export const gamesApi = {
   get: (id: string) => api.get(`/games/${id}/`),
   createAI: (data: {
     mode: string;
-    difficulty: number;
     color: string;
+    ai_elo: number;
     include_comments?: boolean;
   }) => api.post("/games/ai/", data),
-  aiPreview: (mode: string, difficulty: number) =>
-    api.get("/games/ai/preview/", { params: { mode, difficulty } }),
+  aiPreview: (mode: string, aiElo: number) =>
+    api.get("/games/ai/preview/", { params: { mode, ai_elo: aiElo } }),
   move: (id: string, uci: string, includeComments = false) =>
     api.post(`/games/${id}/move/`, { uci, include_comments: includeComments }),
   matchmaking: (mode: string) => api.post("/games/matchmaking/", { mode }),

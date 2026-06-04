@@ -52,7 +52,8 @@ class GameListSerializer(serializers.ModelSerializer):
 
 class CreateAIGameSerializer(serializers.Serializer):
     mode = serializers.ChoiceField(choices=["bullet", "blitz", "rapid"], default="blitz")
-    difficulty = serializers.IntegerField(min_value=1, max_value=10, default=5)
+    difficulty = serializers.IntegerField(min_value=1, max_value=20, required=False)
+    ai_elo = serializers.IntegerField(min_value=800, max_value=5000, required=False)
     color = serializers.ChoiceField(choices=["white", "black"], default="white")
     include_comments = serializers.BooleanField(default=False, required=False)
 

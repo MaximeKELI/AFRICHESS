@@ -7,7 +7,7 @@ import chess
 import chess.engine
 from django.conf import settings
 
-from .elo_config import clamp_elo
+from .elo_config import STOCKFISH_UCI_MAX_ELO, clamp_elo
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +33,11 @@ class MoveEvaluation:
 class ChessEngineService:
     """Wrapper around Stockfish — joue à un ELO UCI quand possible."""
 
-    # Repli si UCI_LimitStrength indisponible
-    DIFFICULTY_DEPTH = {1: 5, 2: 7, 3: 9, 4: 11, 5: 13, 6: 15, 7: 17, 8: 19, 9: 21, 10: 23}
+    # Repli profondeur si UCI indisponible (curseur 1–20)
+    DIFFICULTY_DEPTH = {
+        1: 5, 2: 6, 3: 7, 4: 8, 5: 9, 6: 10, 7: 11, 8: 12, 9: 13, 10: 14,
+        11: 15, 12: 16, 13: 17, 14: 18, 15: 19, 16: 20, 17: 21, 18: 22, 19: 24, 20: 26,
+    }
 
     def __init__(self, stockfish_path: Optional[str] = None):
         self.path = stockfish_path or settings.STOCKFISH_PATH
@@ -43,8 +46,8 @@ class ChessEngineService:
         return chess.engine.SimpleEngine.popen_uci(self.path)
 
     def _configure_strength(self, engine, target_elo: int) -> bool:
-        """Active UCI_LimitStrength + UCI_Elo (Stockfish)."""
-        elo = clamp_elo(target_elo)
+        """Active UCI_LimitStrength + UCI_Elo (Stockfish, max ~3190)."""
+        elo = min(clamp_elo(target_elo), STOCKFISH_UCI_MAX_ELO)
         try:
             engine.configure({"UCI_LimitStrength": True, "UCI_Elo": elo})
             return True
@@ -52,23 +55,42 @@ class ChessEngineService:
             logger.warning("UCI_Elo non supporté, repli sur profondeur")
             return False
 
+    def _limit_for_elo(self, target_elo: int, difficulty: int) -> chess.engine.Limit:
+        """Au-delà de l'ELO UCI : force maximale (profondeur + temps)."""
+        elo = clamp_elo(target_elo) if target_elo else 1200
+        if elo > STOCKFISH_UCI_MAX_ELO:
+            if elo >= 4800:
+                return chess.engine.Limit(depth=32, time=3.0)
+            if elo >= 4200:
+                return chess.engine.Limit(depth=30, time=2.2)
+            if elo >= 3600:
+                return chess.engine.Limit(depth=28, time=1.5)
+            return chess.engine.Limit(depth=26, time=1.0)
+
+        depth = self.DIFFICULTY_DEPTH.get(min(max(difficulty, 1), 20), 14)
+        return chess.engine.Limit(depth=depth)
+
     def get_best_move(
         self,
         fen: str,
-        difficulty: int = 5,
+        difficulty: int = 10,
         target_elo: Optional[int] = None,
     ) -> Optional[EngineMove]:
         board = chess.Board(fen)
         elo = clamp_elo(target_elo) if target_elo else None
-        depth = self.DIFFICULTY_DEPTH.get(min(max(difficulty, 1), 10), 13)
+        diff_key = min(max(difficulty, 1), 20)
 
         try:
             with self._get_engine() as engine:
-                if elo and self._configure_strength(engine, elo):
-                    # Temps court suffit quand la force est limitée par ELO
-                    limit = chess.engine.Limit(time=0.3)
+                use_uci = (
+                    elo is not None
+                    and elo <= STOCKFISH_UCI_MAX_ELO
+                    and self._configure_strength(engine, elo)
+                )
+                if use_uci:
+                    limit = chess.engine.Limit(time=0.35)
                 else:
-                    limit = chess.engine.Limit(depth=depth)
+                    limit = self._limit_for_elo(elo or 1200, diff_key)
 
                 result = engine.play(board, limit)
                 if result.move:

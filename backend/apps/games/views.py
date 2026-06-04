@@ -8,7 +8,7 @@ from apps.ratings.models import PlayerRating
 from .engine import ChessEngineService
 from .models import Game, GameAnalysis
 from .serializers import CreateAIGameSerializer, GameListSerializer, GameSerializer, MakeMoveSerializer
-from .elo_config import get_user_elo, resolve_ai_target_elo
+from .elo_config import elo_strength_label, get_user_elo, resolve_ai_target_elo
 from .services import GameService, MatchmakingService
 
 
@@ -32,12 +32,14 @@ class CreateAIGameView(APIView):
     def post(self, request):
         ser = CreateAIGameSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
+        vd = ser.validated_data
         game = GameService().create_ai_game(
             request.user,
-            mode=ser.validated_data["mode"],
-            difficulty=ser.validated_data["difficulty"],
-            color=ser.validated_data["color"],
-            include_comments=ser.validated_data.get("include_comments", False),
+            mode=vd["mode"],
+            difficulty=vd.get("difficulty"),
+            color=vd["color"],
+            include_comments=vd.get("include_comments", False),
+            ai_elo=vd.get("ai_elo"),
         )
         return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
 
@@ -49,12 +51,18 @@ def ai_strength_preview(request):
     """Prévisualise l'ELO IA selon le profil et le curseur."""
     mode = request.query_params.get("mode", "blitz")
     difficulty = request.query_params.get("difficulty")
+    ai_elo_param = request.query_params.get("ai_elo")
     diff_int = int(difficulty) if difficulty and difficulty.isdigit() else None
+    ai_elo_int = int(ai_elo_param) if ai_elo_param and ai_elo_param.isdigit() else None
     user_elo = get_user_elo(request.user, mode)
-    ai_elo = resolve_ai_target_elo(request.user, mode=mode, difficulty=diff_int)
+    ai_elo = resolve_ai_target_elo(
+        request.user, mode=mode, difficulty=diff_int, ai_elo=ai_elo_int
+    )
     return Response({
         "user_elo": user_elo,
         "ai_target_elo": ai_elo,
+        "ai_strength_label": elo_strength_label(ai_elo),
+        "max_ai_elo": 5000,
         "chess_level": request.user.chess_level,
         "mode": mode,
     })
