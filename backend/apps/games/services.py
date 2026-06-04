@@ -11,7 +11,7 @@ from .commentary import generate_move_comment
 from .elo_config import elo_to_difficulty_label, resolve_ai_target_elo
 from .engine import ChessEngineService
 from .models import Game, MatchmakingQueue, Move
-from .realtime_services import ensure_game_room, uci_to_squares
+from .room_utils import ensure_game_room, uci_to_squares
 
 MODE_TIME_CONFIG = {
     "bullet": {"initial_ms": 60000, "increment_ms": 0},

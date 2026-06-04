@@ -1,34 +1,13 @@
-"""Salles de jeu, état temps réel et matchmaking WebSocket."""
+"""État temps réel et sérialisation pour WebSockets."""
 
 from __future__ import annotations
 
-import uuid
-
-import chess
 from django.utils import timezone
 
-from .models import Game, GameRoom, Move
+from .models import Game
+from .room_utils import current_turn, ensure_game_room
 from .serializers import GameSerializer
-from .services import GameService, MatchmakingService, MODE_TIME_CONFIG
-
-
-def uci_to_squares(uci: str) -> tuple[str, str]:
-    uci = (uci or "").strip().lower()
-    if len(uci) >= 4:
-        return uci[:2], uci[2:4]
-    return "", ""
-
-
-def current_turn(game: Game) -> str:
-    return "white" if " w " in (game.fen or "") else "black"
-
-
-def ensure_game_room(game: Game) -> GameRoom:
-    room, _ = GameRoom.objects.get_or_create(
-        game=game,
-        defaults={"room_id": game.id},
-    )
-    return room
+from .services import MatchmakingService, MODE_TIME_CONFIG
 
 
 def serialize_game(game: Game) -> dict:
@@ -48,31 +27,12 @@ def build_ws_payload(game: Game, extra: dict | None = None) -> dict:
     return payload
 
 
-def set_player_connected(game: Game, user, connected: bool) -> GameRoom:
-    room = ensure_game_room(game)
-    if game.white_player_id == user.id:
-        room.white_connected = connected
-    elif game.black_player_id == user.id:
-        room.black_connected = connected
-    room.last_activity = timezone.now()
-    room.save(
-        update_fields=["white_connected", "black_connected", "last_activity"]
-    )
-    return room
-
-
-def try_start_game(game: Game) -> Game:
-    """Passe waiting → active si les deux joueurs sont présents."""
-    if game.status != Game.Status.WAITING:
-        return game
-    if not game.white_player_id or not game.black_player_id:
-        return game
-    room = ensure_game_room(game)
-    if room.white_connected and room.black_connected:
-        game.status = Game.Status.ACTIVE
-        game.started_at = game.started_at or timezone.now()
-        game.save(update_fields=["status", "started_at"])
-    return game
+def restore_game_state(game_id) -> dict | None:
+    try:
+        game = Game.objects.get(pk=game_id)
+    except Game.DoesNotExist:
+        return None
+    return serialize_game(game)
 
 
 def create_matchmaking_game(white, black, mode: str) -> Game:
@@ -91,17 +51,7 @@ def create_matchmaking_game(white, black, mode: str) -> Game:
     return game
 
 
-def restore_game_state(game_id) -> dict | None:
-    try:
-        game = Game.objects.get(pk=game_id)
-    except Game.DoesNotExist:
-        return None
-    return serialize_game(game)
-
-
 class RealtimeMatchmakingService(MatchmakingService):
-    """Matchmaking avec création de salle et notification WS."""
-
     def find_and_create(self, user, mode: str, elo: int):
         self.join_queue(user, mode, elo)
         game = self.find_match(user, mode, elo)
