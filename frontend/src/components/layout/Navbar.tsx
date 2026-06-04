@@ -4,8 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { t } from "@/lib/i18n";
-import { Moon, Sun, Wifi, WifiOff, Globe } from "lucide-react";
-import { motion } from "framer-motion";
+import { Moon, Sun, Wifi, WifiOff } from "lucide-react";
 
 export function Navbar() {
   const { user, locale, setLocale, darkMode, toggleDarkMode, lowBandwidth, setLowBandwidth, logout } = useAuthStore();
