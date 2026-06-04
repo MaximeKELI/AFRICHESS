@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db import models
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -19,9 +20,6 @@ class FriendsListView(generics.ListAPIView):
         ).filter(
             models.Q(from_user=user) | models.Q(to_user=user)
         )
-
-
-from django.db import models  # noqa: E402
 
 
 class SendFriendRequestView(APIView):
