@@ -5,14 +5,18 @@ import { useSearchParams } from "next/navigation";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
+import { AiCommentaryPanel } from "@/components/chess/AiCommentaryPanel";
+import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { gamesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { levelToAiDifficulty, CHESS_LEVELS } from "@/lib/avatars";
 import {
   buildGameDisplayFromFen,
   buildGameDisplayFromMoves,
+  commentsFromMoves,
   type ApiMove,
 } from "@/lib/chessDisplay";
+import { usePreferencesStore } from "@/store/preferences";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
