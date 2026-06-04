@@ -5,10 +5,7 @@ import Link from "next/link";
 import { Bell } from "lucide-react";
 import { notificationsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
-import {
-  useNotificationsWebSocket,
-  type WsNotification,
-} from "@/hooks/useNotificationsWebSocket";
+import { useNotificationsWebSocket } from "@/hooks/useNotificationsWebSocket";
 
 interface Notification {
   id: number;

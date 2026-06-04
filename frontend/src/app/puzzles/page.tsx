@@ -18,7 +18,14 @@ interface Puzzle {
   rating: number;
 }
 
-type Tab = "daily" | "training";
+interface LeaderboardRow {
+  rank: number;
+  username: string;
+  display_name: string;
+  solved_count: number;
+}
+
+type Tab = "daily" | "training" | "rush" | "leaderboard";
 
 export default function PuzzlesPage() {
   const { user } = useAuthStore();
@@ -31,6 +38,10 @@ export default function PuzzlesPage() {
   const [result, setResult] = useState<string | null>(null);
   const [streak, setStreak] = useState(0);
   const [startTime, setStartTime] = useState(Date.now());
+  const [rushQueue, setRushQueue] = useState<Puzzle[]>([]);
+  const [rushIndex, setRushIndex] = useState(0);
+  const [rushScore, setRushScore] = useState(0);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
 
   useEffect(() => {
     setStreak(getPuzzleStreak());
