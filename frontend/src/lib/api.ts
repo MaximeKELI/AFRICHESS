@@ -8,7 +8,14 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+/** Ne pas envoyer un vieux JWT sur login/inscription (sinon 401 « token not valid »). */
+const NO_AUTH_PATHS = ["/auth/login/", "/auth/registration/", "/users/register/"];
+
 api.interceptors.request.use((config) => {
+  const path = config.url ?? "";
+  if (NO_AUTH_PATHS.some((p) => path.includes(p))) {
+    return config;
+  }
   const token = Cookies.get("access_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

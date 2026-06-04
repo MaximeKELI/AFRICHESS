@@ -41,6 +41,12 @@ export function formatApiError(error: unknown): string {
 
   if (typeof data.detail === "string") {
     if (data.detail.includes("Plusieurs comptes")) return data.detail;
+    if (
+      data.detail.includes("token not valid") ||
+      data.detail.includes("Token is invalid")
+    ) {
+      return "Session expirée. Réessayez de vous connecter.";
+    }
     return data.detail;
   }
 

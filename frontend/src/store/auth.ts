@@ -74,6 +74,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           "Plusieurs comptes peuvent partager le même e-mail sur ce site."
       );
     }
+    Cookies.remove("access_token");
+    Cookies.remove("refresh_token");
     set({ isLoading: true });
     try {
       const { data } = await authApi.login(loginId, password);
@@ -91,6 +93,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   register: async (data) => {
+    Cookies.remove("access_token");
+    Cookies.remove("refresh_token");
     set({ isLoading: true });
     try {
       await authApi.register({
