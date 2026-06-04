@@ -16,10 +16,11 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        # Ensure stats exist even if signal was skipped or duplicated
         from .models import UserStats
+        from .services import init_user_ratings
 
         UserStats.objects.get_or_create(user=user)
+        init_user_ratings(user)
         return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
 

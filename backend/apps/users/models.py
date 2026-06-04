@@ -70,7 +70,33 @@ class User(AbstractUser):
         PT = "pt", "Portuguese"
         SW = "sw", "Swahili"
 
+    class ChessLevel(models.TextChoices):
+        BEGINNER = "beginner", "Débutant"
+        INTERMEDIATE = "intermediate", "Intermédiaire"
+        ADVANCED = "advanced", "Avancé"
+        EXPERT = "expert", "Expert"
+        MASTER = "master", "Maître"
+
+    LEVEL_ELO = {
+        "beginner": 800,
+        "intermediate": 1200,
+        "advanced": 1600,
+        "expert": 2000,
+        "master": 2200,
+    }
+
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
+    avatar_preset = models.CharField(
+        max_length=20,
+        blank=True,
+        default="avatar-1",
+        help_text="Preset avatar id (avatar-1 … avatar-8)",
+    )
+    chess_level = models.CharField(
+        max_length=20,
+        choices=ChessLevel.choices,
+        default=ChessLevel.INTERMEDIATE,
+    )
     bio = models.TextField(max_length=500, blank=True)
     country = models.CharField(max_length=2, choices=Country.choices, default=Country.OTHER)
     city = models.CharField(max_length=100, blank=True)
@@ -90,6 +116,10 @@ class User(AbstractUser):
     @property
     def display_name(self):
         return self.get_full_name() or self.username
+
+    @property
+    def initial_elo(self):
+        return self.LEVEL_ELO.get(self.chess_level, 1200)
 
     def __str__(self):
         return self.username
