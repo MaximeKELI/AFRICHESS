@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   title: "AFRICHESS — Africa's Premier Chess Platform",
   description: "Play chess online, train tactics, join African chess communities. Built for Africa, open to the world.",
   icons: { icon: "/images/logo.png" },
+  manifest: "/manifest.json",
+  appleWebApp: { capable: true, title: "AFRICHESS" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

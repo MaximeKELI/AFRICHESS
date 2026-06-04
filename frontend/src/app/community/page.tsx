@@ -15,7 +15,38 @@ export default function CommunityPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold mb-8">Community</h1>
+      <h1 className="font-display text-3xl font-bold mb-8">Communauté</h1>
+
+      <section className="mb-12">
+        <h2 className="text-xl font-semibold mb-4 text-africhess-terracotta">
+          Histoires & culture des échecs en Afrique
+        </h2>
+        <div className="grid md:grid-cols-2 gap-4">
+          {[
+            {
+              title: "Les échecs au Sénégal",
+              text: "Dakar et Saint-Louis accueillent des tournois ouverts qui réunissent joueurs locaux et visiteurs. Le jeu se transmet dans les écoles et les clubs de quartier.",
+            },
+            {
+              title: "Nigeria, puissance montante",
+              text: "Avec une jeune génération de grands maîtres et d'IM, le Nigeria forme l'élite du continent et inspire toute l'Afrique de l'Ouest.",
+            },
+            {
+              title: "Éthiopie & Kenya",
+              text: "Les championnats d'Afrique de l'Est développent des talents en blitz et en rapide, souvent sur mobile.",
+            },
+            {
+              title: "AFRICHESS",
+              text: "Notre plateforme relie les joueurs du continent : classements par pays, clubs et tournois en ligne à venir.",
+            },
+          ].map((story) => (
+            <article key={story.title} className="glass-card p-5">
+              <h3 className="font-semibold text-africhess-gold mb-2">{story.title}</h3>
+              <p className="text-sm opacity-80 leading-relaxed">{story.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <section className="mb-12">
         <h2 className="text-xl font-semibold mb-4 text-africhess-gold">Featured African Players</h2>

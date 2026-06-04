@@ -121,10 +121,16 @@ class AnalyzeGameView(APIView):
             game = Game.objects.get(id=game_id)
         except Game.DoesNotExist:
             return Response({"error": "Game not found"}, status=404)
-        if not game.pgn:
+        pgn = game.pgn
+        if not pgn and game.moves.exists():
+            parts = []
+            for m in game.moves.order_by("move_number"):
+                parts.append(m.san)
+            pgn = " ".join(parts)
+        if not pgn:
             return Response({"error": "No moves to analyze"}, status=400)
         engine = ChessEngineService()
-        evaluations = engine.analyze_game(game.pgn)
+        evaluations = engine.analyze_game(pgn)
         blunders_w = sum(1 for e in evaluations if e.classification == "blunder" and e.move_number % 2 == 1)
         blunders_b = sum(1 for e in evaluations if e.classification == "blunder" and e.move_number % 2 == 0)
         analysis, _ = GameAnalysis.objects.update_or_create(

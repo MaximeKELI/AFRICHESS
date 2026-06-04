@@ -165,7 +165,10 @@ def generate_move_comment(
             if gain >= 0.8:
                 return pick(STRONG_PLAYER)
             if gain <= -1.2:
-                return pick(WEAK_PLAYER)
+                return (
+                    f"{pick(WEAK_PLAYER)} La position s'est dégradée d'environ "
+                    f"{abs(gain):.1f} pions."
+                )
         else:
             if gain >= 0.8:
                 return pick(STRONG_AI)

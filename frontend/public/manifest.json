@@ -1,0 +1,18 @@
+{
+  "name": "AFRICHESS",
+  "short_name": "AFRICHESS",
+  "description": "Plateforme d'échecs africaine",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D1117",
+  "theme_color": "#1B7A3D",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
