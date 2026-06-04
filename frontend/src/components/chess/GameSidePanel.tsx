@@ -10,6 +10,7 @@ interface GameSidePanelProps {
   orientation?: "white" | "black";
   isCheck?: boolean;
   turn?: "w" | "b";
+  openingName?: string;
 }
 
 export function GameSidePanel({
@@ -18,9 +19,15 @@ export function GameSidePanel({
   orientation = "white",
   isCheck = false,
   turn = "w",
+  openingName,
 }: GameSidePanelProps) {
   return (
     <div className="glass-card p-4 space-y-4 h-full">
+      {openingName && (
+        <p className="text-xs text-africhess-gold font-medium border-b border-white/10 pb-2">
+          📖 {openingName}
+        </p>
+      )}
       {isCheck && (
         <p className="text-sm font-semibold text-africhess-terracotta animate-pulse">
           Échec au roi {turn === "w" ? "blanc" : "noir"} !

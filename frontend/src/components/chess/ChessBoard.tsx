@@ -48,6 +48,10 @@ export function ChessBoard({
   const [game, setGame] = useState(() => new Chess(fen === "start" ? undefined : fen));
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [legalTargets, setLegalTargets] = useState<Square[]>([]);
+  const [promotionPending, setPromotionPending] = useState<{
+    from: Square;
+    to: Square;
+  } | null>(null);
   const prevPliesRef = useRef(0);
 
   const squareBase = useMemo(() => getThemedSquareStyles(theme), [theme]);
@@ -125,9 +129,25 @@ export function ChessBoard({
   }, [game]);
 
   const applyMove = useCallback(
-    (from: Square, to: Square): boolean => {
+    (from: Square, to: Square, promotion?: "q" | "r" | "b" | "n"): boolean => {
       const g = new Chess(game.fen());
-      const move = g.move({ from, to, promotion: "q" });
+      const legal = g.moves({ square: from, verbose: true });
+      const targetMoves = legal.filter((m) => m.to === to);
+      if (targetMoves.length === 0) return false;
+
+      const needsPromo = targetMoves.some((m) => m.promotion);
+      if (needsPromo && !promotion) {
+        setPromotionPending({ from, to });
+        setSelectedSquare(null);
+        setLegalTargets([]);
+        return false;
+      }
+
+      const move = g.move({
+        from,
+        to,
+        promotion: promotion || (needsPromo ? "q" : undefined),
+      });
       if (!move) return false;
 
       playChessSound(soundForMove(move.flags), soundsOn);
@@ -145,6 +165,7 @@ export function ChessBoard({
       prevPliesRef.current = g.history().length;
       setSelectedSquare(null);
       setLegalTargets([]);
+      setPromotionPending(null);
       onMove?.(uci);
       return true;
     },
@@ -241,7 +262,17 @@ export function ChessBoard({
         customLightSquareStyle={squareBase.light as Record<string, string>}
         animationDuration={200}
         arePiecesDraggable={!disabled}
+        autoPromoteToQueen={false}
       />
+      {promotionPending && (
+        <PromotionDialog
+          color={game.turn()}
+          onSelect={(piece) =>
+            applyMove(promotionPending.from, promotionPending.to, piece)
+          }
+          onCancel={() => setPromotionPending(null)}
+        />
+      )}
     </motion.div>
   );
 }
