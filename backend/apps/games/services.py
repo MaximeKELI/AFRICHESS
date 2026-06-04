@@ -11,6 +11,7 @@ from .commentary import generate_move_comment
 from .elo_config import elo_to_difficulty_label, resolve_ai_target_elo
 from .engine import ChessEngineService
 from .models import Game, MatchmakingQueue, Move
+from .realtime_services import ensure_game_room, uci_to_squares
 
 MODE_TIME_CONFIG = {
     "bullet": {"initial_ms": 60000, "increment_ms": 0},
@@ -89,7 +90,7 @@ class GameService:
 
     def create_friend_game(self, white, black, mode="blitz"):
         config = MODE_TIME_CONFIG.get(mode, MODE_TIME_CONFIG["blitz"])
-        return Game.objects.create(
+        game = Game.objects.create(
             white_player=white,
             black_player=black,
             mode=mode,
@@ -99,6 +100,8 @@ class GameService:
             increment_ms=config["increment_ms"],
             started_at=timezone.now(),
         )
+        ensure_game_room(game)
+        return game
 
     def _apply_clock(self, game: Game, mover_is_white: bool, spent_ms: int) -> None:
         spent = max(0, int(spent_ms))
@@ -189,6 +192,7 @@ class GameService:
                 eval_before=eval_before,
                 eval_after=eval_after,
             )
+        game.fen = new_fen
         move = self._record_move(
             game,
             uci,
@@ -196,8 +200,8 @@ class GameService:
             played_by_white=is_white_turn,
             time_ms=game.white_time_ms if is_white_turn else game.black_time_ms,
             comment=player_comment,
+            fen_after=new_fen,
         )
-        game.fen = new_fen
         game.move_count += 1
         game.pgn = (game.pgn or "") + f" {game.move_count}. {san}" if is_white_turn else f" {san}"
         game.save()
@@ -257,13 +261,17 @@ class GameService:
         played_by_white,
         time_ms=None,
         comment="",
+        fen_after=None,
     ):
+        from_sq, to_sq = uci_to_squares(uci)
         return Move.objects.create(
             game=game,
             move_number=game.move_count + 1,
             san=san,
             uci=uci,
-            fen_after=game.fen,
+            from_square=from_sq,
+            to_square=to_sq,
+            fen_after=fen_after or game.fen,
             played_by_white=played_by_white,
             time_remaining_ms=time_ms,
             comment=comment or "",

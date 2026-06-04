@@ -77,11 +77,30 @@ class Game(models.Model):
         return f"Game {self.id} ({self.mode})"
 
 
+class GameRoom(models.Model):
+    """Salle temps réel — room_id = identifiant WebSocket (souvent = game.id)."""
+
+    game = models.OneToOneField(Game, on_delete=models.CASCADE, related_name="room")
+    room_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    white_connected = models.BooleanField(default=False)
+    black_connected = models.BooleanField(default=False)
+    last_activity = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Salle de jeu"
+        verbose_name_plural = "Salles de jeu"
+
+    def __str__(self):
+        return f"Room {self.room_id} (game {self.game_id})"
+
+
 class Move(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="moves")
     move_number = models.PositiveSmallIntegerField()
     san = models.CharField(max_length=10)
     uci = models.CharField(max_length=10)
+    from_square = models.CharField(max_length=2, blank=True, help_text="Case départ (ex. e2)")
+    to_square = models.CharField(max_length=2, blank=True, help_text="Case arrivée (ex. e4)")
     fen_after = models.CharField(max_length=100)
     played_by_white = models.BooleanField()
     time_remaining_ms = models.PositiveIntegerField(null=True, blank=True)
