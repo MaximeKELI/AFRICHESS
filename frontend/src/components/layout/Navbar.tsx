@@ -59,6 +59,7 @@ export function Navbar() {
 
           {user ? (
             <div className="flex items-center gap-3 ml-2">
+              <NotificationBell />
               <Link href="/profile" className="flex items-center gap-2 hover:opacity-90">
                 <span className="relative w-8 h-8 rounded-lg overflow-hidden ring-1 ring-africhess-gold/50 shrink-0">
                   <Image

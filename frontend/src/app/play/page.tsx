@@ -48,6 +48,7 @@ interface GameState {
 function PlayContent() {
   const params = useSearchParams();
   const mode = params.get("mode") || "blitz";
+  const gameFromUrl = params.get("game");
   const { user } = useAuthStore();
   const [gameId, setGameId] = useState<string | null>(null);
   const [gameData, setGameData] = useState<GameState>({ fen: "start", moves: [] });
@@ -113,6 +114,22 @@ function PlayContent() {
     const saved = loadActiveGame();
     if (saved && !gameId) setResumeOffer(saved);
   }, [user, gameId]);
+
+  useEffect(() => {
+    if (!user || !gameFromUrl || gameId) return;
+    gamesApi
+      .get(gameFromUrl)
+      .then(({ data }) => {
+        setGameId(data.id);
+        setIsVsAi(Boolean(data.is_vs_ai));
+        if (data.white_player?.id === user.id) setOrientation("white");
+        else if (data.black_player?.id === user.id) setOrientation("black");
+        applyGameResponse(data);
+        setStatus("Partie chargée");
+      })
+      .catch(() => setStatus("Partie introuvable"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, gameFromUrl]);
 
   useEffect(() => {
     turnStartRef.current = Date.now();

@@ -17,11 +17,14 @@ export default function LeaderboardPage() {
   const [tab, setTab] = useState<"global" | "african">("african");
   const [mode, setMode] = useState("blitz");
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [country, setCountry] = useState("");
 
   useEffect(() => {
     const fetcher = tab === "global" ? ratingsApi.globalLeaderboard : ratingsApi.africanLeaderboard;
-    fetcher(mode).then(({ data }) => setEntries(data.results || data)).catch(() => setEntries([]));
-  }, [tab, mode]);
+    fetcher(mode, tab === "african" && country ? country : undefined)
+      .then(({ data }) => setEntries(data.results || data))
+      .catch(() => setEntries([]));
+  }, [tab, mode, country]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -40,6 +43,19 @@ export default function LeaderboardPage() {
         >
           {t(locale, "leaderboard.global")}
         </button>
+        {tab === "african" && (
+          <select
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            className="px-3 py-2 rounded-lg border bg-transparent text-sm"
+          >
+            {AFRICAN_COUNTRIES.map((c) => (
+              <option key={c.code || "all"} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        )}
         {["bullet", "blitz", "rapid"].map((m) => (
           <button
             key={m}
