@@ -67,9 +67,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   login: async (username, password) => {
+    const loginId = username.trim();
+    if (loginId.includes("@")) {
+      throw new Error(
+        "Connectez-vous avec votre nom d'utilisateur (ex. DKELI), pas avec l'e-mail. " +
+          "Plusieurs comptes peuvent partager le même e-mail sur ce site."
+      );
+    }
     set({ isLoading: true });
     try {
-      const { data } = await authApi.login(username.trim(), password);
+      const { data } = await authApi.login(loginId, password);
       if (!data.access) {
         throw new Error("Réponse de connexion invalide.");
       }
@@ -95,7 +102,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         avatar_preset: data.avatar_preset ?? "avatar-1",
         chess_level: data.chess_level ?? "intermediate",
       });
-      await get().login(data.username.trim(), data.password);
+      await get().login(data.username.trim(), data.password); // toujours par username après inscription
     } catch (error) {
       throw new Error(formatApiError(error));
     } finally {
