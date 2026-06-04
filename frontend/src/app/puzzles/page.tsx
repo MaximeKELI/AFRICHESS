@@ -312,9 +312,9 @@ export default function PuzzlesPage() {
           </div>
           {result && <p className="mt-4 text-lg font-semibold">{result}</p>}
         </motion.div>
-      ) : (
+      ) : tab !== "leaderboard" ? (
         <p>Chargement du problème…</p>
-      )}
+      ) : null}
     </div>
   );
 }
