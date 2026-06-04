@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gold: #D4A017;
+  --green: #1B7A3D;
+  --terracotta: #C45C26;
+  --bg: #F5F0E8;
+  --text: #0D1117;
+  --card: #ffffff;
+}
+
+.dark {
+  --bg: #0D1117;
+  --text: #F5F0E8;
+  --card: #161B22;
+}
+
+body {
+  @apply bg-[var(--bg)] text-[var(--text)] font-body antialiased transition-colors duration-300;
+}
+
+.african-gradient {
+  background: linear-gradient(135deg, #1B7A3D 0%, #D4A017 50%, #C45C26 100%);
+}
+
+.glass-card {
+  @apply backdrop-blur-md bg-[var(--card)]/80 border border-white/10 rounded-2xl shadow-xl;
+}
+
+.chess-board-light {
+  background-color: #F0D9B5;
+}
+.chess-board-dark {
+  background-color: #B58863;
+}
+
+/* Low-bandwidth: reduce animations */
+.low-bandwidth * {
+  animation: none !important;
+  transition: none !important;
+}
