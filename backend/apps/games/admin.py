@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Game, GameAnalysis, MatchmakingQueue, Move
+from .models import Game, GameAnalysis, GameRoom, MatchmakingQueue, Move
 
 
 class MoveInline(admin.TabularInline):

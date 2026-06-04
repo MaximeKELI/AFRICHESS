@@ -12,6 +12,8 @@ class MoveSerializer(serializers.ModelSerializer):
             "move_number",
             "san",
             "uci",
+            "from_square",
+            "to_square",
             "played_by_white",
             "time_remaining_ms",
             "comment",
