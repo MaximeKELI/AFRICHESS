@@ -430,8 +430,8 @@ function PlayContent() {
         </div>
       )}
 
-      <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:gap-6">
-        <div className="w-full min-w-0 flex-1 space-y-3 order-1">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] xl:grid-cols-[minmax(480px,1.55fr)_minmax(300px,380px)] gap-5 lg:gap-6 items-start">
+        <div className="w-full min-w-0 space-y-3">
           {isLiveHuman && (
             <p className="text-xs text-center opacity-60">
               {wsConnected ? "● En direct (WebSocket)" : "○ Connexion temps réel…"}
