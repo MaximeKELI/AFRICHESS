@@ -9,6 +9,7 @@ import { initAiSpeech } from "@/lib/aiSpeech";
 import { accentRgba, getBoardTheme, getThemedSquareStyles } from "@/lib/boardThemes";
 import { useAuthStore } from "@/store/auth";
 import { usePreferencesStore } from "@/store/preferences";
+import { PromotionDialog } from "./PromotionDialog";
 
 export interface MoveInfo {
   uci: string;

@@ -36,8 +36,18 @@ export const gamesApi = {
   }) => api.post("/games/ai/", data),
   aiPreview: (mode: string, aiElo: number) =>
     api.get("/games/ai/preview/", { params: { mode, ai_elo: aiElo } }),
-  move: (id: string, uci: string, includeComments = false) =>
-    api.post(`/games/${id}/move/`, { uci, include_comments: includeComments }),
+  active: () => api.get("/games/active/"),
+  move: (
+    id: string,
+    uci: string,
+    opts?: { includeComments?: boolean; spentMs?: number }
+  ) =>
+    api.post(`/games/${id}/move/`, {
+      uci,
+      include_comments: opts?.includeComments ?? false,
+      spent_ms: opts?.spentMs,
+    }),
+  undo: (id: string) => api.post(`/games/${id}/undo/`),
   matchmaking: (mode: string) => api.post("/games/matchmaking/", { mode }),
   leaveQueue: () => api.delete("/games/matchmaking/"),
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),
