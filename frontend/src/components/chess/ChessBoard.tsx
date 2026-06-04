@@ -232,8 +232,8 @@ export function ChessBoard({
         onSquareClick={onSquareClick}
         boardOrientation={orientation}
         customSquareStyles={customSquareStyles}
-        customDarkSquareStyle={squareBase.dark}
-        customLightSquareStyle={squareBase.light}
+        customDarkSquareStyle={squareBase.dark as Record<string, string>}
+        customLightSquareStyle={squareBase.light as Record<string, string>}
         animationDuration={200}
         arePiecesDraggable={!disabled}
       />
