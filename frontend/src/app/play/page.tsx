@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useCallback, Suspense, useEffect, useMemo } from "react";
+import { useState, useCallback, Suspense, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { AiCommentaryPanel } from "@/components/chess/AiCommentaryPanel";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
+import { GameClock } from "@/components/chess/GameClock";
+import { GameAnalysisPanel } from "@/components/chess/GameAnalysisPanel";
 import { gamesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { CHESS_LEVELS } from "@/lib/avatars";
@@ -19,12 +21,27 @@ import {
   type ApiMove,
 } from "@/lib/chessDisplay";
 import { usePreferencesStore } from "@/store/preferences";
+import { useGameClock } from "@/hooks/useGameClock";
+import { MODE_CLOCK_LABEL } from "@/lib/clock";
+import {
+  saveActiveGame,
+  loadActiveGame,
+  clearActiveGame,
+} from "@/lib/gameStorage";
+import { openingNameFromMoves } from "@/lib/openings";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-interface GameData {
+interface GameState {
   fen: string;
   moves?: ApiMove[];
+  white_time_ms?: number;
+  black_time_ms?: number;
+  increment_ms?: number;
+  status?: string;
+  result?: string;
+  is_vs_ai?: boolean;
+  ai_target_elo?: number;
 }
 
 function PlayContent() {
@@ -32,7 +49,7 @@ function PlayContent() {
   const mode = params.get("mode") || "blitz";
   const { user } = useAuthStore();
   const [gameId, setGameId] = useState<string | null>(null);
-  const [gameData, setGameData] = useState<GameData>({ fen: "start", moves: [] });
+  const [gameData, setGameData] = useState<GameState>({ fen: "start", moves: [] });
   const [orientation, setOrientation] = useState<"white" | "black">("white");
   const [status, setStatus] = useState<string>("");
   const [searching, setSearching] = useState(false);
@@ -40,10 +57,15 @@ function PlayContent() {
   const [userElo, setUserElo] = useState<number | null>(null);
   const [aiElo, setAiElo] = useState<number | null>(null);
   const [isVsAi, setIsVsAi] = useState(false);
+  const [resumeOffer, setResumeOffer] = useState<ReturnType<typeof loadActiveGame>>(null);
   const { aiCommentsEnabled } = usePreferencesStore();
+  const turnStartRef = useRef(Date.now());
+
   const playerColor = orientation === "white" ? "w" : "b";
   const playerIsWhite = orientation === "white";
   const levelLabel = CHESS_LEVELS.find((l) => l.id === user?.chess_level)?.label;
+  const gameActive = gameId && gameData.status === "active";
+  const gameCompleted = gameData.status === "completed";
 
   const display = useMemo(() => {
     if (gameData.moves && gameData.moves.length > 0) {
@@ -51,6 +73,23 @@ function PlayContent() {
     }
     return buildGameDisplayFromFen(gameData.fen);
   }, [gameData]);
+
+  const { white: clockWhite, black: clockBlack } = useGameClock(
+    gameData.white_time_ms ?? 180000,
+    gameData.black_time_ms ?? 180000,
+    display.turn,
+    Boolean(gameActive)
+  );
+
+  const openingName = useMemo(() => {
+    const sans = gameData.moves?.map((m) => m.san) ?? [];
+    return openingNameFromMoves(sans);
+  }, [gameData.moves]);
+
+  const moveComments = useMemo(() => {
+    if (!gameData.moves?.length) return [];
+    return commentsFromMoves(gameData.moves, playerIsWhite);
+  }, [gameData.moves, playerIsWhite]);
 
   useEffect(() => {
     if (user?.chess_level) {
@@ -69,23 +108,48 @@ function PlayContent() {
       .catch(() => {});
   }, [user, mode, aiEloChoice]);
 
-  const applyGameResponse = (data: {
-    fen: string;
-    moves?: ApiMove[];
-    ai_target_elo?: number;
-    status?: string;
-    result?: string;
-    is_vs_ai?: boolean;
-  }) => {
-    setGameData({ fen: data.fen, moves: data.moves ?? [] });
+  useEffect(() => {
+    const saved = loadActiveGame();
+    if (saved && !gameId) setResumeOffer(saved);
+  }, [user, gameId]);
+
+  useEffect(() => {
+    turnStartRef.current = Date.now();
+  }, [display.turn, gameData.white_time_ms, gameData.black_time_ms]);
+
+  const applyGameResponse = (data: GameState & { id?: string }) => {
+    setGameData({
+      fen: data.fen,
+      moves: data.moves ?? [],
+      white_time_ms: data.white_time_ms,
+      black_time_ms: data.black_time_ms,
+      increment_ms: data.increment_ms,
+      status: data.status,
+      result: data.result,
+      is_vs_ai: data.is_vs_ai,
+      ai_target_elo: data.ai_target_elo,
+    });
     if (data.ai_target_elo) setAiElo(data.ai_target_elo);
     if (data.is_vs_ai !== undefined) setIsVsAi(data.is_vs_ai);
+    if (data.status === "completed") clearActiveGame();
   };
 
-  const moveComments = useMemo(() => {
-    if (!gameData.moves?.length) return [];
-    return commentsFromMoves(gameData.moves, playerIsWhite);
-  }, [gameData.moves, playerIsWhite]);
+  const resumeGame = async () => {
+    if (!resumeOffer) return;
+    try {
+      const { data } = await gamesApi.get(resumeOffer.gameId);
+      setGameId(data.id);
+      setOrientation(resumeOffer.orientation);
+      setAiEloChoice(resumeOffer.aiElo as AiLevelElo);
+      setIsVsAi(true);
+      applyGameResponse(data);
+      setResumeOffer(null);
+      setStatus("Partie reprise");
+    } catch {
+      clearActiveGame();
+      setResumeOffer(null);
+    }
+  };
 
   const startAI = async () => {
     try {
@@ -98,6 +162,13 @@ function PlayContent() {
       setIsVsAi(true);
       setGameId(data.id);
       applyGameResponse(data);
+      saveActiveGame({
+        gameId: data.id,
+        mode,
+        orientation,
+        aiElo: aiEloChoice,
+        savedAt: Date.now(),
+      });
       setStatus(
         data.ai_target_elo
           ? `Partie lancée — IA ~${data.ai_target_elo} ELO`
@@ -107,6 +178,37 @@ function PlayContent() {
       setStatus("Échec du lancement. Connectez-vous.");
     }
   };
+
+  const handleUndo = async () => {
+    if (!gameId || !isVsAi) return;
+    try {
+      const { data } = await gamesApi.undo(gameId);
+      applyGameResponse(data);
+      setStatus("Coup annulé");
+    } catch {
+      setStatus("Impossible d'annuler");
+    }
+  };
+
+  const handleMove = useCallback(
+    async (uci: string) => {
+      if (!gameId) return;
+      const spentMs = Date.now() - turnStartRef.current;
+      try {
+        const { data } = await gamesApi.move(gameId, uci, {
+          includeComments: isVsAi && aiCommentsEnabled,
+          spentMs,
+        });
+        applyGameResponse(data);
+        if (data.status === "completed") {
+          setStatus(`Fin de partie : ${data.result || "Terminée"}`);
+        }
+      } catch {
+        setStatus("Coup invalide ou temps écoulé");
+      }
+    },
+    [gameId, isVsAi, aiCommentsEnabled]
+  );
 
   const findMatch = async () => {
     setSearching(true);
@@ -127,26 +229,6 @@ function PlayContent() {
     }
   };
 
-  const handleMove = useCallback(
-    async (uci: string) => {
-      if (!gameId) return;
-      try {
-        const { data } = await gamesApi.move(
-          gameId,
-          uci,
-          isVsAi && aiCommentsEnabled
-        );
-        applyGameResponse(data);
-        if (data.status === "completed") {
-          setStatus(`Fin de partie : ${data.result || "Terminée"}`);
-        }
-      } catch {
-        setStatus("Coup invalide");
-      }
-    },
-    [gameId, isVsAi, aiCommentsEnabled]
-  );
-
   if (!user) {
     return (
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
@@ -160,19 +242,66 @@ function PlayContent() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold mb-6 capitalize">Jouer — {mode}</h1>
+      <h1 className="font-display text-3xl font-bold mb-6 capitalize">
+        Jouer — {mode}
+      </h1>
+
+      {resumeOffer && !gameId && (
+        <div className="glass-card p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm">
+            Partie en cours sauvegardée ({resumeOffer.mode}, IA {resumeOffer.aiElo})
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={resumeGame}
+              className="px-4 py-2 rounded-lg african-gradient text-white text-sm"
+            >
+              Reprendre
+            </button>
+            <button
+              onClick={() => {
+                clearActiveGame();
+                setResumeOffer(null);
+              }}
+              className="px-4 py-2 rounded-lg border text-sm opacity-70"
+            >
+              Nouvelle partie
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px_260px] gap-6">
-        <div className="lg:col-span-1">
+        <div className="space-y-3">
+          {gameId && (
+            <GameClock
+              whiteMs={clockWhite}
+              blackMs={clockBlack}
+              turn={display.turn}
+              running={Boolean(gameActive)}
+              orientation={orientation}
+              incrementMs={gameData.increment_ms ?? 0}
+              label={MODE_CLOCK_LABEL[mode] ?? mode}
+            />
+          )}
           <ChessBoard
             fen={display.fen}
             orientation={orientation}
             onMove={handleMove}
-            disabled={!gameId}
+            disabled={!gameId || gameCompleted}
             playerColor={playerColor as "w" | "b"}
             lastMove={display.lastMove}
             playSoundOnFenChange={true}
           />
+          {isVsAi && gameActive && (
+            <button
+              type="button"
+              onClick={handleUndo}
+              className="w-full max-w-[560px] mx-auto block py-2 text-sm rounded-lg border border-white/20 hover:bg-white/5"
+            >
+              ↩ Annuler le dernier coup (ou 2 avec réponse IA)
+            </button>
+          )}
         </div>
 
         <div className="space-y-4">
@@ -182,6 +311,7 @@ function PlayContent() {
             orientation={orientation}
             isCheck={display.isCheck}
             turn={display.turn}
+            openingName={openingName}
           />
           {isVsAi && (
             <div className="glass-card p-4">
@@ -191,6 +321,9 @@ function PlayContent() {
                 enabled={aiCommentsEnabled}
               />
             </div>
+          )}
+          {gameId && (
+            <GameAnalysisPanel gameId={gameId} completed={gameCompleted} />
           )}
         </div>
 
@@ -202,7 +335,8 @@ function PlayContent() {
             )}
             <div className="flex justify-between text-xs mb-2 gap-2">
               <span className="opacity-70">
-                Votre ELO : <strong className="text-africhess-green">{userElo ?? "—"}</strong>
+                Votre ELO :{" "}
+                <strong className="text-africhess-green">{userElo ?? "—"}</strong>
               </span>
               <span className="opacity-70">
                 IA : <strong className="text-africhess-gold">{aiElo ?? "—"}</strong>
@@ -213,7 +347,9 @@ function PlayContent() {
             </div>
             <select
               value={orientation}
-              onChange={(e) => setOrientation(e.target.value as "white" | "black")}
+              onChange={(e) =>
+                setOrientation(e.target.value as "white" | "black")
+              }
               className="w-full mb-3 border rounded-lg px-3 py-2 bg-transparent"
             >
               <option value="white">Blancs</option>
