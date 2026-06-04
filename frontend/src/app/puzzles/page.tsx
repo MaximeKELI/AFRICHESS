@@ -215,7 +215,30 @@ export default function PuzzlesPage() {
         )}
       </div>
 
-      {puzzle && display ? (
+      {tab === "leaderboard" && (
+        <div className="glass-card p-6">
+          <h2 className="font-semibold mb-4">Top résolveurs</h2>
+          {leaderboard.length === 0 ? (
+            <p className="opacity-60">Aucun score enregistré</p>
+          ) : (
+            <ol className="space-y-2">
+              {leaderboard.map((row) => (
+                <li
+                  key={row.rank}
+                  className="flex justify-between text-sm border-b border-white/5 pb-2"
+                >
+                  <span>
+                    {row.rank}. {row.display_name || row.username}
+                  </span>
+                  <span className="text-africhess-gold">{row.solved_count} résolus</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      )}
+
+      {tab !== "leaderboard" && puzzle && display ? (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} key={puzzle.id}>
           <div className="flex flex-wrap gap-2 mb-4">
             <span className="px-3 py-1 rounded-full bg-africhess-green/20 text-sm capitalize">
@@ -275,6 +298,15 @@ export default function PuzzlesPage() {
                 className="px-6 py-2 border border-africhess-green text-africhess-green rounded-lg"
               >
                 Suivant →
+              </button>
+            )}
+            {tab === "rush" && result && (
+              <button
+                type="button"
+                onClick={nextRush}
+                className="px-6 py-2 border border-africhess-green text-africhess-green rounded-lg"
+              >
+                Suivant rush →
               </button>
             )}
           </div>
