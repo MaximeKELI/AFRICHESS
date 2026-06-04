@@ -14,15 +14,27 @@ function readBoardTheme(): BoardThemeId {
   return isBoardThemeId(stored) ? stored : DEFAULT_BOARD_THEME;
 }
 
+function readAiComments(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(AI_COMMENTS_KEY) === "1";
+}
+
 interface PreferencesState {
   boardTheme: BoardThemeId;
+  aiCommentsEnabled: boolean;
   setBoardTheme: (id: BoardThemeId) => void;
+  setAiCommentsEnabled: (enabled: boolean) => void;
 }
 
 export const usePreferencesStore = create<PreferencesState>((set) => ({
   boardTheme: readBoardTheme(),
+  aiCommentsEnabled: readAiComments(),
   setBoardTheme: (id) => {
     localStorage.setItem(BOARD_THEME_KEY, id);
     set({ boardTheme: id });
+  },
+  setAiCommentsEnabled: (enabled) => {
+    localStorage.setItem(AI_COMMENTS_KEY, enabled ? "1" : "0");
+    set({ aiCommentsEnabled: enabled });
   },
 }));

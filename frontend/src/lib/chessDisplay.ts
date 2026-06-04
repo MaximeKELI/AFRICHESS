@@ -44,6 +44,25 @@ export interface ApiMove {
   san: string;
   played_by_white: boolean;
   move_number: number;
+  comment?: string;
+}
+
+export interface MoveComment {
+  san: string;
+  text: string;
+  byAi: boolean;
+  moveNumber: number;
+}
+
+export function commentsFromMoves(moves: ApiMove[], playerIsWhite: boolean): MoveComment[] {
+  return moves
+    .filter((m) => m.comment?.trim())
+    .map((m) => ({
+      san: m.san,
+      text: m.comment!.trim(),
+      byAi: m.played_by_white !== playerIsWhite,
+      moveNumber: m.move_number,
+    }));
 }
 
 export interface GameDisplayState {

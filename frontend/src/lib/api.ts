@@ -28,11 +28,16 @@ export const authApi = {
 export const gamesApi = {
   list: () => api.get("/games/"),
   get: (id: string) => api.get(`/games/${id}/`),
-  createAI: (data: { mode: string; difficulty: number; color: string }) =>
-    api.post("/games/ai/", data),
+  createAI: (data: {
+    mode: string;
+    difficulty: number;
+    color: string;
+    include_comments?: boolean;
+  }) => api.post("/games/ai/", data),
   aiPreview: (mode: string, difficulty: number) =>
     api.get("/games/ai/preview/", { params: { mode, difficulty } }),
-  move: (id: string, uci: string) => api.post(`/games/${id}/move/`, { uci }),
+  move: (id: string, uci: string, includeComments = false) =>
+    api.post(`/games/${id}/move/`, { uci, include_comments: includeComments }),
   matchmaking: (mode: string) => api.post("/games/matchmaking/", { mode }),
   leaveQueue: () => api.delete("/games/matchmaking/"),
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),
