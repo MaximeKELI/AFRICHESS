@@ -116,22 +116,6 @@ function PlayContent() {
   }, [user, gameId]);
 
   useEffect(() => {
-    if (!user || !gameFromUrl || gameId) return;
-    gamesApi
-      .get(gameFromUrl)
-      .then(({ data }) => {
-        setGameId(data.id);
-        setIsVsAi(Boolean(data.is_vs_ai));
-        if (data.white_player?.id === user.id) setOrientation("white");
-        else if (data.black_player?.id === user.id) setOrientation("black");
-        applyGameResponse(data);
-        setStatus("Partie chargée");
-      })
-      .catch(() => setStatus("Partie introuvable"));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, gameFromUrl]);
-
-  useEffect(() => {
     turnStartRef.current = Date.now();
   }, [display.turn, gameData.white_time_ms, gameData.black_time_ms]);
 
@@ -151,6 +135,21 @@ function PlayContent() {
     if (data.is_vs_ai !== undefined) setIsVsAi(data.is_vs_ai);
     if (data.status === "completed") clearActiveGame();
   };
+
+  useEffect(() => {
+    if (!user || !gameFromUrl) return;
+    gamesApi
+      .get(gameFromUrl)
+      .then(({ data }) => {
+        setGameId(data.id);
+        setIsVsAi(Boolean(data.is_vs_ai));
+        if (data.white_player?.id === user.id) setOrientation("white");
+        else if (data.black_player?.id === user.id) setOrientation("black");
+        applyGameResponse(data);
+        setStatus("Partie chargée");
+      })
+      .catch(() => setStatus("Partie introuvable"));
+  }, [user, gameFromUrl]);
 
   const resumeGame = async () => {
     if (!resumeOffer) return;
