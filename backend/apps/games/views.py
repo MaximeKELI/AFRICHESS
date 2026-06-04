@@ -9,6 +9,7 @@ from apps.ratings.models import PlayerRating
 from .engine import ChessEngineService
 from .models import Game, GameAnalysis
 from .serializers import CreateAIGameSerializer, GameListSerializer, GameSerializer, MakeMoveSerializer
+from .elo_adapt import adapt_ai_elo_from_history
 from .elo_config import elo_strength_label, get_user_elo, resolve_ai_target_elo
 from .services import GameService, MatchmakingService
 
@@ -56,12 +57,14 @@ def ai_strength_preview(request):
     diff_int = int(difficulty) if difficulty and difficulty.isdigit() else None
     ai_elo_int = int(ai_elo_param) if ai_elo_param and ai_elo_param.isdigit() else None
     user_elo = get_user_elo(request.user, mode)
-    ai_elo = resolve_ai_target_elo(
+    base_elo = resolve_ai_target_elo(
         request.user, mode=mode, difficulty=diff_int, ai_elo=ai_elo_int
     )
+    ai_elo = adapt_ai_elo_from_history(request.user, base_elo, mode=mode)
     return Response({
         "user_elo": user_elo,
         "ai_target_elo": ai_elo,
+        "ai_base_elo": base_elo,
         "ai_strength_label": elo_strength_label(ai_elo),
         "max_ai_elo": 5000,
         "chess_level": request.user.chess_level,
