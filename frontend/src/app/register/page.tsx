@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
-import { isEmailAlreadyUsedError } from "@/lib/errors";
 import { AvatarPicker } from "@/components/profile/AvatarPicker";
 import { LevelPicker } from "@/components/profile/LevelPicker";
 import type { AvatarId, ChessLevelId } from "@/lib/avatars";
@@ -47,7 +46,11 @@ export default function RegisterPage() {
       await register(form);
       router.push("/play");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Inscription échouée.");
+      const msg = err instanceof Error ? err.message : "Inscription échouée.";
+      setError(msg);
+      if (msg.includes("e-mail") && (msg.includes("déjà") || msg.includes("compte"))) {
+        setEmailTaken(true);
+      }
     }
   };
 

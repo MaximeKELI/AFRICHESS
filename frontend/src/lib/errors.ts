@@ -39,7 +39,10 @@ export function formatApiError(error: unknown): string {
     return data;
   }
 
-  if (typeof data.detail === "string") return data.detail;
+  if (typeof data.detail === "string") {
+    if (data.detail.includes("Plusieurs comptes")) return data.detail;
+    return data.detail;
+  }
 
   if (Array.isArray(data)) return data.join(" ");
 

@@ -196,6 +196,7 @@ SPECTACULAR_SETTINGS = {
 REST_AUTH = {
     "USE_JWT": True,
     "JWT_AUTH_HTTPONLY": False,
+    "LOGIN_SERIALIZER": "apps.users.auth_serializers.AfrichessLoginSerializer",
 }
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = True

@@ -30,7 +30,7 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit} className="glass-card p-8 space-y-4">
         <input
           type="text"
-          placeholder="Nom d'utilisateur"
+          placeholder="Nom d'utilisateur (ex. DKELI)"
           autoComplete="username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
@@ -59,6 +59,10 @@ export default function LoginPage() {
           {isLoading ? "Connexion…" : "Se connecter"}
         </button>
         <OAuthButtons />
+        <p className="text-center text-xs opacity-70">
+          Si votre e-mail a déjà un compte, utilisez le nom d&apos;utilisateur choisi à l&apos;inscription,
+          pas l&apos;e-mail seul.
+        </p>
         <p className="text-center text-sm">
           Pas encore de compte ?{" "}
           <Link href="/register" className="text-africhess-gold underline">
