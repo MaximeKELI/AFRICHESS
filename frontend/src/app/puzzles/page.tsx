@@ -187,6 +187,20 @@ export default function PuzzlesPage() {
         >
           Entraînement
         </button>
+        <button
+          type="button"
+          onClick={() => setTab("rush")}
+          className={`px-4 py-2 rounded-lg ${tab === "rush" ? "african-gradient text-white" : "border"}`}
+        >
+          Rush (5)
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("leaderboard")}
+          className={`px-4 py-2 rounded-lg ${tab === "leaderboard" ? "african-gradient text-white" : "border"}`}
+        >
+          Classement
+        </button>
         {tab === "training" && (
           <select
             value={difficulty}
