@@ -37,7 +37,10 @@ function PlayContent() {
   const [difficulty, setDifficulty] = useState(5);
   const [userElo, setUserElo] = useState<number | null>(null);
   const [aiElo, setAiElo] = useState<number | null>(null);
+  const [isVsAi, setIsVsAi] = useState(false);
+  const { aiCommentsEnabled } = usePreferencesStore();
   const playerColor = orientation === "white" ? "w" : "b";
+  const playerIsWhite = orientation === "white";
   const levelLabel = CHESS_LEVELS.find((l) => l.id === user?.chess_level)?.label;
 
   const display = useMemo(() => {
@@ -64,10 +67,23 @@ function PlayContent() {
       .catch(() => {});
   }, [user, mode, difficulty]);
 
-  const applyGameResponse = (data: { fen: string; moves?: ApiMove[]; ai_target_elo?: number; status?: string; result?: string }) => {
+  const applyGameResponse = (data: {
+    fen: string;
+    moves?: ApiMove[];
+    ai_target_elo?: number;
+    status?: string;
+    result?: string;
+    is_vs_ai?: boolean;
+  }) => {
     setGameData({ fen: data.fen, moves: data.moves ?? [] });
     if (data.ai_target_elo) setAiElo(data.ai_target_elo);
+    if (data.is_vs_ai !== undefined) setIsVsAi(data.is_vs_ai);
   };
+
+  const moveComments = useMemo(() => {
+    if (!gameData.moves?.length) return [];
+    return commentsFromMoves(gameData.moves, playerIsWhite);
+  }, [gameData.moves, playerIsWhite]);
 
   const startAI = async () => {
     try {
