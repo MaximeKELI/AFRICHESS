@@ -44,6 +44,8 @@ export function ChessBoard({
 }: ChessBoardProps) {
   const { lowBandwidth } = useAuthStore();
   const boardThemeId = usePreferencesStore((s) => s.boardTheme);
+  const pieceSet = usePreferencesStore((s) => s.pieceSet);
+  const customPieces = useMemo(() => customPiecesForSet(pieceSet), [pieceSet]);
   const theme = getBoardTheme(boardThemeId);
   const soundsOn = !lowBandwidth;
   const [game, setGame] = useState(() => new Chess(fen === "start" ? undefined : fen));
@@ -264,6 +266,7 @@ export function ChessBoard({
         animationDuration={200}
         arePiecesDraggable={!disabled}
         autoPromoteToQueen={false}
+        customPieces={customPieces}
       />
       {promotionPending && (
         <PromotionDialog

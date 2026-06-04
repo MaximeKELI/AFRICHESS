@@ -51,6 +51,11 @@ export const gamesApi = {
   matchmaking: (mode: string) => api.post("/games/matchmaking/", { mode }),
   leaveQueue: () => api.delete("/games/matchmaking/"),
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),
+  live: () => api.get("/games/live/"),
+  offerDraw: (id: string) => api.post(`/games/${id}/draw/`),
+  respondDraw: (id: string, accept: boolean) =>
+    api.post(`/games/${id}/draw/respond/`, { accept }),
+  rematch: (id: string) => api.post(`/games/${id}/rematch/`),
 };
 
 export const ratingsApi = {
@@ -67,6 +72,8 @@ export const puzzlesApi = {
     api.get("/puzzles/training/", { params: { difficulty, count } }),
   submit: (id: number, moves: string[], time_seconds: number) =>
     api.post(`/puzzles/${id}/submit/`, { moves, time_seconds }),
+  leaderboard: () => api.get("/puzzles/leaderboard/"),
+  rush: (count = 5) => api.get("/puzzles/rush/", { params: { count } }),
 };
 
 export const socialApi = {
@@ -84,6 +91,9 @@ export const socialApi = {
   clubs: (country?: string) =>
     api.get("/social/clubs/", { params: { country } }),
   africanPlayers: () => api.get("/users/featured/african/"),
+  directMessages: (username: string) => api.get(`/social/messages/${username}/`),
+  sendDirectMessage: (username: string, message: string) =>
+    api.post(`/social/messages/${username}/`, { message }),
 };
 
 export const notificationsApi = {
