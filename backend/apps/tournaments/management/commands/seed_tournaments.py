@@ -3,7 +3,11 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from django.contrib.auth import get_user_model
+
 from apps.tournaments.models import Tournament
+
+User = get_user_model()
 
 
 class Command(BaseCommand):
@@ -13,8 +17,13 @@ class Command(BaseCommand):
         if Tournament.objects.exists():
             self.stdout.write("Tournois déjà présents — rien à faire.")
             return
+        owner = User.objects.filter(is_superuser=True).first() or User.objects.first()
+        if not owner:
+            self.stderr.write("Créez un utilisateur avant seed_tournaments.")
+            return
         starts = timezone.now() + timedelta(days=7)
         Tournament.objects.create(
+            created_by=owner,
             name="Coupe AFRICHESS Blitz",
             slug="coupe-africhess-blitz",
             description="Arène blitz ouverte — 5 min + 2 s.",
@@ -28,6 +37,7 @@ class Command(BaseCommand):
             starts_at=starts,
         )
         Tournament.objects.create(
+            created_by=owner,
             name="Rapid du Sahel",
             slug="rapid-sahel",
             description="Rapide 10+5 pour joueurs confirmés.",
