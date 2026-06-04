@@ -30,3 +30,15 @@ export function getLevelElo(levelId?: string | null): number {
   const found = CHESS_LEVELS.find((l) => l.id === levelId);
   return found?.elo ?? 1200;
 }
+
+/** Map declared level to default AI opponent strength (1–10) */
+export function levelToAiDifficulty(levelId?: string | null): number {
+  const map: Record<string, number> = {
+    beginner: 2,
+    intermediate: 4,
+    advanced: 6,
+    expert: 8,
+    master: 10,
+  };
+  return map[levelId ?? "intermediate"] ?? 4;
+}

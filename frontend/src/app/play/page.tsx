@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { gamesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
+import { levelToAiDifficulty, CHESS_LEVELS } from "@/lib/avatars";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
@@ -17,8 +18,10 @@ function PlayContent() {
   const [orientation, setOrientation] = useState<"white" | "black">("white");
   const [status, setStatus] = useState<string>("");
   const [searching, setSearching] = useState(false);
-  const [difficulty, setDifficulty] = useState(5);
+  const defaultDifficulty = levelToAiDifficulty(user?.chess_level);
+  const [difficulty, setDifficulty] = useState(defaultDifficulty);
   const playerColor = orientation === "white" ? "w" : "b";
+  const levelLabel = CHESS_LEVELS.find((l) => l.id === user?.chess_level)?.label;
 
   const startAI = async () => {
     try {
@@ -92,8 +95,11 @@ function PlayContent() {
 
         <div className="space-y-4">
           <div className="glass-card p-4">
-            <h2 className="font-semibold mb-3">Play vs Computer</h2>
-            <label className="text-sm block mb-2">Difficulty: {difficulty}</label>
+            <h2 className="font-semibold mb-3">Jouer vs l&apos;ordinateur</h2>
+            {levelLabel && (
+              <p className="text-xs opacity-60 mb-2">Votre niveau : {levelLabel}</p>
+            )}
+            <label className="text-sm block mb-2">Force de l&apos;IA : {difficulty}/10</label>
             <input
               type="range"
               min={1}

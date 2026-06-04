@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { t } from "@/lib/i18n";
+import { getAvatarSrc } from "@/lib/avatars";
 import { Moon, Sun, Wifi, WifiOff } from "lucide-react";
 
 export function Navbar() {
@@ -55,8 +56,19 @@ export function Navbar() {
 
           {user ? (
             <div className="flex items-center gap-3 ml-2">
-              <Link href="/profile" className="text-sm font-medium hover:text-africhess-gold">
-                {user.display_name || user.username}
+              <Link href="/profile" className="flex items-center gap-2 hover:opacity-90">
+                <span className="relative w-8 h-8 rounded-lg overflow-hidden ring-1 ring-africhess-gold/50 shrink-0">
+                  <Image
+                    src={getAvatarSrc(user.avatar_preset)}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="32px"
+                  />
+                </span>
+                <span className="text-sm font-medium hidden sm:inline hover:text-africhess-gold">
+                  {user.display_name || user.username}
+                </span>
               </Link>
               <button onClick={logout} className="text-sm text-africhess-terracotta hover:underline">
                 Logout

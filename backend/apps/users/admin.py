@@ -15,8 +15,9 @@ class UserAdmin(BaseUserAdmin):
     list_display = ["username", "email", "country", "title", "is_african_highlight", "is_staff"]
     list_filter = ["country", "is_african_highlight", "preferred_language"]
     fieldsets = BaseUserAdmin.fieldsets + (
-        ("AFRICHESS", {"fields": ("avatar", "bio", "country", "city", "preferred_language",
-                                   "is_african_highlight", "low_bandwidth_mode", "title", "fide_id")}),
+        ("AFRICHESS", {"fields": ("avatar", "avatar_preset", "chess_level", "bio", "country", "city",
+                                   "preferred_language", "is_african_highlight", "low_bandwidth_mode",
+                                   "title", "fide_id")}),
     )
 
 
