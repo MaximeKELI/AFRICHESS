@@ -205,12 +205,13 @@ export function ChessBoard({
         : { ...squareStyles.legalDot };
     }
 
-    if (game.inCheck()) {
+    const kingDanger = getKingDangerStyle(game);
+    if (kingDanger) {
       const kingSquare = findKingSquare(game, game.turn());
       if (kingSquare) {
         styles[kingSquare] = {
           ...styles[kingSquare],
-          boxShadow: "inset 0 0 0 3px rgba(196, 40, 40, 0.85)",
+          ...kingDanger,
         };
       }
     }
@@ -239,6 +240,35 @@ export function ChessBoard({
       />
     </motion.div>
   );
+}
+
+/** Rouge sang sur la case du roi en échec ou mat. */
+function getKingDangerStyle(chess: Chess): React.CSSProperties | null {
+  if (!chess.inCheck()) return null;
+
+  const base: React.CSSProperties = {
+    backgroundImage: "none",
+    backgroundSize: "unset",
+    backgroundRepeat: "unset",
+  };
+
+  if (chess.isCheckmate()) {
+    return {
+      ...base,
+      backgroundColor: "rgba(69, 10, 10, 0.95)",
+      boxShadow:
+        "inset 0 0 0 4px #450a0a, inset 0 0 36px rgba(127, 29, 29, 0.95), 0 0 12px rgba(220, 38, 38, 0.5)",
+      animation: "king-mate-blood 0.9s ease-in-out infinite",
+    };
+  }
+
+  return {
+    ...base,
+    backgroundColor: "rgba(127, 29, 29, 0.88)",
+    boxShadow:
+      "inset 0 0 0 3px #991b1b, inset 0 0 24px rgba(153, 27, 27, 0.75)",
+    animation: "king-check-blood 1.1s ease-in-out infinite",
+  };
 }
 
 function findKingSquare(chess: Chess, color: "w" | "b"): Square | null {
