@@ -119,11 +119,15 @@ export default function PuzzlesPage() {
       const solved = Boolean(data.solved);
       const nextStreak = recordPuzzleSolved(solved);
       setStreak(nextStreak);
+      if (tab === "rush" && solved) setRushScore((s) => s + 1);
       setResult(
         solved
-          ? `✓ Bravo ! Série : ${nextStreak}`
+          ? `✓ Bravo ! Série : ${nextStreak}${tab === "rush" ? ` — Rush : ${rushScore + (solved ? 1 : 0)}/5` : ""}`
           : "✗ Ce n'est pas la bonne ligne"
       );
+      if (tab === "rush" && result === null) {
+        /* rush advance handled in nextRush */
+      }
     } catch {
       setResult("Connectez-vous pour valider");
     }
@@ -133,6 +137,18 @@ export default function PuzzlesPage() {
     setUciMoves([]);
     setResult(null);
     setStartTime(Date.now());
+  };
+
+  const nextRush = () => {
+    const next = rushIndex + 1;
+    if (next < rushQueue.length) {
+      setRushIndex(next);
+      setPuzzle(rushQueue[next]);
+      reset();
+    } else {
+      setResult(`Rush terminé — ${rushScore}/5 résolus`);
+      setPuzzle(null);
+    }
   };
 
   const nextTraining = () => {
