@@ -27,6 +27,7 @@ from .serializers import (
 
 class DashboardView(APIView):
     """Vue d'ensemble : cours, puzzles, progression, coach."""
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         user = request.user
@@ -78,6 +79,8 @@ class LessonDetailView(generics.RetrieveAPIView):
 
 
 class CompleteLessonView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request, slug):
         try:
             course = Course.objects.get(slug=slug, is_published=True)
@@ -117,6 +120,8 @@ class QuizDetailView(generics.RetrieveAPIView):
 
 
 class SubmitQuizView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request, pk):
         try:
             quiz = Quiz.objects.get(pk=pk)
@@ -162,6 +167,8 @@ class SubmitQuizView(APIView):
 
 
 class AnalyzePgnView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request):
         ser = AnalyzePgnSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
