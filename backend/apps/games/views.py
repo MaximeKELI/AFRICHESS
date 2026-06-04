@@ -183,3 +183,52 @@ def engine_eval(request):
         return Response({"error": "fen required"}, status=400)
     eval_score = ChessEngineService().analyze_position(fen)
     return Response({"evaluation": eval_score})
+
+
+class LiveGamesView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        games = live_games_queryset()
+        return Response(GameSerializer(games, many=True).data)
+
+
+class DrawOfferView(APIView):
+    def post(self, request, game_id):
+        try:
+            game = Game.objects.get(id=game_id)
+        except Game.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        result = offer_draw(game, request.user)
+        if "error" in result:
+            return Response(result, status=400)
+        return Response(result)
+
+
+class DrawRespondView(APIView):
+    def post(self, request, game_id):
+        try:
+            game = Game.objects.get(id=game_id)
+        except Game.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        accept = request.data.get("accept", False)
+        if accept:
+            result = accept_draw(game, request.user)
+        else:
+            result = decline_draw(game, request.user)
+        if "error" in result:
+            return Response(result, status=400)
+        game.refresh_from_db()
+        return Response(GameSerializer(game).data)
+
+
+class RematchView(APIView):
+    def post(self, request, game_id):
+        try:
+            game = Game.objects.get(id=game_id)
+        except Game.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        new_game = create_rematch(game, request.user)
+        if not new_game:
+            return Response({"error": "Impossible"}, status=400)
+        return Response(GameSerializer(new_game).data, status=201)

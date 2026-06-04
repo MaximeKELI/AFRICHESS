@@ -35,5 +35,58 @@ class RegisterTournamentView(APIView):
             return Response({"error": "Tournament not available"}, status=404)
         if tournament.participants.count() >= tournament.max_players:
             return Response({"error": "Tournament full"}, status=400)
-        tournament.participants.add(request.user)
+        TournamentEngine().ensure_participant(tournament, request.user)
         return Response(TournamentSerializer(tournament).data)
+
+
+class StartTournamentView(APIView):
+    def post(self, request, slug):
+        try:
+            tournament = Tournament.objects.get(slug=slug)
+        except Tournament.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        if tournament.created_by_id != request.user.id and not request.user.is_staff:
+            return Response({"error": "Forbidden"}, status=403)
+        try:
+            tournament = TournamentEngine().start_tournament(tournament)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=400)
+        return Response(TournamentSerializer(tournament).data)
+
+
+class TournamentStandingsView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, slug):
+        try:
+            tournament = Tournament.objects.get(slug=slug)
+        except Tournament.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        standings = TournamentEngine().get_standings(tournament)
+        return Response(
+            TournamentParticipantSerializer(standings, many=True).data
+        )
+
+
+class MyTournamentGameView(APIView):
+    def get(self, request, slug):
+        try:
+            tournament = Tournament.objects.get(slug=slug)
+        except Tournament.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        from apps.games.models import Game
+
+        game = (
+            Game.objects.filter(
+                tournament=tournament,
+                status=Game.Status.ACTIVE,
+            )
+            .filter(
+                models.Q(white_player=request.user)
+                | models.Q(black_player=request.user)
+            )
+            .first()
+        )
+        if not game:
+            return Response({"game": None})
+        return Response({"game": GameSerializer(game).data})

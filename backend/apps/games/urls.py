@@ -14,4 +14,7 @@ urlpatterns = [
     path("<uuid:game_id>/move/", views.MakeMoveView.as_view(), name="game-move"),
     path("<uuid:game_id>/undo/", views.UndoMoveView.as_view(), name="game-undo"),
     path("<uuid:game_id>/analyze/", views.AnalyzeGameView.as_view(), name="game-analyze"),
+    path("<uuid:game_id>/draw/", views.DrawOfferView.as_view(), name="game-draw-offer"),
+    path("<uuid:game_id>/draw/respond/", views.DrawRespondView.as_view(), name="game-draw-respond"),
+    path("<uuid:game_id>/rematch/", views.RematchView.as_view(), name="game-rematch"),
 ]
