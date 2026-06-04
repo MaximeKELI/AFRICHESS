@@ -7,6 +7,13 @@ from django.utils import timezone
 
 from apps.ratings.services import RatingService
 
+from .anticheat import validate_move_timing
+from .clock_service import (
+    apply_increment_after_move,
+    apply_server_clock_before_move,
+    check_timeout,
+    tick_turn_started,
+)
 from .commentary import generate_move_comment
 from .elo_config import elo_to_difficulty_label, resolve_ai_target_elo
 from .engine import ChessEngineService
@@ -53,6 +60,7 @@ class GameService:
             black_time_ms=config["initial_ms"],
             increment_ms=config["increment_ms"],
             started_at=timezone.now(),
+            turn_started_at=timezone.now(),
         )
         if color == "black":
             ai_move = self.engine.get_best_move(
