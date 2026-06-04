@@ -45,7 +45,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: false,
   locale: (typeof window !== "undefined" && (localStorage.getItem("locale") as AuthState["locale"])) || "fr",
   darkMode: typeof window !== "undefined" && localStorage.getItem("theme") === "dark",
-  lowBandwidth: false,
+  lowBandwidth:
+    typeof window !== "undefined" && localStorage.getItem("lowBandwidth") === "1",
 
   setLocale: (locale) => {
     localStorage.setItem("locale", locale);
@@ -60,6 +61,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   setLowBandwidth: (v) => {
+    localStorage.setItem("lowBandwidth", v ? "1" : "0");
     document.documentElement.classList.toggle("low-bandwidth", v);
     set({ lowBandwidth: v });
   },

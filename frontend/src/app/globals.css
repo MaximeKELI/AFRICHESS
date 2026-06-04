@@ -18,7 +18,29 @@
 }
 
 body {
-  @apply bg-[var(--bg)] text-[var(--text)] font-body antialiased transition-colors duration-300;
+  @apply bg-[var(--bg)] text-[var(--text)] font-body antialiased;
+}
+
+.low-bandwidth body,
+.low-bandwidth .glass-card {
+  backdrop-filter: none !important;
+}
+
+.low-bandwidth .glass-card {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
+}
+
+.low-bandwidth * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .african-gradient {

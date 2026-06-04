@@ -29,7 +29,7 @@ export function useGameClock(
       } else {
         setBlack((t) => Math.max(0, t - 100));
       }
-    }, 100);
+    }, 250);
     return () => clearInterval(id);
   }, [running]);
 

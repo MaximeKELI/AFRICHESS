@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
+import { isEmailAlreadyUsedError } from "@/lib/errors";
 import { AvatarPicker } from "@/components/profile/AvatarPicker";
 import { LevelPicker } from "@/components/profile/LevelPicker";
 import type { AvatarId, ChessLevelId } from "@/lib/avatars";
@@ -20,12 +21,14 @@ export default function RegisterPage() {
     chess_level: "intermediate" as ChessLevelId,
   });
   const [error, setError] = useState("");
+  const [emailTaken, setEmailTaken] = useState(false);
   const { register, isLoading } = useAuthStore();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setEmailTaken(false);
 
     if (form.username.trim().length < 3) {
       setError("Le nom d'utilisateur doit contenir au moins 3 caractères.");
@@ -124,9 +127,16 @@ export default function RegisterPage() {
         </select>
 
         {error && (
-          <p className="text-africhess-terracotta text-sm" role="alert">
-            {error}
-          </p>
+          <div className="text-africhess-terracotta text-sm space-y-2" role="alert">
+            <p>{error}</p>
+            {emailTaken && (
+              <p>
+                <Link href="/login" className="text-africhess-gold underline font-medium">
+                  → Se connecter avec ce compte
+                </Link>
+              </p>
+            )}
+          </div>
         )}
         <button
           type="submit"

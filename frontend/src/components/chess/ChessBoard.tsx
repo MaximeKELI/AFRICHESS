@@ -1,11 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Chessboard } from "react-chessboard";
 import { Chess, Square } from "chess.js";
-import { motion } from "framer-motion";
 import { playChessSound, preloadChessSounds, soundForMove } from "@/lib/chessSounds";
-import { initAiSpeech } from "@/lib/aiSpeech";
 import { accentRgba, getBoardTheme, getThemedSquareStyles } from "@/lib/boardThemes";
 import { useAuthStore } from "@/store/auth";
 import { customPiecesForSet } from "@/lib/pieceSets";
@@ -32,7 +30,7 @@ interface ChessBoardProps {
   playSoundOnFenChange?: boolean;
 }
 
-export function ChessBoard({
+function ChessBoardInner({
   fen = "start",
   orientation = "white",
   onMove,
@@ -56,8 +54,17 @@ export function ChessBoard({
     to: Square;
   } | null>(null);
   const prevPliesRef = useRef(0);
+  const soundsReadyRef = useRef(false);
+
+  useEffect(() => {
+    if (soundsOn && !soundsReadyRef.current) {
+      preloadChessSounds();
+      soundsReadyRef.current = true;
+    }
+  }, [soundsOn]);
 
   const squareBase = useMemo(() => getThemedSquareStyles(theme), [theme]);
+  const pieceAnimMs = lowBandwidth ? 0 : 120;
 
   const squareStyles = useMemo(() => {
     const floral = Boolean(theme.floral);
@@ -177,8 +184,6 @@ export function ChessBoard({
 
   const onSquareClick = useCallback(
     (square: Square) => {
-      preloadChessSounds();
-      initAiSpeech();
       if (disabled) return;
 
       if (selectedSquare && legalTargets.includes(square)) {
@@ -206,8 +211,6 @@ export function ChessBoard({
 
   const onDrop = useCallback(
     (sourceSquare: Square, targetSquare: Square) => {
-      preloadChessSounds();
-      initAiSpeech();
       if (disabled) return false;
       return applyMove(sourceSquare, targetSquare);
     },
@@ -233,7 +236,7 @@ export function ChessBoard({
         : { ...squareStyles.legalDot };
     }
 
-    const kingDanger = getKingDangerStyle(game);
+    const kingDanger = lowBandwidth ? null : getKingDangerStyle(game);
     if (kingDanger) {
       const kingSquare = findKingSquare(game, game.turn());
       if (kingSquare) {
@@ -245,18 +248,21 @@ export function ChessBoard({
     }
 
     return styles;
-  }, [lastMove, selectedSquare, legalTargets, game, squareStyles]);
+  }, [lastMove, selectedSquare, legalTargets, game, squareStyles, lowBandwidth]);
 
   return (
-    <motion.div
+    <div
       data-testid="chess-board"
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="w-full max-w-[min(100%,560px)] aspect-square mx-auto rounded-xl overflow-hidden shadow-2xl"
-      style={{ boxShadow: `0 25px 50px -12px rgb(0 0 0 / 0.25), 0 0 0 2px ${accentRgba(theme.accent, 0.4)}` }}
+      className="w-full max-w-[min(100%,560px)] aspect-square mx-auto rounded-xl overflow-hidden shadow-lg"
+      style={
+        lowBandwidth
+          ? undefined
+          : {
+              boxShadow: `0 12px 28px -8px rgb(0 0 0 / 0.2), 0 0 0 1px ${accentRgba(theme.accent, 0.35)}`,
+            }
+      }
     >
       <Chessboard
-        key={boardThemeId}
         position={game.fen()}
         onPieceDrop={onDrop}
         onSquareClick={onSquareClick}
@@ -264,7 +270,7 @@ export function ChessBoard({
         customSquareStyles={customSquareStyles}
         customDarkSquareStyle={squareBase.dark as Record<string, string>}
         customLightSquareStyle={squareBase.light as Record<string, string>}
-        animationDuration={200}
+        animationDuration={pieceAnimMs}
         arePiecesDraggable={!disabled}
         autoPromoteToQueen={false}
         customPieces={customPieces}
@@ -278,9 +284,11 @@ export function ChessBoard({
           onCancel={() => setPromotionPending(null)}
         />
       )}
-    </motion.div>
+    </div>
   );
 }
+
+export const ChessBoard = memo(ChessBoardInner);
 
 /** Rouge sang sur la case du roi en échec ou mat. */
 function getKingDangerStyle(chess: Chess): React.CSSProperties | null {
