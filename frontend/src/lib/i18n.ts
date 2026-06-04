@@ -5,6 +5,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "nav.play": "Play",
     "nav.puzzles": "Puzzles",
     "nav.learn": "Learn",
+    "nav.friends": "Friends",
+    "nav.tournaments": "Tournaments",
     "nav.community": "Community",
     "nav.login": "Log In",
     "nav.signup": "Sign Up",
