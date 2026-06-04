@@ -31,9 +31,13 @@ class ChessConsumer(AsyncWebsocketConsumer):
             await self.close(code=4001)
             return
 
+        self.is_spectator = False
         if not await self._is_participant():
-            await self.close(code=4003)
-            return
+            if await self._can_spectate():
+                self.is_spectator = True
+            else:
+                await self.close(code=4003)
+                return
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
@@ -51,6 +55,9 @@ class ChessConsumer(AsyncWebsocketConsumer):
             return
 
         event = data.get("event") or data.get("action")
+        if self.is_spectator:
+            await self._send_event("error", {"message": "Mode observateur — lecture seule"})
+            return
         if event in ("jouer_coup", "move"):
             await self._handle_move(data)
         elif event in ("abandonner_partie", "resign"):
