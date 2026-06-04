@@ -18,6 +18,7 @@ function PlayContent() {
   const [status, setStatus] = useState<string>("");
   const [searching, setSearching] = useState(false);
   const [difficulty, setDifficulty] = useState(5);
+  const playerColor = orientation === "white" ? "w" : "b";
 
   const startAI = async () => {
     try {
@@ -80,7 +81,13 @@ function PlayContent() {
 
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <ChessBoard fen={fen} orientation={orientation} onMove={handleMove} disabled={!gameId} />
+          <ChessBoard
+            fen={fen}
+            orientation={orientation}
+            onMove={handleMove}
+            disabled={!gameId}
+            playerColor={playerColor as "w" | "b"}
+          />
         </div>
 
         <div className="space-y-4">
