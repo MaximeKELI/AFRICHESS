@@ -34,10 +34,11 @@ export function AiCommentaryPanel({
     if (lastSpokenKey.current === key) return;
     lastSpokenKey.current = key;
 
-    const delay = latest.byAi ? 400 : 200;
+    if (!latest.byAi) return;
+
     const timer = window.setTimeout(() => {
-      speakComment(latest.text, { byAi: latest.byAi, enabled: true });
-    }, delay);
+      speakComment(latest.text, { byAi: true, enabled: true });
+    }, 450);
 
     return () => window.clearTimeout(timer);
   }, [enabled, latest, lowBandwidth]);
