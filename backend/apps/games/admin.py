@@ -3,6 +3,11 @@ from django.contrib import admin
 from .models import Game, GameAnalysis, GameRoom, MatchmakingQueue, Move
 
 
+@admin.register(GameRoom)
+class GameRoomAdmin(admin.ModelAdmin):
+    list_display = ["room_id", "game", "white_connected", "black_connected", "last_activity"]
+
+
 class MoveInline(admin.TabularInline):
     model = Move
     extra = 0
