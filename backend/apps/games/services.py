@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from apps.ratings.services import RatingService
 
+from .commentary import generate_move_comment
 from .elo_config import elo_to_difficulty_label, resolve_ai_target_elo
 from .engine import ChessEngineService
 from .models import Game, MatchmakingQueue, Move
@@ -24,7 +25,14 @@ class GameService:
         self.engine = ChessEngineService()
         self.rating_service = RatingService()
 
-    def create_ai_game(self, user, mode="blitz", difficulty=5, color="white"):
+    def create_ai_game(
+        self,
+        user,
+        mode="blitz",
+        difficulty=5,
+        color="white",
+        include_comments=False,
+    ):
         config = MODE_TIME_CONFIG.get(mode, MODE_TIME_CONFIG["blitz"])
         target_elo = resolve_ai_target_elo(user, mode=mode, difficulty=difficulty)
         display_difficulty = elo_to_difficulty_label(target_elo)

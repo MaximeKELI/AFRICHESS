@@ -8,7 +8,15 @@ from .models import Game, GameAnalysis, Move
 class MoveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Move
-        fields = ["move_number", "san", "uci", "played_by_white", "time_remaining_ms", "created_at"]
+        fields = [
+            "move_number",
+            "san",
+            "uci",
+            "played_by_white",
+            "time_remaining_ms",
+            "comment",
+            "created_at",
+        ]
 
 
 class GameAnalysisSerializer(serializers.ModelSerializer):
@@ -46,7 +54,9 @@ class CreateAIGameSerializer(serializers.Serializer):
     mode = serializers.ChoiceField(choices=["bullet", "blitz", "rapid"], default="blitz")
     difficulty = serializers.IntegerField(min_value=1, max_value=10, default=5)
     color = serializers.ChoiceField(choices=["white", "black"], default="white")
+    include_comments = serializers.BooleanField(default=False, required=False)
 
 
 class MakeMoveSerializer(serializers.Serializer):
     uci = serializers.CharField(max_length=10)
+    include_comments = serializers.BooleanField(default=False, required=False)

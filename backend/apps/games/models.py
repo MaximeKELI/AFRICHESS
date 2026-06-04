@@ -85,6 +85,7 @@ class Move(models.Model):
     fen_after = models.CharField(max_length=100)
     played_by_white = models.BooleanField()
     time_remaining_ms = models.PositiveIntegerField(null=True, blank=True)
+    comment = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
