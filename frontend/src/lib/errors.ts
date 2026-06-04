@@ -10,8 +10,14 @@ export function formatApiError(error: unknown): string {
   }
   if (typeof data === "string") {
     if (data.includes("<!DOCTYPE") || data.includes("<html")) {
-      if (data.includes("IntegrityError")) {
-        return "Compte déjà existant ou données invalides. Essayez de vous connecter.";
+      if (data.includes("users_userstats")) {
+        return "Erreur serveur à l'inscription. Contactez l'admin ou redémarrez le backend.";
+      }
+      if (data.includes("IntegrityError") && data.includes("username")) {
+        return "Ce nom d'utilisateur est déjà pris.";
+      }
+      if (data.includes("IntegrityError") && data.includes("email")) {
+        return "Cet e-mail est déjà utilisé — connectez-vous.";
       }
       return "Erreur serveur. Réessayez dans un instant.";
     }

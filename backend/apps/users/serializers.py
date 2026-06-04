@@ -132,6 +132,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        from .setup import setup_new_user
+
         validated_data.pop("password_confirm", None)
         password = validated_data.pop("password")
         validated_data.setdefault("avatar_preset", "avatar-1")
@@ -139,4 +141,5 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = User(**validated_data)
         user.set_password(password)
         user.save()
+        setup_new_user(user)
         return user

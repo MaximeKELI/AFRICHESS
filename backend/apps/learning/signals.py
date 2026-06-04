@@ -6,5 +6,5 @@ from .models import LearningProfile
 
 @receiver(post_save, sender="users.User")
 def create_learning_profile(sender, instance, created, **kwargs):
-    if created:
-        LearningProfile.objects.get_or_create(user=instance)
+    # Profil learning créé dans apps.users.setup.setup_new_user()
+    pass

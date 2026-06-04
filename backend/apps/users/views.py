@@ -19,16 +19,20 @@ class RegisterView(APIView):
         try:
             with transaction.atomic():
                 user = serializer.save()
-                from .services import init_user_ratings
-
-                init_user_ratings(user)
-        except IntegrityError:
-            return Response(
-                {
-                    "detail": "Nom d'utilisateur ou e-mail déjà utilisé.",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        except IntegrityError as exc:
+            msg = str(exc).lower()
+            if "users_userstats" in msg:
+                detail = (
+                    "Erreur technique à l'inscription. "
+                    "Redémarrez le serveur backend (docker compose restart backend) puis réessayez."
+                )
+            elif "username" in msg:
+                detail = "Ce nom d'utilisateur est déjà pris."
+            elif "email" in msg:
+                detail = "Cet e-mail est déjà utilisé."
+            else:
+                detail = "Nom d'utilisateur ou e-mail déjà utilisé."
+            return Response({"detail": detail}, status=status.HTTP_400_BAD_REQUEST)
         return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
 
