@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { ChessBoard } from "@/components/chess/ChessBoard";
+import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { puzzlesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
+import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
 import { motion } from "framer-motion";
 
 interface Puzzle {
@@ -17,7 +19,7 @@ interface Puzzle {
 export default function PuzzlesPage() {
   const { user } = useAuthStore();
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
-  const [moves, setMoves] = useState<string[]>([]);
+  const [uciMoves, setUciMoves] = useState<string[]>([]);
   const [result, setResult] = useState<string | null>(null);
   const [startTime] = useState(Date.now());
 
@@ -25,54 +27,85 @@ export default function PuzzlesPage() {
     puzzlesApi.daily().then(({ data }) => setPuzzle(data)).catch(() => {});
   }, []);
 
-  const handleMove = useCallback(
-    (uci: string) => {
-      if (!puzzle) return;
-      const newMoves = [...moves, uci];
-      setMoves(newMoves);
-    },
-    [moves, puzzle]
-  );
+  const display = useMemo(() => {
+    if (!puzzle) return null;
+    return buildGameDisplayFromUciList(puzzle.fen, uciMoves);
+  }, [puzzle, uciMoves]);
+
+  const handleMove = useCallback((uci: string) => {
+    setUciMoves((prev) => [...prev, uci]);
+  }, []);
 
   const submit = async () => {
     if (!puzzle || !user) return;
     const time = Math.floor((Date.now() - startTime) / 1000);
     try {
-      const { data } = await puzzlesApi.submit(puzzle.id, moves, time);
-      setResult(data.solved ? "✓ Solved!" : "✗ Try again");
+      const { data } = await puzzlesApi.submit(puzzle.id, uciMoves, time);
+      setResult(data.solved ? "✓ Bravo, résolu !" : "✗ Ce n'est pas la bonne ligne");
     } catch {
-      setResult("Login required to submit");
+      setResult("Connectez-vous pour valider");
     }
   };
 
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold mb-2">Daily Puzzle</h1>
-      <p className="opacity-70 mb-8">Find the best move sequence</p>
+  const reset = () => {
+    setUciMoves([]);
+    setResult(null);
+  };
 
-      {puzzle ? (
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      <h1 className="font-display text-3xl font-bold mb-2">Problème du jour</h1>
+      <p className="opacity-70 mb-8">Trouvez la meilleure suite de coups</p>
+
+      {puzzle && display ? (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <div className="flex flex-wrap gap-2 mb-4">
-            <span className="px-3 py-1 rounded-full bg-africhess-green/20 text-sm capitalize">{puzzle.difficulty}</span>
-            <span className="px-3 py-1 rounded-full bg-africhess-gold/20 text-sm">Rating: {puzzle.rating}</span>
+            <span className="px-3 py-1 rounded-full bg-africhess-green/20 text-sm capitalize">
+              {puzzle.difficulty}
+            </span>
+            <span className="px-3 py-1 rounded-full bg-africhess-gold/20 text-sm">
+              ELO {puzzle.rating}
+            </span>
             {puzzle.themes?.map((t) => (
-              <span key={t} className="px-3 py-1 rounded-full bg-white/10 text-sm">{t}</span>
+              <span key={t} className="px-3 py-1 rounded-full bg-white/10 text-sm">
+                {t}
+              </span>
             ))}
           </div>
-          <ChessBoard fen={puzzle.fen} onMove={handleMove} orientation="white" playerColor="w" />
-          <div className="mt-6 flex gap-4">
-            <button onClick={submit} className="px-6 py-2 african-gradient text-white rounded-lg font-medium">
-              Submit Solution
+
+          <div className="grid md:grid-cols-[1fr_240px] gap-6">
+            <ChessBoard
+              fen={display.fen}
+              onMove={handleMove}
+              orientation="white"
+              playerColor="w"
+              lastMove={display.lastMove}
+              playSoundOnFenChange={false}
+            />
+            <GameSidePanel
+              moves={display.moveRows}
+              captured={display.captured}
+              orientation="white"
+              isCheck={display.isCheck}
+              turn={display.turn}
+            />
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-4">
+            <button
+              onClick={submit}
+              className="px-6 py-2 african-gradient text-white rounded-lg font-medium"
+            >
+              Valider
             </button>
-            <button onClick={() => { setMoves([]); setResult(null); }} className="px-6 py-2 border rounded-lg">
-              Reset
+            <button onClick={reset} className="px-6 py-2 border rounded-lg">
+              Recommencer
             </button>
           </div>
           {result && <p className="mt-4 text-lg font-semibold">{result}</p>}
-          <p className="mt-2 text-sm opacity-60">Moves: {moves.join(", ") || "none"}</p>
         </motion.div>
       ) : (
-        <p>Loading puzzle...</p>
+        <p>Chargement du problème…</p>
       )}
     </div>
   );

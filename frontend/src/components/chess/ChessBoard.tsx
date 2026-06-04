@@ -1,18 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Chessboard } from "react-chessboard";
 import { Chess, Square } from "chess.js";
 import { motion } from "framer-motion";
+import { playChessSound, soundForMove } from "@/lib/chessSounds";
+import { useAuthStore } from "@/store/auth";
+
+export interface MoveInfo {
+  uci: string;
+  san: string;
+  from: string;
+  to: string;
+  flags: string;
+}
 
 interface ChessBoardProps {
   fen?: string;
   orientation?: "white" | "black";
   onMove?: (uci: string) => void;
+  onMovePlayed?: (info: MoveInfo) => void;
   disabled?: boolean;
   lastMove?: { from: string; to: string } | null;
-  /** Whose turn it is — only that side's pieces can be selected */
   playerColor?: "w" | "b";
+  /** Jouer le son pour les coups adverses quand le FEN change (réponse serveur) */
+  playSoundOnFenChange?: boolean;
 }
 
 const SELECTED_STYLE: React.CSSProperties = {
@@ -44,24 +56,46 @@ export function ChessBoard({
   fen = "start",
   orientation = "white",
   onMove,
+  onMovePlayed,
   disabled = false,
   lastMove = null,
   playerColor,
+  playSoundOnFenChange = true,
 }: ChessBoardProps) {
+  const { lowBandwidth } = useAuthStore();
+  const soundsOn = !lowBandwidth;
   const [game, setGame] = useState(() => new Chess(fen === "start" ? undefined : fen));
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [legalTargets, setLegalTargets] = useState<Square[]>([]);
+  const prevPliesRef = useRef(0);
 
   useEffect(() => {
     try {
       const g = new Chess(fen === "start" ? undefined : fen);
+      const plies = g.history().length;
+
+      if (playSoundOnFenChange && plies > prevPliesRef.current && prevPliesRef.current > 0) {
+        const last = g.history({ verbose: true }).at(-1);
+        if (last) {
+          playChessSound(soundForMove(last.flags), soundsOn);
+          onMovePlayed?.({
+            uci: `${last.from}${last.to}${last.promotion || ""}`,
+            san: last.san,
+            from: last.from,
+            to: last.to,
+            flags: last.flags,
+          });
+        }
+      }
+
+      prevPliesRef.current = plies;
       setGame(g);
       setSelectedSquare(null);
       setLegalTargets([]);
     } catch {
       /* invalid fen */
     }
-  }, [fen]);
+  }, [fen, playSoundOnFenChange, soundsOn, onMovePlayed]);
 
   const turnColor = game.turn();
 
@@ -85,13 +119,26 @@ export function ChessBoard({
       const g = new Chess(game.fen());
       const move = g.move({ from, to, promotion: "q" });
       if (!move) return false;
+
+      playChessSound(soundForMove(move.flags), soundsOn);
+
+      const uci = `${from}${to}${move.promotion || ""}`;
+      onMovePlayed?.({
+        uci,
+        san: move.san,
+        from: move.from,
+        to: move.to,
+        flags: move.flags,
+      });
+
       setGame(g);
+      prevPliesRef.current = g.history().length;
       setSelectedSquare(null);
       setLegalTargets([]);
-      onMove?.(`${from}${to}${move.promotion || ""}`);
+      onMove?.(uci);
       return true;
     },
-    [game, onMove]
+    [game, onMove, onMovePlayed, soundsOn]
   );
 
   const onSquareClick = useCallback(
@@ -124,8 +171,7 @@ export function ChessBoard({
   const onDrop = useCallback(
     (sourceSquare: Square, targetSquare: Square) => {
       if (disabled) return false;
-      const ok = applyMove(sourceSquare, targetSquare);
-      return ok;
+      return applyMove(sourceSquare, targetSquare);
     },
     [disabled, applyMove]
   );
@@ -147,6 +193,16 @@ export function ChessBoard({
       styles[target] = pieceOnTarget
         ? { ...LEGAL_CAPTURE_RING }
         : { ...LEGAL_MOVE_DOT };
+    }
+
+    if (game.inCheck()) {
+      const kingSquare = findKingSquare(game, game.turn());
+      if (kingSquare) {
+        styles[kingSquare] = {
+          ...styles[kingSquare],
+          boxShadow: "inset 0 0 0 3px rgba(196, 40, 40, 0.85)",
+        };
+      }
     }
 
     return styles;
@@ -171,4 +227,19 @@ export function ChessBoard({
       />
     </motion.div>
   );
+}
+
+function findKingSquare(chess: Chess, color: "w" | "b"): Square | null {
+  const board = chess.board();
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = board[r][c];
+      if (p && p.type === "k" && p.color === color) {
+        const file = String.fromCharCode(97 + c);
+        const rank = String(8 - r);
+        return `${file}${rank}` as Square;
+      }
+    }
+  }
+  return null;
 }
