@@ -64,6 +64,7 @@ class GameService:
                         ai_move.uci,
                         ai_move.san,
                         played_by_ai=True,
+                        mover_is_white=True,
                         move_number=1,
                         eval_after=eval_after,
                     )
@@ -115,6 +116,7 @@ class GameService:
                 uci,
                 san,
                 played_by_ai=False,
+                mover_is_white=is_white_turn,
                 move_number=game.move_count + 1,
                 eval_before=eval_before,
                 eval_after=eval_after,

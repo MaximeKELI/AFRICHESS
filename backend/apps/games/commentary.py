@@ -160,18 +160,16 @@ def generate_move_comment(
         return pick(OPENING_AI if pool_ai else OPENING_PLAYER)
 
     if eval_before is not None and eval_after is not None:
-        # Éval du point de vue des blancs ; ajuster si l'IA joue les noirs
-        delta = eval_after - eval_before
+        gain = _eval_gain_for_mover(eval_before, eval_after, mover_is_white)
         if not played_by_ai:
-            # Coup du joueur humain (blancs ou noirs selon partie)
-            if delta >= 0.8:
+            if gain >= 0.8:
                 return pick(STRONG_PLAYER)
-            if delta <= -1.2:
+            if gain <= -1.2:
                 return pick(WEAK_PLAYER)
-
-        if played_by_ai and delta <= -0.8:
-            return pick(STRONG_AI)
-        if played_by_ai and delta >= 1.0:
-            return "Je subis une petite pression, mais je tiens."
+        else:
+            if gain >= 0.8:
+                return pick(STRONG_AI)
+            if gain <= -1.2:
+                return "Je subis une petite pression, mais je tiens."
 
     return pick(NEUTRAL_AI if pool_ai else NEUTRAL_PLAYER)
