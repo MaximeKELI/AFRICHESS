@@ -19,6 +19,8 @@ function PlayContent() {
   const [status, setStatus] = useState<string>("");
   const [searching, setSearching] = useState(false);
   const [difficulty, setDifficulty] = useState(5);
+  const [userElo, setUserElo] = useState<number | null>(null);
+  const [aiElo, setAiElo] = useState<number | null>(null);
   const playerColor = orientation === "white" ? "w" : "b";
   const levelLabel = CHESS_LEVELS.find((l) => l.id === user?.chess_level)?.label;
 
@@ -28,12 +30,28 @@ function PlayContent() {
     }
   }, [user?.chess_level]);
 
+  useEffect(() => {
+    if (!user) return;
+    gamesApi
+      .aiPreview(mode, difficulty)
+      .then(({ data }) => {
+        setUserElo(data.user_elo);
+        setAiElo(data.ai_target_elo);
+      })
+      .catch(() => {});
+  }, [user, mode, difficulty]);
+
   const startAI = async () => {
     try {
       const { data } = await gamesApi.createAI({ mode, difficulty, color: orientation });
       setGameId(data.id);
       setFen(data.fen);
-      setStatus("Game started vs AI");
+      setStatus(
+        data.ai_target_elo
+          ? `Partie lancée — IA ~${data.ai_target_elo} ELO`
+          : "Partie lancée vs IA"
+      );
+      if (data.ai_target_elo) setAiElo(data.ai_target_elo);
     } catch {
       setStatus("Failed to start game. Please log in.");
     }
@@ -45,7 +63,7 @@ function PlayContent() {
     try {
       const { data } = await gamesApi.matchmaking(mode);
       if (data.status === "searching") {
-        setStatus(`Searching... (ELO ~${data.elo})`);
+        setStatus(`Recherche adversaire proche de ${data.elo} ELO…`);
       } else {
         setGameId(data.id);
         setFen(data.fen);
@@ -104,15 +122,27 @@ function PlayContent() {
             {levelLabel && (
               <p className="text-xs opacity-60 mb-2">Votre niveau : {levelLabel}</p>
             )}
-            <label className="text-sm block mb-2">Force de l&apos;IA : {difficulty}/10</label>
+            <div className="flex justify-between text-xs mb-2 gap-2">
+              <span className="opacity-70">
+                Votre ELO ({mode}) :{" "}
+                <strong className="text-africhess-green">{userElo ?? "—"}</strong>
+              </span>
+              <span className="opacity-70">
+                IA : <strong className="text-africhess-gold">{aiElo ?? "—"}</strong> ELO
+              </span>
+            </div>
+            <label className="text-sm block mb-2">Ajustement force IA : {difficulty}/10</label>
             <input
               type="range"
               min={1}
               max={10}
               value={difficulty}
               onChange={(e) => setDifficulty(Number(e.target.value))}
-              className="w-full mb-3"
+              className="w-full mb-1"
             />
+            <p className="text-xs opacity-50 mb-3">
+              L&apos;IA utilise Stockfish avec limite ELO (respecte votre niveau déclaré)
+            </p>
             <select
               value={orientation}
               onChange={(e) => setOrientation(e.target.value as "white" | "black")}

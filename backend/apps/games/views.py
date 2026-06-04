@@ -104,7 +104,7 @@ class MatchmakingView(APIView):
     def post(self, request):
         mode = request.data.get("mode", "blitz")
         rating = PlayerRating.objects.filter(user=request.user, mode=mode).first()
-        elo = rating.elo if rating else 1200
+        elo = rating.elo if rating else request.user.initial_elo
         svc = MatchmakingService()
         game = svc.find_match(request.user, mode, elo)
         if game:
