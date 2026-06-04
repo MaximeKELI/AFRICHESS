@@ -161,13 +161,28 @@ class GameService:
         if game.status != Game.Status.ACTIVE:
             return {"error": "Game is not active"}
 
+        cheat = validate_move_timing(game, user)
+        if cheat:
+            return cheat
+
         is_white_turn = " w " in game.fen
         if is_white_turn and game.white_player != user:
             return {"error": "Not your turn"}
         if not is_white_turn and game.black_player != user and not game.is_vs_ai:
             return {"error": "Not your turn"}
 
-        if spent_ms is not None:
+        if not game.is_vs_ai:
+            apply_server_clock_before_move(game)
+            timed_out = check_timeout(game)
+            if timed_out == "white":
+                self._finalize_game_on_timeout(game, winner_white=False)
+                game.save()
+                return {"error": "Time out", "game_over": True}
+            if timed_out == "black":
+                self._finalize_game_on_timeout(game, winner_white=True)
+                game.save()
+                return {"error": "Time out", "game_over": True}
+        elif spent_ms is not None:
             clock = game.white_time_ms if is_white_turn else game.black_time_ms
             if clock <= 0:
                 return {"error": "Time out"}
@@ -213,6 +228,9 @@ class GameService:
         )
         game.move_count += 1
         game.pgn = (game.pgn or "") + f" {game.move_count}. {san}" if is_white_turn else f" {san}"
+        if not game.is_vs_ai:
+            apply_increment_after_move(game, is_white_turn)
+            tick_turn_started(game)
         game.save()
 
         response = {"move": move, "fen": new_fen, "game_over": is_over}
