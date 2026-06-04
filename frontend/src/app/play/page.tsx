@@ -262,6 +262,15 @@ function PlayContent() {
     async (uci: string) => {
       if (!gameId) return;
       const spentMs = Date.now() - turnStartRef.current;
+
+      if (isLiveHuman && wsConnected) {
+        const sent = wsSendMove(uci, spentMs);
+        if (sent) {
+          turnStartRef.current = Date.now();
+          return;
+        }
+      }
+
       try {
         const { data } = await gamesApi.move(gameId, uci, {
           includeComments: isVsAi && aiCommentsEnabled,
@@ -275,26 +284,13 @@ function PlayContent() {
         setStatus("Coup invalide ou temps écoulé");
       }
     },
-    [gameId, isVsAi, aiCommentsEnabled]
+    [gameId, isVsAi, aiCommentsEnabled, isLiveHuman, wsConnected, wsSendMove]
   );
 
   const findMatch = async () => {
     setSearching(true);
-    setStatus("Recherche d'un adversaire…");
-    try {
-      const { data } = await gamesApi.matchmaking(mode);
-      if (data.status === "searching") {
-        setStatus(`Recherche adversaire proche de ${data.elo} ELO…`);
-      } else {
-        setGameId(data.id);
-        applyGameResponse(data);
-        setSearching(false);
-        setStatus("Adversaire trouvé !");
-      }
-    } catch {
-      setStatus("Matchmaking échoué.");
-      setSearching(false);
-    }
+    setStatus("Recherche d'un adversaire (WebSocket)…");
+    wsSearch();
   };
 
   if (!user) {
@@ -352,11 +348,20 @@ function PlayContent() {
               label={MODE_CLOCK_LABEL[mode] ?? mode}
             />
           )}
+          {isLiveHuman && (
+            <p className="text-xs text-center opacity-60">
+              {wsConnected ? "● En direct (WebSocket)" : "○ Connexion temps réel…"}
+            </p>
+          )}
           <ChessBoard
             fen={display.fen}
             orientation={orientation}
             onMove={handleMove}
-            disabled={!gameId || gameCompleted}
+            disabled={
+              !gameId ||
+              gameCompleted ||
+              (isLiveHuman && !isMyTurn)
+            }
             playerColor={playerColor as "w" | "b"}
             lastMove={display.lastMove}
             playSoundOnFenChange={true}
