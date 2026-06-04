@@ -32,6 +32,7 @@ import { openingNameFromMoves } from "@/lib/openings";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { GameChat } from "@/components/social/GameChat";
+import { useGameWebSocket, useMatchmakingWebSocket } from "@/hooks/useGameWebSocket";
 
 interface GameState {
   fen: string;
@@ -68,6 +69,52 @@ function PlayContent() {
   const levelLabel = CHESS_LEVELS.find((l) => l.id === user?.chess_level)?.label;
   const gameActive = gameId && gameData.status === "active";
   const gameCompleted = gameData.status === "completed";
+  const isLiveHuman = Boolean(gameId && !isVsAi);
+
+  const handleWsUpdate = useCallback(
+    (payload: { game: GameState & { id?: string; moves?: ApiMove[] } }) => {
+      const g = payload.game;
+      applyGameResponse({
+        fen: g.fen,
+        moves: g.moves ?? [],
+        white_time_ms: g.white_time_ms,
+        black_time_ms: g.black_time_ms,
+        increment_ms: g.increment_ms,
+        status: g.status,
+        result: g.result,
+        is_vs_ai: g.is_vs_ai,
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const { connected: wsConnected, sendMove: wsSendMove } = useGameWebSocket(
+    gameId,
+    isLiveHuman,
+    handleWsUpdate,
+    (payload) => {
+      setStatus(`Fin de partie : ${payload.game.result || "Terminée"}`);
+    }
+  );
+
+  const handleMatchFound = useCallback(
+    (id: string) => {
+      setGameId(id);
+      setIsVsAi(false);
+      setSearching(false);
+      gamesApi.get(id).then(({ data }) => {
+        if (data.white_player?.id === user?.id) setOrientation("white");
+        else if (data.black_player?.id === user?.id) setOrientation("black");
+        applyGameResponse(data);
+        setStatus("Adversaire trouvé — partie en direct !");
+      });
+    },
+    [user?.id]
+  );
+
+  const { searching: wsSearching, search: wsSearch, cancel: wsCancel } =
+    useMatchmakingWebSocket(Boolean(user), mode, handleMatchFound);
 
   const display = useMemo(() => {
     if (gameData.moves && gameData.moves.length > 0) {
