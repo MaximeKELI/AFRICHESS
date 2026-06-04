@@ -1,79 +1,54 @@
-# AFRICHESS — Deployment Guide
+# Déploiement production AFRICHESS
 
-## Production Environment Variables
+## Prérequis
+
+- PostgreSQL 16+
+- Redis 7+ (Channels + Celery)
+- Stockfish installé sur le serveur backend
+- HTTPS + **WSS** (`wss://api.votredomaine.com`)
+
+## Variables d'environnement
 
 ```env
-SECRET_KEY=<strong-random-key>
+SECRET_KEY=<long-random>
 DEBUG=False
-DJANGO_SETTINGS_MODULE=config.settings.production
-ALLOWED_HOSTS=africhess.com,api.africhess.com
-POSTGRES_HOST=<managed-db-host>
-REDIS_URL=redis://<redis-host>:6379/0
+ALLOWED_HOSTS=api.africhess.com
 CORS_ALLOWED_ORIGINS=https://africhess.com
-SECURE_SSL_REDIRECT=True
+REDIS_URL=redis://redis:6379/0
+POSTGRES_HOST=db
 STOCKFISH_PATH=/usr/games/stockfish
+NEXT_PUBLIC_API_URL=https://api.africhess.com/api
+NEXT_PUBLIC_WS_URL=wss://api.africhess.com
 ```
 
-## Docker Production
+## Services Docker
 
-1. Build images: `docker compose -f docker-compose.yml build`
-2. Use a reverse proxy (Nginx/Caddy) for TLS
-3. Run migrations: `docker compose run backend python manage.py migrate`
-4. Collect static: `docker compose run backend python manage.py collectstatic --noinput`
+- `backend` — Daphne ASGI (HTTP + WebSocket)
+- `celery` — worker (matchmaking, forfeits)
+- `celery-beat` — tâches périodiques
+- `frontend` — Next.js
+- `db`, `redis`
 
-## Cloud Options
+## Commandes initiales
 
-### AWS
-- **ECS/Fargate** for backend + frontend containers
-- **RDS PostgreSQL** for database
-- **ElastiCache Redis** for Channels/Celery
-- **S3 + CloudFront** for media/static
-- **ALB** with WebSocket support
-
-### DigitalOcean
-- App Platform or Droplets + Managed PostgreSQL + Managed Redis
-
-### Railway / Render
-- Deploy `backend` and `frontend` as separate services
-- Add PostgreSQL and Redis plugins
-
-## Scaling
-
-- **Daphne/Uvicorn** workers behind load balancer (sticky sessions for WebSockets)
-- **Celery workers** for game analysis, notifications
-- **Redis** channel layer for multi-instance WebSocket broadcast
-
-## CI/CD (GitHub Actions example)
-
-```yaml
-name: Deploy
-on:
-  push:
-    branches: [main]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_PASSWORD: test
-    steps:
-      - uses: actions/checkout@v4
-      - run: pip install -r backend/requirements.txt
-      - run: cd backend && python manage.py check
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Deploy to your cloud provider"
+```bash
+python manage.py migrate
+python manage.py seed_learning
+python manage.py seed_full_curriculum --regenerate
+python manage.py seed_tournaments
+python manage.py collectstatic --noinput
 ```
 
-## Security Checklist
+## Rate limiting
 
-- [ ] Rotate `SECRET_KEY`
-- [ ] Enable HTTPS everywhere
-- [ ] Restrict `ALLOWED_HOSTS` and CORS
-- [ ] Use managed secrets (AWS Secrets Manager, etc.)
-- [ ] Rate-limit auth endpoints
-- [ ] Regular dependency updates
+DRF throttling activé (`anon` 200/h, `user` 3000/h).
+
+## Anti-triche (basique)
+
+- Max 45 coups/minute en partie humaine
+- Intervalle minimum entre coups identiques
+
+## Monitoring recommandé
+
+- Sentry (erreurs Django + Next)
+- Healthcheck `GET /api/schema/`

@@ -116,10 +116,10 @@ export function BoardThemePicker({ compact = false, className }: BoardThemePicke
           <button
             key={id}
             type="button"
-            onClick={() => usePreferencesStore.getState().setPieceSet(id)}
+            onClick={() => setPieceSet(id)}
             className={clsx(
               "px-3 py-1 rounded text-xs capitalize border",
-              usePreferencesStore.getState().pieceSet === id
+              pieceSet === id
                 ? "border-africhess-gold bg-africhess-gold/20"
                 : "border-white/20"
             )}

@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: africhess
+          POSTGRES_USER: africhess
+          POSTGRES_PASSWORD: africhess
+        ports: ["5432:5432"]
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install backend deps
+        run: |
+          cd backend
+          pip install -r requirements.txt
+      - name: Migrate & test
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_DB: africhess
+          POSTGRES_USER: africhess
+          POSTGRES_PASSWORD: africhess
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SETTINGS_MODULE: config.settings.development
+          SECRET_KEY: ci-secret
+        run: |
+          cd backend
+          python manage.py migrate --noinput
+          python manage.py test apps.games.tests apps.learning --verbosity=1
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: cd frontend && npm ci && npm run lint

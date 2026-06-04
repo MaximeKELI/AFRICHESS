@@ -348,15 +348,56 @@ function PlayContent() {
               label={MODE_CLOCK_LABEL[mode] ?? mode}
             />
           )}
+          {isLiveHuman && (
+            <p className="text-xs text-center opacity-60">
+              {wsConnected ? "● En direct (WebSocket)" : "○ Connexion temps réel…"}
+            </p>
+          )}
           <ChessBoard
             fen={display.fen}
             orientation={orientation}
             onMove={handleMove}
-            disabled={!gameId || gameCompleted}
+            disabled={!gameId || gameCompleted || (isLiveHuman && !isMyTurn)}
             playerColor={playerColor as "w" | "b"}
             lastMove={display.lastMove}
             playSoundOnFenChange={true}
           />
+          {isLiveHuman && gameActive && (
+            <div className="flex flex-wrap gap-2 justify-center max-w-[560px] mx-auto">
+              <button
+                type="button"
+                onClick={() => gameId && gamesApi.offerDraw(gameId)}
+                className="text-xs px-3 py-1 rounded border border-white/20"
+              >
+                Proposer nulle
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  gameId &&
+                  gamesApi.respondDraw(gameId, true).then(({ data }) => applyGameResponse(data))
+                }
+                className="text-xs px-3 py-1 rounded border border-africhess-green text-africhess-green"
+              >
+                Accepter nulle
+              </button>
+            </div>
+          )}
+          {isLiveHuman && gameCompleted && gameId && (
+            <button
+              type="button"
+              onClick={() =>
+                gamesApi.rematch(gameId).then(({ data }) => {
+                  setGameId(data.id);
+                  applyGameResponse(data);
+                  setStatus("Revanche lancée");
+                })
+              }
+              className="w-full max-w-[560px] mx-auto block py-2 text-sm rounded-lg african-gradient text-white"
+            >
+              Revanche
+            </button>
+          )}
           {isVsAi && gameActive && (
             <button
               type="button"

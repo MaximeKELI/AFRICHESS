@@ -14,21 +14,32 @@
 | 17 | **PWA** | `manifest.json` + métadonnées |
 | 19 | **Culture** | Section histoires sur `/community` |
 
-## 🔶 Partiel / à étendre
+## ✅ Ajouts récents (complément roadmap)
 
-| # | Fonctionnalité | État |
-|---|----------------|------|
-| 7 | Puzzles+ | Daily + entraînement + série localStorage |
-| 8 | Tournois | Page `/tournaments` + inscription + `seed_tournaments` |
-| 9 | Classement pays | Filtre pays sur classement africain |
-| 10 | Amis & défis | Page `/friends` + `POST /social/friends/challenge/` |
-| 11 | Chat | `GameChat` REST sur `/play` (parties humaines) |
-| 12 | Notifications | Cloche navbar + lien partie |
-| 14 | Mode entraînement | Puzzles training ; ouvertures IA à dédié |
-| 15 | ELO adaptatif | `elo_adapt.py` sur preview IA (10 dernières parties) |
-| 16 | Tests E2E | Tests Django OK ; Playwright à ajouter |
-| 18 | i18n | Fichier `i18n.ts` ; traduire pages Jouer/Profil |
-| 20 | Pièces africaines | Thèmes plateau OK ; pièces SVG custom à dessiner |
+| # | Fonctionnalité | Détail |
+|---|----------------|--------|
+| 7 | Puzzles+ | Leaderboard, mode rush, streak |
+| 8 | Tournois | Moteur arène/suisse, standings, start, my-game |
+| 9 | Classement pays | Filtre pays |
+| 10 | Amis & défis | Page + API + notif |
+| 11 | Chat | REST + WS partie ; messages privés API |
+| 12 | Notifications | Cloche + WS `ws/notifications/` |
+| 14 | Entraînement | Puzzles training + curriculum 40 docs |
+| 15 | ELO adaptatif | Preview IA |
+| 16 | CI | GitHub Actions backend + lint frontend |
+| 18 | i18n | EN/FR/AR/PT/SW (menu étendu) |
+| 20 | Pièces | Thème pièces « africain » (préférences) |
+| — | Multijoueur | Chrono serveur, matchmaking Celery, spectateur, nulle, revanche |
+| — | Ops | Rate limit, anti-triche, doc déploiement |
+
+## 🔶 Encore perfectible
+
+| # | Sujet |
+|---|--------|
+| 16 | Tests E2E Playwright complets (scénario login→partie) |
+| 20 | Pièces SVG illustrées (vs Unicode) |
+| — | OAuth Google/GitHub bout-en-bout |
+| — | Push notifications mobile natives |
 
 ## Tests
 
