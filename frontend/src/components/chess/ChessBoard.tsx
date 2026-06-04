@@ -101,7 +101,7 @@ function ChessBoardInner({
       if (playSoundOnFenChange && plies > prevPliesRef.current && prevPliesRef.current > 0) {
         const last = g.history({ verbose: true }).at(-1);
         if (last) {
-          playChessSound(soundForMove(last.flags), soundsOn);
+          playChessSound(soundForMove(last.flags, last.san), soundsOn);
           onMovePlayed?.({
             uci: `${last.from}${last.to}${last.promotion || ""}`,
             san: last.san,
@@ -160,7 +160,7 @@ function ChessBoardInner({
       });
       if (!move) return false;
 
-      playChessSound(soundForMove(move.flags), soundsOn);
+      playChessSound(soundForMove(move.flags, move.san), soundsOn);
 
       const uci = `${from}${to}${move.promotion || ""}`;
       onMovePlayed?.({

@@ -1,5 +1,6 @@
 """Stockfish integration for AI moves and game analysis."""
 import logging
+import random
 from dataclasses import dataclass
 from typing import Optional
 
@@ -45,11 +46,32 @@ class ChessEngineService:
     def _get_engine(self):
         return chess.engine.SimpleEngine.popen_uci(self.path)
 
+    def _skill_level_for_elo(self, elo: int) -> int:
+        """Skill Level 0–20 : plus bas = plus faible (débutants)."""
+        if elo <= 900:
+            return 0
+        if elo <= 1100:
+            return 2
+        if elo <= 1400:
+            return 5
+        if elo <= 1800:
+            return 8
+        if elo <= 2200:
+            return 12
+        return 20
+
     def _configure_strength(self, engine, target_elo: int) -> bool:
-        """Active UCI_LimitStrength + UCI_Elo (Stockfish, max ~3190)."""
+        """Active UCI_LimitStrength + UCI_Elo + Skill Level (Stockfish, max ~3190)."""
         elo = min(clamp_elo(target_elo), STOCKFISH_UCI_MAX_ELO)
         try:
-            engine.configure({"UCI_LimitStrength": True, "UCI_Elo": elo})
+            opts = {
+                "UCI_LimitStrength": True,
+                "UCI_Elo": elo,
+                "Skill Level": self._skill_level_for_elo(elo),
+            }
+            if elo <= 1100:
+                opts["Slow Mover"] = 150
+            engine.configure(opts)
             return True
         except chess.engine.EngineError:
             logger.warning("UCI_Elo non supporté, repli sur profondeur")
@@ -70,6 +92,19 @@ class ChessEngineService:
         depth = self.DIFFICULTY_DEPTH.get(min(max(difficulty, 1), 20), 14)
         return chess.engine.Limit(depth=depth)
 
+    def _maybe_random_weak_move(self, board: chess.Board, elo: int) -> Optional[EngineMove]:
+        """Coup aléatoire légal pour les tout débutants (800–1000 ELO)."""
+        if elo > 1000:
+            return None
+        chance = 0.35 if elo <= 900 else 0.2
+        if random.random() > chance:
+            return None
+        legal = list(board.legal_moves)
+        if not legal:
+            return None
+        move = random.choice(legal)
+        return EngineMove(uci=move.uci(), san=board.san(move))
+
     def get_best_move(
         self,
         fen: str,
@@ -80,6 +115,11 @@ class ChessEngineService:
         elo = clamp_elo(target_elo) if target_elo else None
         diff_key = min(max(difficulty, 1), 20)
 
+        if elo is not None:
+            weak = self._maybe_random_weak_move(board, elo)
+            if weak:
+                return weak
+
         try:
             with self._get_engine() as engine:
                 use_uci = (
@@ -88,7 +128,12 @@ class ChessEngineService:
                     and self._configure_strength(engine, elo)
                 )
                 if use_uci:
-                    limit = chess.engine.Limit(time=0.35)
+                    if elo <= 900:
+                        limit = chess.engine.Limit(time=0.08, depth=4)
+                    elif elo <= 1200:
+                        limit = chess.engine.Limit(time=0.15, depth=6)
+                    else:
+                        limit = chess.engine.Limit(time=0.35)
                 else:
                     limit = self._limit_for_elo(elo or 1200, diff_key)
 

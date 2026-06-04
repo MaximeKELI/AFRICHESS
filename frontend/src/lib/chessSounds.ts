@@ -178,6 +178,10 @@ function playDrawWhistleSynthetic() {
 
 export function playChessSound(type: ChessSoundType, enabled = true) {
   if (!enabled || typeof window === "undefined") return;
+  if (type === "draw") {
+    playSyntheticSound("draw");
+    return;
+  }
   preloadChessSounds();
   if (useFileSounds) {
     playFileSound(type);
@@ -186,10 +190,15 @@ export function playChessSound(type: ChessSoundType, enabled = true) {
   }
 }
 
-export function soundForMove(flags: string): ChessSoundType {
-  if (flags.includes("#")) return "checkmate";
-  if (flags.includes("+")) return "check";
+/** chess.js v1 met +/# dans le SAN, pas dans flags (n, c, b, k, q…). */
+export function soundForMove(flags: string, san?: string): ChessSoundType {
+  if (san?.includes("#")) return "checkmate";
+  if (san?.includes("+")) return "check";
   if (flags.includes("c")) return "capture";
   if (flags.includes("k") || flags.includes("q")) return "castle";
   return "move";
+}
+
+export function playDrawWhistle(enabled = true) {
+  playChessSound("draw", enabled);
 }

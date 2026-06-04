@@ -8,6 +8,7 @@ from django.utils import timezone
 from apps.ratings.services import RatingService
 
 from .anticheat import validate_move_timing
+from .draw_rules import can_claim_threefold_from_game, finalize_repetition_draw
 from .clock_service import (
     apply_increment_after_move,
     apply_server_clock_before_move,
@@ -233,6 +234,18 @@ class GameService:
             tick_turn_started(game)
         game.save()
 
+        if can_claim_threefold_from_game(game):
+            finalize_repetition_draw(game)
+            game.save()
+            return {
+                "move": move,
+                "fen": game.fen,
+                "game_over": True,
+                "result": game.result,
+                "termination_reason": "repetition",
+                "draw_claim": "threefold",
+            }
+
         response = {"move": move, "fen": new_fen, "game_over": is_over}
 
         if game.is_vs_ai and not is_over:
@@ -274,6 +287,15 @@ class GameService:
                     response["fen"] = nf
                     response["game_over"] = ai_over
                     is_over = ai_over
+
+                    if can_claim_threefold_from_game(game):
+                        finalize_repetition_draw(game)
+                        game.save()
+                        response["game_over"] = True
+                        response["result"] = game.result
+                        response["termination_reason"] = "repetition"
+                        response["draw_claim"] = "threefold"
+                        is_over = True
 
         if is_over:
             self._finalize_game(game)

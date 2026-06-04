@@ -23,6 +23,7 @@ import {
 import { usePreferencesStore } from "@/store/preferences";
 import { MODE_CLOCK_LABEL } from "@/lib/clock";
 import { turnFromFen } from "@/lib/gameDisplayFast";
+import { playDrawWhistle } from "@/lib/chessSounds";
 import {
   saveActiveGame,
   loadActiveGame,
@@ -45,6 +46,7 @@ interface GameState {
   increment_ms?: number;
   status?: string;
   result?: string;
+  termination_reason?: string;
   is_vs_ai?: boolean;
   ai_target_elo?: number;
 }
@@ -121,6 +123,9 @@ function PlayContent() {
   }, [turn, gameData.white_time_ms, gameData.black_time_ms]);
 
   const applyGameResponse = useCallback((data: GameState & { id?: string }) => {
+    if (data.termination_reason === "repetition") {
+      playDrawWhistle();
+    }
     setGameData({
       fen: data.fen,
       moves: data.moves ?? [],
@@ -129,12 +134,20 @@ function PlayContent() {
       increment_ms: data.increment_ms,
       status: data.status,
       result: data.result,
+      termination_reason: data.termination_reason,
       is_vs_ai: data.is_vs_ai,
       ai_target_elo: data.ai_target_elo,
     });
     if (data.ai_target_elo) setAiElo(data.ai_target_elo);
     if (data.is_vs_ai !== undefined) setIsVsAi(data.is_vs_ai);
-    if (data.status === "completed") clearActiveGame();
+    if (data.status === "completed") {
+      clearActiveGame();
+      if (data.termination_reason === "repetition") {
+        setStatus("Nulle — même position 3 fois (répétition)");
+      } else if (data.result) {
+        setStatus(`Fin de partie : ${data.result}`);
+      }
+    }
   }, []);
 
   const wsPendingRef = useRef<WsGamePayload | null>(null);
@@ -286,7 +299,11 @@ function PlayContent() {
   const handleMove = useCallback(
     async (uci: string) => {
       if (!gameId || gameCompleted) return;
-      const spentMs = Date.now() - turnStartRef.current;
+      const poolMs = playerIsWhite ? gameData.white_time_ms : gameData.black_time_ms;
+      const spentMs = Math.min(
+        Date.now() - turnStartRef.current,
+        poolMs ?? 999_999
+      );
       applyOptimisticUci(uci);
       turnStartRef.current = Date.now();
 
@@ -302,7 +319,7 @@ function PlayContent() {
           spentMs,
         });
         applyGameResponse(data);
-        if (data.status === "completed") {
+        if (data.status === "completed" && data.termination_reason !== "repetition") {
           setStatus(`Fin de partie : ${data.result || "Terminée"}`);
         }
       } catch {
@@ -395,7 +412,9 @@ function PlayContent() {
             showClock={Boolean(gameId)}
             whiteMs={gameData.white_time_ms ?? 180000}
             blackMs={gameData.black_time_ms ?? 180000}
-            clockRunning={Boolean(gameActive)}
+            clockRunning={Boolean(
+              gameActive && (isVsAi ? isMyTurn && !movePending : true)
+            )}
             incrementMs={gameData.increment_ms ?? 0}
             clockLabel={MODE_CLOCK_LABEL[mode] ?? mode}
           />

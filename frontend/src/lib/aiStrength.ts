@@ -1,7 +1,7 @@
 /** Niveaux IA sélectionnables (800 → 5000 ELO). */
 
 export const AI_LEVELS = [
-  { elo: 800, label: "Débutant", description: "Idéal pour apprendre" },
+  { elo: 800, label: "Débutant", description: "Très facile — coups parfois aléatoires" },
   { elo: 1200, label: "Club", description: "Adversaire loisir régulier" },
   { elo: 1600, label: "Confirmé", description: "Bon niveau amateur" },
   { elo: 2000, label: "Expert", description: "Joueur de tournoi" },
