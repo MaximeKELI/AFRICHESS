@@ -58,6 +58,7 @@ export default function LoginPage() {
         >
           {isLoading ? "Connexion…" : "Se connecter"}
         </button>
+        <OAuthButtons />
         <p className="text-center text-sm">
           Pas encore de compte ?{" "}
           <Link href="/register" className="text-africhess-gold underline">

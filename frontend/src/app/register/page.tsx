@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
+import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { AvatarPicker } from "@/components/profile/AvatarPicker";
 import { LevelPicker } from "@/components/profile/LevelPicker";
 import type { AvatarId, ChessLevelId } from "@/lib/avatars";
