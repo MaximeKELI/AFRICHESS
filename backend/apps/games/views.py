@@ -11,6 +11,13 @@ from .models import Game, GameAnalysis
 from .serializers import CreateAIGameSerializer, GameListSerializer, GameSerializer, MakeMoveSerializer
 from .elo_adapt import adapt_ai_elo_from_history
 from .elo_config import elo_strength_label, get_user_elo, resolve_ai_target_elo
+from .game_actions import (
+    accept_draw,
+    create_rematch,
+    decline_draw,
+    live_games_queryset,
+    offer_draw,
+)
 from .services import GameService, MatchmakingService
 
 
@@ -160,6 +167,7 @@ class MatchmakingView(APIView):
         if game:
             return Response(GameSerializer(game).data, status=201)
         svc.join_queue(request.user, mode, elo)
+        svc.pair_all_waiting()
         return Response({"status": "searching", "elo": elo})
 
     def delete(self, request):

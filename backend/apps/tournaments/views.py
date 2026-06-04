@@ -2,8 +2,11 @@ from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.games.serializers import GameSerializer
+
 from .models import Tournament
-from .serializers import TournamentSerializer
+from .serializers import TournamentParticipantSerializer, TournamentSerializer
+from .services import TournamentEngine
 
 
 class TournamentListView(generics.ListAPIView):

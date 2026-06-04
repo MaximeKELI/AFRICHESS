@@ -28,11 +28,19 @@ def set_player_connected(game: Game, user, connected: bool) -> GameRoom:
     room = ensure_game_room(game)
     if game.white_player_id == user.id:
         room.white_connected = connected
+        room.white_disconnected_at = None if connected else timezone.now()
     elif game.black_player_id == user.id:
         room.black_connected = connected
+        room.black_disconnected_at = None if connected else timezone.now()
     room.last_activity = timezone.now()
     room.save(
-        update_fields=["white_connected", "black_connected", "last_activity"]
+        update_fields=[
+            "white_connected",
+            "black_connected",
+            "white_disconnected_at",
+            "black_disconnected_at",
+            "last_activity",
+        ]
     )
     return room
 

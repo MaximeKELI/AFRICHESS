@@ -8,6 +8,7 @@ urlpatterns = [
     path("ai/preview/", views.ai_strength_preview, name="ai-strength-preview"),
     path("active/", views.active_games, name="active-games"),
     path("matchmaking/", views.MatchmakingView.as_view(), name="matchmaking"),
+    path("live/", views.LiveGamesView.as_view(), name="live-games"),
     path("engine/eval/", views.engine_eval, name="engine-eval"),
     path("<uuid:id>/", views.GameDetailView.as_view(), name="game-detail"),
     path("<uuid:game_id>/move/", views.MakeMoveView.as_view(), name="game-move"),

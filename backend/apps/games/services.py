@@ -332,6 +332,13 @@ class GameService:
         game.save()
         if not game.is_vs_ai and game.white_player and game.black_player:
             self.rating_service.update_ratings(game)
+        if game.tournament_id:
+            try:
+                from apps.tournaments.services import TournamentEngine
+
+                TournamentEngine().record_result(game)
+            except Exception:
+                pass
 
 
 class MatchmakingService:
