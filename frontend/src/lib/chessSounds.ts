@@ -1,18 +1,30 @@
 /**
- * Sons de coups — fichiers MP3/OGG (thème Lichess LISP, voir public/sounds/README.md).
- * Repli Web Audio si le navigateur ne charge pas les fichiers.
+ * Sons de coups — fichiers MP3/OGG (Lichess), sons « killer » pour échec et mat.
  */
 
-export type ChessSoundType = "move" | "capture" | "check" | "castle";
+export type ChessSoundType =
+  | "move"
+  | "capture"
+  | "check"
+  | "checkmate"
+  | "castle";
 
 const SOUND_PATHS: Record<ChessSoundType, { mp3: string; ogg: string }> = {
   move: { mp3: "/sounds/move.mp3", ogg: "/sounds/move.ogg" },
   capture: { mp3: "/sounds/capture.mp3", ogg: "/sounds/capture.ogg" },
   check: { mp3: "/sounds/check.mp3", ogg: "/sounds/check.ogg" },
+  checkmate: { mp3: "/sounds/checkmate.mp3", ogg: "/sounds/checkmate.ogg" },
   castle: { mp3: "/sounds/castle.mp3", ogg: "/sounds/castle.ogg" },
 };
 
-const VOLUME = 0.75;
+const VOLUME: Record<ChessSoundType, number> = {
+  move: 0.75,
+  capture: 0.75,
+  castle: 0.75,
+  check: 0.9,
+  checkmate: 0.95,
+};
+
 const audioCache = new Map<ChessSoundType, HTMLAudioElement>();
 let useFileSounds = true;
 let preloaded = false;
@@ -20,7 +32,7 @@ let preloaded = false;
 function createAudio(type: ChessSoundType): HTMLAudioElement {
   const { mp3, ogg } = SOUND_PATHS[type];
   const audio = new Audio();
-  audio.volume = VOLUME;
+  audio.volume = VOLUME[type];
   audio.preload = "auto";
 
   const canOgg =
@@ -58,15 +70,14 @@ export function preloadChessSounds() {
   if (preloaded || typeof window === "undefined") return;
   preloaded = true;
   (Object.keys(SOUND_PATHS) as ChessSoundType[]).forEach((type) => {
-    const a = getAudio(type);
-    a.load();
+    getAudio(type).load();
   });
 }
 
 function playFileSound(type: ChessSoundType) {
   const base = getAudio(type);
   const node = base.cloneNode(true) as HTMLAudioElement;
-  node.volume = VOLUME;
+  node.volume = VOLUME[type];
   node.currentTime = 0;
   void node.play().catch(() => {
     useFileSounds = false;
@@ -74,7 +85,7 @@ function playFileSound(type: ChessSoundType) {
   });
 }
 
-/* --- Repli synthétique --- */
+/* --- Repli synthétique « killer » --- */
 
 let audioCtx: AudioContext | null = null;
 
@@ -95,20 +106,40 @@ function tone(
   freq: number,
   duration: number,
   volume = 0.15,
-  type: OscillatorType = "sine"
+  type: OscillatorType = "sine",
+  delayMs = 0
 ) {
   const ctx = getContext();
   if (!ctx) return;
+  const start = ctx.currentTime + delayMs / 1000;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = type;
   osc.frequency.value = freq;
-  gain.gain.setValueAtTime(volume, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+  gain.gain.setValueAtTime(volume, start);
+  gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
   osc.connect(gain);
   gain.connect(ctx.destination);
-  osc.start(ctx.currentTime);
-  osc.stop(ctx.currentTime + duration);
+  osc.start(start);
+  osc.stop(start + duration);
+}
+
+/** Alerte percutante — échec */
+function playKillerCheckSynthetic() {
+  tone(90, 0.18, 0.32, "sawtooth");
+  tone(740, 0.07, 0.28, "square", 25);
+  tone(980, 0.09, 0.24, "triangle", 70);
+  tone(520, 0.14, 0.2, "sawtooth", 130);
+}
+
+/** Fanfare grave — mat */
+function playKillerMateSynthetic() {
+  tone(50, 0.4, 0.4, "sine");
+  tone(100, 0.22, 0.32, "sawtooth", 60);
+  tone(196, 0.12, 0.22, "triangle", 120);
+  tone(262, 0.14, 0.22, "triangle", 220);
+  tone(330, 0.14, 0.2, "triangle", 320);
+  tone(392, 0.28, 0.24, "triangle", 420);
 }
 
 function playSyntheticSound(type: ChessSoundType) {
@@ -121,8 +152,10 @@ function playSyntheticSound(type: ChessSoundType) {
       setTimeout(() => tone(220, 0.05, 0.1), 40);
       break;
     case "check":
-      tone(520, 0.12, 0.2, "triangle");
-      setTimeout(() => tone(640, 0.08, 0.15, "triangle"), 90);
+      playKillerCheckSynthetic();
+      break;
+    case "checkmate":
+      playKillerMateSynthetic();
       break;
     case "castle":
       tone(320, 0.05, 0.1);
@@ -142,8 +175,9 @@ export function playChessSound(type: ChessSoundType, enabled = true) {
 }
 
 export function soundForMove(flags: string): ChessSoundType {
+  if (flags.includes("#")) return "checkmate";
+  if (flags.includes("+")) return "check";
   if (flags.includes("c")) return "capture";
-  if (flags.includes("+") || flags.includes("#")) return "check";
   if (flags.includes("k") || flags.includes("q")) return "castle";
   return "move";
 }

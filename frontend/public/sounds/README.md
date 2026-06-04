@@ -1,12 +1,13 @@
 # Sons d'échecs
 
-Fichiers issus du thème **LISP** du projet [Lichess (lila)](https://github.com/lichess-org/lila), licence AGPL-3.0.
+| Fichier      | Événement              | Source Lichess                          |
+|--------------|------------------------|-----------------------------------------|
+| move         | Déplacement            | `public/sound/lisp/Move`                |
+| capture      | Prise                  | `public/sound/lisp/Capture`             |
+| castle       | Roque                  | `public/sound/lisp/Castles`             |
+| check        | **Échec** (alerte)     | `public/sound/sfx/Check`                |
+| checkmate    | **Mat** (victoire)     | `public/sound/sfx/Victory`              |
 
-| Fichier   | Événement        |
-|-----------|------------------|
-| move      | Déplacement      |
-| capture   | Prise            |
-| check     | Échec            |
-| castle    | Roque            |
+Licence : [Lichess lila](https://github.com/lichess-org/lila) (AGPL-3.0).
 
-Source : `public/sound/lisp/` dans le dépôt lichess-org/lila.
+Si les fichiers ne chargent pas, un repli Web Audio « killer » (grave + aigu) est utilisé pour échec et mat.
