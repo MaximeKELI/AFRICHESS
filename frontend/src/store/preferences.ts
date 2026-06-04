@@ -39,10 +39,15 @@ interface PreferencesState {
 
 export const usePreferencesStore = create<PreferencesState>((set) => ({
   boardTheme: readBoardTheme(),
+  pieceSet: readPieceSet(),
   aiCommentsEnabled: readAiComments(),
   setBoardTheme: (id) => {
     localStorage.setItem(BOARD_THEME_KEY, id);
     set({ boardTheme: id });
+  },
+  setPieceSet: (id) => {
+    localStorage.setItem(PIECE_SET_KEY, id);
+    set({ pieceSet: id });
   },
   setAiCommentsEnabled: (enabled) => {
     localStorage.setItem(AI_COMMENTS_KEY, enabled ? "1" : "0");
