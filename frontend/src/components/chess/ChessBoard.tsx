@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Chessboard } from "react-chessboard";
 import { Chess, Square } from "chess.js";
 import { motion } from "framer-motion";
-import { playChessSound, soundForMove } from "@/lib/chessSounds";
+import { playChessSound, preloadChessSounds, soundForMove } from "@/lib/chessSounds";
 import { useAuthStore } from "@/store/auth";
 
 export interface MoveInfo {
@@ -143,6 +143,7 @@ export function ChessBoard({
 
   const onSquareClick = useCallback(
     (square: Square) => {
+      preloadChessSounds();
       if (disabled) return;
 
       if (selectedSquare && legalTargets.includes(square)) {
