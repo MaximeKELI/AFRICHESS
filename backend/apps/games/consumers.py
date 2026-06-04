@@ -114,13 +114,18 @@ class ChessConsumer(AsyncWebsocketConsumer):
             )
 
     async def _on_join(self):
-        await self._set_connected(True)
+        if not getattr(self, "is_spectator", False):
+            await self._set_connected(True)
         payload = await self._get_full_state()
         await self._send_event("game_state", payload)
         await self._send_event("rejoindre_partie", {"ok": True, "game_id": self.game_id})
 
     async def _on_leave(self):
-        if getattr(self, "user", None) and self.user.is_authenticated:
+        if (
+            getattr(self, "user", None)
+            and self.user.is_authenticated
+            and not getattr(self, "is_spectator", False)
+        ):
             await self._set_connected(False)
 
     async def broadcast_move(self, event):
