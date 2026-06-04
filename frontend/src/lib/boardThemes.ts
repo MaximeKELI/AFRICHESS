@@ -1,6 +1,9 @@
 /** Thèmes de cases pour l'échiquier (couleurs claires / foncées + accents). */
 
-import type { FloralPattern } from "./boardPatterns";
+import {
+  buildThemedSquareStyles,
+  type FloralPattern,
+} from "./boardPatterns";
 
 export type BoardThemeId =
   | "wood"
@@ -253,7 +256,6 @@ export const BOARD_THEMES: BoardTheme[] = [
 ];
 
 export function getThemedSquareStyles(theme: BoardTheme) {
-  const { buildThemedSquareStyles } = require("./boardPatterns") as typeof import("./boardPatterns");
   return buildThemedSquareStyles(theme.dark, theme.light, theme.floral);
 }
 
