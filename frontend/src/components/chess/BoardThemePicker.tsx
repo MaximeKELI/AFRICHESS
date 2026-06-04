@@ -107,6 +107,27 @@ export function BoardThemePicker({ compact = false, className }: BoardThemePicke
           />
         ))}
       </div>
+
+      <p className={clsx("opacity-50 mb-2 mt-4 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs")}>
+        Pièces
+      </p>
+      <div className="flex gap-2">
+        {(["classic", "african"] as const).map((id) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => usePreferencesStore.getState().setPieceSet(id)}
+            className={clsx(
+              "px-3 py-1 rounded text-xs capitalize border",
+              usePreferencesStore.getState().pieceSet === id
+                ? "border-africhess-gold bg-africhess-gold/20"
+                : "border-white/20"
+            )}
+          >
+            {id === "african" ? "Africain ♛" : "Classique"}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
