@@ -8,7 +8,15 @@ export function formatApiError(error: unknown): string {
   if (!data) {
     return error.message || "Impossible de contacter le serveur.";
   }
-  if (typeof data === "string") return data;
+  if (typeof data === "string") {
+    if (data.includes("<!DOCTYPE") || data.includes("<html")) {
+      if (data.includes("IntegrityError")) {
+        return "Compte déjà existant ou données invalides. Essayez de vous connecter.";
+      }
+      return "Erreur serveur. Réessayez dans un instant.";
+    }
+    return data;
+  }
   if (typeof data.detail === "string") return data.detail;
   if (Array.isArray(data)) return data.join(" ");
   const messages: string[] = [];

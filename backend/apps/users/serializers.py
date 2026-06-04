@@ -114,16 +114,29 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Avatar invalide.")
         return value
 
+    def validate_username(self, value):
+        if User.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError("Ce nom d'utilisateur est déjà pris.")
+        return value
+
+    def validate_email(self, value):
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("Cet e-mail est déjà utilisé.")
+        return value
+
     def validate(self, data):
         if data["password"] != data["password_confirm"]:
-            raise serializers.ValidationError({"password_confirm": "Passwords do not match."})
+            raise serializers.ValidationError(
+                {"password_confirm": "Les mots de passe ne correspondent pas."}
+            )
         return data
 
     def create(self, validated_data):
-        validated_data.pop("password_confirm")
+        validated_data.pop("password_confirm", None)
         password = validated_data.pop("password")
+        validated_data.setdefault("avatar_preset", "avatar-1")
+        validated_data.setdefault("chess_level", User.ChessLevel.INTERMEDIATE)
         user = User(**validated_data)
         user.set_password(password)
         user.save()
-        # UserStats created by post_save signal
         return user

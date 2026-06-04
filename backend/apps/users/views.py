@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError, transaction
 from rest_framework import generics, permissions, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -15,12 +16,19 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        from .models import UserStats
-        from .services import init_user_ratings
+        try:
+            with transaction.atomic():
+                user = serializer.save()
+                from .services import init_user_ratings
 
-        UserStats.objects.get_or_create(user=user)
-        init_user_ratings(user)
+                init_user_ratings(user)
+        except IntegrityError:
+            return Response(
+                {
+                    "detail": "Nom d'utilisateur ou e-mail déjà utilisé.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
 
