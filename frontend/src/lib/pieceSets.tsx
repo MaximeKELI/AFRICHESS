@@ -1,10 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CustomPieces, Piece } from "react-chessboard/dist/chessboard/types";
 
 export type PieceSetId = "classic" | "african";
 
-const AFRICAN_PIECES: Record<string, string> = {
+const AFRICAN_SYMBOLS: Record<Piece, string> = {
   wP: "♙",
   wN: "♘",
   wB: "♗",
@@ -19,24 +19,33 @@ const AFRICAN_PIECES: Record<string, string> = {
   bK: "♚",
 };
 
-export function customPiecesForSet(
-  setId: PieceSetId
-): Record<string, ReactNode> | undefined {
+/** react-chessboard v4 exige des fonctions (pas des ReactNode statiques). */
+export function customPiecesForSet(setId: PieceSetId): CustomPieces | undefined {
   if (setId !== "african") return undefined;
-  const out: Record<string, ReactNode> = {};
-  for (const [k, v] of Object.entries(AFRICAN_PIECES)) {
-    out[k] = (
-      <span
+
+  const out: CustomPieces = {};
+  for (const [key, symbol] of Object.entries(AFRICAN_SYMBOLS) as [Piece, string][]) {
+    const isWhite = key.startsWith("w");
+    out[key] = ({ squareWidth, isDragging }) => (
+      <div
+        aria-hidden
         style={{
-          fontSize: "2.8rem",
+          width: squareWidth,
+          height: squareWidth,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: Math.round(squareWidth * 0.72),
           lineHeight: 1,
-          filter: k.startsWith("w")
+          userSelect: "none",
+          opacity: isDragging ? 0.85 : 1,
+          filter: isWhite
             ? "drop-shadow(0 0 2px #C9A227)"
             : "drop-shadow(0 0 2px #1a1a1a)",
         }}
       >
-        {v}
-      </span>
+        {symbol}
+      </div>
     );
   }
   return out;

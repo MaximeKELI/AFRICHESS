@@ -273,7 +273,7 @@ function ChessBoardInner({
         animationDuration={pieceAnimMs}
         arePiecesDraggable={!disabled}
         autoPromoteToQueen={false}
-        customPieces={customPieces}
+        {...(customPieces ? { customPieces } : {})}
       />
       {promotionPending && (
         <PromotionDialog
