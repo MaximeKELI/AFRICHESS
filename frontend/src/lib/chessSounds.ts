@@ -7,7 +7,8 @@ export type ChessSoundType =
   | "capture"
   | "check"
   | "checkmate"
-  | "castle";
+  | "castle"
+  | "draw";
 
 const SOUND_PATHS: Record<ChessSoundType, { mp3: string; ogg: string }> = {
   move: { mp3: "/sounds/move.mp3", ogg: "/sounds/move.ogg" },
@@ -23,6 +24,7 @@ const VOLUME: Record<ChessSoundType, number> = {
   castle: 0.75,
   check: 0.9,
   checkmate: 0.95,
+  draw: 0.85,
 };
 
 const audioCache = new Map<ChessSoundType, HTMLAudioElement>();
@@ -161,7 +163,17 @@ function playSyntheticSound(type: ChessSoundType) {
       tone(320, 0.05, 0.1);
       setTimeout(() => tone(380, 0.05, 0.1), 55);
       break;
+    case "draw":
+      playDrawWhistleSynthetic();
+      break;
   }
+}
+
+/** Sifflet court — nulle par répétition */
+function playDrawWhistleSynthetic() {
+  tone(880, 0.12, 0.22, "sine");
+  tone(660, 0.1, 0.18, "sine", 90);
+  tone(880, 0.14, 0.2, "triangle", 180);
 }
 
 export function playChessSound(type: ChessSoundType, enabled = true) {
