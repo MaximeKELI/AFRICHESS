@@ -273,6 +273,7 @@ class MyBadgesView(generics.ListAPIView):
 
 class MyProgressView(generics.ListAPIView):
     serializer_class = UserProgressSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return UserProgress.objects.filter(user=self.request.user).select_related("course")
