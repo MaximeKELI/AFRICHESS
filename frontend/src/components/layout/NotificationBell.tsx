@@ -36,9 +36,18 @@ export function NotificationBell() {
 
   useEffect(() => {
     load();
-    const id = setInterval(load, 30000);
+    const id = setInterval(load, 60000);
     return () => clearInterval(id);
   }, [user]);
+
+  useNotificationsWebSocket(
+    Boolean(user),
+    (snapshot) => setItems(snapshot as Notification[]),
+    (n) => {
+      const item = n as Notification;
+      setItems((prev) => [item, ...prev.filter((x) => x.id !== item.id)]);
+    }
+  );
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {

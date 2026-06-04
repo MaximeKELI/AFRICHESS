@@ -5,6 +5,15 @@ import { tournamentsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import Link from "next/link";
 
+interface StandingRow {
+  user: { id: number; username: string; display_name?: string };
+  score: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  games_played: number;
+}
+
 interface Tournament {
   id: number;
   name: string;
@@ -19,6 +28,8 @@ interface Tournament {
   prize_pool: string;
   starts_at: string;
   country: string;
+  created_by?: { id: number; username: string };
+  standings?: StandingRow[];
 }
 
 export default function TournamentsPage() {
@@ -26,6 +37,8 @@ export default function TournamentsPage() {
   const [list, setList] = useState<Tournament[]>([]);
   const [africanOnly, setAfricanOnly] = useState(true);
   const [status, setStatus] = useState("");
+  const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
+  const [standings, setStandings] = useState<StandingRow[]>([]);
 
   const load = () => {
     tournamentsApi.list(africanOnly).then(({ data }) => {
@@ -52,10 +65,43 @@ export default function TournamentsPage() {
     }
   };
 
+  const startTournament = async (slug: string) => {
+    try {
+      await tournamentsApi.start(slug);
+      setStatus("Tournoi démarré — les parties sont créées");
+      load();
+    } catch {
+      setStatus("Impossible de démarrer (droits ou participants insuffisants)");
+    }
+  };
+
+  const loadStandings = async (slug: string) => {
+    if (expandedSlug === slug) {
+      setExpandedSlug(null);
+      return;
+    }
+    const { data } = await tournamentsApi.standings(slug);
+    setStandings(Array.isArray(data) ? data : []);
+    setExpandedSlug(slug);
+  };
+
+  const openMyGame = async (slug: string) => {
+    try {
+      const { data } = await tournamentsApi.myGame(slug);
+      if (data?.game?.id) {
+        window.location.href = `/play?game=${data.game.id}`;
+      } else {
+        setStatus("Aucune partie active pour vous dans ce tournoi");
+      }
+    } catch {
+      setStatus("Erreur lors de la recherche de partie");
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold mb-2">Tournois</h1>
-      <p className="opacity-70 mb-6">Coupes africaines et arènes communautaires</p>
+      <p className="opacity-70 mb-6">Coupes africaines, arène et suisse</p>
 
       <label className="flex items-center gap-2 mb-6 text-sm">
         <input
@@ -91,17 +137,72 @@ export default function TournamentsPage() {
                 <span>{new Date(t.starts_at).toLocaleDateString("fr-FR")}</span>
               )}
             </div>
-            {t.status === "registration" && user && (
+
+            <div className="flex flex-wrap gap-2">
+              {t.status === "registration" && user && (
+                <button
+                  type="button"
+                  onClick={() => register(t.slug)}
+                  className="px-4 py-2 rounded-lg african-gradient text-white text-sm"
+                >
+                  S&apos;inscrire
+                </button>
+              )}
+              {user &&
+                t.created_by?.id === user.id &&
+                (t.status === "registration" || t.status === "upcoming") && (
+                  <button
+                    type="button"
+                    onClick={() => startTournament(t.slug)}
+                    className="px-4 py-2 rounded-lg border border-africhess-green text-africhess-green text-sm"
+                  >
+                    Démarrer le tournoi
+                  </button>
+                )}
+              {t.status === "active" && user && (
+                <button
+                  type="button"
+                  onClick={() => openMyGame(t.slug)}
+                  className="px-4 py-2 rounded-lg border text-sm"
+                >
+                  Ma partie
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => register(t.slug)}
-                className="px-4 py-2 rounded-lg african-gradient text-white text-sm"
+                onClick={() => loadStandings(t.slug)}
+                className="px-4 py-2 rounded-lg border border-white/20 text-sm"
               >
-                S&apos;inscrire
+                {expandedSlug === t.slug ? "Masquer classement" : "Classement"}
               </button>
+            </div>
+
+            {expandedSlug === t.slug && (
+              <div className="mt-4 border-t border-white/10 pt-3">
+                {standings.length === 0 ? (
+                  <p className="text-sm opacity-60">Pas encore de résultats</p>
+                ) : (
+                  <ol className="text-sm space-y-1">
+                    {standings.map((row, i) => (
+                      <li key={row.user.id} className="flex justify-between">
+                        <span>
+                          {i + 1}. {row.user.display_name || row.user.username}
+                        </span>
+                        <span className="opacity-70">
+                          {row.score} pts ({row.wins}V {row.draws}N {row.losses}D)
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
             )}
+
             {!user && t.status === "registration" && (
-              <Link href="/login" className="text-sm text-africhess-green hover:underline">
+              <Link
+                href="/login"
+                className="text-sm text-africhess-green hover:underline mt-2 inline-block"
+              >
                 Connexion pour s&apos;inscrire
               </Link>
             )}
