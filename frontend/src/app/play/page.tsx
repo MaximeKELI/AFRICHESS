@@ -129,7 +129,7 @@ function PlayContent() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold mb-6 capitalize">Jouer — {mode}</h1>
 
-      <div className="grid lg:grid-cols-[1fr_280px_260px] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px_260px] gap-6">
         <div className="lg:col-span-1">
           <ChessBoard
             fen={display.fen}
