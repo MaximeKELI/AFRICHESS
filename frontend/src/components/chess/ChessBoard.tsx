@@ -8,6 +8,7 @@ import { playChessSound, preloadChessSounds, soundForMove } from "@/lib/chessSou
 import { initAiSpeech } from "@/lib/aiSpeech";
 import { accentRgba, getBoardTheme, getThemedSquareStyles } from "@/lib/boardThemes";
 import { useAuthStore } from "@/store/auth";
+import { customPiecesForSet } from "@/lib/pieceSets";
 import { usePreferencesStore } from "@/store/preferences";
 import { PromotionDialog } from "./PromotionDialog";
 
