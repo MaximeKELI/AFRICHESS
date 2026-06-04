@@ -37,6 +37,7 @@ class CreateAIGameView(APIView):
             mode=ser.validated_data["mode"],
             difficulty=ser.validated_data["difficulty"],
             color=ser.validated_data["color"],
+            include_comments=ser.validated_data.get("include_comments", False),
         )
         return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
 
@@ -67,7 +68,12 @@ class MakeMoveView(APIView):
             game = Game.objects.get(id=game_id)
         except Game.DoesNotExist:
             return Response({"error": "Game not found"}, status=404)
-        result = GameService().make_move(game, request.user, ser.validated_data["uci"])
+        result = GameService().make_move(
+            game,
+            request.user,
+            ser.validated_data["uci"],
+            include_comments=ser.validated_data.get("include_comments", False),
+        )
         if "error" in result:
             return Response(result, status=400)
         game.refresh_from_db()

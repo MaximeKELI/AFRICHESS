@@ -55,7 +55,25 @@ class GameService:
                 game.fen, display_difficulty, target_elo=target_elo
             )
             if ai_move:
-                self._record_move(game, ai_move.uci, ai_move.san, played_by_white=True)
+                fen_before = game.fen
+                comment = ""
+                if include_comments:
+                    eval_after = self.engine.analyze_position(fen_before, depth=10)
+                    comment = generate_move_comment(
+                        fen_before,
+                        ai_move.uci,
+                        ai_move.san,
+                        played_by_ai=True,
+                        move_number=1,
+                        eval_after=eval_after,
+                    )
+                self._record_move(
+                    game,
+                    ai_move.uci,
+                    ai_move.san,
+                    played_by_white=True,
+                    comment=comment,
+                )
         return game
 
     def create_friend_game(self, white, black, mode="blitz"):
@@ -72,7 +90,7 @@ class GameService:
         )
 
     @transaction.atomic
-    def make_move(self, game: Game, user, uci: str) -> dict:
+    def make_move(self, game: Game, user, uci: str, include_comments: bool = False) -> dict:
         if game.status != Game.Status.ACTIVE:
             return {"error": "Game is not active"}
 
@@ -87,9 +105,27 @@ class GameService:
             return {"error": "Illegal move"}
 
         new_fen, san, is_over = result
+        fen_before_player = game.fen
+        player_comment = ""
+        if include_comments and game.is_vs_ai:
+            eval_before = self.engine.analyze_position(fen_before_player, depth=10)
+            eval_after = self.engine.analyze_position(new_fen, depth=10)
+            player_comment = generate_move_comment(
+                fen_before_player,
+                uci,
+                san,
+                played_by_ai=False,
+                move_number=game.move_count + 1,
+                eval_before=eval_before,
+                eval_after=eval_after,
+            )
         move = self._record_move(
-            game, uci, san, played_by_white=is_white_turn,
+            game,
+            uci,
+            san,
+            played_by_white=is_white_turn,
             time_ms=game.white_time_ms if is_white_turn else game.black_time_ms,
+            comment=player_comment,
         )
         game.fen = new_fen
         game.move_count += 1
@@ -108,7 +144,26 @@ class GameService:
                 ai_result = self.engine.apply_move(new_fen, ai_move.uci)
                 if ai_result:
                     nf, ai_san, ai_over = ai_result
-                    self._record_move(game, ai_move.uci, ai_san, played_by_white=not is_white_turn)
+                    ai_comment = ""
+                    if include_comments:
+                        eval_before = self.engine.analyze_position(new_fen, depth=10)
+                        eval_after = self.engine.analyze_position(nf, depth=10)
+                        ai_comment = generate_move_comment(
+                            new_fen,
+                            ai_move.uci,
+                            ai_san,
+                            played_by_ai=True,
+                            move_number=game.move_count + 1,
+                            eval_before=eval_before,
+                            eval_after=eval_after,
+                        )
+                    self._record_move(
+                        game,
+                        ai_move.uci,
+                        ai_san,
+                        played_by_white=not is_white_turn,
+                        comment=ai_comment,
+                    )
                     game.fen = nf
                     game.move_count += 1
                     game.save()
@@ -122,7 +177,15 @@ class GameService:
 
         return response
 
-    def _record_move(self, game, uci, san, played_by_white, time_ms=None):
+    def _record_move(
+        self,
+        game,
+        uci,
+        san,
+        played_by_white,
+        time_ms=None,
+        comment="",
+    ):
         return Move.objects.create(
             game=game,
             move_number=game.move_count + 1,
@@ -131,6 +194,7 @@ class GameService:
             fen_after=game.fen,
             played_by_white=played_by_white,
             time_remaining_ms=time_ms,
+            comment=comment or "",
         )
 
     def _finalize_game(self, game: Game):
