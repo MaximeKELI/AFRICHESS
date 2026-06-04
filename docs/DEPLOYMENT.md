@@ -19,7 +19,17 @@ POSTGRES_HOST=db
 STOCKFISH_PATH=/usr/games/stockfish
 NEXT_PUBLIC_API_URL=https://api.africhess.com/api
 NEXT_PUBLIC_WS_URL=wss://api.africhess.com
+NEXT_PUBLIC_API_ORIGIN=https://api.africhess.com
+FRONTEND_URL=https://africhess.com
+GOOGLE_OAUTH_CLIENT_ID=...
+GOOGLE_OAUTH_CLIENT_SECRET=...
+GITHUB_OAUTH_CLIENT_ID=...
+GITHUB_OAUTH_CLIENT_SECRET=...
 ```
+
+Redirect OAuth (Google Cloud / GitHub) : `https://api.africhess.com/accounts/google/login/callback/` (idem GitHub).
+
+Après login social, redirection vers `https://africhess.com/auth/callback?access=...&refresh=...`.
 
 ## Services Docker
 

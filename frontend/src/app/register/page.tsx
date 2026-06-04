@@ -135,6 +135,7 @@ export default function RegisterPage() {
         >
           {isLoading ? "Création du compte…" : "Créer mon compte"}
         </button>
+        <OAuthButtons />
         <p className="text-center text-sm">
           Déjà inscrit ?{" "}
           <Link href="/login" className="text-africhess-gold underline">

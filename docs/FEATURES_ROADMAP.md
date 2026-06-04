@@ -32,14 +32,23 @@
 | — | Multijoueur | Chrono serveur, matchmaking Celery, spectateur, nulle, revanche |
 | — | Ops | Rate limit, anti-triche, doc déploiement |
 
+## ✅ Compléments audit (juin 2026)
+
+| Sujet | Détail |
+|--------|--------|
+| Push WS notifs | Signal `post_save` → `notify_push` |
+| Messages privés | UI `/friends` (liste + envoi) |
+| E2E Playwright | `frontend/e2e/login-game.spec.ts` + job CI |
+| OAuth | `/accounts/google|github/login/` → `/auth/callback` JWT |
+| Tests étendus | notifications, social, tournois, learning + consumers WS |
+
 ## 🔶 Encore perfectible
 
 | # | Sujet |
 |---|--------|
-| 16 | Tests E2E Playwright complets (scénario login→partie) |
 | 20 | Pièces SVG illustrées (vs Unicode) |
-| — | OAuth Google/GitHub bout-en-bout |
 | — | Push notifications mobile natives |
+| 18 | i18n complet des pages (hors menu) |
 
 ## Tests
 
