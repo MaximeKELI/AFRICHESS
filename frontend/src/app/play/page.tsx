@@ -173,13 +173,24 @@ function PlayContent() {
           />
         </div>
 
-        <GameSidePanel
-          moves={display.moveRows}
-          captured={display.captured}
-          orientation={orientation}
-          isCheck={display.isCheck}
-          turn={display.turn}
-        />
+        <div className="space-y-4">
+          <GameSidePanel
+            moves={display.moveRows}
+            captured={display.captured}
+            orientation={orientation}
+            isCheck={display.isCheck}
+            turn={display.turn}
+          />
+          {isVsAi && (
+            <div className="glass-card p-4">
+              <h3 className="font-semibold text-sm mb-3">Commentaires</h3>
+              <AiCommentaryPanel
+                comments={moveComments}
+                enabled={aiCommentsEnabled}
+              />
+            </div>
+          )}
+        </div>
 
         <div className="space-y-4">
           <div className="glass-card p-4">
