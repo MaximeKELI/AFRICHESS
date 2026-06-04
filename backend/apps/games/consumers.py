@@ -60,6 +60,12 @@ class ChessConsumer(AsyncWebsocketConsumer):
             return
         if event in ("jouer_coup", "move"):
             await self._handle_move(data)
+        elif event in ("proposer_nulle", "offer_draw"):
+            await self._handle_draw_offer()
+        elif event in ("accepter_nulle", "accept_draw"):
+            await self._handle_draw_accept()
+        elif event in ("refuser_nulle", "decline_draw"):
+            await self._handle_draw_decline()
         elif event in ("abandonner_partie", "resign"):
             await self._handle_resign()
         elif event in ("demarrer_partie", "start"):
