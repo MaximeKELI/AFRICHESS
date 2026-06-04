@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Avoid .next owned by Docker root (EACCES on local npm run dev)
-  distDir: process.env.NEXT_DIST_DIR || '.next-dev',
+  // Build outside frontend/ — Docker root-owned .next* caused EACCES locally
+  distDir: process.env.NEXT_DIST_DIR || '../.next-build',
   output: 'standalone',
   images: {
     remotePatterns: [{ protocol: 'http', hostname: 'localhost' }],
