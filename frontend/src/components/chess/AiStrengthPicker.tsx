@@ -1,69 +1,40 @@
 "use client";
 
 import clsx from "clsx";
-import {
-  AI_ELO_PRESETS,
-  AI_ELO_STEP,
-  MAX_AI_ELO,
-  MIN_AI_ELO,
-  clampAiElo,
-  eloStrengthLabel,
-} from "@/lib/aiStrength";
+import { AI_LEVELS, normalizeToPreset, type AiLevelElo } from "@/lib/aiStrength";
 
 interface AiStrengthPickerProps {
   value: number;
-  onChange: (elo: number) => void;
+  onChange: (elo: AiLevelElo) => void;
 }
 
 export function AiStrengthPicker({ value, onChange }: AiStrengthPickerProps) {
-  const elo = clampAiElo(value);
-  const label = eloStrengthLabel(elo);
-  const isMonster = elo >= 4500;
+  const selected = normalizeToPreset(value);
 
   return (
-    <div className="space-y-3">
-      <div className="flex justify-between items-baseline gap-2">
-        <label className="text-sm font-medium">Force de l&apos;IA</label>
-        <span className="font-mono font-bold text-africhess-gold text-lg">{elo}</span>
-      </div>
-      <p className="text-xs opacity-70 -mt-1">
-        {label}
-        {isMonster && (
-          <span className="text-africhess-terracotta font-semibold">
-            {" "}
-            — niveau moteur, très difficile à battre
-          </span>
-        )}
-      </p>
-      <input
-        type="range"
-        min={MIN_AI_ELO}
-        max={MAX_AI_ELO}
-        step={AI_ELO_STEP}
-        value={elo}
-        onChange={(e) => onChange(clampAiElo(Number(e.target.value)))}
-        className="w-full accent-africhess-gold"
-        aria-label="ELO de l'IA"
-      />
-      <div className="flex justify-between text-[10px] opacity-50 font-mono">
-        <span>{MIN_AI_ELO}</span>
-        <span>{MAX_AI_ELO}</span>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {AI_ELO_PRESETS.map((p) => (
+    <div>
+      <p className="text-sm font-medium mb-3">Niveau de l&apos;ordinateur</p>
+      <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+        {AI_LEVELS.map((level) => (
           <button
-            key={p.elo}
+            key={level.elo}
             type="button"
-            onClick={() => onChange(p.elo)}
+            onClick={() => onChange(level.elo)}
             className={clsx(
-              "px-2 py-1 rounded-md text-[10px] font-medium border transition-colors",
-              elo === p.elo
-                ? "border-africhess-gold bg-africhess-gold/20 text-africhess-gold"
-                : "border-white/15 hover:border-white/30 opacity-80"
+              "w-full text-left p-3 rounded-xl border transition-all",
+              selected === level.elo
+                ? "border-africhess-gold bg-africhess-gold/10 ring-1 ring-africhess-gold"
+                : "border-white/10 hover:border-white/25 hover:bg-white/5"
             )}
+            aria-pressed={selected === level.elo}
           >
-            {p.label}
-            <span className="font-mono opacity-60 ml-1">{p.elo}</span>
+            <div className="flex justify-between items-center gap-2">
+              <span className="font-semibold text-sm">{level.label}</span>
+              <span className="text-xs font-mono text-africhess-gold shrink-0">
+                {level.elo} ELO
+              </span>
+            </div>
+            <p className="text-xs opacity-60 mt-0.5">{level.description}</p>
           </button>
         ))}
       </div>

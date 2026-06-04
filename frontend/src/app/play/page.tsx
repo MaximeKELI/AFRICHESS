@@ -10,7 +10,7 @@ import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { gamesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { CHESS_LEVELS } from "@/lib/avatars";
-import { defaultAiEloForLevel } from "@/lib/aiStrength";
+import { defaultAiEloForLevel, type AiLevelElo } from "@/lib/aiStrength";
 import { AiStrengthPicker } from "@/components/chess/AiStrengthPicker";
 import {
   buildGameDisplayFromFen,
@@ -36,10 +36,9 @@ function PlayContent() {
   const [orientation, setOrientation] = useState<"white" | "black">("white");
   const [status, setStatus] = useState<string>("");
   const [searching, setSearching] = useState(false);
-  const [aiEloChoice, setAiEloChoice] = useState(1300);
+  const [aiEloChoice, setAiEloChoice] = useState<AiLevelElo>(1200);
   const [userElo, setUserElo] = useState<number | null>(null);
   const [aiElo, setAiElo] = useState<number | null>(null);
-  const [aiStrengthLabel, setAiStrengthLabel] = useState<string>("");
   const [isVsAi, setIsVsAi] = useState(false);
   const { aiCommentsEnabled } = usePreferencesStore();
   const playerColor = orientation === "white" ? "w" : "b";
@@ -66,7 +65,6 @@ function PlayContent() {
       .then(({ data }) => {
         setUserElo(data.user_elo);
         setAiElo(data.ai_target_elo);
-        if (data.ai_strength_label) setAiStrengthLabel(data.ai_strength_label);
       })
       .catch(() => {});
   }, [user, mode, aiEloChoice]);
@@ -210,12 +208,9 @@ function PlayContent() {
                 IA : <strong className="text-africhess-gold">{aiElo ?? "—"}</strong>
               </span>
             </div>
-            <div className="mb-3">
+            <div className="mb-3 border-t border-white/10 pt-3">
               <AiStrengthPicker value={aiEloChoice} onChange={setAiEloChoice} />
             </div>
-            {aiStrengthLabel && (
-              <p className="text-xs opacity-60 mb-2 text-center">{aiStrengthLabel}</p>
-            )}
             <select
               value={orientation}
               onChange={(e) => setOrientation(e.target.value as "white" | "black")}
