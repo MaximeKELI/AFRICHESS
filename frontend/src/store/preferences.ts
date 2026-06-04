@@ -7,6 +7,9 @@ import {
 
 const BOARD_THEME_KEY = "board_theme";
 const AI_COMMENTS_KEY = "ai_comments";
+const PIECE_SET_KEY = "piece_set";
+
+export type PieceSetId = "classic" | "african";
 
 function readBoardTheme(): BoardThemeId {
   if (typeof window === "undefined") return DEFAULT_BOARD_THEME;
@@ -19,10 +22,18 @@ function readAiComments(): boolean {
   return localStorage.getItem(AI_COMMENTS_KEY) === "1";
 }
 
+function readPieceSet(): PieceSetId {
+  if (typeof window === "undefined") return "classic";
+  const v = localStorage.getItem(PIECE_SET_KEY);
+  return v === "african" ? "african" : "classic";
+}
+
 interface PreferencesState {
   boardTheme: BoardThemeId;
+  pieceSet: PieceSetId;
   aiCommentsEnabled: boolean;
   setBoardTheme: (id: BoardThemeId) => void;
+  setPieceSet: (id: PieceSetId) => void;
   setAiCommentsEnabled: (enabled: boolean) => void;
 }
 
