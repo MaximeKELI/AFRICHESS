@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { formatClock } from "@/lib/clock";
 
@@ -13,7 +14,7 @@ interface GameClockProps {
   label?: string;
 }
 
-export function GameClock({
+function GameClockInner({
   whiteMs,
   blackMs,
   turn,
@@ -22,9 +23,34 @@ export function GameClock({
   incrementMs = 0,
   label,
 }: GameClockProps) {
+  const [white, setWhite] = useState(whiteMs);
+  const [black, setBlack] = useState(blackMs);
+  const turnRef = useRef(turn);
+
+  useEffect(() => {
+    setWhite(whiteMs);
+    setBlack(blackMs);
+  }, [whiteMs, blackMs]);
+
+  useEffect(() => {
+    turnRef.current = turn;
+  }, [turn]);
+
+  useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => {
+      if (turnRef.current === "w") {
+        setWhite((t) => Math.max(0, t - 250));
+      } else {
+        setBlack((t) => Math.max(0, t - 250));
+      }
+    }, 250);
+    return () => clearInterval(id);
+  }, [running]);
+
   const topIsWhite = orientation === "black";
-  const topMs = topIsWhite ? whiteMs : blackMs;
-  const bottomMs = topIsWhite ? blackMs : whiteMs;
+  const topMs = topIsWhite ? white : black;
+  const bottomMs = topIsWhite ? black : white;
   const topTurn = topIsWhite ? turn === "w" : turn === "b";
   const bottomTurn = !topTurn;
 
@@ -39,11 +65,11 @@ export function GameClock({
   }) => (
     <div
       className={clsx(
-        "flex justify-between items-center px-4 py-3 rounded-xl font-mono text-2xl font-bold transition-all",
+        "flex justify-between items-center px-4 py-3 rounded-xl font-mono text-2xl font-bold",
         active && running
           ? "bg-africhess-gold/25 ring-2 ring-africhess-gold text-africhess-gold"
           : "bg-black/20 text-white/90",
-        ms < 10000 && running && "text-africhess-terracotta animate-pulse"
+        ms < 10000 && running && active && "text-africhess-terracotta"
       )}
     >
       <span className="text-xs font-sans font-normal opacity-70">{side}</span>
@@ -64,3 +90,5 @@ export function GameClock({
     </div>
   );
 }
+
+export const GameClock = memo(GameClockInner);
