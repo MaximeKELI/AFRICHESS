@@ -45,6 +45,11 @@ class Command(BaseCommand):
             return
 
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        # Anciens mini-cours remplacés par le parcours 40 documents
+        Course.objects.filter(
+            slug__in=["fondamentaux-echecs", "tactiques-essentielles"]
+        ).update(is_published=False)
+
         created_courses = 0
         created_lessons = 0
 
