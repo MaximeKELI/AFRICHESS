@@ -2,13 +2,13 @@
 
 import { useState, useCallback, Suspense, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { ChessBoard } from "@/components/chess/ChessBoard";
+import { Chess } from "chess.js";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { AiCommentaryPanel } from "@/components/chess/AiCommentaryPanel";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
-import { GameClock } from "@/components/chess/GameClock";
 import { GameAnalysisPanel } from "@/components/chess/GameAnalysisPanel";
+import { PlayBoardSection } from "@/components/play/PlayBoardSection";
 import { gamesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { CHESS_LEVELS } from "@/lib/avatars";
@@ -21,8 +21,8 @@ import {
   type ApiMove,
 } from "@/lib/chessDisplay";
 import { usePreferencesStore } from "@/store/preferences";
-import { useGameClock } from "@/hooks/useGameClock";
 import { MODE_CLOCK_LABEL } from "@/lib/clock";
+import { turnFromFen } from "@/lib/gameDisplayFast";
 import {
   saveActiveGame,
   loadActiveGame,
@@ -64,6 +64,7 @@ function PlayContent() {
   const [aiElo, setAiElo] = useState<number | null>(null);
   const [isVsAi, setIsVsAi] = useState(false);
   const [resumeOffer, setResumeOffer] = useState<ReturnType<typeof loadActiveGame>>(null);
+  const [movePending, setMovePending] = useState(false);
   const { aiCommentsEnabled } = usePreferencesStore();
   const turnStartRef = useRef(Date.now());
 
@@ -74,19 +75,14 @@ function PlayContent() {
   const gameCompleted = gameData.status === "completed";
   const isLiveHuman = Boolean(gameId && !isVsAi);
 
-  const display = useMemo(() => {
+  const panelDisplay = useMemo(() => {
     if (gameData.moves && gameData.moves.length > 0) {
       return buildGameDisplayFromMoves("start", gameData.moves);
     }
     return buildGameDisplayFromFen(gameData.fen);
-  }, [gameData]);
+  }, [gameData.fen, gameData.moves]);
 
-  const { white: clockWhite, black: clockBlack } = useGameClock(
-    gameData.white_time_ms ?? 180000,
-    gameData.black_time_ms ?? 180000,
-    display.turn,
-    Boolean(gameActive)
-  );
+  const turn = turnFromFen(gameData.fen);
 
   const openingName = useMemo(() => {
     const sans = gameData.moves?.map((m) => m.san) ?? [];
@@ -122,9 +118,9 @@ function PlayContent() {
 
   useEffect(() => {
     turnStartRef.current = Date.now();
-  }, [display.turn, gameData.white_time_ms, gameData.black_time_ms]);
+  }, [turn, gameData.white_time_ms, gameData.black_time_ms]);
 
-  const applyGameResponse = (data: GameState & { id?: string }) => {
+  const applyGameResponse = useCallback((data: GameState & { id?: string }) => {
     setGameData({
       fen: data.fen,
       moves: data.moves ?? [],
@@ -139,21 +135,34 @@ function PlayContent() {
     if (data.ai_target_elo) setAiElo(data.ai_target_elo);
     if (data.is_vs_ai !== undefined) setIsVsAi(data.is_vs_ai);
     if (data.status === "completed") clearActiveGame();
-  };
+  }, []);
 
-  const handleWsUpdate = useCallback((payload: WsGamePayload) => {
-      const g = payload.game;
-      applyGameResponse({
-        fen: g.fen,
-        moves: (g.moves ?? []) as ApiMove[],
-        white_time_ms: g.white_time_ms,
-        black_time_ms: g.black_time_ms,
-        increment_ms: g.increment_ms,
-        status: g.status,
-        result: g.result,
-        is_vs_ai: g.is_vs_ai,
+  const wsPendingRef = useRef<WsGamePayload | null>(null);
+  const wsRafRef = useRef(0);
+
+  const handleWsUpdate = useCallback(
+    (payload: WsGamePayload) => {
+      wsPendingRef.current = payload;
+      if (wsRafRef.current) return;
+      wsRafRef.current = requestAnimationFrame(() => {
+        wsRafRef.current = 0;
+        const p = wsPendingRef.current;
+        if (!p) return;
+        const g = p.game;
+        applyGameResponse({
+          fen: g.fen,
+          moves: (g.moves ?? []) as ApiMove[],
+          white_time_ms: g.white_time_ms,
+          black_time_ms: g.black_time_ms,
+          increment_ms: g.increment_ms,
+          status: g.status,
+          result: g.result,
+          is_vs_ai: g.is_vs_ai,
+        });
       });
-    }, []);
+    },
+    [applyGameResponse]
+  );
 
 
   const { connected: wsConnected, sendMove: wsSendMove } = useGameWebSocket(
@@ -185,8 +194,23 @@ function PlayContent() {
 
   const isMyTurn =
     gameActive &&
-    ((display.turn === "w" && playerIsWhite) ||
-      (display.turn === "b" && !playerIsWhite));
+    ((turn === "w" && playerIsWhite) || (turn === "b" && !playerIsWhite));
+
+  const applyOptimisticUci = useCallback((uci: string) => {
+    setGameData((prev) => {
+      try {
+        const chess = new Chess(prev.fen === "start" ? undefined : prev.fen);
+        const from = uci.slice(0, 2);
+        const to = uci.slice(2, 4);
+        const promotion = uci.length > 4 ? (uci[4] as "q" | "r" | "b" | "n") : undefined;
+        const m = chess.move({ from, to, promotion });
+        if (!m) return prev;
+        return { ...prev, fen: chess.fen() };
+      } catch {
+        return prev;
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (!user || !gameFromUrl) return;
@@ -261,17 +285,17 @@ function PlayContent() {
 
   const handleMove = useCallback(
     async (uci: string) => {
-      if (!gameId) return;
+      if (!gameId || gameCompleted) return;
       const spentMs = Date.now() - turnStartRef.current;
+      applyOptimisticUci(uci);
+      turnStartRef.current = Date.now();
 
       if (isLiveHuman && wsConnected) {
         const sent = wsSendMove(uci, spentMs);
-        if (sent) {
-          turnStartRef.current = Date.now();
-          return;
-        }
+        if (sent) return;
       }
 
+      setMovePending(true);
       try {
         const { data } = await gamesApi.move(gameId, uci, {
           includeComments: isVsAi && aiCommentsEnabled,
@@ -282,10 +306,23 @@ function PlayContent() {
           setStatus(`Fin de partie : ${data.result || "Terminée"}`);
         }
       } catch {
+        gamesApi.get(gameId).then(({ data }) => applyGameResponse(data)).catch(() => {});
         setStatus("Coup invalide ou temps écoulé");
+      } finally {
+        setMovePending(false);
       }
     },
-    [gameId, isVsAi, aiCommentsEnabled, isLiveHuman, wsConnected, wsSendMove]
+    [
+      gameId,
+      gameCompleted,
+      isVsAi,
+      aiCommentsEnabled,
+      isLiveHuman,
+      wsConnected,
+      wsSendMove,
+      applyOptimisticUci,
+      applyGameResponse,
+    ]
   );
 
   const findMatch = async () => {
@@ -338,30 +375,29 @@ function PlayContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px_260px] gap-6">
         <div className="space-y-3">
-          {gameId && (
-            <GameClock
-              whiteMs={clockWhite}
-              blackMs={clockBlack}
-              turn={display.turn}
-              running={Boolean(gameActive)}
-              orientation={orientation}
-              incrementMs={gameData.increment_ms ?? 0}
-              label={MODE_CLOCK_LABEL[mode] ?? mode}
-            />
-          )}
           {isLiveHuman && (
             <p className="text-xs text-center opacity-60">
               {wsConnected ? "● En direct (WebSocket)" : "○ Connexion temps réel…"}
             </p>
           )}
-          <ChessBoard
-            fen={display.fen}
+          {movePending && isVsAi && (
+            <p className="text-xs text-center text-africhess-gold animate-pulse">
+              L&apos;IA réfléchit…
+            </p>
+          )}
+          <PlayBoardSection
+            fen={gameData.fen}
+            moves={gameData.moves}
             orientation={orientation}
             onMove={handleMove}
-            disabled={!gameId || gameCompleted || (isLiveHuman && !isMyTurn)}
+            disabled={!gameId || gameCompleted || movePending || (isLiveHuman && !isMyTurn)}
             playerColor={playerColor as "w" | "b"}
-            lastMove={display.lastMove}
-            playSoundOnFenChange={true}
+            showClock={Boolean(gameId)}
+            whiteMs={gameData.white_time_ms ?? 180000}
+            blackMs={gameData.black_time_ms ?? 180000}
+            clockRunning={Boolean(gameActive)}
+            incrementMs={gameData.increment_ms ?? 0}
+            clockLabel={MODE_CLOCK_LABEL[mode] ?? mode}
           />
           {isLiveHuman && gameActive && (
             <div className="flex flex-wrap gap-2 justify-center max-w-[560px] mx-auto">
@@ -412,11 +448,11 @@ function PlayContent() {
 
         <div className="space-y-4">
           <GameSidePanel
-            moves={display.moveRows}
-            captured={display.captured}
+            moves={panelDisplay.moveRows}
+            captured={panelDisplay.captured}
             orientation={orientation}
-            isCheck={display.isCheck}
-            turn={display.turn}
+            isCheck={panelDisplay.isCheck}
+            turn={panelDisplay.turn}
             openingName={openingName}
           />
           {isVsAi && (
