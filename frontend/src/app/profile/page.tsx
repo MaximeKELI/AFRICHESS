@@ -88,8 +88,11 @@ export default function ProfilePage() {
         />
         <div>
           <h1 className="font-display text-3xl font-bold">{user.display_name || user.username}</h1>
-          <p className="opacity-60">
-            {user.country} · {levelLabel}
+          <p className="opacity-60 flex items-center gap-1.5 flex-wrap">
+            <span>{countryFlag(user.country)}</span>
+            <span>{displayCountry(user.country, locale)}</span>
+            <span>·</span>
+            <span>{levelLabel}</span>
           </p>
         </div>
       </div>

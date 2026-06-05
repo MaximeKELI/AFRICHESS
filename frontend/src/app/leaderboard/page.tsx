@@ -6,7 +6,8 @@ import { useAuthStore } from "@/store/auth";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { useTranslation } from "@/hooks/useTranslation";
-import { AFRICAN_COUNTRIES } from "@/lib/countries";
+import { AFRICAN_COUNTRIES, displayCountry } from "@/lib/countries";
+import { countryFlag } from "@/lib/worldCountries";
 
 interface Entry {
   user: { username: string; display_name: string; country: string; title?: string };
@@ -15,7 +16,7 @@ interface Entry {
 }
 
 export default function LeaderboardPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [tab, setTab] = useState<"global" | "african">("african");
   const [mode, setMode] = useState("blitz");
   const [entries, setEntries] = useState<Entry[]>([]);
