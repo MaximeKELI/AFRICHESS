@@ -62,8 +62,6 @@ class CreateAIGameView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        if not request.user.is_authenticated:
-            return Response({"error": "Authentication required"}, status=401)
         ser = CreateAIGameSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
         vd = ser.validated_data
@@ -161,11 +159,15 @@ def active_games(request):
 
 
 class AnalyzeGameView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request, game_id):
         try:
             game = Game.objects.get(id=game_id)
         except Game.DoesNotExist:
             return Response({"error": "Game not found"}, status=404)
+        if not can_analyze_game(request.user, game):
+            return Response({"error": "Forbidden"}, status=403)
         move_rows = list(
             game.moves.order_by("move_number").values_list("uci", "played_by_white")
         )
@@ -203,6 +205,8 @@ class AnalyzeGameView(APIView):
 
 
 class MatchmakingView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request):
         ser = MatchmakingJoinSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
@@ -253,11 +257,15 @@ class LiveGamesView(APIView):
 
 
 class DrawOfferView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request, game_id):
         try:
             game = Game.objects.get(id=game_id)
         except Game.DoesNotExist:
             return Response({"error": "Not found"}, status=404)
+        if not can_play_game(request.user, game):
+            return Response({"error": "Forbidden"}, status=403)
         result = offer_draw(game, request.user)
         if "error" in result:
             return Response(result, status=400)
@@ -265,11 +273,15 @@ class DrawOfferView(APIView):
 
 
 class DrawRespondView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request, game_id):
         try:
             game = Game.objects.get(id=game_id)
         except Game.DoesNotExist:
             return Response({"error": "Not found"}, status=404)
+        if not can_play_game(request.user, game):
+            return Response({"error": "Forbidden"}, status=403)
         accept = request.data.get("accept", False)
         if accept:
             result = accept_draw(game, request.user)
@@ -282,11 +294,15 @@ class DrawRespondView(APIView):
 
 
 class RematchView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request, game_id):
         try:
             game = Game.objects.get(id=game_id)
         except Game.DoesNotExist:
             return Response({"error": "Not found"}, status=404)
+        if not user_is_participant(request.user, game):
+            return Response({"error": "Forbidden"}, status=403)
         new_game = create_rematch(game, request.user)
         if not new_game:
             return Response({"error": "Impossible"}, status=400)

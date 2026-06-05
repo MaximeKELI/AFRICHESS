@@ -61,7 +61,7 @@ export function isAiLevelElo(elo: number): elo is AiLevelElo {
 }
 
 export function normalizeToPreset(elo: number): AiLevelElo {
-  let best = AI_LEVELS[0].elo;
+  let best: AiLevelElo = AI_LEVELS[0].elo;
   let diff = Math.abs(elo - best);
   for (const level of AI_LEVELS) {
     const d = Math.abs(elo - level.elo);

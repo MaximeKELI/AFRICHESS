@@ -9,9 +9,12 @@ const FIELD_LABELS: Record<string, string> = {
   detail: "",
 };
 
-export function formatApiError(error: unknown): string {
+export function formatApiError(
+  error: unknown,
+  fallback = "Une erreur est survenue."
+): string {
   if (!(error instanceof AxiosError)) {
-    return "Une erreur est survenue.";
+    return fallback;
   }
 
   if (!error.response) {

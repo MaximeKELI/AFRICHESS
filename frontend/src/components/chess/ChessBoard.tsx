@@ -74,7 +74,7 @@ function ChessBoardInner({
       const desktop =
         typeof window !== "undefined" &&
         window.matchMedia("(min-width: 1024px)").matches;
-      const cap = desktop ? Math.min(window.innerWidth * 0.58, 800) : w;
+      const cap = desktop ? Math.min(window.innerWidth * 0.72, 920) : w;
       setBoardWidth(Math.floor(Math.min(w, cap)));
     };
     update();

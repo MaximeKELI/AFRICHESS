@@ -10,13 +10,18 @@ export type ChessSoundType =
   | "castle"
   | "draw";
 
-const SOUND_PATHS: Record<ChessSoundType, { mp3: string; ogg: string }> = {
+const FILE_SOUND_PATHS = {
   move: { mp3: "/sounds/move.mp3", ogg: "/sounds/move.ogg" },
   capture: { mp3: "/sounds/capture.mp3", ogg: "/sounds/capture.ogg" },
   check: { mp3: "/sounds/check.mp3", ogg: "/sounds/check.ogg" },
   checkmate: { mp3: "/sounds/checkmate.mp3", ogg: "/sounds/checkmate.ogg" },
   castle: { mp3: "/sounds/castle.mp3", ogg: "/sounds/castle.ogg" },
-};
+} as const;
+
+type FileSoundType = keyof typeof FILE_SOUND_PATHS;
+
+const SOUND_PATHS: Record<FileSoundType, { mp3: string; ogg: string }> =
+  FILE_SOUND_PATHS;
 
 const VOLUME: Record<ChessSoundType, number> = {
   move: 0.75,
@@ -27,11 +32,11 @@ const VOLUME: Record<ChessSoundType, number> = {
   draw: 0.85,
 };
 
-const audioCache = new Map<ChessSoundType, HTMLAudioElement>();
+const audioCache = new Map<FileSoundType, HTMLAudioElement>();
 let useFileSounds = true;
 let preloaded = false;
 
-function createAudio(type: ChessSoundType): HTMLAudioElement {
+function createAudio(type: FileSoundType): HTMLAudioElement {
   const { mp3, ogg } = SOUND_PATHS[type];
   const audio = new Audio();
   audio.volume = VOLUME[type];
@@ -58,7 +63,7 @@ function createAudio(type: ChessSoundType): HTMLAudioElement {
   return audio;
 }
 
-function getAudio(type: ChessSoundType): HTMLAudioElement {
+function getAudio(type: FileSoundType): HTMLAudioElement {
   let audio = audioCache.get(type);
   if (!audio) {
     audio = createAudio(type);
@@ -71,12 +76,12 @@ function getAudio(type: ChessSoundType): HTMLAudioElement {
 export function preloadChessSounds() {
   if (preloaded || typeof window === "undefined") return;
   preloaded = true;
-  (Object.keys(SOUND_PATHS) as ChessSoundType[]).forEach((type) => {
+  (Object.keys(SOUND_PATHS) as FileSoundType[]).forEach((type) => {
     getAudio(type).load();
   });
 }
 
-function playFileSound(type: ChessSoundType) {
+function playFileSound(type: FileSoundType) {
   const base = getAudio(type);
   const node = base.cloneNode(true) as HTMLAudioElement;
   node.volume = VOLUME[type];

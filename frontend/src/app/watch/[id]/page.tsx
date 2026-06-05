@@ -5,9 +5,20 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { gamesApi } from "@/lib/api";
-import { useGameWebSocket } from "@/hooks/useGameWebSocket";
+import { useGameWebSocket, type WsGamePayload } from "@/hooks/useGameWebSocket";
 import { buildGameDisplayFromFen, buildGameDisplayFromMoves, type ApiMove } from "@/lib/chessDisplay";
 import Link from "next/link";
+
+function wsMovesToApi(
+  raw: WsGamePayload["game"]["moves"]
+): ApiMove[] {
+  return (raw ?? []).map((m, i) => ({
+    uci: m.uci,
+    san: m.san,
+    played_by_white: m.played_by_white,
+    move_number: i + 1,
+  }));
+}
 
 export default function WatchGamePage() {
   const { id } = useParams<{ id: string }>();
@@ -15,9 +26,9 @@ export default function WatchGamePage() {
   const [moves, setMoves] = useState<ApiMove[]>([]);
   const [status, setStatus] = useState("");
 
-  const handleUpdate = useCallback((payload: { game: { fen: string; moves?: ApiMove[]; status?: string } }) => {
+  const handleUpdate = useCallback((payload: WsGamePayload) => {
     setFen(payload.game.fen);
-    setMoves(payload.game.moves ?? []);
+    setMoves(wsMovesToApi(payload.game.moves));
     setStatus(payload.game.status ?? "");
   }, []);
 

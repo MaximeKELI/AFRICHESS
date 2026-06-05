@@ -31,8 +31,8 @@ export function getLevelElo(levelId?: string | null): number {
   return found?.elo ?? 1200;
 }
 
-/** @deprecated Utiliser aiStrength.ts — curseur 1–20 → 800–5000 ELO */
+/** @deprecated Utiliser aiStrength.ts — curseur 1–20 → 100–5000 ELO */
 export function difficultyToElo(difficulty: number): number {
   const d = Math.min(20, Math.max(1, difficulty));
-  return Math.round(800 + ((5000 - 800) * (d - 1)) / 19);
+  return Math.round(100 + ((5000 - 100) * (d - 1)) / 19);
 }
