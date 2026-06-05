@@ -324,10 +324,10 @@ export default function PuzzlesPage() {
               onClick={submit}
               className="px-6 py-2 african-gradient text-white rounded-lg font-medium"
             >
-              Valider
+              {t("puzzles.validate")}
             </button>
             <button type="button" onClick={reset} className="px-6 py-2 border rounded-lg">
-              Recommencer
+              {t("puzzles.reset")}
             </button>
             {tab === "training" && result?.startsWith("✓") && (
               <button
