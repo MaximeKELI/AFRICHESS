@@ -176,7 +176,7 @@ export default function FriendsPage() {
                   onClick={() => accept(f.id)}
                   className="text-sm px-3 py-1 rounded-lg border border-africhess-green text-africhess-green"
                 >
-                  Accepter
+                  {t("friends.pending.accept")}
                 </button>
               </li>
             ))}
@@ -187,7 +187,7 @@ export default function FriendsPage() {
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="glass-card p-4">
           <div className="flex justify-between items-center mb-3">
-            <h2 className="font-semibold">Mes amis ({friends.length})</h2>
+            <h2 className="font-semibold">{t("friends.list.title", { count: friends.length })}</h2>
             <select
               value={mode}
               onChange={(e) => setMode(e.target.value)}
@@ -199,7 +199,7 @@ export default function FriendsPage() {
             </select>
           </div>
           {friends.length === 0 ? (
-            <p className="opacity-60 text-sm">Aucun ami pour l&apos;instant.</p>
+            <p className="opacity-60 text-sm">{t("friends.list.empty")}</p>
           ) : (
             <ul className="space-y-2">
               {friends.map((f) => (
@@ -224,7 +224,7 @@ export default function FriendsPage() {
                     onClick={() => challenge(f.username)}
                     className="text-sm px-3 py-1 rounded-lg african-gradient text-white ml-2"
                   >
-                    Défier
+                    {t("friends.challenge")}
                   </button>
                 </li>
               ))}
