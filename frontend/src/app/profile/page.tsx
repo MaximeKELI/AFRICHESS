@@ -28,7 +28,8 @@ export default function ProfilePage() {
     ratingsApi
       .me()
       .then(({ data }) => {
-        setRatings(data);
+        const list = Array.isArray(data) ? data : data.results ?? [];
+        setRatings(list);
         setRatingsError(null);
       })
       .catch((err) => {

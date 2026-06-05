@@ -81,7 +81,7 @@ export function RecentGamesList({ limit = 15, showTitle = true }: RecentGamesLis
     gamesApi
       .list()
       .then(({ data }) => {
-        const rows = Array.isArray(data) ? data : [];
+        const rows = Array.isArray(data) ? data : data.results ?? [];
         setGames(rows.slice(0, limit));
       })
       .catch((err) => {
