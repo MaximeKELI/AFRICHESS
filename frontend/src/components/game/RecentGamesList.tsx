@@ -6,6 +6,8 @@ import { gamesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { formatApiError } from "@/lib/errors";
 import { pickAiAvatar } from "@/lib/avatars";
+import { useTranslation } from "@/hooks/useTranslation";
+import { LOCALE_DATE } from "@/lib/i18n/labels";
 
 export interface RecentGameRow {
   id: string;
@@ -22,7 +24,8 @@ export interface RecentGameRow {
 
 function opponentLabel(
   game: RecentGameRow,
-  userId: number
+  userId: number,
+  t: (key: string) => string
 ): string {
   if (game.is_vs_ai) {
     const ai = pickAiAvatar(game.ai_target_elo);
@@ -31,23 +34,23 @@ function opponentLabel(
   }
   const isWhite = game.white_player?.id === userId;
   const opp = isWhite ? game.black_player : game.white_player;
-  return opp?.display_name || opp?.username || "Adversaire";
+  return opp?.display_name || opp?.username || t("play.recent.opponent");
 }
 
-function outcomeLabel(game: RecentGameRow, userId: number): string {
-  if (game.status === "active") return "En cours";
-  if (!game.result || game.result === "*") return "Annulée";
+function outcomeLabel(game: RecentGameRow, userId: number, t: (key: string) => string): string {
+  if (game.status === "active") return t("play.recent.inProgress");
+  if (!game.result || game.result === "*") return t("play.recent.cancelled");
   const isWhite = game.white_player?.id === userId;
-  if (game.result === "1/2-1/2") return "Nulle";
-  if (game.result === "1-0") return isWhite ? "Victoire" : "Défaite";
-  if (game.result === "0-1") return isWhite ? "Défaite" : "Victoire";
+  if (game.result === "1/2-1/2") return t("play.recent.draw");
+  if (game.result === "1-0") return isWhite ? t("play.recent.win") : t("play.recent.loss");
+  if (game.result === "0-1") return isWhite ? t("play.recent.loss") : t("play.recent.win");
   return game.result;
 }
 
-function outcomeClass(label: string): string {
-  if (label === "Victoire") return "text-africhess-green";
-  if (label === "Défaite") return "text-africhess-terracotta";
-  if (label === "En cours") return "text-africhess-gold";
+function outcomeClass(label: string, t: (key: string) => string): string {
+  if (label === t("play.recent.win")) return "text-africhess-green";
+  if (label === t("play.recent.loss")) return "text-africhess-terracotta";
+  if (label === t("play.recent.inProgress")) return "text-africhess-gold";
   return "opacity-70";
 }
 
@@ -56,16 +59,9 @@ interface RecentGamesListProps {
   showTitle?: boolean;
 }
 
-const LOCALE_MAP: Record<string, string> = {
-  fr: "fr-FR",
-  en: "en-GB",
-  ar: "ar-EG",
-  pt: "pt-PT",
-  sw: "sw-KE",
-};
-
 export function RecentGamesList({ limit = 15, showTitle = true }: RecentGamesListProps) {
-  const { user, locale } = useAuthStore();
+  const { user } = useAuthStore();
+  const { t, locale } = useTranslation();
   const [games, setGames] = useState<RecentGameRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,30 +82,30 @@ export function RecentGamesList({ limit = 15, showTitle = true }: RecentGamesLis
       })
       .catch((err) => {
         setGames([]);
-        setError(formatApiError(err, "Impossible de charger l'historique."));
+        setError(formatApiError(err, t("common.error.loadHistory")));
       })
       .finally(() => setLoading(false));
-  }, [user, limit]);
+  }, [user, limit, t]);
 
   if (!user) return null;
 
   return (
     <div className="glass-card p-5">
       {showTitle && (
-        <h2 className="font-semibold text-lg mb-3">Parties précédentes</h2>
+        <h2 className="font-semibold text-lg mb-3">{t("play.recent.title")}</h2>
       )}
-      {loading && <p className="text-sm opacity-60">Chargement…</p>}
+      {loading && <p className="text-sm opacity-60">{t("common.loading")}</p>}
       {error && <p className="text-sm text-africhess-terracotta">{error}</p>}
       {!loading && !error && games.length === 0 && (
-        <p className="text-sm opacity-60">Aucune partie enregistrée pour l&apos;instant.</p>
+        <p className="text-sm opacity-60">{t("common.recent.empty")}</p>
       )}
       {!loading && games.length > 0 && (
         <ul className="space-y-2 max-h-[min(50vh,420px)] overflow-y-auto pr-1">
           {games.map((g) => {
-            const outcome = outcomeLabel(g, user.id);
+            const outcome = outcomeLabel(g, user.id, t);
             const date = g.ended_at || g.created_at;
             const when = date
-              ? new Date(date).toLocaleDateString(LOCALE_MAP[locale] ?? "fr-FR", {
+              ? new Date(date).toLocaleDateString(LOCALE_DATE[locale] ?? "fr-FR", {
                   day: "numeric",
                   month: "short",
                   hour: "2-digit",
@@ -128,11 +124,11 @@ export function RecentGamesList({ limit = 15, showTitle = true }: RecentGamesLis
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate capitalize">
-                      {g.mode} · {opponentLabel(g, user.id)}
+                      {g.mode} · {opponentLabel(g, user.id, t)}
                     </p>
                     <p className="text-xs opacity-50">{when}</p>
                   </div>
-                  <span className={`text-sm font-semibold shrink-0 ${outcomeClass(outcome)}`}>
+                  <span className={`text-sm font-semibold shrink-0 ${outcomeClass(outcome, t)}`}>
                     {outcome}
                   </span>
                 </Link>
