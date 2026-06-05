@@ -35,6 +35,7 @@ interface Tournament {
 
 export default function TournamentsPage() {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [list, setList] = useState<Tournament[]>([]);
   const [africanOnly, setAfricanOnly] = useState(true);
   const [status, setStatus] = useState("");

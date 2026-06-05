@@ -6,6 +6,7 @@ import { Bell } from "lucide-react";
 import { notificationsApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
 import { useAuthStore } from "@/store/auth";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNotificationsWebSocket } from "@/hooks/useNotificationsWebSocket";
 
 interface Notification {
@@ -20,6 +21,7 @@ interface Notification {
 
 export function NotificationBell() {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [items, setItems] = useState<Notification[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -35,9 +37,9 @@ export function NotificationBell() {
       })
       .catch((err) => {
         setItems([]);
-        setLoadError(formatApiError(err, "Notifications indisponibles."));
+        setLoadError(formatApiError(err, t("notifications.error.load")));
       });
-  }, [user]);
+  }, [user, t]);
 
   useEffect(() => {
     load();
@@ -81,7 +83,7 @@ export function NotificationBell() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="p-2 rounded-lg hover:bg-white/10 relative"
-        aria-label="Notifications"
+        aria-label={t("notifications.title")}
       >
         <Bell size={18} />
         {unread > 0 && (

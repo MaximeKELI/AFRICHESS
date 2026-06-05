@@ -82,15 +82,15 @@ export default function CommunityPage() {
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold mb-4 text-africhess-green">Chess Clubs</h2>
+        <h2 className="text-xl font-semibold mb-4 text-africhess-green">{t("community.clubs.title")}</h2>
         <div className="grid sm:grid-cols-2 gap-4">
           {clubs.length > 0 ? clubs.map((c) => (
             <div key={c.slug} className="glass-card p-4">
               <h3 className="font-semibold">{c.name}</h3>
-              <p className="text-sm opacity-60">{c.country} · {c.member_count} members</p>
+              <p className="text-sm opacity-60">{c.country} · {t("community.clubs.members", { count: c.member_count })}</p>
             </div>
           )) : (
-            <p className="opacity-60">Create the first African chess club!</p>
+            <p className="opacity-60">{t("community.clubs.empty")}</p>
           )}
         </div>
       </section>
