@@ -270,7 +270,7 @@ export default function FriendsPage() {
                   value={dmText}
                   onChange={(e) => setDmText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendDm()}
-                  placeholder="Votre message…"
+                  placeholder={t("friends.messages.placeholder")}
                   className="flex-1 border rounded-lg px-3 py-2 bg-transparent text-sm"
                 />
                 <button
