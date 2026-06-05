@@ -354,7 +354,7 @@ def build_user_stats_payload(user) -> dict[str, Any]:
         "rating_history": rating_history,
         "activity": activity_series,
         "analysis": {
-            "games_analyzed": analysis_agg["games_analyzed"] or 0,
+            "games_analyzed": games_analyzed,
             "avg_accuracy": avg_accuracy,
             "avg_blunders": avg_blunders,
         },
