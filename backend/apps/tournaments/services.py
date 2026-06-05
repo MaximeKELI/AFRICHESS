@@ -11,14 +11,25 @@ from .models import Tournament, TournamentParticipant, TournamentRound
 
 
 class TournamentEngine:
+    def participant_users(self, tournament: Tournament):
+        return [
+            tp.user
+            for tp in TournamentParticipant.objects.filter(
+                tournament=tournament
+            ).select_related("user")
+        ]
+
+    def participant_count(self, tournament: Tournament) -> int:
+        return TournamentParticipant.objects.filter(tournament=tournament).count()
+
     def ensure_participant(self, tournament: Tournament, user):
-        tournament.participants.add(user)
         TournamentParticipant.objects.get_or_create(
             tournament=tournament, user=user
         )
+        tournament.participants.add(user)
 
     def start_tournament(self, tournament: Tournament) -> Tournament:
-        if tournament.participants.count() < 2:
+        if self.participant_count(tournament) < 2:
             raise ValueError("Au moins 2 participants requis")
         tournament.status = Tournament.Status.ACTIVE
         tournament.save(update_fields=["status"])
@@ -29,7 +40,7 @@ class TournamentEngine:
         return tournament
 
     def _start_arena_round(self, tournament: Tournament, round_no: int):
-        players = list(tournament.participants.all())
+        players = self.participant_users(tournament)
         random.shuffle(players)
         rnd = TournamentRound.objects.create(
             tournament=tournament, round_number=round_no
@@ -49,12 +60,11 @@ class TournamentEngine:
             )
         )
         if len(standings) < 2:
-            standings = [
-                TournamentParticipant.objects.get_or_create(
-                    tournament=tournament, user=u
-                )[0]
-                for u in tournament.participants.all()
-            ]
+            standings = list(
+                TournamentParticipant.objects.filter(
+                    tournament=tournament
+                ).select_related("user")
+            )
         random.shuffle(standings)
         rnd = TournamentRound.objects.create(
             tournament=tournament, round_number=round_no

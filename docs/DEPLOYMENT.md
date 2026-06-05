@@ -25,6 +25,8 @@ ALLOWED_HOSTS=api.africhess.com
 CORS_ALLOWED_ORIGINS=https://africhess.com
 REDIS_URL=redis://redis:6379/0
 POSTGRES_HOST=db
+POSTGRES_SSLMODE=prefer
+DB_CONN_MAX_AGE=600
 STOCKFISH_PATH=/usr/games/stockfish
 NEXT_PUBLIC_API_URL=https://api.africhess.com/api
 NEXT_PUBLIC_WS_URL=wss://api.africhess.com
@@ -67,7 +69,30 @@ DRF throttling activé (`anon` 200/h, `user` 3000/h).
 - Max 45 coups/minute en partie humaine
 - Intervalle minimum entre coups identiques
 
+## Base de données (production)
+
+- `CONN_MAX_AGE=600` et `CONN_HEALTH_CHECKS=True` (Daphne + Celery)
+- `POSTGRES_SSLMODE=require` recommandé hors docker-compose local
+- Index composites sur notifications, parties, puzzles (migrations automatiques)
+
+### Sauvegarde PostgreSQL
+
+```bash
+chmod +x scripts/backup_db.sh
+./scripts/backup_db.sh
+# → backups/africhess_YYYYMMDD_HHMMSS.dump (rétention 14 fichiers)
+```
+
+Restauration :
+
+```bash
+docker exec -i africhess-db-1 pg_restore -U africhess -d africhess --clean < backups/votre.dump
+```
+
+Cron suggéré (quotidien 3h) : `0 3 * * * /chemin/AFRICHESS/scripts/backup_db.sh`
+
 ## Monitoring recommandé
 
 - Sentry (erreurs Django + Next)
 - Healthcheck `GET /api/schema/`
+- `pg_isready` sur le conteneur `db`

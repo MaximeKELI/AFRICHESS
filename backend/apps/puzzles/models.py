@@ -22,6 +22,10 @@ class Puzzle(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["is_daily", "daily_date"]),
+            models.Index(fields=["difficulty"]),
+        ]
 
     def __str__(self):
         return f"Puzzle #{self.pk} ({self.difficulty})"
@@ -37,3 +41,6 @@ class PuzzleAttempt(models.Model):
 
     class Meta:
         unique_together = ["user", "puzzle", "created_at"]
+        indexes = [
+            models.Index(fields=["user", "solved"]),
+        ]

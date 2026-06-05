@@ -5,7 +5,8 @@ from rest_framework.views import APIView
 
 from apps.games.serializers import GameSerializer
 
-from .models import Tournament
+from .models import Tournament, TournamentParticipant
+from .querysets import tournament_detail_queryset, tournament_list_queryset
 from .serializers import TournamentParticipantSerializer, TournamentSerializer
 from .services import TournamentEngine
 
@@ -15,17 +16,19 @@ class TournamentListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        qs = Tournament.objects.all()
+        qs = tournament_list_queryset()
         if self.request.query_params.get("african"):
             qs = qs.filter(is_african_cup=True)
         return qs.order_by("-starts_at")
 
 
 class TournamentDetailView(generics.RetrieveAPIView):
-    queryset = Tournament.objects.all()
     serializer_class = TournamentSerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = "slug"
+
+    def get_queryset(self):
+        return tournament_detail_queryset()
 
 
 class RegisterTournamentView(APIView):
@@ -36,9 +39,11 @@ class RegisterTournamentView(APIView):
             tournament = Tournament.objects.get(slug=slug, status=Tournament.Status.REGISTRATION)
         except Tournament.DoesNotExist:
             return Response({"error": "Tournament not available"}, status=404)
-        if tournament.participants.count() >= tournament.max_players:
+        enrolled = TournamentParticipant.objects.filter(tournament=tournament).count()
+        if enrolled >= tournament.max_players:
             return Response({"error": "Tournament full"}, status=400)
         TournamentEngine().ensure_participant(tournament, request.user)
+        tournament = tournament_detail_queryset().get(pk=tournament.pk)
         return Response(TournamentSerializer(tournament).data)
 
 

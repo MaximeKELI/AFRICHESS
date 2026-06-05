@@ -48,10 +48,16 @@ class TournamentSerializer(serializers.ModelSerializer):
         ]
 
     def get_participant_count(self, obj):
-        return obj.participants.count()
+        if hasattr(obj, "participant_count"):
+            return obj.participant_count
+        return TournamentParticipant.objects.filter(tournament=obj).count()
 
     def get_standings(self, obj):
-        qs = TournamentParticipant.objects.filter(tournament=obj).select_related(
-            "user"
-        )[:20]
+        top = getattr(obj, "top_standings", None)
+        if top is not None:
+            qs = top
+        else:
+            qs = TournamentParticipant.objects.filter(tournament=obj).select_related(
+                "user"
+            )[:20]
         return TournamentParticipantSerializer(qs, many=True).data

@@ -22,3 +22,10 @@ if len(SECRET_KEY) < 50 or SECRET_KEY in _INSECURE_SECRET_KEYS:  # noqa: F405
     raise ImproperlyConfigured(
         "SECRET_KEY must be a unique random string of at least 50 characters in production."
     )
+
+DATABASES["default"]["CONN_MAX_AGE"] = config("DB_CONN_MAX_AGE", default=600, cast=int)  # noqa: F405
+DATABASES["default"]["CONN_HEALTH_CHECKS"] = True  # noqa: F405
+DATABASES["default"]["OPTIONS"] = {  # noqa: F405
+    "connect_timeout": config("POSTGRES_CONNECT_TIMEOUT", default=10, cast=int),
+    "sslmode": config("POSTGRES_SSLMODE", default="prefer"),
+}

@@ -41,6 +41,7 @@ class GameListView(generics.ListAPIView):
             Game.objects.filter(
                 models.Q(white_player=user) | models.Q(black_player=user)
             )
+            .select_related("white_player", "black_player")
             .distinct()
             .order_by("-ended_at", "-created_at")[:50]
         )
@@ -50,8 +51,12 @@ class GameListView(generics.ListAPIView):
 class GameDetailView(generics.RetrieveAPIView):
     serializer_class = GameSerializer
     lookup_field = "id"
-    queryset = Game.objects.all()
     permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        return Game.objects.select_related(
+            "white_player", "black_player", "winner"
+        ).prefetch_related("moves")
 
     def get_object(self):
         game = super().get_object()

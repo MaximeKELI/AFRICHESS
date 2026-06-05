@@ -5,7 +5,10 @@ from rest_framework.views import APIView
 
 from apps.games.engine import ChessEngineService
 
+from django.contrib.auth import get_user_model
+
 from .models import Puzzle, PuzzleAttempt
+from .random_sample import random_queryset
 from .serializers import PuzzleSerializer, SubmitPuzzleSerializer
 
 
@@ -76,7 +79,9 @@ class TacticalTrainingView(APIView):
     def get(self, request):
         difficulty = request.query_params.get("difficulty", "medium")
         count = min(int(request.query_params.get("count", 10)), 20)
-        puzzles = Puzzle.objects.filter(difficulty=difficulty).order_by("?")[:count]
+        puzzles = random_queryset(
+            Puzzle.objects.filter(difficulty=difficulty), count
+        )
         return Response(PuzzleSerializer(puzzles, many=True).data)
 
 
@@ -85,29 +90,34 @@ class PuzzleLeaderboardView(APIView):
 
     def get(self, request):
         from django.db.models import Count
-        from django.contrib.auth import get_user_model
 
         User = get_user_model()
-        rows = (
+        rows = list(
             PuzzleAttempt.objects.filter(solved=True)
             .values("user_id")
             .annotate(solved_count=Count("id"))
             .order_by("-solved_count")[:50]
         )
+        user_ids = [r["user_id"] for r in rows]
+        users = {
+            u.pk: u
+            for u in User.objects.filter(pk__in=user_ids).only(
+                "id", "username", "display_name"
+            )
+        }
         out = []
         for i, row in enumerate(rows, 1):
-            try:
-                u = User.objects.get(pk=row["user_id"])
-                out.append(
-                    {
-                        "rank": i,
-                        "username": u.username,
-                        "display_name": u.display_name or u.username,
-                        "solved_count": row["solved_count"],
-                    }
-                )
-            except User.DoesNotExist:
+            u = users.get(row["user_id"])
+            if not u:
                 continue
+            out.append(
+                {
+                    "rank": i,
+                    "username": u.username,
+                    "display_name": u.display_name or u.username,
+                    "solved_count": row["solved_count"],
+                }
+            )
         return Response(out)
 
 
@@ -116,5 +126,5 @@ class PuzzleRushView(APIView):
 
     def get(self, request):
         count = min(int(request.query_params.get("count", 5)), 10)
-        puzzles = Puzzle.objects.order_by("?")[:count]
+        puzzles = random_queryset(Puzzle.objects.all(), count)
         return Response(PuzzleSerializer(puzzles, many=True).data)

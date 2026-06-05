@@ -3,6 +3,7 @@
 from django.utils import timezone
 
 from apps.puzzles.models import Puzzle, PuzzleAttempt
+from apps.puzzles.random_sample import random_queryset
 from apps.puzzles.serializers import PuzzleSerializer
 
 LEVEL_TO_DIFFICULTY = {
@@ -62,8 +63,13 @@ def get_daily_puzzle():
 
 def get_adaptive_puzzles(user, count: int = 10):
     diff = adaptive_difficulty(user)
-    qs = Puzzle.objects.filter(difficulty=diff).order_by("?")[:count]
-    if qs.count() < count:
-        extra = Puzzle.objects.exclude(difficulty=diff).order_by("?")[: count - qs.count()]
-        qs = list(qs) + list(extra)
-    return PuzzleSerializer(qs, many=True).data
+    primary = list(random_queryset(Puzzle.objects.filter(difficulty=diff), count))
+    if len(primary) < count:
+        extra = list(
+            random_queryset(
+                Puzzle.objects.exclude(difficulty=diff),
+                count - len(primary),
+            )
+        )
+        primary.extend(extra)
+    return PuzzleSerializer(primary, many=True).data

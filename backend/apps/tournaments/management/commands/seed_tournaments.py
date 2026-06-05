@@ -14,7 +14,6 @@ class Command(BaseCommand):
     help = "Crée des tournois de démo si la base est vide."
 
     def handle(self, *args, **options):
-        Tournament.objects.filter(created_by__isnull=True).delete()
         owner = User.objects.filter(is_superuser=True).first() or User.objects.first()
         if not owner:
             self.stderr.write("Créez un utilisateur avant seed_tournaments.")

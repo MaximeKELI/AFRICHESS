@@ -102,6 +102,8 @@ class Game(models.Model):
         indexes = [
             models.Index(fields=["status", "mode"]),
             models.Index(fields=["white_player", "black_player"]),
+            models.Index(fields=["tournament", "status"]),
+            models.Index(fields=["status", "-ended_at"]),
         ]
 
     def __str__(self):
@@ -142,6 +144,7 @@ class Move(models.Model):
 
     class Meta:
         ordering = ["move_number", "created_at"]
+        indexes = [models.Index(fields=["game", "move_number"])]
 
     def __str__(self):
         return f"{self.game_id}: {self.san}"
