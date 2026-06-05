@@ -261,22 +261,22 @@ export default function StatsPage() {
             <>
               <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">{t("stats.chart.outcomes")}</h2>
+                  <h2 className="font-semibold mb-4">Répartition V / N / D</h2>
                   <DonutChart
                     centerLabel={`${data.summary.win_rate}%`}
-                    centerSub={t("stats.chart.wins")}
+                    centerSub="victoires"
                     slices={[
-                      { label: t("stats.chart.victories"), value: data.summary.games_won, color: CHART_COLORS.win },
-                      { label: t("stats.chart.draws"), value: data.summary.games_drawn, color: CHART_COLORS.draw },
-                      { label: t("stats.chart.losses"), value: data.summary.games_lost, color: CHART_COLORS.loss },
+                      { label: "Victoires", value: data.summary.games_won, color: CHART_COLORS.win },
+                      { label: "Nulles", value: data.summary.games_drawn, color: CHART_COLORS.draw },
+                      { label: "Défaites", value: data.summary.games_lost, color: CHART_COLORS.loss },
                     ]}
                   />
                 </div>
 
                 <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">Par cadence</h2>
+                  <h2 className="font-semibold mb-4">{t("stats.chart.byMode")}</h2>
                   {data.by_mode.length === 0 ? (
-                    <p className="text-sm opacity-50">Aucune partie.</p>
+                    <p className="text-sm opacity-50">{t("stats.chart.noGames")}</p>
                   ) : (
                     <BarChart
                       items={data.by_mode.map((m) => ({
@@ -289,16 +289,16 @@ export default function StatsPage() {
                 </div>
 
                 <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">Humain vs IA</h2>
+                  <h2 className="font-semibold mb-4">{t("stats.chart.humanVsAi")}</h2>
                   <BarChart
                     items={[
                       {
-                        label: "En ligne",
+                        label: t("stats.chart.online"),
                         value: data.vs_opponent.human.played,
                         color: CHART_COLORS.green,
                       },
                       {
-                        label: "IA",
+                        label: t("stats.chart.ai"),
                         value: data.vs_opponent.ai.played,
                         color: CHART_COLORS.terracotta,
                       },
@@ -306,7 +306,7 @@ export default function StatsPage() {
                   />
                   <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                     <div className="text-center p-2 rounded-lg bg-white/5">
-                      <p className="opacity-50">En ligne</p>
+                      <p className="opacity-50">{t("stats.chart.online")}</p>
                       <p className="font-mono text-africhess-green">
                         {data.vs_opponent.human.win_rate}%
                       </p>
