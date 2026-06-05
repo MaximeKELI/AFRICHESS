@@ -1,19 +1,7 @@
 /** Export des statistiques en CSV ou JSON. */
 
-export interface StatsExportData {
-  summary: Record<string, unknown>;
-  by_mode: Record<string, unknown>[];
-  vs_opponent: Record<string, unknown>;
-  by_color: Record<string, unknown>;
-  by_termination: Record<string, number>;
-  openings: Record<string, unknown>[];
-  recent_form: Record<string, unknown>[];
-  ratings: Record<string, unknown>[];
-  rating_history: Record<string, unknown>[];
-  activity: Record<string, unknown>[];
-  analysis: Record<string, unknown>;
-  ai_stats: Record<string, unknown>;
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type StatsExportData = Record<string, any>;
 
 function escapeCsv(value: unknown): string {
   const s = String(value ?? "");
