@@ -59,7 +59,7 @@ export default function FriendsPage() {
       .catch((err) => {
         setFriends([]);
         setPending([]);
-        setLoadError(formatApiError(err, "Impossible de charger vos amis."));
+        setLoadError(formatApiError(err, t("friends.error.load")));
       });
   }, [user?.id]);
 
@@ -90,9 +90,9 @@ export default function FriendsPage() {
   if (!user) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <p className="mb-4">Connectez-vous pour gérer vos amis.</p>
+        <p className="mb-4">{t("friends.loginRequired")}</p>
         <Link href="/login" className="african-gradient text-white px-6 py-2 rounded-lg">
-          Connexion
+          {t("nav.login")}
         </Link>
       </div>
     );
@@ -137,7 +137,7 @@ export default function FriendsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold mb-6">Amis & défis</h1>
+      <h1 className="font-display text-3xl font-bold mb-6">{t("friends.title")}</h1>
       {loadError && (
         <InlineAlert className="mb-4" onDismiss={() => setLoadError(null)}>
           {loadError}

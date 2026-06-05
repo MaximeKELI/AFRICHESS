@@ -5,8 +5,10 @@ import { socialApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import Link from "next/link";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function CommunityPage() {
+  const { t } = useTranslation();
   const [clubs, setClubs] = useState<Array<{ name: string; slug: string; country: string; member_count: number }>>([]);
   const [players, setPlayers] = useState<Array<{ username: string; display_name: string; country: string; title?: string }>>([]);
   const [error, setError] = useState<string | null>(null);
@@ -23,20 +25,20 @@ export default function CommunityPage() {
       .catch((err) => {
         setClubs([]);
         setPlayers([]);
-        setError(formatApiError(err, "Impossible de charger la communauté."));
+        setError(formatApiError(err, t("community.error.load")));
       })
       .finally(() => setLoading(false));
   }, []);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold mb-8">Communauté</h1>
+      <h1 className="font-display text-3xl font-bold mb-8">{t("community.title")}</h1>
       {error && <InlineAlert className="mb-6">{error}</InlineAlert>}
-      {loading && <p className="text-sm opacity-60 mb-6">Chargement…</p>}
+      {loading && <p className="text-sm opacity-60 mb-6">{t("common.loading")}</p>}
 
       <section className="mb-12">
         <h2 className="text-xl font-semibold mb-4 text-africhess-terracotta">
-          Histoires & culture des échecs en Afrique
+          {t("community.stories.title")}
         </h2>
         <div className="grid md:grid-cols-2 gap-4">
           {[
@@ -66,7 +68,7 @@ export default function CommunityPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="text-xl font-semibold mb-4 text-africhess-gold">Featured African Players</h2>
+        <h2 className="text-xl font-semibold mb-4 text-africhess-gold">{t("community.players.title")}</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {players.length > 0 ? players.map((p) => (
             <Link key={p.username} href={`/profile/${p.username}`} className="glass-card p-4 hover:ring-2 ring-africhess-gold/30">

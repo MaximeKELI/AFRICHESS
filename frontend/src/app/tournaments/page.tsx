@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { tournamentsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import Link from "next/link";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface StandingRow {
   user: { id: number; username: string; display_name?: string };
@@ -100,8 +101,8 @@ export default function TournamentsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold mb-2">Tournois</h1>
-      <p className="opacity-70 mb-6">Coupes africaines, arène et suisse</p>
+      <h1 className="font-display text-3xl font-bold mb-2">{t("tournaments.title")}</h1>
+      <p className="opacity-70 mb-6">{t("tournaments.subtitle")}</p>
 
       <label className="flex items-center gap-2 mb-6 text-sm">
         <input
