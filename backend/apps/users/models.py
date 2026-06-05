@@ -105,6 +105,8 @@ class UserStats(models.Model):
     best_win_streak = models.PositiveIntegerField(default=0)
     current_streak = models.IntegerField(default=0)
     total_play_time_seconds = models.PositiveBigIntegerField(default=0)
+    daily_puzzle_streak = models.PositiveIntegerField(default=0)
+    daily_puzzle_last_date = models.DateField(null=True, blank=True)
 
     @property
     def win_rate(self):

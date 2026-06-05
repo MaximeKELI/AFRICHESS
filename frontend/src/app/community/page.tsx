@@ -85,7 +85,7 @@ export default function CommunityPage() {
         <h2 className="text-xl font-semibold mb-4 text-africhess-green">{t("community.clubs.title")}</h2>
         <div className="grid sm:grid-cols-2 gap-4">
           {clubs.length > 0 ? clubs.map((c) => (
-            <div key={c.slug} className="glass-card p-4">
+            <Link key={c.slug} href={`/clubs/${c.slug}`} className="glass-card p-4 hover:ring-2 ring-africhess-green/30">
               <h3 className="font-semibold">{c.name}</h3>
               <p className="text-sm opacity-60">{c.country} · {t("community.clubs.members", { count: c.member_count })}</p>
             </div>

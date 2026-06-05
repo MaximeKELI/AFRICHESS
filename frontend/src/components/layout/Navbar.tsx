@@ -146,6 +146,16 @@ export function Navbar() {
                 {t(key)}
               </Link>
             ))}
+            {user?.is_staff && (
+              <Link
+                href="/admin"
+                onClick={closeMobile}
+                className="py-2.5 px-2 rounded-lg hover:bg-white/10 text-africhess-gold flex items-center gap-2"
+              >
+                <Shield size={16} />
+                {t("nav.admin")}
+              </Link>
+            )}
           </div>
         </div>
       )}

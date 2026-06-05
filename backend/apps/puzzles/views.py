@@ -1,15 +1,44 @@
+from datetime import timedelta
+
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.games.engine import ChessEngineService
-
-from django.contrib.auth import get_user_model
-
 from .models import Puzzle, PuzzleAttempt
 from .random_sample import random_queryset
 from .serializers import PuzzleSerializer, SubmitPuzzleSerializer
+
+DIFFICULTY_ALIASES = {
+    "beginner": "easy",
+    "intermediate": "medium",
+    "advanced": "hard",
+    "expert": "expert",
+    "easy": "easy",
+    "medium": "medium",
+    "hard": "hard",
+}
+
+
+def _normalize_difficulty(raw: str) -> str:
+    return DIFFICULTY_ALIASES.get((raw or "medium").lower(), "medium")
+
+
+def _update_daily_streak(user, puzzle: Puzzle, solved: bool) -> int:
+    if not solved or not puzzle.is_daily:
+        return getattr(user.stats, "daily_puzzle_streak", 0) if hasattr(user, "stats") else 0
+    stats = user.stats
+    today = timezone.now().date()
+    if stats.daily_puzzle_last_date == today:
+        return stats.daily_puzzle_streak
+    if stats.daily_puzzle_last_date == today - timedelta(days=1):
+        stats.daily_puzzle_streak += 1
+    else:
+        stats.daily_puzzle_streak = 1
+    stats.daily_puzzle_last_date = today
+    stats.save(update_fields=["daily_puzzle_streak", "daily_puzzle_last_date"])
+    return stats.daily_puzzle_streak
 
 
 class DailyPuzzleView(generics.RetrieveAPIView):
@@ -64,20 +93,26 @@ class SubmitPuzzleView(APIView):
             time_seconds=ser.validated_data["time_seconds"],
         )
         puzzle.plays_count += 1
+        streak = 0
         if solved:
             if request.user.stats:
                 request.user.stats.puzzles_solved += 1
-                request.user.stats.save()
+                request.user.stats.save(update_fields=["puzzles_solved"])
+            streak = _update_daily_streak(request.user, puzzle, solved)
         puzzle.save()
 
-        return Response({"solved": solved, "correct_moves": puzzle.solution_moves if solved else None})
+        return Response({
+            "solved": solved,
+            "correct_moves": puzzle.solution_moves if solved else None,
+            "daily_streak": streak,
+        })
 
 
 class TacticalTrainingView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        difficulty = request.query_params.get("difficulty", "medium")
+        difficulty = _normalize_difficulty(request.query_params.get("difficulty", "medium"))
         count = min(int(request.query_params.get("count", 10)), 20)
         puzzles = random_queryset(
             Puzzle.objects.filter(difficulty=difficulty), count
@@ -122,9 +157,24 @@ class PuzzleLeaderboardView(APIView):
 
 
 class PuzzleRushView(APIView):
-    """Lot de 5 puzzles — mode rush."""
+    """Lot de puzzles — mode rush (3 min, 3 erreurs max côté client)."""
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        count = min(int(request.query_params.get("count", 5)), 10)
+        count = min(int(request.query_params.get("count", 15)), 20)
         puzzles = random_queryset(Puzzle.objects.all(), count)
         return Response(PuzzleSerializer(puzzles, many=True).data)
+
+
+class PuzzleStreakView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        stats = request.user.stats
+        return Response({
+            "daily_streak": stats.daily_puzzle_streak,
+            "last_date": stats.daily_puzzle_last_date.isoformat() if stats.daily_puzzle_last_date else None,
+            "solved_today": (
+                stats.daily_puzzle_last_date == timezone.now().date()
+            ),
+        })

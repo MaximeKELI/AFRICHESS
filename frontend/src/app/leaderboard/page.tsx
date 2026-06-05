@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { ratingsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { formatApiError } from "@/lib/errors";
@@ -99,7 +100,9 @@ export default function LeaderboardPage() {
                 <td className="p-4 font-bold text-africhess-gold">{i + 1}</td>
                 <td className="p-4">
                   {e.user.title && <span className="text-africhess-terracotta mr-1">{e.user.title}</span>}
-                  {e.user.display_name || e.user.username}
+                  <Link href={`/profile/${e.user.username}`} className="hover:text-africhess-gold hover:underline">
+                    {e.user.display_name || e.user.username}
+                  </Link>
                 </td>
                 <td className="p-4">
                   <span className="inline-flex items-center gap-1.5">

@@ -16,11 +16,29 @@ class FriendshipSerializer(serializers.ModelSerializer):
 
 class ClubSerializer(serializers.ModelSerializer):
     owner = UserPublicSerializer(read_only=True)
+    is_member = serializers.SerializerMethodField()
 
     class Meta:
         model = Club
-        fields = ["id", "name", "slug", "description", "country", "logo", "owner",
-                  "member_count", "is_public", "created_at"]
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "description",
+            "country",
+            "logo",
+            "owner",
+            "member_count",
+            "is_public",
+            "is_member",
+            "created_at",
+        ]
+
+    def get_is_member(self, obj) -> bool:
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            return obj.members.filter(pk=request.user.pk).exists()
+        return False
 
 
 class ChatMessageSerializer(serializers.ModelSerializer):

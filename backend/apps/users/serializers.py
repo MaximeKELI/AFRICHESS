@@ -57,8 +57,25 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "date_joined", "is_african_highlight", "is_staff"]
 
 
+class UserStatsPublicSerializer(serializers.ModelSerializer):
+    win_rate = serializers.ReadOnlyField()
+
+    class Meta:
+        model = UserStats
+        fields = [
+            "games_played",
+            "games_won",
+            "games_drawn",
+            "games_lost",
+            "win_rate",
+            "puzzles_solved",
+            "daily_puzzle_streak",
+        ]
+
+
 class UserPublicSerializer(serializers.ModelSerializer):
     display_name = serializers.ReadOnlyField()
+    stats = UserStatsPublicSerializer(read_only=True)
 
     class Meta:
         model = User
@@ -71,7 +88,10 @@ class UserPublicSerializer(serializers.ModelSerializer):
             "country",
             "city",
             "title",
+            "chess_level",
             "is_african_highlight",
+            "date_joined",
+            "stats",
         ]
 
 

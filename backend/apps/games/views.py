@@ -203,9 +203,13 @@ class AnalyzeGameView(APIView):
             return Response({"error": "Game not found"}, status=404)
         if not can_analyze_game(request.user, game):
             return Response({"error": "Forbidden"}, status=403)
+        if game.status != Game.Status.COMPLETED:
+            return Response({"error": "Game not completed"}, status=400)
+        from .analysis_utils import MAX_ANALYZED_MOVES, compute_accuracies
+
         move_rows = list(
             game.moves.order_by("move_number").values_list("uci", "played_by_white")
-        )
+        )[:MAX_ANALYZED_MOVES]
         if not move_rows:
             return Response({"error": "No moves to analyze"}, status=400)
         engine = ChessEngineService()
@@ -225,14 +229,23 @@ class AnalyzeGameView(APIView):
             for i, e in enumerate(evaluations)
             if e.classification == "blunder" and not move_rows[i][1]
         )
+        acc_w, acc_b = compute_accuracies(evaluations, move_rows)
         analysis, _ = GameAnalysis.objects.update_or_create(
             game=game,
             defaults={
+                "accuracy_white": acc_w,
+                "accuracy_black": acc_b,
                 "blunders_white": blunders_w,
                 "blunders_black": blunders_b,
                 "best_moves_json": [
-                    {"san": e.san, "eval": e.eval_after, "class": e.classification}
-                    for e in evaluations
+                    {
+                        "san": e.san,
+                        "eval": e.eval_after,
+                        "class": e.classification,
+                        "cp_loss": e.centipawn_loss,
+                        "played_by_white": move_rows[i][1],
+                    }
+                    for i, e in enumerate(evaluations)
                 ],
             },
         )

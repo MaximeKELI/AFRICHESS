@@ -106,6 +106,10 @@ export const authApi = {
     api.patch("/users/profile/", data, data instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined),
 };
 
+export const usersApi = {
+  get: (username: string) => api.get(`/users/${username}/`),
+};
+
 export const gamesApi = {
   list: () => api.get("/games/"),
   get: (id: string) => api.get(`/games/${id}/`),
@@ -161,6 +165,7 @@ export const adminApi = {
 
 export const ratingsApi = {
   me: () => api.get("/ratings/me/"),
+  user: (username: string) => api.get(`/ratings/user/${username}/`),
   globalLeaderboard: (mode = "blitz") =>
     api.get("/ratings/leaderboard/global/", { params: { mode } }),
   africanLeaderboard: (mode = "blitz", country?: string) =>
@@ -174,7 +179,8 @@ export const puzzlesApi = {
   submit: (id: number, moves: string[], time_seconds: number) =>
     api.post(`/puzzles/${id}/submit/`, { moves, time_seconds }),
   leaderboard: () => api.get("/puzzles/leaderboard/"),
-  rush: (count = 5) => api.get("/puzzles/rush/", { params: { count } }),
+  rush: (count = 15) => api.get("/puzzles/rush/", { params: { count } }),
+  streak: () => api.get("/puzzles/streak/"),
 };
 
 export const socialApi = {
@@ -191,6 +197,10 @@ export const socialApi = {
     api.post(`/social/chat/${roomType}/${roomId}/send/`, { message }),
   clubs: (country?: string) =>
     api.get("/social/clubs/", { params: { country } }),
+  club: (slug: string) => api.get(`/social/clubs/${slug}/`),
+  joinClub: (slug: string) => api.post(`/social/clubs/${slug}/join/`),
+  createClub: (data: { name: string; description?: string; country?: string }) =>
+    api.post("/social/clubs/", data),
   africanPlayers: () => api.get("/users/featured/african/"),
   directMessages: (username: string) => api.get(`/social/messages/${username}/`),
   sendDirectMessage: (username: string, message: string) =>

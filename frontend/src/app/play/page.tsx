@@ -224,7 +224,7 @@ function PlayContent() {
   );
 
 
-  const { connected: wsConnected, wsError, sendMove: wsSendMove } = useGameWebSocket(
+  const { connected: wsConnected, wsError, sendMove: wsSendMove, resign: wsResign } = useGameWebSocket(
     gameId,
     isLiveHuman,
     handleWsUpdate,
@@ -554,6 +554,18 @@ function PlayContent() {
                 className="text-xs px-3 py-1 rounded border border-africhess-green text-africhess-green"
               >
                 {t("play.draw.accept")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(t("play.resign.confirm"))) {
+                    wsResign();
+                    setStatus(t("play.resign.sent"));
+                  }
+                }}
+                className="text-xs px-3 py-1 rounded border border-africhess-terracotta text-africhess-terracotta"
+              >
+                {t("play.resign")}
               </button>
             </div>
           )}

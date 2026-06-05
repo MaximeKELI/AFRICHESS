@@ -80,7 +80,11 @@ class AcceptFriendView(APIView):
 
 class ClubListView(generics.ListCreateAPIView):
     serializer_class = ClubSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
         country = self.request.query_params.get("country")
@@ -90,14 +94,26 @@ class ClubListView(generics.ListCreateAPIView):
         return qs.order_by("-member_count")
 
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        from django.utils.text import slugify
+
+        name = serializer.validated_data["name"]
+        base = slugify(name) or "club"
+        slug = base
+        n = 1
+        while Club.objects.filter(slug=slug).exists():
+            slug = f"{base}-{n}"
+            n += 1
+        club = serializer.save(owner=self.request.user, slug=slug)
+        club.members.add(self.request.user)
+        club.member_count = 1
+        club.save(update_fields=["member_count"])
 
 
 class ClubDetailView(generics.RetrieveAPIView):
     queryset = Club.objects.all()
     serializer_class = ClubSerializer
     lookup_field = "slug"
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
 
 class JoinClubView(APIView):

@@ -51,7 +51,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       <nav className="flex flex-wrap gap-2 mb-8">
-        {ADMIN_LINKS.map(({ href, key, icon: Icon, exact }) => {
+        {ADMIN_LINKS.map((link) => {
+          const { href, key, icon: Icon } = link;
+          const exact = "exact" in link && link.exact;
           const active = exact ? pathname === href : pathname.startsWith(href);
           return (
             <Link
