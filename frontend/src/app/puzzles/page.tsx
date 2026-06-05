@@ -264,7 +264,9 @@ export default function PuzzlesPage() {
                   <span>
                     {row.rank}. {row.display_name || row.username}
                   </span>
-                  <span className="text-africhess-gold">{row.solved_count} résolus</span>
+                  <span className="text-africhess-gold">
+                    {t("puzzles.leaderboard.solved", { n: row.solved_count })}
+                  </span>
                 </li>
               ))}
             </ol>
