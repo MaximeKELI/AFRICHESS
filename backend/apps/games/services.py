@@ -69,6 +69,10 @@ class GameService:
         chess960_pos = None
         if variant == Game.Variant.CHESS960:
             start_fen, chess960_pos = generate_chess960_start()
+        elif variant == Game.Variant.CRAZYHOUSE:
+            import chess.variant
+
+            start_fen = chess.variant.CrazyhouseBoard().fen()
 
         game = Game.objects.create(
             white_player=user if color == "white" else None,
@@ -96,11 +100,16 @@ class GameService:
             )
         if color == "black":
             ai_move = self.engine.get_best_move(
-                game.fen, display_difficulty, target_elo=target_elo
+                game.fen,
+                display_difficulty,
+                target_elo=target_elo,
+                variant=game.variant,
             )
             if ai_move:
                 fen_before = game.fen
-                ai_result = self.engine.apply_move(fen_before, ai_move.uci)
+                ai_result = self.engine.apply_move(
+                    fen_before, ai_move.uci, variant=game.variant
+                )
                 if ai_result:
                     nf, ai_san, _ = ai_result
                     comment = ""
@@ -243,7 +252,7 @@ class GameService:
                 game.save()
                 return {"error": "Time out", "game_over": True}
 
-        result = self.engine.apply_move(game.fen, uci)
+        result = self.engine.apply_move(game.fen, uci, variant=game.variant)
         if not result:
             return {"error": "Illegal move"}
 
@@ -304,9 +313,12 @@ class GameService:
                 new_fen,
                 game.ai_difficulty,
                 target_elo=game.ai_target_elo,
+                variant=game.variant,
             )
             if ai_move:
-                ai_result = self.engine.apply_move(new_fen, ai_move.uci)
+                ai_result = self.engine.apply_move(
+                    new_fen, ai_move.uci, variant=game.variant
+                )
                 if ai_result:
                     nf, ai_san, ai_over = ai_result
                     ai_comment = ""
