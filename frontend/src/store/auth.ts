@@ -35,7 +35,13 @@ interface AuthState {
     password: string;
     password_confirm: string;
     country: string;
+    city?: string;
     chess_level?: string;
+    preferred_language?: string;
+    birth_year?: number;
+    gender?: string;
+    discovery_source?: string;
+    registration_locale?: string;
   }) => Promise<void>;
   logout: () => void;
   fetchProfile: () => Promise<void>;
