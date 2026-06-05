@@ -110,15 +110,15 @@ export default function LearningDashboardPage() {
         <div className="glass-card p-6 grid grid-cols-2 gap-4 text-center">
           <div>
             <p className="text-2xl font-bold text-africhess-green">{profile.lessons_completed}</p>
-            <p className="text-xs opacity-60">Leçons</p>
+            <p className="text-xs opacity-60">{t("learning.lessons")}</p>
           </div>
           <div>
             <p className="text-2xl font-bold text-africhess-gold">{profile.puzzles_solved_learning}</p>
-            <p className="text-xs opacity-60">Puzzles</p>
+            <p className="text-xs opacity-60">{t("learning.puzzles")}</p>
           </div>
           <div>
             <p className="text-2xl font-bold">{profile.puzzle_accuracy}%</p>
-            <p className="text-xs opacity-60">Précision</p>
+            <p className="text-xs opacity-60">{t("learning.accuracy")}</p>
           </div>
           <div>
             <p className="text-2xl font-bold">{data.stats.win_rate}%</p>
