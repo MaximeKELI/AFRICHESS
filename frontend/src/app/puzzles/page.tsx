@@ -196,7 +196,7 @@ export default function PuzzlesPage() {
       <p className="opacity-70 mb-4">
         {t("puzzles.subtitle")}
         {streak > 0 && (
-          <span className="ml-2 text-africhess-gold">🔥 Série : {streak}</span>
+          <span className="ml-2 text-africhess-gold">🔥 {t("puzzles.streak", { n: streak })}</span>
         )}
       </p>
 
@@ -251,9 +251,9 @@ export default function PuzzlesPage() {
 
       {tab === "leaderboard" && (
         <div className="glass-card p-6">
-          <h2 className="font-semibold mb-4">Top résolveurs</h2>
+          <h2 className="font-semibold mb-4">{t("puzzles.leaderboard.title")}</h2>
           {leaderboard.length === 0 ? (
-            <p className="opacity-60">Aucun score enregistré</p>
+            <p className="opacity-60">{t("puzzles.leaderboard.empty")}</p>
           ) : (
             <ol className="space-y-2">
               {leaderboard.map((row) => (
