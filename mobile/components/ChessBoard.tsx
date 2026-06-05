@@ -84,8 +84,24 @@ export function ChessBoard({
     [disabled, game, playerColor]
   );
 
+  const sendUci = useCallback(
+    (from: Square, to: Square) => {
+      const rank = to[1];
+      const needsPromo =
+        serverValidated &&
+        ((from[1] === "7" && rank === "8") || (from[1] === "2" && rank === "1"));
+      const uci = `${from}${to}${needsPromo ? "q" : ""}`;
+      setSelected(null);
+      setTargets([]);
+      onMove(uci);
+      return true;
+    },
+    [onMove, serverValidated]
+  );
+
   const tryMove = useCallback(
     (from: Square, to: Square) => {
+      if (serverValidated) return sendUci(from, to);
       const g = new Chess(game.fen());
       const legal = g.moves({ square: from, verbose: true }).filter((m) => m.to === to);
       if (legal.length === 0) return false;
@@ -102,12 +118,39 @@ export function ChessBoard({
       onMove(uci);
       return true;
     },
-    [game, onMove]
+    [game, onMove, serverValidated, sendUci]
+  );
+
+  const highlightTargets = useCallback(
+    (from: Square) => {
+      if (serverValidated) {
+        const squares: Square[] = [];
+        for (let f = 0; f < 8; f++) {
+          for (let r = 1; r <= 8; r++) {
+            const sq = `${String.fromCharCode(97 + f)}${r}` as Square;
+            if (sq !== from) squares.push(sq);
+          }
+        }
+        setTargets(squares);
+        return;
+      }
+      const moves = game.moves({ square: from, verbose: true });
+      setTargets(moves.map((m) => m.to as Square));
+    },
+    [game, serverValidated]
   );
 
   const onSquarePress = useCallback(
     (sq: Square) => {
       if (disabled) return;
+
+      if (pendingDrop && onDropAtSquare) {
+        onDropAtSquare(`${pendingDrop.toUpperCase()}@${sq}`);
+        setSelected(null);
+        setTargets([]);
+        return;
+      }
+
       if (selected && targets.includes(sq)) {
         tryMove(selected, sq);
         return;
@@ -118,16 +161,17 @@ export function ChessBoard({
         return;
       }
       if (canSelect(sq)) {
-        const moves = game.moves({ square: sq, verbose: true });
         setSelected(sq);
-        setTargets(moves.map((m) => m.to as Square));
+        highlightTargets(sq);
         return;
       }
       setSelected(null);
       setTargets([]);
     },
-    [disabled, selected, targets, tryMove, canSelect, game]
+    [disabled, selected, targets, tryMove, canSelect, highlightTargets, pendingDrop, onDropAtSquare]
   );
+
+  const displayFen = serverValidated ? toChessFen(fen) : game.fen();
 
   return (
     <View style={[styles.board, { width: boardSize, height: boardSize }]}>
