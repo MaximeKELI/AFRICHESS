@@ -157,6 +157,8 @@ export const gamesApi = {
   ) => api.post("/games/matchmaking/", { mode, ...opts }),
   leaveQueue: () => api.delete("/games/matchmaking/"),
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),
+  engineEval: (fen: string) =>
+    api.get<{ evaluation: number | null }>("/games/engine/eval/", { params: { fen } }),
   live: () => api.get("/games/live/"),
   liveTv: () => api.get("/games/live/"),
   legalMoves: (id: string, from?: string) =>

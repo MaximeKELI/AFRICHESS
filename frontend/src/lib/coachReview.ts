@@ -1,9 +1,11 @@
-import type { TFunction } from "@/lib/i18n";
+import type { MessageParams } from "@/lib/i18n";
 
 export type MoveClass = "best" | "good" | "inaccuracy" | "mistake" | "blunder";
 
+type TranslateFn = (key: string, params?: MessageParams) => string;
+
 export function coachPhrase(
-  t: TFunction,
+  t: TranslateFn,
   moveClass: string,
   cpLoss?: number,
   playedByWhite?: boolean

@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { gamesApi } from "@/lib/api";
+import { coachPhrase } from "@/lib/coachReview";
 import { formatApiError } from "@/lib/errors";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuthStore } from "@/store/auth";
 import Link from "next/link";
 import clsx from "clsx";
+import { EvalGraph } from "./EvalGraph";
 
 interface MoveAnalysis {
   san: string;
@@ -45,6 +47,7 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
   const [retryIdx, setRetryIdx] = useState<number | null>(null);
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
   const runAnalysis = async () => {
     setLoading(true);
@@ -54,6 +57,7 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
       const payload = data?.analysis;
       if (payload?.best_moves_json?.length) {
         setAnalysis(payload);
+        setSelectedIdx(0);
       } else if (payload) {
         setError(t("chess.analysis.noMoves"));
       } else {
@@ -79,6 +83,19 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
     if (filter === "all") return analysis.best_moves_json;
     return analysis.best_moves_json.filter((m) => m.class === filter);
   }, [analysis, filter]);
+
+  const selectedMove =
+    selectedIdx != null ? analysis?.best_moves_json[selectedIdx] : null;
+
+  const coachText = useMemo(() => {
+    if (!selectedMove) return null;
+    return coachPhrase(
+      t,
+      selectedMove.class,
+      selectedMove.cp_loss,
+      selectedMove.played_by_white
+    );
+  }, [selectedMove, t]);
 
   if (!completed) return null;
 
@@ -110,6 +127,12 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
 
       {analysis && (
         <>
+          <EvalGraph
+            points={analysis.best_moves_json}
+            selectedIndex={selectedIdx}
+            onSelect={setSelectedIdx}
+          />
+
           <div className="grid grid-cols-2 gap-2 text-center text-sm">
             <div className="rounded-lg bg-white/5 p-2">
               <p className="text-xs opacity-50">{t("chess.analysis.white")}</p>
@@ -125,6 +148,25 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
             </div>
           </div>
 
+          {coachText && (
+            <div className="rounded-lg border border-africhess-green/30 bg-africhess-green/5 p-3 text-xs">
+              <p className="font-semibold text-africhess-gold mb-1">
+                {t("chess.analysis.coachTitle")}
+              </p>
+              <p className="opacity-90">{coachText}</p>
+              {selectedMove && (
+                <p className="mt-2 font-mono opacity-70">
+                  {selectedMove.san}
+                  {selectedMove.cp_loss != null && selectedMove.cp_loss > 0 && (
+                    <span className="ml-2 text-africhess-terracotta">
+                      −{Math.round(selectedMove.cp_loss / 100 * 10) / 10}
+                    </span>
+                  )}
+                </p>
+              )}
+            </div>
+          )}
+
           <p className="text-xs opacity-70">
             {t("chess.analysis.blunders", {
               white: analysis.blunders_white,
@@ -135,7 +177,15 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
           {mistakes.length > 0 && (
             <button
               type="button"
-              onClick={() => setRetryIdx(0)}
+              onClick={() => {
+                const first = analysis.best_moves_json.findIndex((m) =>
+                  ["mistake", "blunder", "inaccuracy"].includes(m.class)
+                );
+                if (first >= 0) {
+                  setSelectedIdx(first);
+                  setRetryIdx(first);
+                }
+              }}
               className="w-full py-1.5 text-xs rounded-lg border border-africhess-gold/50 text-africhess-gold hover:bg-africhess-gold/10"
             >
               {t("chess.analysis.retry", { count: mistakes.length })}
@@ -155,7 +205,17 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setRetryIdx((i) => (i != null && i < mistakes.length - 1 ? i + 1 : null))}
+                  onClick={() => {
+                    const idx = analysis.best_moves_json.findIndex(
+                      (m, i) =>
+                        i > (retryIdx ?? -1) &&
+                        ["mistake", "blunder", "inaccuracy"].includes(m.class)
+                    );
+                    if (idx >= 0) {
+                      setRetryIdx(idx);
+                      setSelectedIdx(idx);
+                    } else setRetryIdx(null);
+                  }}
                   className="px-2 py-1 rounded border text-[10px]"
                 >
                   {t("chess.analysis.next")}
@@ -188,14 +248,30 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
           </div>
 
           <ul className="max-h-48 overflow-y-auto text-xs space-y-1">
-            {filtered.map((e, i) => (
-              <li key={i} className="flex items-center gap-2">
-                <span className="w-4 opacity-40">{i + 1}.</span>
-                <span className="font-mono text-africhess-gold">{e.san}</span>
-                <span className={clsx("capitalize", CLASS_COLORS[e.class] ?? "")}>{e.class}</span>
-                {e.eval != null && <span className="opacity-50 ml-auto">{e.eval}</span>}
-              </li>
-            ))}
+            {filtered.map((e, i) => {
+              const globalIdx = analysis.best_moves_json.indexOf(e);
+              return (
+                <li key={i}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIdx(globalIdx)}
+                    className={clsx(
+                      "w-full flex items-center gap-2 text-left rounded px-1 py-0.5",
+                      selectedIdx === globalIdx && "bg-africhess-gold/10"
+                    )}
+                  >
+                    <span className="w-4 opacity-40">{globalIdx + 1}.</span>
+                    <span className="font-mono text-africhess-gold">{e.san}</span>
+                    <span className={clsx("capitalize", CLASS_COLORS[e.class] ?? "")}>
+                      {e.class}
+                    </span>
+                    {e.eval != null && (
+                      <span className="opacity-50 ml-auto">{e.eval}</span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </>
       )}
