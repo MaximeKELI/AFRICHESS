@@ -50,6 +50,13 @@ export default function HomeScreen() {
             <Text style={styles.btnTextOutline}>Catalogue bots</Text>
           </Pressable>
         </Link>
+        {user && (
+          <Link href="/friends" asChild>
+            <Pressable style={[styles.btn, styles.btnOutline]}>
+              <Text style={styles.btnTextOutline}>Amis</Text>
+            </Pressable>
+          </Link>
+        )}
         <Link href="/puzzles" asChild>
           <Pressable style={[styles.btn, styles.btnOutline]}>
             <Text style={styles.btnTextOutline}>Puzzle du jour</Text>

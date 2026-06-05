@@ -17,6 +17,7 @@ export default function RootLayout() {
         <Stack.Screen name="play" options={{ title: "Jouer" }} />
         <Stack.Screen name="bots" options={{ title: "Bots" }} />
         <Stack.Screen name="puzzles" options={{ title: "Puzzles" }} />
+        <Stack.Screen name="friends" options={{ title: "Amis" }} />
         <Stack.Screen name="login" options={{ title: "Connexion" }} />
       </Stack>
     </AuthProvider>

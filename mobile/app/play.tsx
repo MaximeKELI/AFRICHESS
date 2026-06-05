@@ -15,6 +15,7 @@ import { GameClock } from "../components/GameClock";
 import { PocketBar } from "../components/PocketBar";
 import { useAuth } from "../context/AuthContext";
 import { useGameWebSocket } from "../hooks/useGameWebSocket";
+import { useMatchmakingWebSocket } from "../hooks/useMatchmakingWebSocket";
 import { parsePocketsFromFen, pocketForPlayer } from "../lib/crazyhouse";
 import { wsPayloadToGameData } from "../lib/gameState";
 import { type Bot, type GameData, type GameVariant, gamesApi } from "../lib/api";
@@ -33,6 +34,7 @@ export default function PlayScreen() {
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
   const [aiElo, setAiElo] = useState(1250);
   const [color, setColor] = useState<"white" | "black">("white");
+  const [playMode, setPlayMode] = useState<"ai" | "human">("ai");
   const [variant, setVariant] = useState<GameVariant>("standard");
   const [activeVariant, setActiveVariant] = useState<GameVariant>("standard");
   const [dropPiece, setDropPiece] = useState<string | null>(null);
@@ -105,6 +107,27 @@ export default function PlayScreen() {
     },
     [applyGame]
   );
+
+  const handleMatchFound = useCallback(
+    async (gameId: string) => {
+      setBusy(true);
+      try {
+        const { data } = await gamesApi.get(gameId);
+        applyGame(data);
+        if (data.white_player?.id === user?.id) setColor("white");
+        else if (data.black_player?.id === user?.id) setColor("black");
+        setStatus("Adversaire trouvé !");
+      } catch {
+        setStatus("Partie introuvable après matchmaking");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [applyGame, user]
+  );
+
+  const { searching, mmError, search: startMatchmaking, cancel: cancelMatchmaking } =
+    useMatchmakingWebSocket(Boolean(user && playMode === "human"), "blitz", handleMatchFound);
 
   const { connected: wsConnected, wsError, resign: wsResign } = useGameWebSocket(
     game?.id ?? null,
@@ -205,9 +228,51 @@ export default function PlayScreen() {
   if (!game) {
     return (
       <ScrollView contentContainerStyle={styles.setup}>
-        <Text style={styles.heading}>Jouer vs IA</Text>
+        <Text style={styles.heading}>Jouer</Text>
         <Text style={styles.user}>Connecté : {user.display_name || user.username}</Text>
 
+        <Text style={styles.label}>Mode</Text>
+        <View style={styles.row}>
+          {(["ai", "human"] as const).map((m) => (
+            <Pressable
+              key={m}
+              onPress={() => {
+                setPlayMode(m);
+                cancelMatchmaking();
+              }}
+              style={[styles.chip, playMode === m && styles.chipActive]}
+            >
+              <Text style={playMode === m ? styles.chipTextActive : styles.chipText}>
+                {m === "ai" ? "Vs IA" : "Joueur humain"}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {playMode === "human" && (
+          <>
+            <Pressable
+              style={styles.startBtn}
+              onPress={startMatchmaking}
+              disabled={busy || searching}
+            >
+              {searching ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.startText}>Chercher un adversaire (blitz)</Text>
+              )}
+            </Pressable>
+            {mmError ? <Text style={styles.status}>{mmError}</Text> : null}
+            {searching ? (
+              <Pressable onPress={cancelMatchmaking}>
+                <Text style={styles.secondaryText}>Annuler la recherche</Text>
+              </Pressable>
+            ) : null}
+          </>
+        )}
+
+        {playMode === "ai" && (
+          <>
         <Text style={styles.label}>Variante</Text>
         <View style={styles.row}>
           {VARIANTS.map((v) => (
@@ -293,6 +358,8 @@ export default function PlayScreen() {
           )}
         </Pressable>
         {status ? <Text style={styles.status}>{status}</Text> : null}
+          </>
+        )}
       </ScrollView>
     );
   }

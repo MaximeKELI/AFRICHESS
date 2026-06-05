@@ -71,12 +71,20 @@ export interface GameMove {
 
 export type GameVariant = "standard" | "chess960" | "crazyhouse";
 
+export interface PublicUser {
+  id: number;
+  username: string;
+  display_name?: string;
+}
+
 export interface GameData {
   id: string;
   fen: string;
   status: string;
   result?: string;
   is_vs_ai: boolean;
+  white_player?: PublicUser | null;
+  black_player?: PublicUser | null;
   ai_target_elo?: number;
   moves?: GameMove[];
   variant?: GameVariant;
@@ -122,6 +130,26 @@ export const gamesApi = {
       ...(opts?.spentMs != null ? { spent_ms: opts.spentMs } : {}),
     }),
   undo: (id: string) => api.post<GameData>(`/games/${id}/undo/`),
+};
+
+export interface FriendUser {
+  id: number;
+  username: string;
+  display_name?: string;
+}
+
+export interface FriendRow {
+  id: number;
+  user: FriendUser;
+  friend: FriendUser;
+  status: string;
+}
+
+export const socialApi = {
+  friends: () => api.get<FriendRow[]>("/social/friends/"),
+  pending: () => api.get<FriendRow[]>("/social/friends/pending/"),
+  request: (username: string) => api.post("/social/friends/request/", { username }),
+  accept: (id: number) => api.post(`/social/friends/${id}/accept/`),
 };
 
 export { API_ORIGIN };
