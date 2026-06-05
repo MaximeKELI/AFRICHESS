@@ -3,6 +3,7 @@
 import { CapturedPieces } from "./CapturedPieces";
 import { MoveHistory } from "./MoveHistory";
 import type { CapturedState, MoveRow } from "@/lib/chessDisplay";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface GameSidePanelProps {
   moves: MoveRow[];
@@ -21,6 +22,8 @@ export function GameSidePanel({
   turn = "w",
   openingName,
 }: GameSidePanelProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="glass-card p-4 space-y-4 h-full">
       {openingName && (
@@ -30,7 +33,9 @@ export function GameSidePanel({
       )}
       {isCheck && (
         <p className="text-sm font-semibold text-africhess-terracotta animate-pulse">
-          Échec au roi {turn === "w" ? "blanc" : "noir"} !
+          {t("chess.check", {
+            color: turn === "w" ? t("chess.check.white") : t("chess.check.black"),
+          })}
         </p>
       )}
       <CapturedPieces captured={captured} orientation={orientation} />

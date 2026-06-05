@@ -3,6 +3,7 @@
 import { memo, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { formatClock } from "@/lib/clock";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface GameClockProps {
   whiteMs: number;
@@ -23,6 +24,7 @@ function GameClockInner({
   incrementMs = 0,
   label,
 }: GameClockProps) {
+  const { t } = useTranslation();
   const [white, setWhite] = useState(whiteMs);
   const [black, setBlack] = useState(blackMs);
   const turnRef = useRef(turn);
@@ -77,6 +79,9 @@ function GameClockInner({
     </div>
   );
 
+  const whiteLabel = t("chess.clock.white");
+  const blackLabel = t("chess.clock.black");
+
   return (
     <div className="space-y-2 w-full">
       {label && (
@@ -85,8 +90,8 @@ function GameClockInner({
           {incrementMs > 0 && ` · +${incrementMs / 1000}s`}
         </p>
       )}
-      <ClockRow ms={topMs} active={topTurn} side={topIsWhite ? "Blancs" : "Noirs"} />
-      <ClockRow ms={bottomMs} active={bottomTurn} side={topIsWhite ? "Noirs" : "Blancs"} />
+      <ClockRow ms={topMs} active={topTurn} side={topIsWhite ? whiteLabel : blackLabel} />
+      <ClockRow ms={bottomMs} active={bottomTurn} side={topIsWhite ? blackLabel : whiteLabel} />
     </div>
   );
 }

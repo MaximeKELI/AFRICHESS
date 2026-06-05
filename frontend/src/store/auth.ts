@@ -78,7 +78,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const { data } = await authApi.login(loginId, password);
       if (!data.access) {
-        throw new Error("Réponse de connexion invalide.");
+        throw new Error(translate(get().locale, "auth.login.invalidResponse"));
       }
       Cookies.set("access_token", data.access, { expires: 1 });
       Cookies.set("refresh_token", data.refresh, { expires: 7 });

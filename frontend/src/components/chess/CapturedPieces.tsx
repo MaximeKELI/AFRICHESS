@@ -1,6 +1,7 @@
 "use client";
 
 import { PIECE_SYMBOLS, type CapturedState } from "@/lib/chessDisplay";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface CapturedPiecesProps {
   captured: CapturedState;
@@ -8,8 +9,11 @@ interface CapturedPiecesProps {
 }
 
 export function CapturedPieces({ captured, orientation = "white" }: CapturedPiecesProps) {
-  const topLabel = orientation === "white" ? "Blancs ont pris" : "Noirs ont pris";
-  const bottomLabel = orientation === "white" ? "Noirs ont pris" : "Blancs ont pris";
+  const { t } = useTranslation();
+  const topLabel =
+    orientation === "white" ? t("chess.captured.whiteTook") : t("chess.captured.blackTook");
+  const bottomLabel =
+    orientation === "white" ? t("chess.captured.blackTook") : t("chess.captured.whiteTook");
   const topPieces = captured.byWhite;
   const bottomPieces = captured.byBlack;
   const topAdvantage = captured.materialWhite - captured.materialBlack;
