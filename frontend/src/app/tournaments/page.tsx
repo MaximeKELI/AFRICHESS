@@ -60,10 +60,10 @@ export default function TournamentsPage() {
     setStatus("");
     try {
       await tournamentsApi.register(slug);
-      setStatus("Inscription confirmée !");
+      setStatus(t("tournaments.status.registered"));
       load();
     } catch {
-      setStatus("Inscription impossible (complet ou fermé)");
+      setStatus(t("tournaments.status.registerFailed"));
     }
   };
 
