@@ -12,10 +12,13 @@ import { LevelPicker } from "@/components/profile/LevelPicker";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
-import { CHESS_LEVELS, type ChessLevelId } from "@/lib/avatars";
+import { type ChessLevelId } from "@/lib/avatars";
+import { useTranslation } from "@/hooks/useTranslation";
+import { chessLevelLabel } from "@/lib/i18n/labels";
 
 export default function ProfilePage() {
   const { user, fetchProfile } = useAuthStore();
+  const { t } = useTranslation();
   const [ratings, setRatings] = useState<Array<{ mode: string; elo: number; peak_elo: number }>>([]);
   const [chessLevel, setChessLevel] = useState<ChessLevelId>("intermediate");
   const [saving, setSaving] = useState(false);
@@ -34,14 +37,13 @@ export default function ProfilePage() {
       })
       .catch((err) => {
         setRatings([]);
-        setRatingsError(formatApiError(err, "Impossible de charger les classements."));
+        setRatingsError(formatApiError(err, t("profile.error.ratings")));
       });
-  }, [fetchProfile]);
+  }, [fetchProfile, t]);
 
   useEffect(() => {
-    if (user) {
-      const level = CHESS_LEVELS.find((l) => l.id === user.chess_level)?.id ?? "intermediate";
-      setChessLevel(level);
+    if (user?.chess_level) {
+      setChessLevel(user.chess_level as ChessLevelId);
     }
   }, [user]);
 
@@ -54,7 +56,7 @@ export default function ProfilePage() {
       await fetchProfile();
       setSaved(true);
     } catch (err) {
-      setSaveError(formatApiError(err, "Impossible d'enregistrer le profil."));
+      setSaveError(formatApiError(err, t("profile.error.save")));
     } finally {
       setSaving(false);
     }
@@ -64,13 +66,13 @@ export default function ProfilePage() {
     return (
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
         <Link href="/login" className="text-africhess-gold underline">
-          Connectez-vous pour voir votre profil
+          {t("profile.loginRequired")}
         </Link>
       </div>
     );
   }
 
-  const levelLabel = CHESS_LEVELS.find((l) => l.id === user.chess_level)?.label ?? "Intermédiaire";
+  const levelLabel = chessLevelLabel(t, user.chess_level ?? "intermediate");
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
@@ -94,17 +96,17 @@ export default function ProfilePage() {
         <div className="grid grid-cols-2 gap-4">
           <div className="glass-card p-4 text-center">
             <p className="text-2xl font-bold text-africhess-gold">{user.stats.games_played}</p>
-            <p className="text-sm opacity-60">Parties</p>
+            <p className="text-sm opacity-60">{t("profile.stats.games")}</p>
           </div>
           <div className="glass-card p-4 text-center">
             <p className="text-2xl font-bold text-africhess-green">{user.stats.win_rate}%</p>
-            <p className="text-sm opacity-60">Victoires</p>
+            <p className="text-sm opacity-60">{t("profile.stats.wins")}</p>
           </div>
         </div>
       )}
 
       <div className="glass-card p-6 space-y-6">
-        <h2 className="font-semibold text-lg">Personnaliser le profil</h2>
+        <h2 className="font-semibold text-lg">{t("profile.customize")}</h2>
         <UserAvatarUpload
           avatar={user.avatar}
           displayName={user.display_name}
@@ -112,19 +114,16 @@ export default function ProfilePage() {
           onUpdated={fetchProfile}
         />
         <hr className="border-white/10" />
-        <p className="text-xs opacity-55 -mt-2">
-          Le niveau choisi ici sert au profil et aux suggestions. Il est distinct de votre ELO
-          classement (parties en ligne) et de la force IA réglée en partie.
-        </p>
+        <p className="text-xs opacity-55 -mt-2">{t("profile.level.hint")}</p>
         <LevelPicker value={chessLevel} onChange={setChessLevel} />
         <button
           onClick={saveProfile}
           disabled={saving}
           className="w-full py-2.5 rounded-lg african-gradient text-white font-medium disabled:opacity-50"
         >
-          {saving ? "Enregistrement…" : "Enregistrer le niveau"}
+          {saving ? t("profile.saving") : t("profile.save")}
         </button>
-        {saved && <p className="text-sm text-africhess-green text-center">Profil mis à jour !</p>}
+        {saved && <p className="text-sm text-africhess-green text-center">{t("profile.saved")}</p>}
         {saveError && <InlineAlert>{saveError}</InlineAlert>}
       </div>
 
@@ -135,19 +134,19 @@ export default function ProfilePage() {
       </div>
 
       <div className="flex justify-between items-center">
-        <h2 className="font-semibold text-lg">Parties & classements</h2>
+        <h2 className="font-semibold text-lg">{t("profile.ratings.title")}</h2>
         <Link
           href="/stats"
           className="text-sm text-africhess-gold hover:underline"
         >
-          Statistiques détaillées →
+          {t("profile.ratings.detailed")}
         </Link>
       </div>
 
       <RecentGamesList />
 
       <div>
-        <h2 className="font-semibold mb-4">Classements ELO</h2>
+        <h2 className="font-semibold mb-4">{t("profile.ratings.elo")}</h2>
         {ratingsError && <InlineAlert className="mb-3">{ratingsError}</InlineAlert>}
         <div className="space-y-2">
           {ratings.map((r) => (
@@ -155,12 +154,12 @@ export default function ProfilePage() {
               <span className="capitalize">{r.mode}</span>
               <span className="font-mono font-bold">
                 {r.elo}{" "}
-                <span className="text-sm opacity-50">pic {r.peak_elo}</span>
+                <span className="text-sm opacity-50">{t("profile.ratings.peak", { elo: r.peak_elo })}</span>
               </span>
             </div>
           ))}
           {ratings.length === 0 && (
-            <p className="opacity-60">Jouez votre première partie pour gagner un classement !</p>
+            <p className="opacity-60">{t("profile.ratings.empty")}</p>
           )}
         </div>
       </div>
