@@ -28,26 +28,26 @@ export function formatApiError(
   if (error.response.status === 404) {
     const path = error.config?.url ?? "";
     if (path.includes("/stats/")) {
-      return tr("errors.stats404", locale);
+      return translate(locale, "errors.stats404");
     }
   }
 
   if (!data) {
-    return error.message || tr("errors.unknown", locale);
+    return error.message || translate(locale, "errors.unknown");
   }
 
   if (typeof data === "string") {
     if (data.includes("<!DOCTYPE") || data.includes("<html")) {
       if (data.includes("users_userstats")) {
-        return tr("errors.serverTechnical", locale);
+        return translate(locale, "errors.serverTechnical");
       }
       if (data.includes("email") || data.includes("username")) {
-        return tr("errors.emailUsed", locale);
+        return translate(locale, "errors.emailUsed");
       }
       if (data.includes("is_timed") || data.includes("time_control")) {
-        return tr("errors.migration", locale);
+        return translate(locale, "errors.migration");
       }
-      return tr("errors.serverGeneric", locale);
+      return translate(locale, "errors.serverGeneric");
     }
     return data;
   }
@@ -58,7 +58,7 @@ export function formatApiError(
       data.detail.includes("token not valid") ||
       data.detail.includes("Token is invalid")
     ) {
-      return tr("errors.sessionExpired", locale);
+      return translate(locale, "errors.sessionExpired");
     }
     return data.detail;
   }
@@ -74,27 +74,27 @@ export function formatApiError(
         : "";
     if (!text) continue;
     if (field === "email" && text.includes("déjà")) {
-      messages.push(tr("errors.emailExists", locale));
+      messages.push(translate(locale, "errors.emailExists"));
       continue;
     }
     if (field === "username" && text.includes("déjà")) {
-      messages.push(tr("errors.usernameTaken", locale));
+      messages.push(translate(locale, "errors.usernameTaken"));
       continue;
     }
     if (field === "non_field_errors") {
       messages.push(
         text.includes("log in") || text.includes("credentials")
-          ? tr("errors.badCredentials", locale)
+          ? translate(locale, "errors.badCredentials")
           : text
       );
       continue;
     }
     const labelKey = FIELD_KEYS[field];
-    const label = labelKey ? tr(labelKey, locale) : "";
+    const label = labelKey ? translate(locale, labelKey) : "";
     messages.push(label ? `${label} : ${text}` : text);
   }
 
-  return messages.length > 0 ? messages.join(" ") : tr("errors.invalidRequest", locale);
+  return messages.length > 0 ? messages.join(" ") : translate(locale, "errors.invalidRequest");
 }
 
 export function isEmailAlreadyUsedError(error: unknown): boolean {

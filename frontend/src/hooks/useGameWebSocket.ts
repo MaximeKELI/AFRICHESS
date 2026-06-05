@@ -70,7 +70,7 @@ export function useGameWebSocket(
 
     const token = Cookies.get("access_token");
     if (!token) {
-      setWsError("Connexion WebSocket impossible (session manquante).");
+      setWsError(tr("ws.error.session"));
       return;
     }
 
@@ -114,7 +114,7 @@ export function useGameWebSocket(
             setWsError(message);
           }
         } catch {
-          setWsError("Message WebSocket invalide.");
+          setWsError(tr("ws.error.invalidMessage"));
         }
       };
 
@@ -124,10 +124,10 @@ export function useGameWebSocket(
         if (retryRef.current < MAX_WS_RETRIES) {
           const delay = Math.min(1000 * 2 ** retryRef.current, 8000);
           retryRef.current += 1;
-          setWsError(`Reconnexion… (${retryRef.current}/${MAX_WS_RETRIES})`);
+          setWsError(tr("ws.error.reconnect", { n: retryRef.current, max: MAX_WS_RETRIES }));
           retryTimerRef.current = setTimeout(connect, delay);
         } else {
-          setWsError("Connexion temps réel perdue. Rechargez la page.");
+          setWsError(tr("ws.error.lost"));
         }
       };
 
@@ -223,18 +223,18 @@ export function useMatchmakingWebSocket(
           setSearching(true);
         }
         if (msg.event === "error") {
-          setMmError(msg.data?.message || "Erreur matchmaking.");
+          setMmError(msg.data?.message || tr("ws.error.matchmakingGeneric"));
           setSearching(false);
         }
       } catch {
-        setMmError("Réponse matchmaking invalide.");
+        setMmError(tr("ws.error.matchmakingInvalid"));
         setSearching(false);
       }
     };
 
     ws.onclose = () => setSearching(false);
     ws.onerror = () => {
-      setMmError("Connexion matchmaking impossible.");
+      setMmError(tr("ws.error.matchmaking"));
       setSearching(false);
     };
   }, [mode, onMatch, timeOpts?.isTimed, timeOpts?.timeMinutes]);

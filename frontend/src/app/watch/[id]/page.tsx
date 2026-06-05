@@ -10,6 +10,7 @@ import { formatApiError } from "@/lib/errors";
 import { useGameWebSocket, type WsGamePayload } from "@/hooks/useGameWebSocket";
 import { buildGameDisplayFromFen, buildGameDisplayFromMoves, type ApiMove } from "@/lib/chessDisplay";
 import Link from "next/link";
+import { useTranslation } from "@/hooks/useTranslation";
 
 function wsMovesToApi(
   raw: WsGamePayload["game"]["moves"]
@@ -23,6 +24,7 @@ function wsMovesToApi(
 }
 
 export default function WatchGamePage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const [fen, setFen] = useState("start");
   const [moves, setMoves] = useState<ApiMove[]>([]);
@@ -50,10 +52,10 @@ export default function WatchGamePage() {
         setStatus(data.status);
       })
       .catch((err) => {
-        setError(formatApiError(err, "Partie introuvable ou accès refusé."));
+        setError(formatApiError(err, t("watch.error")));
       })
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, t]);
 
   const display = useMemo(() => {
     if (moves.length) return buildGameDisplayFromMoves("start", moves);
@@ -61,7 +63,7 @@ export default function WatchGamePage() {
   }, [fen, moves]);
 
   if (loading) {
-    return <p className="p-8 text-center opacity-60">Chargement de la partie…</p>;
+    return <p className="p-8 text-center opacity-60">{t("watch.loading")}</p>;
   }
 
   if (error) {
@@ -69,7 +71,7 @@ export default function WatchGamePage() {
       <div className="max-w-lg mx-auto px-4 py-16">
         <InlineAlert className="mb-4">{error}</InlineAlert>
         <Link href="/live" className="text-sm text-africhess-gold hover:underline">
-          ← Retour aux parties en direct
+          {t("watch.backLiveError")}
         </Link>
       </div>
     );
@@ -78,17 +80,23 @@ export default function WatchGamePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <Link href="/live" className="text-sm text-africhess-gold mb-4 inline-block">
-        ← Parties en direct
+        {t("watch.backLive")}
       </Link>
-      <h1 className="font-display text-2xl font-bold mb-4">Mode observateur</h1>
-      <p className="text-xs opacity-60 mb-4">Lecture seule · WebSocket</p>
+      <h1 className="font-display text-2xl font-bold mb-4">{t("watch.title")}</h1>
+      <p className="text-xs opacity-60 mb-4">{t("watch.readonly")}</p>
       {wsError && (
         <InlineAlert variant="info" className="mb-4 text-xs">
           {wsError}
         </InlineAlert>
       )}
       <div className="grid md:grid-cols-[1fr_220px] gap-6">
-        <ChessBoard fen={display.fen} disabled playerColor="w" lastMove={display.lastMove} />
+        <ChessBoard
+          fen={display.fen}
+          orientation="white"
+          disabled
+          playerColor="w"
+          lastMove={display.lastMove}
+        />
         <GameSidePanel
           moves={display.moveRows}
           captured={display.captured}
@@ -97,7 +105,9 @@ export default function WatchGamePage() {
           turn={display.turn}
         />
       </div>
-      {status === "completed" && <p className="mt-4 text-africhess-gold">Partie terminée</p>}
+      {status && (
+        <p className="mt-4 text-sm opacity-60 capitalize">{status}</p>
+      )}
     </div>
   );
 }
