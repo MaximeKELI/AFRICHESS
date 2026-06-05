@@ -42,7 +42,7 @@ export function buildStatsCsv(data: StatsExportData, username: string): string {
     sections.push(
       rowsToCsv(
         keys,
-        data.by_mode.map((r) => keys.map((k) => r[k]))
+        data.by_mode.map((r: Record<string, unknown>) => keys.map((k) => r[k]))
       )
     );
     sections.push("");
@@ -97,7 +97,7 @@ export function buildStatsCsv(data: StatsExportData, username: string): string {
     sections.push(
       rowsToCsv(
         keys,
-        data.openings.map((r) => keys.map((k) => r[k]))
+        data.openings.map((r: Record<string, unknown>) => keys.map((k) => r[k]))
       )
     );
     sections.push("");
@@ -109,7 +109,7 @@ export function buildStatsCsv(data: StatsExportData, username: string): string {
     sections.push(
       rowsToCsv(
         keys,
-        data.ratings.map((r) => keys.map((k) => r[k]))
+        data.ratings.map((r: Record<string, unknown>) => keys.map((k) => r[k]))
       )
     );
     sections.push("");
@@ -121,7 +121,7 @@ export function buildStatsCsv(data: StatsExportData, username: string): string {
     sections.push(
       rowsToCsv(
         keys,
-        data.rating_history.map((r) => keys.map((k) => r[k]))
+        data.rating_history.map((r: Record<string, unknown>) => keys.map((k) => r[k]))
       )
     );
     sections.push("");
@@ -133,7 +133,7 @@ export function buildStatsCsv(data: StatsExportData, username: string): string {
     sections.push(
       rowsToCsv(
         keys,
-        data.recent_form.map((r) => keys.map((k) => r[k]))
+        data.recent_form.map((r: Record<string, unknown>) => keys.map((k) => r[k]))
       )
     );
     sections.push("");
@@ -144,7 +144,7 @@ export function buildStatsCsv(data: StatsExportData, username: string): string {
     sections.push(
       rowsToCsv(
         ["date", "parties"],
-        data.activity.map((a) => [a.date, a.games])
+        data.activity.map((a: { date: string; games: number }) => [a.date, a.games])
       )
     );
   }
