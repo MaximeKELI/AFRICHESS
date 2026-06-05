@@ -192,14 +192,16 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
             </button>
           )}
 
-          {retryIdx !== null && mistakes[retryIdx] && (
+          {retryIdx !== null && analysis.best_moves_json[retryIdx] && (
             <div className="rounded-lg border border-africhess-gold/30 p-3 text-xs space-y-2">
               <p className="font-medium">{t("chess.analysis.retryHint")}</p>
               <p>
-                <span className="font-mono text-africhess-gold">{mistakes[retryIdx].san}</span>
+                <span className="font-mono text-africhess-gold">
+                  {analysis.best_moves_json[retryIdx].san}
+                </span>
                 {" — "}
-                <span className={CLASS_COLORS[mistakes[retryIdx].class]}>
-                  {mistakes[retryIdx].class}
+                <span className={CLASS_COLORS[analysis.best_moves_json[retryIdx].class]}>
+                  {analysis.best_moves_json[retryIdx].class}
                 </span>
               </p>
               <div className="flex gap-2">

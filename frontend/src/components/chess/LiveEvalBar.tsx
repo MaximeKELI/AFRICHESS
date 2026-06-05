@@ -1,6 +1,6 @@
 "use client";
 
-import { formatEvalDisplay } from "@/lib/coachReview";
+import { evalForBar, formatEvalDisplay } from "@/lib/coachReview";
 
 interface LiveEvalBarProps {
   evaluation: number | null;

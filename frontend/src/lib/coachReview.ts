@@ -29,10 +29,16 @@ export function coachPhrase(
 
 export function formatEvalDisplay(evalScore: number | null | undefined): string {
   if (evalScore == null || Number.isNaN(evalScore)) return "—";
-  if (Math.abs(evalScore) >= 50) {
-    const mateIn = Math.max(1, Math.round(100 / Math.max(Math.abs(evalScore) - 90, 1)));
-    return evalScore > 0 ? `#${mateIn}` : `#-${mateIn}`;
+  if (Math.abs(evalScore) >= 100) {
+    const mateIn = Math.max(1, Math.round(Math.abs(evalScore) / 100));
+    return evalScore > 0 ? `M${mateIn}` : `M-${mateIn}`;
   }
-  const pawns = evalScore / 100;
-  return pawns > 0 ? `+${pawns.toFixed(1)}` : pawns.toFixed(1);
+  return evalScore > 0 ? `+${evalScore.toFixed(1)}` : evalScore.toFixed(1);
+}
+
+/** Normalise l'eval moteur pour la barre live (−10…+10 pions). */
+export function evalForBar(evalScore: number | null | undefined): number {
+  if (evalScore == null || Number.isNaN(evalScore)) return 0;
+  if (Math.abs(evalScore) >= 100) return evalScore > 0 ? 10 : -10;
+  return Math.max(-10, Math.min(10, evalScore));
 }
