@@ -1,31 +1,19 @@
-/** Codes pays africains (alignés sur le backend User.Country). */
+/** Pays africains pour filtres classement — aligné sur backend AFRICAN_COUNTRY_CODES. */
+import { WORLD_COUNTRIES, countryName, type WorldCountry } from "./worldCountries";
+
 export const AFRICAN_COUNTRIES: { code: string; name: string }[] = [
   { code: "", name: "Tous les pays" },
-  { code: "DZ", name: "Algérie" },
-  { code: "AO", name: "Angola" },
-  { code: "BJ", name: "Bénin" },
-  { code: "BW", name: "Botswana" },
-  { code: "BF", name: "Burkina Faso" },
-  { code: "CM", name: "Cameroun" },
-  { code: "CI", name: "Côte d'Ivoire" },
-  { code: "EG", name: "Égypte" },
-  { code: "ET", name: "Éthiopie" },
-  { code: "GH", name: "Ghana" },
-  { code: "KE", name: "Kenya" },
-  { code: "MA", name: "Maroc" },
-  { code: "MG", name: "Madagascar" },
-  { code: "ML", name: "Mali" },
-  { code: "MR", name: "Mauritanie" },
-  { code: "MU", name: "Maurice" },
-  { code: "MZ", name: "Mozambique" },
-  { code: "NA", name: "Namibie" },
-  { code: "NG", name: "Nigeria" },
-  { code: "RW", name: "Rwanda" },
-  { code: "SN", name: "Sénégal" },
-  { code: "ZA", name: "Afrique du Sud" },
-  { code: "TN", name: "Tunisie" },
-  { code: "TZ", name: "Tanzanie" },
-  { code: "UG", name: "Ouganda" },
-  { code: "ZM", name: "Zambie" },
-  { code: "ZW", name: "Zimbabwe" },
+  ...WORLD_COUNTRIES.filter((c) => c.isAfrican)
+    .sort((a, b) => a.nameFr.localeCompare(b.nameFr, "fr"))
+    .map((c) => ({ code: c.code, name: c.nameFr })),
 ];
+
+export function getCountryByCode(code: string): WorldCountry | undefined {
+  return WORLD_COUNTRIES.find((c) => c.code === code);
+}
+
+export function displayCountry(code: string, locale: string): string {
+  const c = getCountryByCode(code);
+  if (!c) return code;
+  return countryName(c, locale);
+}

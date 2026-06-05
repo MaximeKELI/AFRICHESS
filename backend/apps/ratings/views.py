@@ -42,14 +42,12 @@ class AfricanLeaderboardView(generics.ListAPIView):
     serializer_class = LeaderboardEntrySerializer
     permission_classes = [permissions.AllowAny]
 
-    AFRICAN_CODES = [c[0] for c in User.Country.choices if c[0] != "XX"]
-
     def get_queryset(self):
         mode = self.request.query_params.get("mode", "blitz")
         country = self.request.query_params.get("country")
         qs = PlayerRating.objects.filter(
             mode=mode,
-            user__country__in=self.AFRICAN_CODES,
+            user__country__in=AFRICAN_COUNTRY_CODES,
         ).select_related("user")
         if country:
             qs = qs.filter(user__country=country)

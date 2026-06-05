@@ -107,9 +107,38 @@ class RegisterSerializer(serializers.ModelSerializer):
             "password",
             "password_confirm",
             "country",
+            "city",
             "preferred_language",
             "chess_level",
+            "birth_year",
+            "gender",
+            "discovery_source",
+            "registration_locale",
         ]
+        extra_kwargs = {
+            "city": {"required": False, "allow_blank": True},
+            "birth_year": {"required": False, "allow_null": True},
+            "gender": {"required": False, "allow_blank": True},
+            "discovery_source": {"required": False, "allow_blank": True},
+            "registration_locale": {"required": False, "allow_blank": True},
+            "preferred_language": {"required": False},
+        }
+
+    def validate_country(self, value):
+        code = (value or "").upper()
+        if code not in VALID_COUNTRY_CODES:
+            raise serializers.ValidationError("Code pays invalide.")
+        return code
+
+    def validate_birth_year(self, value):
+        if value is None:
+            return value
+        current = date.today().year
+        if value < 1940 or value > current - 5:
+            raise serializers.ValidationError(
+                f"L'année de naissance doit être entre 1940 et {current - 5}."
+            )
+        return value
 
     def validate_username(self, value):
         if User.objects.filter(username__iexact=value).exists():

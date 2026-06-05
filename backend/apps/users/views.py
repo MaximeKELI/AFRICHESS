@@ -75,4 +75,19 @@ class AfricanPlayersView(generics.ListAPIView):
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
 def countries_list(request):
-    return Response([{"code": c[0], "name": c[1]} for c in User.Country.choices])
+    lang = (request.query_params.get("lang") or request.headers.get("Accept-Language", "en"))[:2]
+    use_fr = lang == "fr"
+    rows = []
+    for code, name_en, name_fr, is_african in WORLD_COUNTRIES:
+        rows.append(
+            {
+                "code": code,
+                "name": name_fr if use_fr else name_en,
+                "name_en": name_en,
+                "name_fr": name_fr,
+                "flag": country_flag(code),
+                "is_african": is_african,
+            }
+        )
+    rows.sort(key=lambda r: (not r["is_african"], r["name"]))
+    return Response(rows)

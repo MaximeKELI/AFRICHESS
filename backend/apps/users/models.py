@@ -1,9 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from .countries_data import VALID_COUNTRY_CODES
-
-
 class User(AbstractUser):
     """Extended user model with African chess identity."""
 
