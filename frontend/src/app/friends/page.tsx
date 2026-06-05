@@ -71,7 +71,7 @@ export default function FriendsPage() {
         .then(({ data }) => setDmMessages(Array.isArray(data) ? data : []))
         .catch((err) => {
           setDmMessages([]);
-          setMsg(formatApiError(err, "Impossible de charger les messages."));
+          setMsg(formatApiError(err, t("friends.error.messages")));
         })
         .finally(() => setDmLoading(false));
     },

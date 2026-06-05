@@ -122,14 +122,14 @@ export default function LearningDashboardPage() {
           </div>
           <div>
             <p className="text-2xl font-bold">{data.stats.win_rate}%</p>
-            <p className="text-xs opacity-60">Victoires</p>
+            <p className="text-xs opacity-60">{t("profile.stats.wins")}</p>
           </div>
         </div>
 
         <div className="glass-card p-6">
-          <h3 className="font-semibold mb-3">Badges</h3>
+          <h3 className="font-semibold mb-3">{t("learning.badges")}</h3>
           {data.badges.length === 0 ? (
-            <p className="text-sm opacity-60">Jouez et apprenez pour débloquer des badges.</p>
+            <p className="text-sm opacity-60">{t("learning.badges.empty")}</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {data.badges.map((b, i) => (
