@@ -102,10 +102,10 @@ export default function FriendsPage() {
     setMsg("");
     try {
       await socialApi.requestFriend(username.trim());
-      setMsg("Demande envoyée");
+      setMsg(t("friends.add.sent"));
       setUsername("");
     } catch {
-      setMsg("Joueur introuvable ou déjà ami");
+      setMsg(t("friends.add.failed"));
     }
   };
 
