@@ -1,16 +1,6 @@
 import { AxiosError } from "axios";
-import { translate, type Locale } from "./i18n";
-
-function getLocale(): Locale {
-  if (typeof window === "undefined") return "fr";
-  const l = localStorage.getItem("locale");
-  if (l === "en" || l === "ar" || l === "pt" || l === "sw") return l;
-  return "fr";
-}
-
-function tr(key: string, locale = getLocale()): string {
-  return translate(locale, key);
-}
+import { translate } from "./i18n";
+import { getAppLocale } from "./i18n/labels";
 
 const FIELD_KEYS: Record<string, string> = {
   email: "errors.field.email",

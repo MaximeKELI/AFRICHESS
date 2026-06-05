@@ -70,7 +70,7 @@ export default function TournamentsPage() {
   const startTournament = async (slug: string) => {
     try {
       await tournamentsApi.start(slug);
-      setStatus("Tournoi démarré — les parties sont créées");
+      setStatus(t("tournaments.status.started"));
       load();
     } catch {
       setStatus("Impossible de démarrer (droits ou participants insuffisants)");
@@ -93,10 +93,10 @@ export default function TournamentsPage() {
       if (data?.game?.id) {
         window.location.href = `/play?game=${data.game.id}`;
       } else {
-        setStatus("Aucune partie active pour vous dans ce tournoi");
+        setStatus(t("tournaments.status.noActiveGame"));
       }
     } catch {
-      setStatus("Erreur lors de la recherche de partie");
+      setStatus(t("tournaments.status.findGameError"));
     }
   };
 
@@ -111,78 +111,83 @@ export default function TournamentsPage() {
           checked={africanOnly}
           onChange={(e) => setAfricanOnly(e.target.checked)}
         />
-        Coupes africaines uniquement
+        {t("tournaments.africanOnly")}
       </label>
 
       {status && <p className="text-africhess-gold mb-4">{status}</p>}
 
       <div className="space-y-4">
-        {list.map((t) => (
-          <article key={t.id} className="glass-card p-5">
+        {list.map((tournament) => (
+          <article key={tournament.id} className="glass-card p-5">
             <div className="flex flex-wrap justify-between gap-2 mb-2">
-              <h2 className="font-semibold text-lg">{t.name}</h2>
-              {t.is_african_cup && (
+              <h2 className="font-semibold text-lg">{tournament.name}</h2>
+              {tournament.is_african_cup && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-africhess-gold/20">
-                  Coupe africaine
+                  {t("tournaments.africanCup")}
                 </span>
               )}
             </div>
-            <p className="text-sm opacity-80 mb-3">{t.description || "—"}</p>
+            <p className="text-sm opacity-80 mb-3">{tournament.description || "—"}</p>
             <div className="flex flex-wrap gap-3 text-xs opacity-70 mb-4">
-              <span className="capitalize">{t.mode}</span>
-              <span>{t.format}</span>
+              <span className="capitalize">{tournament.mode}</span>
+              <span>{tournament.format}</span>
               <span>
-                {t.participant_count}/{t.max_players} joueurs
+                {t("tournaments.players", {
+                  current: tournament.participant_count,
+                  max: tournament.max_players,
+                })}
               </span>
-              <span className="capitalize">{t.status}</span>
-              {t.starts_at && (
-                <span>{new Date(t.starts_at).toLocaleDateString("fr-FR")}</span>
+              <span className="capitalize">{tournament.status}</span>
+              {tournament.starts_at && (
+                <span>{new Date(tournament.starts_at).toLocaleDateString()}</span>
               )}
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {t.status === "registration" && user && (
+              {tournament.status === "registration" && user && (
                 <button
                   type="button"
-                  onClick={() => register(t.slug)}
+                  onClick={() => register(tournament.slug)}
                   className="px-4 py-2 rounded-lg african-gradient text-white text-sm"
                 >
-                  S&apos;inscrire
+                  {t("tournaments.register")}
                 </button>
               )}
               {user &&
-                t.created_by?.id === user.id &&
-                (t.status === "registration" || t.status === "upcoming") && (
+                tournament.created_by?.id === user.id &&
+                (tournament.status === "registration" || tournament.status === "upcoming") && (
                   <button
                     type="button"
-                    onClick={() => startTournament(t.slug)}
+                    onClick={() => startTournament(tournament.slug)}
                     className="px-4 py-2 rounded-lg border border-africhess-green text-africhess-green text-sm"
                   >
-                    Démarrer le tournoi
+                    {t("tournaments.start")}
                   </button>
                 )}
-              {t.status === "active" && user && (
+              {tournament.status === "active" && user && (
                 <button
                   type="button"
-                  onClick={() => openMyGame(t.slug)}
+                  onClick={() => openMyGame(tournament.slug)}
                   className="px-4 py-2 rounded-lg border text-sm"
                 >
-                  Ma partie
+                  {t("tournaments.myGame")}
                 </button>
               )}
               <button
                 type="button"
-                onClick={() => loadStandings(t.slug)}
+                onClick={() => loadStandings(tournament.slug)}
                 className="px-4 py-2 rounded-lg border border-white/20 text-sm"
               >
-                {expandedSlug === t.slug ? "Masquer classement" : "Classement"}
+                {expandedSlug === tournament.slug
+                  ? t("tournaments.hideStandings")
+                  : t("tournaments.showStandings")}
               </button>
             </div>
 
-            {expandedSlug === t.slug && (
+            {expandedSlug === tournament.slug && (
               <div className="mt-4 border-t border-white/10 pt-3">
                 {standings.length === 0 ? (
-                  <p className="text-sm opacity-60">Pas encore de résultats</p>
+                  <p className="text-sm opacity-60">{t("tournaments.noResults")}</p>
                 ) : (
                   <ol className="text-sm space-y-1">
                     {standings.map((row, i) => (
@@ -200,20 +205,18 @@ export default function TournamentsPage() {
               </div>
             )}
 
-            {!user && t.status === "registration" && (
+            {!user && tournament.status === "registration" && (
               <Link
                 href="/login"
                 className="text-sm text-africhess-green hover:underline mt-2 inline-block"
               >
-                Connexion pour s&apos;inscrire
+                {t("tournaments.loginToRegister")}
               </Link>
             )}
           </article>
         ))}
         {list.length === 0 && (
-          <p className="opacity-60 text-center py-12">
-            Aucun tournoi ouvert. Revenez bientôt !
-          </p>
+          <p className="opacity-60 text-center py-12">{t("tournaments.empty")}</p>
         )}
       </div>
     </div>

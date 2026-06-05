@@ -1,4 +1,16 @@
+import { translate, type Locale } from "./index";
 import type { MessageParams } from "./types";
+
+export function getAppLocale(): Locale {
+  if (typeof window === "undefined") return "fr";
+  const l = localStorage.getItem("locale");
+  if (l === "en" || l === "ar" || l === "pt" || l === "sw") return l;
+  return "fr";
+}
+
+export function tr(key: string, params?: MessageParams): string {
+  return translate(getAppLocale(), key, params);
+}
 
 export type TranslateFn = (key: string, params?: MessageParams) => string;
 
