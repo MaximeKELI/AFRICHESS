@@ -16,6 +16,7 @@ interface User {
   is_staff?: boolean;
   subscription_tier?: string;
   is_premium?: boolean;
+  is_diamond?: boolean;
   stats?: {
     games_played: number;
     win_rate: number;
