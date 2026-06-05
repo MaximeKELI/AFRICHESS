@@ -18,6 +18,21 @@ class User(AbstractUser):
         EXPERT = "expert", "Expert"
         MASTER = "master", "Maître"
 
+    class Gender(models.TextChoices):
+        MALE = "male", "Male"
+        FEMALE = "female", "Female"
+        OTHER = "other", "Other"
+        UNDISCLOSED = "undisclosed", "Prefer not to say"
+
+    class DiscoverySource(models.TextChoices):
+        FRIEND = "friend", "Friend"
+        SOCIAL = "social", "Social media"
+        SEARCH = "search", "Search engine"
+        TOURNAMENT = "tournament", "Tournament / club"
+        SCHOOL = "school", "School"
+        PRESS = "press", "Press / media"
+        OTHER = "other", "Other"
+
     LEVEL_ELO = {
         "beginner": 800,
         "intermediate": 1200,
