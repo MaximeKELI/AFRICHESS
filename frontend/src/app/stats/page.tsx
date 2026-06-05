@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Download, FileJson, Table2 } from "lucide-react";
+import { BarChart3, Download, FileJson, Table2 } from "lucide-react";
 import { statsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { formatApiError } from "@/lib/errors";
@@ -243,7 +243,7 @@ export default function StatsPage() {
                   : "border border-white/15 hover:bg-white/5"
               }`}
             >
-              <Download size={14} className="rotate-180" />
+              <BarChart3 size={14} />
               Diagrammes
             </button>
             <button

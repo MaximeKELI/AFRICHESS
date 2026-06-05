@@ -103,14 +103,10 @@ export function DonutChart({
 export function BarChart({
   items,
   maxHeight = 140,
-  valueKey = "value",
-  labelKey = "label",
   color = CHART_COLORS.gold,
 }: {
   items: { label: string; value: number; color?: string }[];
   maxHeight?: number;
-  valueKey?: string;
-  labelKey?: string;
   color?: string;
 }) {
   const max = Math.max(...items.map((i) => i.value), 1);

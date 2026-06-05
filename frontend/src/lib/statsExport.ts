@@ -60,13 +60,21 @@ export function buildStatsCsv(data: StatsExportData, username: string): string {
     sections.push("");
   }
 
+  const bucketRow = (b: Record<string, unknown>) => [
+    b.played,
+    b.won,
+    b.drawn,
+    b.lost,
+    b.win_rate,
+  ];
+
   sections.push("## ADVERSAIRE");
   sections.push(
     rowsToCsv(
       ["type", "jouées", "victoires", "nulles", "défaites", "win_rate"],
       [
-        ["humain", ...(Object.values(data.vs_opponent.human as Record<string, unknown>))],
-        ["ia", ...(Object.values(data.vs_opponent.ai as Record<string, unknown>))],
+        ["humain", ...bucketRow(data.vs_opponent.human as Record<string, unknown>)],
+        ["ia", ...bucketRow(data.vs_opponent.ai as Record<string, unknown>)],
       ]
     )
   );
@@ -77,8 +85,8 @@ export function buildStatsCsv(data: StatsExportData, username: string): string {
     rowsToCsv(
       ["couleur", "jouées", "victoires", "nulles", "défaites", "win_rate"],
       [
-        ["blancs", ...(Object.values(data.by_color.white as Record<string, unknown>))],
-        ["noirs", ...(Object.values(data.by_color.black as Record<string, unknown>))],
+        ["blancs", ...bucketRow(data.by_color.white as Record<string, unknown>)],
+        ["noirs", ...bucketRow(data.by_color.black as Record<string, unknown>)],
       ]
     )
   );
