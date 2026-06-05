@@ -346,9 +346,9 @@ export default function StatsPage() {
 
               <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">Top ouvertures</h2>
+                  <h2 className="font-semibold mb-4">{t("stats.chart.openings")}</h2>
                   {data.openings.length === 0 ? (
-                    <p className="text-sm opacity-50">Pas encore d&apos;ouvertures.</p>
+                    <p className="text-sm opacity-50">{t("stats.chart.noOpenings")}</p>
                   ) : (
                     <HorizontalBarChart
                       items={data.openings.slice(0, 8).map((o) => ({
@@ -382,21 +382,22 @@ export default function StatsPage() {
 
               {eloLinePoints.length >= 2 && (
                 <section className="glass-card p-5">
-                  <h2 className="font-semibold mb-2">Évolution ELO (parties en ligne)</h2>
-                  <p className="text-xs opacity-50 mb-4">Historique des changements de classement</p>
+                  <h2 className="font-semibold mb-2">{t("stats.chart.eloEvolution")}</h2>
+                  <p className="text-xs opacity-50 mb-4">{t("stats.chart.eloHistory")}</p>
                   <LineChart points={eloLinePoints} />
                 </section>
               )}
 
               {data.recent_form.length > 0 && (
                 <section className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">Forme récente</h2>
+                  <h2 className="font-semibold mb-4">{t("stats.chart.recentForm")}</h2>
                   <FormSparkline
                     outcomes={data.recent_form.slice(0, 20).map((g) => g.outcome)}
                   />
                   <p className="text-xs opacity-40 mt-3">
-                    Dernières {Math.min(20, data.recent_form.length)} parties — V victoire, D défaite, N
-                    nulle
+                    {t("stats.chart.recentFormHint", {
+                      n: Math.min(20, data.recent_form.length),
+                    })}
                   </p>
                 </section>
               )}
