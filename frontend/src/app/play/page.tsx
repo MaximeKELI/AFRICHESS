@@ -535,6 +535,7 @@ function PlayContent() {
             )}
             incrementMs={gameData.increment_ms ?? 0}
             clockLabel={clockLabel}
+            serverValidated={variant !== "standard"}
           />
           {isLiveHuman && gameActive && (
             <div className="flex flex-wrap gap-2 justify-center w-full">

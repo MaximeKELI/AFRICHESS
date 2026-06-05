@@ -29,6 +29,13 @@ interface ChessBoardProps {
   playerColor?: "w" | "b";
   /** Jouer le son pour les coups adverses quand le FEN change (réponse serveur) */
   playSoundOnFenChange?: boolean;
+  /** Variantes (960, Crazyhouse) : validation côté serveur uniquement */
+  serverValidated?: boolean;
+}
+
+function normalizeFenForDisplay(fen: string): string {
+  if (fen === "start") return fen;
+  return fen.replace(/\[.*?\]/g, "");
 }
 
 function ChessBoardInner({
@@ -40,6 +47,7 @@ function ChessBoardInner({
   lastMove = null,
   playerColor,
   playSoundOnFenChange = true,
+  serverValidated = false,
 }: ChessBoardProps) {
   const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
@@ -121,9 +129,11 @@ function ChessBoardInner({
     return { selected, lastFrom, lastTo, legalDot, captureRing };
   }, [theme]);
 
+  const displayFen = normalizeFenForDisplay(fen);
+
   useEffect(() => {
     try {
-      const g = new Chess(fen === "start" ? undefined : fen);
+      const g = new Chess(displayFen === "start" ? undefined : displayFen);
       const plies = g.history().length;
 
       if (playSoundOnFenChange && plies > prevPliesRef.current && prevPliesRef.current > 0) {
@@ -147,7 +157,7 @@ function ChessBoardInner({
     } catch {
       /* invalid fen */
     }
-  }, [fen, playSoundOnFenChange, soundsOn, onMovePlayed]);
+  }, [displayFen, playSoundOnFenChange, soundsOn, onMovePlayed]);
 
   const turnColor = game.turn();
 
@@ -171,13 +181,51 @@ function ChessBoardInner({
     [disabled, game, playerColor, turnColor]
   );
 
-  const highlightTargets = useCallback((from: Square) => {
-    const moves = game.moves({ square: from, verbose: true });
-    setLegalTargets(moves.map((m) => m.to as Square));
-  }, [game]);
+  const highlightTargets = useCallback(
+    (from: Square) => {
+      if (serverValidated) {
+        const squares: Square[] = [];
+        for (let f = 0; f < 8; f++) {
+          for (let r = 1; r <= 8; r++) {
+            const sq = `${String.fromCharCode(97 + f)}${r}` as Square;
+            if (sq !== from) squares.push(sq);
+          }
+        }
+        setLegalTargets(squares);
+        return;
+      }
+      const moves = game.moves({ square: from, verbose: true });
+      setLegalTargets(moves.map((m) => m.to as Square));
+    },
+    [game, serverValidated]
+  );
+
+  const applyMoveServer = useCallback(
+    (from: Square, to: Square, promotion?: "q" | "r" | "b" | "n"): boolean => {
+      const uci = `${from}${to}${promotion || ""}`;
+      setSelectedSquare(null);
+      setLegalTargets([]);
+      setPromotionPending(null);
+      onMove?.(uci);
+      return true;
+    },
+    [onMove]
+  );
 
   const applyMove = useCallback(
     (from: Square, to: Square, promotion?: "q" | "r" | "b" | "n"): boolean => {
+      if (serverValidated) {
+        const rank = to[1];
+        const needsPromo =
+          (from[1] === "7" && rank === "8") || (from[1] === "2" && rank === "1");
+        if (needsPromo && !promotion) {
+          setPromotionPending({ from, to });
+          setSelectedSquare(null);
+          setLegalTargets([]);
+          return false;
+        }
+        return applyMoveServer(from, to, promotion);
+      }
       const g = new Chess(game.fen());
       const legal = g.moves({ square: from, verbose: true });
       const targetMoves = legal.filter((m) => m.to === to);
@@ -217,7 +265,7 @@ function ChessBoardInner({
       onMove?.(uci);
       return true;
     },
-    [game, onMove, onMovePlayed, soundsOn]
+    [game, onMove, onMovePlayed, soundsOn, serverValidated, applyMoveServer]
   );
 
   const onSquareClick = useCallback(
@@ -345,7 +393,13 @@ function ChessBoardInner({
     >
       <Chessboard
         boardWidth={boardWidth}
-        position={game.fen()}
+        position={
+          serverValidated
+            ? displayFen === "start"
+              ? "start"
+              : displayFen
+            : game.fen()
+        }
         onPieceDrop={onDrop}
         onSquareClick={onSquareClick}
         boardOrientation={orientation}

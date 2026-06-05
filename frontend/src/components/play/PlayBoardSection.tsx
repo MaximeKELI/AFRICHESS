@@ -19,6 +19,7 @@ interface PlayBoardSectionProps {
   clockRunning: boolean;
   incrementMs: number;
   clockLabel: string;
+  serverValidated?: boolean;
 }
 
 function PlayBoardSectionInner({
@@ -34,6 +35,7 @@ function PlayBoardSectionInner({
   clockRunning,
   incrementMs,
   clockLabel,
+  serverValidated = false,
 }: PlayBoardSectionProps) {
   const turn = turnFromFen(fen);
   const lastMove = lastMoveFromMoves(moves);
@@ -59,6 +61,7 @@ function PlayBoardSectionInner({
         playerColor={playerColor}
         lastMove={lastMove}
         playSoundOnFenChange={true}
+        serverValidated={serverValidated}
       />
     </div>
   );

@@ -18,6 +18,7 @@ export default function PremiumPage() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [stripeEnabled, setStripeEnabled] = useState(false);
   const [status, setStatus] = useState<{ tier: string; is_premium: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<string | null>(null);
@@ -27,7 +28,10 @@ export default function PremiumPage() {
   useEffect(() => {
     usersApi
       .subscriptionPlans()
-      .then(({ data }) => setPlans(data.plans ?? []))
+      .then(({ data }) => {
+        setPlans(data.plans ?? []);
+        setStripeEnabled(Boolean(data.stripe_enabled));
+      })
       .catch((err) => setError(formatApiError(err, t("premium.error.load"))))
       .finally(() => setLoading(false));
   }, [t]);
@@ -43,6 +47,10 @@ export default function PremiumPage() {
     setError(null);
     try {
       const { data } = await usersApi.subscribe(planId);
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+        return;
+      }
       setStatus({ tier: data.tier, is_premium: data.is_premium });
       setMsg(data.message || t("premium.subscribed"));
     } catch (err) {
@@ -118,7 +126,9 @@ export default function PremiumPage() {
         ))}
       </div>
 
-      <p className="text-xs opacity-50 mt-8 text-center">{t("premium.demoNote")}</p>
+      <p className="text-xs opacity-50 mt-8 text-center">
+        {stripeEnabled ? t("premium.stripeNote") : t("premium.demoNote")}
+      </p>
     </div>
   );
 }
