@@ -7,6 +7,7 @@ import { useAuthStore } from "@/store/auth";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { LevelPicker } from "@/components/profile/LevelPicker";
 import type { ChessLevelId } from "@/lib/avatars";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -20,6 +21,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [emailTaken, setEmailTaken] = useState(false);
   const { register, isLoading } = useAuthStore();
+  const { t } = useTranslation();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,15 +30,15 @@ export default function RegisterPage() {
     setEmailTaken(false);
 
     if (form.username.trim().length < 3) {
-      setError("Le nom d'utilisateur doit contenir au moins 3 caractères.");
+      setError(t("auth.register.error.usernameMin"));
       return;
     }
     if (form.password.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caractères.");
+      setError(t("auth.register.error.passwordMin"));
       return;
     }
     if (form.password !== form.password_confirm) {
-      setError("Les mots de passe ne correspondent pas.");
+      setError(t("auth.register.error.passwordMismatch"));
       return;
     }
 
@@ -44,9 +46,9 @@ export default function RegisterPage() {
       await register(form);
       router.push("/play");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Inscription échouée.";
+      const msg = err instanceof Error ? err.message : t("auth.register.error.failed");
       setError(msg);
-      if (msg.includes("e-mail") && (msg.includes("déjà") || msg.includes("compte"))) {
+      if (msg.includes("e-mail") && (msg.includes("déjà") || msg.includes("compte") || msg.includes("already"))) {
         setEmailTaken(true);
       }
     }
@@ -54,24 +56,21 @@ export default function RegisterPage() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-12">
-      <h1 className="font-display text-3xl font-bold mb-2 text-center">Rejoindre AFRICHESS</h1>
-      <p className="text-center opacity-70 mb-8 text-sm">Créez votre profil de joueur africain</p>
+      <h1 className="font-display text-3xl font-bold mb-2 text-center">{t("auth.register.title")}</h1>
+      <p className="text-center opacity-70 mb-8 text-sm">{t("auth.register.subtitle")}</p>
 
       <form onSubmit={handleSubmit} className="glass-card p-8 space-y-6">
         <LevelPicker
           value={form.chess_level}
           onChange={(chess_level) => setForm({ ...form, chess_level })}
         />
-        <p className="text-xs opacity-50 -mt-2">
-          Vous pourrez ajouter votre photo de profil plus tard. Les portraits illustrés
-          (Kofi, Amara, Nana Kofi…) représentent les adversaires IA en partie.
-        </p>
+        <p className="text-xs opacity-50 -mt-2">{t("auth.register.levelHint")}</p>
 
         <hr className="border-white/10" />
 
         <input
           type="text"
-          placeholder="Nom d'utilisateur"
+          placeholder={t("auth.register.username")}
           autoComplete="username"
           value={form.username}
           onChange={(e) => setForm({ ...form, username: e.target.value })}
@@ -81,7 +80,7 @@ export default function RegisterPage() {
         />
         <input
           type="email"
-          placeholder="E-mail"
+          placeholder={t("auth.register.email")}
           autoComplete="email"
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -90,7 +89,7 @@ export default function RegisterPage() {
         />
         <input
           type="password"
-          placeholder="Mot de passe (8 caractères min.)"
+          placeholder={t("auth.register.password")}
           autoComplete="new-password"
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -100,7 +99,7 @@ export default function RegisterPage() {
         />
         <input
           type="password"
-          placeholder="Confirmer le mot de passe"
+          placeholder={t("auth.register.passwordConfirm")}
           autoComplete="new-password"
           value={form.password_confirm}
           onChange={(e) => setForm({ ...form, password_confirm: e.target.value })}
@@ -112,7 +111,7 @@ export default function RegisterPage() {
           value={form.country}
           onChange={(e) => setForm({ ...form, country: e.target.value })}
           className="w-full px-4 py-3 rounded-lg border bg-transparent"
-          aria-label="Pays"
+          aria-label={t("auth.register.country")}
         >
           <option value="SN">Sénégal</option>
           <option value="NG">Nigeria</option>
@@ -132,7 +131,7 @@ export default function RegisterPage() {
             {emailTaken && (
               <p>
                 <Link href="/login" className="text-africhess-gold underline font-medium">
-                  → Se connecter avec ce compte
+                  {t("auth.register.emailTaken")}
                 </Link>
               </p>
             )}
@@ -143,13 +142,13 @@ export default function RegisterPage() {
           disabled={isLoading}
           className="w-full py-3 african-gradient text-white rounded-lg font-medium disabled:opacity-50"
         >
-          {isLoading ? "Création du compte…" : "Créer mon compte"}
+          {isLoading ? t("auth.register.submitting") : t("auth.register.submit")}
         </button>
         <OAuthButtons />
         <p className="text-center text-sm">
-          Déjà inscrit ?{" "}
+          {t("auth.register.hasAccount")}{" "}
           <Link href="/login" className="text-africhess-gold underline">
-            Se connecter
+            {t("auth.register.login")}
           </Link>
         </p>
       </form>
