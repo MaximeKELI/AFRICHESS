@@ -8,8 +8,15 @@ from apps.games.serializers import GameSerializer
 from apps.games.services import GameService
 from apps.notifications.models import Notification
 
-from .models import ChatMessage, Club, Friendship
-from .serializers import ChatMessageSerializer, ClubSerializer, FriendshipSerializer
+from .models import ChatMessage, Club, ForumComment, ForumPost, Friendship
+from .serializers import (
+    ChatMessageSerializer,
+    ClubSerializer,
+    ForumCommentSerializer,
+    ForumPostDetailSerializer,
+    ForumPostSerializer,
+    FriendshipSerializer,
+)
 
 User = get_user_model()
 
@@ -207,6 +214,66 @@ class DirectMessageListView(APIView):
             content=content,
         )
         return Response(ChatMessageSerializer(msg).data, status=201)
+
+
+class ForumPostListView(generics.ListCreateAPIView):
+    serializer_class = ForumPostSerializer
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
+
+    def get_queryset(self):
+        qs = ForumPost.objects.select_related("author").all()
+        featured = self.request.query_params.get("featured")
+        category = self.request.query_params.get("category")
+        if featured == "1":
+            qs = qs.filter(is_featured=True)
+        if category:
+            qs = qs.filter(category=category)
+        return qs[:50]
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+
+class ForumPostDetailView(generics.RetrieveAPIView):
+    queryset = ForumPost.objects.select_related("author").prefetch_related(
+        "comments__author"
+    )
+    serializer_class = ForumPostDetailSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class ForumCommentCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            post = ForumPost.objects.get(pk=pk)
+        except ForumPost.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        body = (request.data.get("body") or "").strip()[:2000]
+        if not body:
+            return Response({"error": "Empty"}, status=400)
+        comment = ForumComment.objects.create(
+            post=post, author=request.user, body=body
+        )
+        return Response(ForumCommentSerializer(comment).data, status=201)
+
+
+class ForumLikeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            post = ForumPost.objects.get(pk=pk)
+        except ForumPost.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        post.likes_count += 1
+        post.save(update_fields=["likes_count"])
+        return Response({"likes_count": post.likes_count})
 
 
 class ChatHistoryView(generics.ListAPIView):

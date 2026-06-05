@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.users.serializers import UserPublicSerializer
 
-from .models import ChatMessage, Club, Friendship
+from .models import ChatMessage, Club, ForumComment, ForumPost, Friendship
 
 
 class FriendshipSerializer(serializers.ModelSerializer):
@@ -39,6 +39,43 @@ class ClubSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.members.filter(pk=request.user.pk).exists()
         return False
+
+
+class ForumCommentSerializer(serializers.ModelSerializer):
+    author = UserPublicSerializer(read_only=True)
+
+    class Meta:
+        model = ForumComment
+        fields = ["id", "author", "body", "created_at"]
+
+
+class ForumPostSerializer(serializers.ModelSerializer):
+    author = UserPublicSerializer(read_only=True)
+    comments_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ForumPost
+        fields = [
+            "id",
+            "author",
+            "title",
+            "body",
+            "category",
+            "is_featured",
+            "likes_count",
+            "comments_count",
+            "created_at",
+        ]
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()
+
+
+class ForumPostDetailSerializer(ForumPostSerializer):
+    comments = ForumCommentSerializer(many=True, read_only=True)
+
+    class Meta(ForumPostSerializer.Meta):
+        fields = ForumPostSerializer.Meta.fields + ["comments"]
 
 
 class ChatMessageSerializer(serializers.ModelSerializer):

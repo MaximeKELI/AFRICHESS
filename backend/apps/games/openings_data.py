@@ -141,17 +141,19 @@ def _san_key(san: str) -> str:
 
 
 def path_key_from_moves(moves: list[str]) -> str:
-    """Convertit une liste SAN en clé d'arbre (e4_e5_Nf3)."""
+    """Parcourt l'arbre selon les coups SAN."""
     if not moves:
         return ""
-    parts: list[str] = []
-    for i, san in enumerate(moves):
-        key = _san_key(san)
-        if i == 0:
-            parts.append(key)
-        else:
-            parts.append(key)
-    return "_".join(parts)
+    key = ""
+    for san in moves:
+        sk = _san_key(san)
+        if not key:
+            key = sk
+            continue
+        parent = OPENING_TREE.get(key, {})
+        child_key = parent.get("children", {}).get(sk)
+        key = child_key if child_key else f"{key}_{sk}"
+    return key
 
 
 def lookup_opening(moves: list[str], locale: str = "fr") -> dict:

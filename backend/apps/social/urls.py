@@ -16,6 +16,10 @@ urlpatterns = [
     path("clubs/", views.ClubListView.as_view(), name="club-list"),
     path("clubs/<slug:slug>/", views.ClubDetailView.as_view(), name="club-detail"),
     path("clubs/<slug:slug>/join/", views.JoinClubView.as_view(), name="club-join"),
+    path("forum/", views.ForumPostListView.as_view(), name="forum-list"),
+    path("forum/<int:pk>/", views.ForumPostDetailView.as_view(), name="forum-detail"),
+    path("forum/<int:pk>/comment/", views.ForumCommentCreateView.as_view(), name="forum-comment"),
+    path("forum/<int:pk>/like/", views.ForumLikeView.as_view(), name="forum-like"),
     path(
         "chat/<str:room_type>/<str:room_id>/",
         views.ChatHistoryView.as_view(),
