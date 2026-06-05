@@ -20,7 +20,7 @@ import { displayCountry } from "@/lib/countries";
 
 export default function ProfilePage() {
   const { user, fetchProfile } = useAuthStore();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [ratings, setRatings] = useState<Array<{ mode: string; elo: number; peak_elo: number }>>([]);
   const [chessLevel, setChessLevel] = useState<ChessLevelId>("intermediate");
   const [saving, setSaving] = useState(false);
