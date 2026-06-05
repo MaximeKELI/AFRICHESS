@@ -9,7 +9,7 @@ class ThreefoldRepetitionTests(TestCase):
         """Position répétée 3 fois → nulle réclamable."""
         game = Game.objects.create(is_vs_ai=True, mode="blitz")
         # Séquence courte qui peut répéter (Nf3 Ng8 Nf3 Ng8 Nf3)
-        ucis = ["g1f3", "g8f6", "f3g1", "f6g8", "g1f3", "g8f6"]
+        ucis = ["g1f3", "g8f6", "f3g1", "f6g8", "g1f3", "g8f6", "f3g1"]
         for i, uci in enumerate(ucis, start=1):
             Move.objects.create(
                 game=game,

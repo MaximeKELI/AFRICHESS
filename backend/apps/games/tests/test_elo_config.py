@@ -32,7 +32,7 @@ class DifficultySliderTests(SimpleTestCase):
         self.assertEqual(difficulty_slider_to_elo(20), 5000)
 
     def test_round_trip_slider_extremes(self):
-        self.assertEqual(difficulty_slider_to_elo(elo_to_difficulty_slider(800)), 800)
+        self.assertEqual(difficulty_slider_to_elo(elo_to_difficulty_slider(100)), 100)
         self.assertEqual(difficulty_slider_to_elo(elo_to_difficulty_slider(5000)), 5000)
 
     def test_presets_map_to_valid_slider(self):

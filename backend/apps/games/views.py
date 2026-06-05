@@ -24,11 +24,13 @@ from .game_actions import (
     live_games_queryset,
     offer_draw,
 )
+from .game_access import can_analyze_game, can_play_game, can_view_game, user_is_participant
 from .services import GameService, MatchmakingService
 
 
 class GameListView(generics.ListAPIView):
     serializer_class = GameListSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -45,10 +47,23 @@ class GameDetailView(generics.RetrieveAPIView):
     serializer_class = GameSerializer
     lookup_field = "id"
     queryset = Game.objects.all()
+    permission_classes = [permissions.AllowAny]
+
+    def get_object(self):
+        game = super().get_object()
+        if not can_view_game(self.request.user, game):
+            from rest_framework.exceptions import PermissionDenied
+
+            raise PermissionDenied("Vous n'avez pas accès à cette partie.")
+        return game
 
 
 class CreateAIGameView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request):
+        if not request.user.is_authenticated:
+            return Response({"error": "Authentication required"}, status=401)
         ser = CreateAIGameSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
         vd = ser.validated_data
@@ -92,6 +107,8 @@ def ai_strength_preview(request):
 
 
 class MakeMoveView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request, game_id):
         ser = MakeMoveSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
@@ -99,6 +116,8 @@ class MakeMoveView(APIView):
             game = Game.objects.get(id=game_id)
         except Game.DoesNotExist:
             return Response({"error": "Game not found"}, status=404)
+        if not can_play_game(request.user, game):
+            return Response({"error": "Forbidden"}, status=403)
         result = GameService().make_move(
             game,
             request.user,
@@ -113,11 +132,15 @@ class MakeMoveView(APIView):
 
 
 class UndoMoveView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request, game_id):
         try:
             game = Game.objects.get(id=game_id)
         except Game.DoesNotExist:
             return Response({"error": "Game not found"}, status=404)
+        if not can_play_game(request.user, game):
+            return Response({"error": "Forbidden"}, status=403)
         result = GameService().undo_moves(game, request.user)
         if "error" in result:
             return Response(result, status=400)
