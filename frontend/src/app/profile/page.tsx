@@ -15,6 +15,7 @@ import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { type ChessLevelId } from "@/lib/avatars";
 import { useTranslation } from "@/hooks/useTranslation";
 import { chessLevelLabel } from "@/lib/i18n/labels";
+import { countryFlag, displayCountry } from "@/lib/worldCountries";
 
 export default function ProfilePage() {
   const { user, fetchProfile } = useAuthStore();

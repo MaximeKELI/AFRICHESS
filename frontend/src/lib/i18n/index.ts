@@ -766,6 +766,7 @@ const en: Record<string, string> = {
   "auth.register.error.passwordMin": "Password must be at least 8 characters.",
   "auth.register.error.passwordMismatch": "Passwords do not match.",
   "auth.register.error.failed": "Registration failed.",
+  "auth.register.error.birthYear": "Invalid birth year.",
   "auth.register.emailTaken": "→ Sign in with this account",
   "auth.register.levelHint": "You can add your profile photo later. Illustrated portraits (Kofi, Amara, Nana Kofi…) represent AI opponents in games.",
   "profile.level.hint": "The level chosen here is for your profile and suggestions. It is separate from your rating ELO (online games) and the AI strength set in a game.",

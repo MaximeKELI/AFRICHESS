@@ -101,14 +101,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     Cookies.remove("refresh_token");
     set({ isLoading: true });
     try {
-      await authApi.register({
+      const payload: Record<string, string | number> = {
         username: data.username.trim(),
         email: data.email.trim().toLowerCase(),
         password: data.password,
         password_confirm: data.password_confirm,
         country: data.country,
         chess_level: data.chess_level ?? "intermediate",
-      });
+      };
+      if (data.city?.trim()) payload.city = data.city.trim();
+      if (data.preferred_language) payload.preferred_language = data.preferred_language;
+      if (data.birth_year) payload.birth_year = data.birth_year;
+      if (data.gender) payload.gender = data.gender;
+      if (data.discovery_source) payload.discovery_source = data.discovery_source;
+      if (data.registration_locale) payload.registration_locale = data.registration_locale;
+      await authApi.register(payload);
       await get().login(data.username.trim(), data.password); // toujours par username après inscription
     } catch (error) {
       throw new Error(formatApiError(error));
