@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import { notificationsApi } from "@/lib/api";
+import { formatApiError } from "@/lib/errors";
 import { useAuthStore } from "@/store/auth";
 import { useNotificationsWebSocket } from "@/hooks/useNotificationsWebSocket";
 
@@ -20,6 +21,7 @@ interface Notification {
 export function NotificationBell() {
   const { user } = useAuthStore();
   const [items, setItems] = useState<Notification[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -27,8 +29,14 @@ export function NotificationBell() {
     if (!user) return;
     notificationsApi
       .list()
-      .then(({ data }) => setItems(Array.isArray(data) ? data : data.results ?? []))
-      .catch(() => setItems([]));
+      .then(({ data }) => {
+        setItems(Array.isArray(data) ? data : data.results ?? []);
+        setLoadError(null);
+      })
+      .catch((err) => {
+        setItems([]);
+        setLoadError(formatApiError(err, "Notifications indisponibles."));
+      });
   }, [user]);
 
   useEffect(() => {
@@ -96,7 +104,9 @@ export function NotificationBell() {
               </button>
             )}
           </div>
-          {items.length === 0 ? (
+          {loadError ? (
+            <p className="p-4 text-africhess-terracotta text-center text-xs">{loadError}</p>
+          ) : items.length === 0 ? (
             <p className="p-4 opacity-60 text-center">Aucune notification</p>
           ) : (
             items.slice(0, 20).map((n) => (

@@ -5,6 +5,8 @@ import { ChessBoard } from "@/components/chess/ChessBoard";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { puzzlesApi } from "@/lib/api";
+import { InlineAlert } from "@/components/ui/InlineAlert";
+import { formatApiError } from "@/lib/errors";
 import { useAuthStore } from "@/store/auth";
 import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
 import { getPuzzleStreak, recordPuzzleSolved } from "@/lib/puzzleStreak";
@@ -41,6 +43,7 @@ export default function PuzzlesPage() {
   const [rushIndex, setRushIndex] = useState(0);
   const [rushScore, setRushScore] = useState(0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     setStreak(getPuzzleStreak());
@@ -50,7 +53,14 @@ export default function PuzzlesPage() {
     setResult(null);
     setUciMoves([]);
     setStartTime(Date.now());
-    puzzlesApi.daily().then(({ data }) => setPuzzle(data)).catch(() => setPuzzle(null));
+    setLoadError(null);
+    puzzlesApi
+      .daily()
+      .then(({ data }) => setPuzzle(data))
+      .catch((err) => {
+        setPuzzle(null);
+        setLoadError(formatApiError(err, "Problème du jour indisponible."));
+      });
   };
 
   const loadRush = () => {
@@ -58,6 +68,7 @@ export default function PuzzlesPage() {
     setUciMoves([]);
     setStartTime(Date.now());
     setRushScore(0);
+    setLoadError(null);
     puzzlesApi
       .rush(5)
       .then(({ data }) => {
@@ -66,22 +77,28 @@ export default function PuzzlesPage() {
         setRushIndex(0);
         setPuzzle(list[0] ?? null);
       })
-      .catch(() => setPuzzle(null));
+      .catch((err) => {
+        setPuzzle(null);
+        setLoadError(formatApiError(err, "Mode rush indisponible."));
+      });
   };
 
   const loadLeaderboard = () => {
+    setLoadError(null);
     puzzlesApi
       .leaderboard()
-      .then(({ data }) =>
-        setLeaderboard(Array.isArray(data) ? data : [])
-      )
-      .catch(() => setLeaderboard([]));
+      .then(({ data }) => setLeaderboard(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        setLeaderboard([]);
+        setLoadError(formatApiError(err, "Classement puzzles indisponible."));
+      });
   };
 
   const loadTraining = () => {
     setResult(null);
     setUciMoves([]);
     setStartTime(Date.now());
+    setLoadError(null);
     puzzlesApi
       .training(difficulty, 10)
       .then(({ data }) => {
@@ -90,7 +107,10 @@ export default function PuzzlesPage() {
         setTrainingIndex(0);
         setPuzzle(list[0] ?? null);
       })
-      .catch(() => setPuzzle(null));
+      .catch((err) => {
+        setPuzzle(null);
+        setLoadError(formatApiError(err, "Entraînement indisponible."));
+      });
   };
 
   useEffect(() => {
@@ -170,6 +190,12 @@ export default function PuzzlesPage() {
           <span className="ml-2 text-africhess-gold">🔥 Série : {streak}</span>
         )}
       </p>
+
+      {loadError && (
+        <InlineAlert className="mb-4" onDismiss={() => setLoadError(null)}>
+          {loadError}
+        </InlineAlert>
+      )}
 
       <div className="flex flex-wrap gap-2 mb-6">
         <button

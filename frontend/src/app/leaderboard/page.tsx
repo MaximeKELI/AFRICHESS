@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { ratingsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
+import { formatApiError } from "@/lib/errors";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import { t } from "@/lib/i18n";
 import { AFRICAN_COUNTRIES } from "@/lib/countries";
 
@@ -18,17 +20,29 @@ export default function LeaderboardPage() {
   const [mode, setMode] = useState("blitz");
   const [entries, setEntries] = useState<Entry[]>([]);
   const [country, setCountry] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     const fetcher = tab === "global" ? ratingsApi.globalLeaderboard : ratingsApi.africanLeaderboard;
     fetcher(mode, tab === "african" && country ? country : undefined)
-      .then(({ data }) => setEntries(data.results || data))
-      .catch(() => setEntries([]));
+      .then(({ data }) => {
+        setEntries(data.results || data);
+        setError(null);
+      })
+      .catch((err) => {
+        setEntries([]);
+        setError(formatApiError(err, "Impossible de charger le classement."));
+      })
+      .finally(() => setLoading(false));
   }, [tab, mode, country]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold mb-6">Leaderboards</h1>
+      {error && <InlineAlert className="mb-4">{error}</InlineAlert>}
+      {loading && <p className="text-sm opacity-60 mb-4">Chargement…</p>}
 
       <div className="flex flex-wrap gap-2 mb-6">
         <button

@@ -2,20 +2,37 @@
 
 import { useEffect, useState } from "react";
 import { socialApi } from "@/lib/api";
+import { formatApiError } from "@/lib/errors";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import Link from "next/link";
 
 export default function CommunityPage() {
   const [clubs, setClubs] = useState<Array<{ name: string; slug: string; country: string; member_count: number }>>([]);
   const [players, setPlayers] = useState<Array<{ username: string; display_name: string; country: string; title?: string }>>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    socialApi.clubs().then(({ data }) => setClubs(data.results || data)).catch(() => {});
-    socialApi.africanPlayers().then(({ data }) => setPlayers(data.results || data)).catch(() => {});
+    setLoading(true);
+    Promise.all([socialApi.clubs(), socialApi.africanPlayers()])
+      .then(([clubsRes, playersRes]) => {
+        setClubs(clubsRes.data.results || clubsRes.data);
+        setPlayers(playersRes.data.results || playersRes.data);
+        setError(null);
+      })
+      .catch((err) => {
+        setClubs([]);
+        setPlayers([]);
+        setError(formatApiError(err, "Impossible de charger la communauté."));
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold mb-8">Communauté</h1>
+      {error && <InlineAlert className="mb-6">{error}</InlineAlert>}
+      {loading && <p className="text-sm opacity-60 mb-6">Chargement…</p>}
 
       <section className="mb-12">
         <h2 className="text-xl font-semibold mb-4 text-africhess-terracotta">

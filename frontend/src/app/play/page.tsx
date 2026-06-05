@@ -39,6 +39,7 @@ import { openingNameFromMoves } from "@/lib/openings";
 import Link from "next/link";
 import { GameChat } from "@/components/social/GameChat";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import {
   useGameWebSocket,
   useMatchmakingWebSocket,
@@ -130,7 +131,7 @@ function PlayContent() {
         setUserElo(data.user_elo);
         setAiElo(data.ai_target_elo);
       })
-      .catch(() => {});
+      .catch((err) => setStatus(formatApiError(err, "Prévisualisation IA indisponible.")));
   }, [user, mode, aiEloChoice]);
 
   useEffect(() => {
@@ -200,7 +201,7 @@ function PlayContent() {
   );
 
 
-  const { connected: wsConnected, sendMove: wsSendMove } = useGameWebSocket(
+  const { connected: wsConnected, wsError, sendMove: wsSendMove } = useGameWebSocket(
     gameId,
     isLiveHuman,
     handleWsUpdate,
@@ -224,7 +225,7 @@ function PlayContent() {
     [user?.id, applyGameResponse]
   );
 
-  const { searching: wsSearching, search: wsSearch, cancel: wsCancel } =
+  const { searching: wsSearching, mmError, search: wsSearch, cancel: wsCancel } =
     useMatchmakingWebSocket(Boolean(user), mode, handleMatchFound, timeOpts);
 
   const isMyTurn =
@@ -437,9 +438,16 @@ function PlayContent() {
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] xl:grid-cols-[minmax(480px,1.55fr)_minmax(300px,380px)] gap-5 lg:gap-6 items-start">
         <div className="w-full min-w-0 space-y-3">
           {isLiveHuman && (
-            <p className="text-xs text-center opacity-60">
-              {wsConnected ? "● En direct (WebSocket)" : "○ Connexion temps réel…"}
-            </p>
+            <div className="space-y-1">
+              <p className="text-xs text-center opacity-60">
+                {wsConnected ? "● En direct (WebSocket)" : "○ Connexion temps réel…"}
+              </p>
+              {wsError && (
+                <InlineAlert variant="info" className="text-xs">
+                  {wsError}
+                </InlineAlert>
+              )}
+            </div>
           )}
           {movePending && isVsAi && (
             <p className="text-xs text-center text-africhess-gold animate-pulse">
@@ -600,6 +608,7 @@ function PlayContent() {
 
           <div className="glass-card p-4">
             <h2 className="font-semibold mb-3">Joueur en ligne</h2>
+            {mmError && <InlineAlert className="mb-3 text-xs">{mmError}</InlineAlert>}
             <button
               onClick={findMatch}
               disabled={searching || wsSearching}

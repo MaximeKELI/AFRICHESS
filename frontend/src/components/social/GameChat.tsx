@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { socialApi } from "@/lib/api";
+import { formatApiError } from "@/lib/errors";
 import { useAuthStore } from "@/store/auth";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 
 interface ChatMsg {
   id: number;
@@ -16,14 +18,22 @@ export function GameChat({ gameId }: { gameId: string }) {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(() => {
     if (!user || !gameId) return;
     socialApi
       .chatHistory("game", gameId)
-      .then(({ data }) => setMessages(Array.isArray(data) ? data : data.results ?? []))
-      .catch(() => {});
+      .then(({ data }) => {
+        setMessages(Array.isArray(data) ? data : data.results ?? []);
+        setLoadError(null);
+      })
+      .catch((err) => {
+        setMessages([]);
+        setLoadError(formatApiError(err, "Chat indisponible."));
+      });
   }, [user, gameId]);
 
   useEffect(() => {
@@ -40,10 +50,13 @@ export function GameChat({ gameId }: { gameId: string }) {
     const msg = text.trim();
     if (!msg || sending) return;
     setSending(true);
+    setSendError(null);
     try {
       await socialApi.sendChat("game", gameId, msg);
       setText("");
       load();
+    } catch (err) {
+      setSendError(formatApiError(err, "Message non envoyé."));
     } finally {
       setSending(false);
     }
@@ -58,7 +71,15 @@ export function GameChat({ gameId }: { gameId: string }) {
   return (
     <div className="glass-card flex flex-col h-[220px]">
       <h3 className="font-semibold text-sm p-3 border-b border-white/10">Chat</h3>
+      {loadError && (
+        <InlineAlert className="m-2 text-xs" onDismiss={() => setLoadError(null)}>
+          {loadError}
+        </InlineAlert>
+      )}
       <div className="flex-1 overflow-y-auto p-2 space-y-2 text-xs">
+        {messages.length === 0 && !loadError && (
+          <p className="opacity-50 text-center py-4">Aucun message pour l&apos;instant.</p>
+        )}
         {messages.map((m) => (
           <div key={m.id}>
             <span className="font-medium text-africhess-gold">
@@ -69,6 +90,11 @@ export function GameChat({ gameId }: { gameId: string }) {
         ))}
         <div ref={bottomRef} />
       </div>
+      {sendError && (
+        <p className="px-2 text-xs text-africhess-terracotta" role="alert">
+          {sendError}
+        </p>
+      )}
       <div className="flex gap-1 p-2 border-t border-white/10">
         <input
           value={text}
@@ -77,12 +103,14 @@ export function GameChat({ gameId }: { gameId: string }) {
           placeholder="Message…"
           className="flex-1 text-sm px-2 py-1 rounded border bg-transparent"
           maxLength={500}
+          aria-label="Message de chat"
         />
         <button
           type="button"
           onClick={send}
           disabled={sending || !text.trim()}
           className="px-3 py-1 text-sm rounded-lg african-gradient text-white disabled:opacity-50"
+          aria-label="Envoyer le message"
         >
           →
         </button>

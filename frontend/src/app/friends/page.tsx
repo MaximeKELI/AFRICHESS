@@ -67,7 +67,10 @@ export default function FriendsPage() {
       socialApi
         .directMessages(friend.username)
         .then(({ data }) => setDmMessages(Array.isArray(data) ? data : []))
-        .catch(() => setDmMessages([]))
+        .catch((err) => {
+          setDmMessages([]);
+          setMsg(formatApiError(err, "Impossible de charger les messages."));
+        })
         .finally(() => setDmLoading(false));
     },
     []

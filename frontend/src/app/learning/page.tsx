@@ -7,6 +7,8 @@ import { useAuthStore } from "@/store/auth";
 import { CoachPanel } from "@/components/learning/CoachPanel";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { ProgressRing } from "@/components/learning/ProgressRing";
+import { formatApiError } from "@/lib/errors";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import { t } from "@/lib/i18n";
 
 interface Dashboard {
@@ -28,10 +30,23 @@ interface Dashboard {
 export default function LearningDashboardPage() {
   const { user, locale } = useAuthStore();
   const [data, setData] = useState<Dashboard | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
-    learningApi.dashboard().then(({ data: d }) => setData(d)).catch(() => setData(null));
+    setLoading(true);
+    learningApi
+      .dashboard()
+      .then(({ data: d }) => {
+        setData(d);
+        setError(null);
+      })
+      .catch((err) => {
+        setData(null);
+        setError(formatApiError(err, "Impossible de charger votre progression."));
+      })
+      .finally(() => setLoading(false));
   }, [user]);
 
   if (!user) {
@@ -46,8 +61,16 @@ export default function LearningDashboardPage() {
     );
   }
 
-  if (!data) {
+  if (loading) {
     return <p className="p-8 text-center opacity-60">Chargement…</p>;
+  }
+
+  if (error || !data) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16">
+        <InlineAlert>{error ?? "Données indisponibles."}</InlineAlert>
+      </div>
+    );
   }
 
   const { profile } = data;

@@ -4,7 +4,9 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import { gamesApi } from "@/lib/api";
+import { formatApiError } from "@/lib/errors";
 import { useGameWebSocket, type WsGamePayload } from "@/hooks/useGameWebSocket";
 import { buildGameDisplayFromFen, buildGameDisplayFromMoves, type ApiMove } from "@/lib/chessDisplay";
 import Link from "next/link";
@@ -25,6 +27,8 @@ export default function WatchGamePage() {
   const [fen, setFen] = useState("start");
   const [moves, setMoves] = useState<ApiMove[]>([]);
   const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const handleUpdate = useCallback((payload: WsGamePayload) => {
     setFen(payload.game.fen);
@@ -32,21 +36,44 @@ export default function WatchGamePage() {
     setStatus(payload.game.status ?? "");
   }, []);
 
-  useGameWebSocket(id ?? null, Boolean(id), handleUpdate);
+  const { wsError } = useGameWebSocket(id ?? null, Boolean(id), handleUpdate);
 
   useEffect(() => {
     if (!id) return;
-    gamesApi.get(id).then(({ data }) => {
-      setFen(data.fen);
-      setMoves(data.moves ?? []);
-      setStatus(data.status);
-    });
+    setLoading(true);
+    setError(null);
+    gamesApi
+      .get(id)
+      .then(({ data }) => {
+        setFen(data.fen);
+        setMoves(data.moves ?? []);
+        setStatus(data.status);
+      })
+      .catch((err) => {
+        setError(formatApiError(err, "Partie introuvable ou accès refusé."));
+      })
+      .finally(() => setLoading(false));
   }, [id]);
 
   const display = useMemo(() => {
     if (moves.length) return buildGameDisplayFromMoves("start", moves);
     return buildGameDisplayFromFen(fen);
   }, [fen, moves]);
+
+  if (loading) {
+    return <p className="p-8 text-center opacity-60">Chargement de la partie…</p>;
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16">
+        <InlineAlert className="mb-4">{error}</InlineAlert>
+        <Link href="/live" className="text-sm text-africhess-gold hover:underline">
+          ← Retour aux parties en direct
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -55,6 +82,11 @@ export default function WatchGamePage() {
       </Link>
       <h1 className="font-display text-2xl font-bold mb-4">Mode observateur</h1>
       <p className="text-xs opacity-60 mb-4">Lecture seule · WebSocket</p>
+      {wsError && (
+        <InlineAlert variant="info" className="mb-4 text-xs">
+          {wsError}
+        </InlineAlert>
+      )}
       <div className="grid md:grid-cols-[1fr_220px] gap-6">
         <ChessBoard fen={display.fen} disabled playerColor="w" lastMove={display.lastMove} />
         <GameSidePanel
