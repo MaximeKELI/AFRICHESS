@@ -78,6 +78,11 @@ export interface GameData {
   ai_target_elo?: number;
   moves?: GameMove[];
   variant?: string;
+  is_timed?: boolean;
+  white_time_ms?: number;
+  black_time_ms?: number;
+  increment_ms?: number;
+  bot?: Bot;
 }
 
 export const gamesApi = {

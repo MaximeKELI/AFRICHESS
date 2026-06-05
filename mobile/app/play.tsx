@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import {
   ActivityIndicator,
   FlatList,
@@ -10,12 +10,14 @@ import {
   View,
 } from "react-native";
 import { ChessBoard } from "../components/ChessBoard";
+import { GameClock } from "../components/GameClock";
 import { useAuth } from "../context/AuthContext";
 import { type Bot, type GameData, gamesApi } from "../lib/api";
 
 const AI_ELOS = [750, 1250, 1750, 2250, 2750, 3250];
 
 export default function PlayScreen() {
+  const { bot: botSlug } = useLocalSearchParams<{ bot?: string }>();
   const { user, loading: authLoading } = useAuth();
   const [bots, setBots] = useState<Bot[]>([]);
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
@@ -40,8 +42,18 @@ export default function PlayScreen() {
       .finally(() => setLoadingBots(false));
   }, []);
 
+  useEffect(() => {
+    if (!botSlug || typeof botSlug !== "string") return;
+    const match = bots.find((b) => b.slug === botSlug);
+    if (match) setSelectedBot(match);
+  }, [botSlug, bots]);
+
   const orientation = color;
   const playerColor = color === "white" ? "w" : "b";
+  const turn = useMemo<"w" | "b">(() => {
+    if (!game?.fen) return "w";
+    return game.fen.includes(" w ") ? "w" : "b";
+  }, [game?.fen]);
   const isMyTurn = useMemo(() => {
     if (!game?.fen) return false;
     const turn = game.fen.includes(" w ") ? "w" : "b";
@@ -67,7 +79,8 @@ export default function PlayScreen() {
         variant: "standard",
       });
       setGame(data);
-      setStatus(`Partie vs ${selectedBot?.name ?? `IA ${data.ai_target_elo}`}`);
+      const opponent = data.bot?.name ?? selectedBot?.name ?? `IA ${data.ai_target_elo}`;
+      setStatus(`Partie vs ${opponent}`);
     } catch {
       setStatus("Impossible de lancer la partie. Vérifiez la connexion API.");
     } finally {
@@ -184,9 +197,21 @@ export default function PlayScreen() {
     );
   }
 
+  const showClock = Boolean(game.is_timed && game.white_time_ms != null && game.black_time_ms != null);
+
   return (
     <ScrollView contentContainerStyle={styles.game}>
       <Text style={styles.status}>{status}</Text>
+      {showClock && (
+        <GameClock
+          whiteMs={game.white_time_ms!}
+          blackMs={game.black_time_ms!}
+          turn={turn}
+          running={game.status === "active"}
+          orientation={orientation}
+          incrementMs={game.increment_ms ?? 0}
+        />
+      )}
       {busy && <ActivityIndicator color="#D4A017" style={{ marginBottom: 8 }} />}
       <ChessBoard
         fen={game.fen}

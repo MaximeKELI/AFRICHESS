@@ -34,7 +34,7 @@ export default function BotsScreen() {
           <Text style={styles.elo}>
             {item.elo} ELO{item.is_premium ? " · Premium" : ""}
           </Text>
-          <Link href="/play" asChild>
+          <Link href={{ pathname: "/play", params: { bot: item.slug } }} asChild>
             <Pressable style={styles.challenge}>
               <Text style={styles.challengeText}>Défier →</Text>
             </Pressable>
