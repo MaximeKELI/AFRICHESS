@@ -73,7 +73,7 @@ export default function TournamentsPage() {
       setStatus(t("tournaments.status.started"));
       load();
     } catch {
-      setStatus("Impossible de démarrer (droits ou participants insuffisants)");
+      setStatus(t("tournaments.status.startFailed"));
     }
   };
 

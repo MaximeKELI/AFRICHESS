@@ -337,7 +337,7 @@ function PlayContent() {
       setStatus(
         msg.includes("joindre le serveur")
           ? msg
-          : msg || "Échec du lancement. Redémarrez le backend : docker start africhess-backend-1"
+          : msg || t("play.status.startFailed")
       );
     }
   };
