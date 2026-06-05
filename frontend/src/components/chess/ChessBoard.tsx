@@ -331,7 +331,7 @@ function ChessBoardInner({
       ref={containerRef}
       data-testid="chess-board"
       role="application"
-      aria-label="Échiquier d'échecs — flèches pour naviguer, Entrée pour sélectionner"
+      aria-label={t("chess.board.aria")}
       tabIndex={disabled ? -1 : 0}
       onKeyDown={onBoardKeyDown}
       className="w-full aspect-square mx-auto rounded-xl overflow-hidden shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold"
