@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import { notificationsApi } from "@/lib/api";
@@ -23,24 +23,23 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const load = () => {
+  const load = useCallback(() => {
     if (!user) return;
     notificationsApi
       .list()
       .then(({ data }) => setItems(Array.isArray(data) ? data : data.results ?? []))
       .catch(() => setItems([]));
-  };
-
-  useEffect(() => {
-    if (!user) return;
-    load();
   }, [user]);
 
   useEffect(() => {
-    if (!user || !open) return;
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (!open) return;
     const id = setInterval(load, 120000);
     return () => clearInterval(id);
-  }, [user, open]);
+  }, [open, load]);
 
   useNotificationsWebSocket(
     Boolean(user),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { tournamentsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import Link from "next/link";
@@ -40,15 +40,15 @@ export default function TournamentsPage() {
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const [standings, setStandings] = useState<StandingRow[]>([]);
 
-  const load = () => {
+  const load = useCallback(() => {
     tournamentsApi.list(africanOnly).then(({ data }) => {
       setList(Array.isArray(data) ? data : data.results ?? []);
     });
-  };
+  }, [africanOnly]);
 
   useEffect(() => {
     load();
-  }, [africanOnly]);
+  }, [load]);
 
   const register = async (slug: string) => {
     if (!user) {

@@ -115,7 +115,7 @@ function ChessBoardInner({
       backgroundSize: "100% 100%",
     };
     return { selected, lastFrom, lastTo, legalDot, captureRing };
-  }, [theme, theme.floral]);
+  }, [theme]);
 
   useEffect(() => {
     try {

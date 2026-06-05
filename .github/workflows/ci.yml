@@ -105,4 +105,4 @@ jobs:
           cd frontend
           npm ci
           npx playwright install chromium --with-deps
-          npm run test:e2e
+          NEXT_DIST_DIR=.next-build npm run test:e2e

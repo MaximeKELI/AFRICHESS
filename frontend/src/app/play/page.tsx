@@ -220,7 +220,7 @@ function PlayContent() {
         setStatus("Adversaire trouvé — partie en direct !");
       });
     },
-    [user?.id]
+    [user?.id, applyGameResponse]
   );
 
   const { searching: wsSearching, search: wsSearch, cancel: wsCancel } =
@@ -259,7 +259,7 @@ function PlayContent() {
         setStatus("Partie chargée");
       })
       .catch(() => setStatus("Partie introuvable"));
-  }, [user, gameFromUrl]);
+  }, [user, gameFromUrl, applyGameResponse]);
 
   const resumeGame = async () => {
     if (!resumeOffer) return;
@@ -367,6 +367,9 @@ function PlayContent() {
       applyOptimisticUci,
       applyGameResponse,
       gameIsTimed,
+      playerIsWhite,
+      gameData.white_time_ms,
+      gameData.black_time_ms,
     ]
   );
 

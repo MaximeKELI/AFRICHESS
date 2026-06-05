@@ -62,22 +62,54 @@ class ChessEngineService:
             return 12
         return 20
 
-    def _configure_strength(self, engine, target_elo: int) -> bool:
-        """Active UCI_LimitStrength + UCI_Elo + Skill Level (Stockfish, max ~3190)."""
+    def _configure_strength(self, engine, target_elo: int) -> str:
+        """
+        Configure la force du moteur.
+        Retourne 'uci_elo', 'skill' ou 'depth' selon les options supportées.
+        """
         elo = min(clamp_elo(target_elo), STOCKFISH_UCI_MAX_ELO)
+        skill = self._skill_level_for_elo(elo)
+        slow = {"Slow Mover": 150} if elo <= 1100 else {}
         try:
-            opts = {
-                "UCI_LimitStrength": True,
-                "UCI_Elo": elo,
-                "Skill Level": self._skill_level_for_elo(elo),
-            }
-            if elo <= 1100:
-                opts["Slow Mover"] = 150
-            engine.configure(opts)
-            return True
+            engine.configure(
+                {
+                    "UCI_LimitStrength": True,
+                    "UCI_Elo": elo,
+                    "Skill Level": skill,
+                    **slow,
+                }
+            )
+            return "uci_elo"
         except chess.engine.EngineError:
-            logger.warning("UCI_Elo non supporté, repli sur profondeur")
-            return False
+            logger.debug("UCI_Elo indisponible, essai Skill Level seul")
+        try:
+            engine.configure(
+                {
+                    "UCI_LimitStrength": False,
+                    "Skill Level": skill,
+                    **slow,
+                }
+            )
+            return "skill"
+        except chess.engine.EngineError:
+            logger.warning("Skill Level non supporté, repli profondeur/ELO")
+            return "depth"
+
+    def _limit_for_weak_elo(self, elo: int) -> chess.engine.Limit:
+        """Profondeur/temps calibrés pour simuler un ELO faible sans UCI_Elo."""
+        if elo <= 400:
+            return chess.engine.Limit(depth=2, time=0.03)
+        if elo <= 700:
+            return chess.engine.Limit(depth=3, time=0.05)
+        if elo <= 1000:
+            return chess.engine.Limit(depth=4, time=0.08)
+        if elo <= 1400:
+            return chess.engine.Limit(depth=6, time=0.12)
+        if elo <= 1800:
+            return chess.engine.Limit(depth=8, time=0.2)
+        if elo <= 2200:
+            return chess.engine.Limit(depth=10, time=0.3)
+        return chess.engine.Limit(depth=12, time=0.4)
 
     def _limit_for_elo(self, target_elo: int, difficulty: int) -> chess.engine.Limit:
         """Au-delà de l'ELO UCI : force maximale (profondeur + temps)."""
@@ -124,22 +156,19 @@ class ChessEngineService:
 
         try:
             with self._get_engine() as engine:
-                use_uci = (
-                    elo is not None
-                    and elo <= STOCKFISH_UCI_MAX_ELO
-                    and self._configure_strength(engine, elo)
+                strength_mode = (
+                    self._configure_strength(engine, elo)
+                    if elo is not None and elo <= STOCKFISH_UCI_MAX_ELO
+                    else "depth"
                 )
-                if use_uci:
-                    if elo <= 500:
-                        limit = chess.engine.Limit(time=0.05, depth=3)
-                    elif elo <= 900:
-                        limit = chess.engine.Limit(time=0.08, depth=4)
-                    elif elo <= 1200:
-                        limit = chess.engine.Limit(time=0.15, depth=6)
-                    else:
-                        limit = chess.engine.Limit(time=0.35)
+                if strength_mode == "uci_elo":
+                    limit = self._limit_for_weak_elo(elo)
+                elif strength_mode == "skill":
+                    limit = self._limit_for_weak_elo(elo)
+                elif elo is not None:
+                    limit = self._limit_for_weak_elo(elo)
                 else:
-                    limit = self._limit_for_elo(elo or 1200, diff_key)
+                    limit = self._limit_for_elo(1200, diff_key)
 
                 result = engine.play(board, limit)
                 if result.move:
