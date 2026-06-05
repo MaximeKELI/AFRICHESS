@@ -235,18 +235,18 @@ export default function FriendsPage() {
         <div className="glass-card p-4 flex flex-col min-h-[320px]">
           <h2 className="font-semibold mb-3">
             {dmUser
-              ? `Messages — ${dmUser.display_name || dmUser.username}`
-              : "Messages privés"}
+              ? t("friends.messages.with", { name: dmUser.display_name || dmUser.username })
+              : t("friends.messages.title")}
           </h2>
           {!dmUser ? (
-            <p className="text-sm opacity-60">Sélectionnez un ami pour discuter.</p>
+            <p className="text-sm opacity-60">{t("friends.messages.select")}</p>
           ) : (
             <>
               <div className="flex-1 overflow-y-auto space-y-2 mb-3 max-h-64 border border-white/10 rounded-lg p-3">
                 {dmLoading ? (
-                  <p className="text-xs opacity-50">Chargement…</p>
+                  <p className="text-xs opacity-50">{t("common.loading")}</p>
                 ) : dmMessages.length === 0 ? (
-                  <p className="text-xs opacity-50">Aucun message.</p>
+                  <p className="text-xs opacity-50">{t("friends.messages.empty")}</p>
                 ) : (
                   dmMessages.map((m) => (
                     <div
