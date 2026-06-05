@@ -147,7 +147,7 @@ export default function StatsPage() {
     return (
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
         <Link href="/login" className="text-africhess-gold underline">
-          Connectez-vous pour voir vos statistiques
+          {t("stats.loginRequired")}
         </Link>
       </div>
     );
@@ -159,9 +159,9 @@ export default function StatsPage() {
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold">Statistiques</h1>
+          <h1 className="font-display text-3xl font-bold">{t("stats.title")}</h1>
           <p className="opacity-60 text-sm mt-1">
-            {user.display_name || user.username} — diagrammes, tableaux et exports
+            {t("stats.subtitle", { name: user.display_name || user.username })}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -186,41 +186,45 @@ export default function StatsPage() {
             </>
           )}
           <Link href="/profile" className="text-sm text-africhess-gold hover:underline px-2">
-            ← Profil
+            {t("stats.backProfile")}
           </Link>
         </div>
       </div>
 
       {error && <InlineAlert>{error}</InlineAlert>}
-      {loading && <p className="text-sm opacity-60">Chargement…</p>}
+      {loading && <p className="text-sm opacity-60">{t("common.loading")}</p>}
 
       {data && (
         <>
           <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <StatCard label="Parties" value={data.summary.games_played} accent="gold" />
+            <StatCard label={t("stats.card.games")} value={data.summary.games_played} accent="gold" />
             <StatCard
-              label="Victoires"
+              label={t("stats.card.wins")}
               value={`${data.summary.win_rate}%`}
-              sub={`${data.summary.games_won} V · ${data.summary.games_drawn} N · ${data.summary.games_lost} D`}
+              sub={t("stats.summary.wdl", {
+                w: data.summary.games_won,
+                d: data.summary.games_drawn,
+                l: data.summary.games_lost,
+              })}
               accent="green"
             />
             <StatCard
-              label="Série actuelle"
+              label={t("stats.card.streak")}
               value={
                 data.summary.current_streak > 0
                   ? `+${data.summary.current_streak}`
                   : data.summary.current_streak
               }
-              sub={`Record : ${data.summary.best_win_streak}`}
+              sub={t("stats.card.streakRecord", { n: data.summary.best_win_streak })}
             />
-            <StatCard label="Temps de jeu" value={`${data.summary.total_play_time_hours}h`} />
-            <StatCard label="Problèmes" value={data.summary.puzzles_solved} />
+            <StatCard label={t("stats.card.playTime")} value={`${data.summary.total_play_time_hours}h`} />
+            <StatCard label={t("stats.card.puzzles")} value={data.summary.puzzles_solved} />
             <StatCard
-              label="vs IA"
+              label={t("stats.card.vsAi")}
               value={data.ai_stats.games_vs_ai}
               sub={
                 data.ai_stats.best_ai_elo_beaten
-                  ? `Meilleure IA : ${data.ai_stats.best_ai_elo_beaten}`
+                  ? t("stats.card.bestAi", { elo: data.ai_stats.best_ai_elo_beaten })
                   : undefined
               }
             />
@@ -237,7 +241,7 @@ export default function StatsPage() {
               }`}
             >
               <BarChart3 size={14} />
-              Diagrammes
+              {t("stats.tabs.charts")}
             </button>
             <button
               type="button"
@@ -249,7 +253,7 @@ export default function StatsPage() {
               }`}
             >
               <Table2 size={14} />
-              Tableaux
+              {t("stats.tabs.tables")}
             </button>
           </div>
 
@@ -257,14 +261,14 @@ export default function StatsPage() {
             <>
               <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">Répartition V / N / D</h2>
+                  <h2 className="font-semibold mb-4">{t("stats.chart.outcomes")}</h2>
                   <DonutChart
                     centerLabel={`${data.summary.win_rate}%`}
-                    centerSub="victoires"
+                    centerSub={t("stats.chart.wins")}
                     slices={[
-                      { label: "Victoires", value: data.summary.games_won, color: CHART_COLORS.win },
-                      { label: "Nulles", value: data.summary.games_drawn, color: CHART_COLORS.draw },
-                      { label: "Défaites", value: data.summary.games_lost, color: CHART_COLORS.loss },
+                      { label: t("stats.chart.victories"), value: data.summary.games_won, color: CHART_COLORS.win },
+                      { label: t("stats.chart.draws"), value: data.summary.games_drawn, color: CHART_COLORS.draw },
+                      { label: t("stats.chart.losses"), value: data.summary.games_lost, color: CHART_COLORS.loss },
                     ]}
                   />
                 </div>
