@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
@@ -21,6 +21,7 @@ class NotificationPushWsTests(TestCase):
     @patch("channels.layers.get_channel_layer")
     def test_push_notification_ws_group_send(self, mock_layer_fn):
         layer = MagicMock()
+        layer.group_send = AsyncMock()
         mock_layer_fn.return_value = layer
         n = Notification(
             user=self.user,
@@ -53,6 +54,7 @@ class NotificationPushWsTests(TestCase):
     @patch("channels.layers.get_channel_layer")
     def test_push_service_serializes(self, mock_layer_fn):
         layer = MagicMock()
+        layer.group_send = AsyncMock()
         mock_layer_fn.return_value = layer
         n = Notification.objects.create(
             user=self.user,

@@ -7,7 +7,7 @@
     "build": "next build",
     "build:safe": "NEXT_DIST_DIR=.next-build next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "NEXT_DIST_DIR=${NEXT_DIST_DIR:-.next-build} next lint",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
