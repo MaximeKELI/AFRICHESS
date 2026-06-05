@@ -16,7 +16,10 @@ export function coachPhrase(
       : playedByWhite
         ? t("chess.analysis.coach.white")
         : t("chess.analysis.coach.black");
-  const key = `chess.analysis.coach.${moveClass}` as const;
+  const known = ["brilliant", "great", "best", "good", "inaccuracy", "mistake", "blunder"];
+  const key = known.includes(moveClass)
+    ? `chess.analysis.coach.${moveClass}`
+    : "chess.analysis.coach.mistake";
   const base = t(key);
   if (moveClass === "blunder" && cpLoss != null && cpLoss >= 200) {
     return t("chess.analysis.coach.blunderSevere", { side, cp: Math.round(cpLoss / 100) });

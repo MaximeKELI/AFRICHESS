@@ -119,13 +119,19 @@ export function BoardThemePicker({ compact = false, className }: BoardThemePicke
         {t("board.picker.pieces")}
       </p>
       <div className="flex gap-2">
-        {(["classic", "african"] as const).map((id) => (
+        {(["classic", "african", "african-svg"] as const).map((id) => (
           <button
             key={id}
             type="button"
             onClick={() => setPieceSet(id)}
             aria-pressed={pieceSet === id}
-            aria-label={id === "african" ? t("board.picker.african") : t("board.picker.classic")}
+            aria-label={
+              id === "african-svg"
+                ? t("board.picker.africanSvg")
+                : id === "african"
+                  ? t("board.picker.african")
+                  : t("board.picker.classic")
+            }
             className={clsx(
               "px-3 py-1 rounded text-xs capitalize border focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold",
               pieceSet === id
@@ -133,7 +139,11 @@ export function BoardThemePicker({ compact = false, className }: BoardThemePicke
                 : "border-white/20"
             )}
           >
-            {id === "african" ? t("board.picker.african") : t("board.picker.classic")}
+            {id === "african-svg"
+              ? t("board.picker.africanSvg")
+              : id === "african"
+                ? t("board.picker.african")
+                : t("board.picker.classic")}
           </button>
         ))}
       </div>

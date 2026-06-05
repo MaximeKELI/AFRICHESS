@@ -8,14 +8,20 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useAuthStore } from "@/store/auth";
 import Link from "next/link";
 import clsx from "clsx";
+import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
+import { ChessBoard } from "./ChessBoard";
 import { EvalGraph } from "./EvalGraph";
 
 interface MoveAnalysis {
+  uci?: string;
   san: string;
   eval: number;
   class: string;
   cp_loss?: number;
   played_by_white?: boolean;
+  best_san?: string | null;
+  best_uci?: string | null;
+  pv_san?: string | null;
 }
 
 interface AnalysisData {
@@ -27,12 +33,16 @@ interface AnalysisData {
 }
 
 const CLASS_COLORS: Record<string, string> = {
+  brilliant: "text-cyan-300",
+  great: "text-sky-300",
   best: "text-africhess-green",
   good: "text-emerald-400",
   inaccuracy: "text-yellow-400",
   mistake: "text-orange-400",
   blunder: "text-africhess-terracotta",
 };
+
+const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 interface GameAnalysisPanelProps {
   gameId: string;
@@ -97,6 +107,15 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
     );
   }, [selectedMove, t]);
 
+  const reviewDisplay = useMemo(() => {
+    if (!analysis || selectedIdx == null) return null;
+    const uciList = analysis.best_moves_json
+      .slice(0, selectedIdx + 1)
+      .map((m) => m.uci)
+      .filter((u): u is string => Boolean(u));
+    return buildGameDisplayFromUciList(START_FEN, uciList);
+  }, [analysis, selectedIdx]);
+
   if (!completed) return null;
 
   return (
@@ -148,20 +167,44 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
             </div>
           </div>
 
+          {reviewDisplay && (
+            <div className="max-w-[280px] mx-auto">
+              <ChessBoard
+                fen={reviewDisplay.fen}
+                disabled
+                orientation="white"
+                lastMove={reviewDisplay.lastMove}
+                playSoundOnFenChange={false}
+              />
+            </div>
+          )}
+
           {coachText && (
-            <div className="rounded-lg border border-africhess-green/30 bg-africhess-green/5 p-3 text-xs">
-              <p className="font-semibold text-africhess-gold mb-1">
+            <div className="rounded-lg border border-africhess-green/30 bg-africhess-green/5 p-3 text-xs space-y-2">
+              <p className="font-semibold text-africhess-gold">
                 {t("chess.analysis.coachTitle")}
               </p>
               <p className="opacity-90">{coachText}</p>
               {selectedMove && (
-                <p className="mt-2 font-mono opacity-70">
+                <p className="font-mono opacity-70">
                   {selectedMove.san}
-                  {selectedMove.cp_loss != null && selectedMove.cp_loss > 0 && (
-                    <span className="ml-2 text-africhess-terracotta">
-                      −{Math.round(selectedMove.cp_loss / 100 * 10) / 10}
-                    </span>
-                  )}
+                  <span className={clsx("ml-2 capitalize", CLASS_COLORS[selectedMove.class])}>
+                    {selectedMove.class}
+                  </span>
+                </p>
+              )}
+              {selectedMove?.best_san &&
+                selectedMove.class !== "best" &&
+                selectedMove.class !== "brilliant" &&
+                selectedMove.class !== "great" && (
+                  <p className="text-africhess-gold/90">
+                    {t("chess.analysis.bestMove")}:{" "}
+                    <span className="font-mono">{selectedMove.best_san}</span>
+                  </p>
+                )}
+              {selectedMove?.pv_san && (
+                <p className="opacity-60 text-[10px]">
+                  {t("chess.analysis.engineLine")}: {selectedMove.pv_san}
                 </p>
               )}
             </div>
@@ -234,7 +277,7 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
           )}
 
           <div className="flex flex-wrap gap-1">
-            {["all", "best", "good", "inaccuracy", "mistake", "blunder"].map((f) => (
+            {["all", "brilliant", "great", "best", "good", "inaccuracy", "mistake", "blunder"].map((f) => (
               <button
                 key={f}
                 type="button"

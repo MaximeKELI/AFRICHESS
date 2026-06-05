@@ -3,14 +3,25 @@
 import clsx from "clsx";
 import { useTranslation } from "@/hooks/useTranslation";
 
-export type GameVariant = "standard" | "chess960" | "crazyhouse";
+export type GameVariant =
+  | "standard"
+  | "chess960"
+  | "crazyhouse"
+  | "kingofthehill"
+  | "threecheck";
 
 interface VariantPickerProps {
   value: GameVariant;
   onChange: (v: GameVariant) => void;
 }
 
-const VARIANTS: GameVariant[] = ["standard", "chess960", "crazyhouse"];
+const VARIANTS: GameVariant[] = [
+  "standard",
+  "chess960",
+  "crazyhouse",
+  "kingofthehill",
+  "threecheck",
+];
 
 export function VariantPicker({ value, onChange }: VariantPickerProps) {
   const { t } = useTranslation();

@@ -9,7 +9,7 @@ const BOARD_THEME_KEY = "board_theme";
 const AI_COMMENTS_KEY = "ai_comments";
 const PIECE_SET_KEY = "piece_set";
 
-export type PieceSetId = "classic" | "african";
+export type PieceSetId = "classic" | "african" | "african-svg";
 
 function readBoardTheme(): BoardThemeId {
   if (typeof window === "undefined") return DEFAULT_BOARD_THEME;
@@ -25,7 +25,8 @@ function readAiComments(): boolean {
 function readPieceSet(): PieceSetId {
   if (typeof window === "undefined") return "classic";
   const v = localStorage.getItem(PIECE_SET_KEY);
-  return v === "african" ? "african" : "classic";
+  if (v === "african" || v === "african-svg") return v;
+  return "classic";
 }
 
 interface PreferencesState {

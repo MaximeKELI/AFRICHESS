@@ -183,6 +183,7 @@ def subscription_status(request):
         {
             "tier": user.subscription_tier,
             "is_premium": user.is_premium,
+            "is_diamond": user.is_diamond,
             "premium_until": user.premium_until,
         }
     )
