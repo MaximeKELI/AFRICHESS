@@ -288,16 +288,20 @@ class ChessEngineService:
             return "mistake"
         return "blunder"
 
-    def is_legal_move(self, fen: str, uci: str) -> bool:
-        board = chess.Board(fen)
+    def is_legal_move(self, fen: str, uci: str, variant: str = "standard") -> bool:
+        board = board_from_fen(fen, variant)
         try:
             move = chess.Move.from_uci(uci)
             return move in board.legal_moves
         except ValueError:
             return False
 
-    def apply_move(self, fen: str, uci: str) -> Optional[tuple[str, str, bool]]:
+    def apply_move(
+        self, fen: str, uci: str, variant: str = "standard"
+    ) -> Optional[tuple[str, str, bool]]:
         """Returns (new_fen, san, is_game_over) or None if illegal."""
+        if variant in ("chess960", "crazyhouse"):
+            return variant_apply_move(fen, uci, variant)
         board = chess.Board(fen)
         try:
             move = chess.Move.from_uci(uci)
