@@ -6,29 +6,49 @@ import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import Link from "next/link";
 import { useTranslation } from "@/hooks/useTranslation";
+import { formatLocaleDate } from "@/lib/i18n/labels";
+import { Heart, MessageCircle } from "lucide-react";
+
+interface ForumPost {
+  id: number;
+  title: string;
+  body: string;
+  category: string;
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  author: { username: string; display_name: string };
+}
 
 export default function CommunityPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [clubs, setClubs] = useState<Array<{ name: string; slug: string; country: string; member_count: number }>>([]);
   const [players, setPlayers] = useState<Array<{ username: string; display_name: string; country: string; title?: string }>>([]);
+  const [posts, setPosts] = useState<ForumPost[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([socialApi.clubs(), socialApi.africanPlayers()])
-      .then(([clubsRes, playersRes]) => {
+    Promise.all([
+      socialApi.clubs(),
+      socialApi.africanPlayers(),
+      socialApi.forum({ featured: true }),
+    ])
+      .then(([clubsRes, playersRes, forumRes]) => {
         setClubs(clubsRes.data.results || clubsRes.data);
         setPlayers(playersRes.data.results || playersRes.data);
+        setPosts(Array.isArray(forumRes.data) ? forumRes.data : forumRes.data.results ?? []);
         setError(null);
       })
       .catch((err) => {
         setClubs([]);
         setPlayers([]);
+        setPosts([]);
         setError(formatApiError(err, t("community.error.load")));
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -37,33 +57,33 @@ export default function CommunityPage() {
       {loading && <p className="text-sm opacity-60 mb-6">{t("common.loading")}</p>}
 
       <section className="mb-12">
-        <h2 className="text-xl font-semibold mb-4 text-africhess-terracotta">
-          {t("community.stories.title")}
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-africhess-terracotta">
+            {t("community.feed.title")}
+          </h2>
+          <Link href="/community/all" className="text-sm text-africhess-gold hover:underline">
+            {t("community.feed.all")}
+          </Link>
+        </div>
         <div className="grid md:grid-cols-2 gap-4">
-          {[
-            {
-              title: "Les échecs au Sénégal",
-              text: "Dakar et Saint-Louis accueillent des tournois ouverts qui réunissent joueurs locaux et visiteurs. Le jeu se transmet dans les écoles et les clubs de quartier.",
-            },
-            {
-              title: "Nigeria, puissance montante",
-              text: "Avec une jeune génération de grands maîtres et d'IM, le Nigeria forme l'élite du continent et inspire toute l'Afrique de l'Ouest.",
-            },
-            {
-              title: "Éthiopie & Kenya",
-              text: "Les championnats d'Afrique de l'Est développent des talents en blitz et en rapide, souvent sur mobile.",
-            },
-            {
-              title: "AFRICHESS",
-              text: "Notre plateforme relie les joueurs du continent : classements par pays, clubs et tournois en ligne à venir.",
-            },
-          ].map((story) => (
-            <article key={story.title} className="glass-card p-5">
-              <h3 className="font-semibold text-africhess-gold mb-2">{story.title}</h3>
-              <p className="text-sm opacity-80 leading-relaxed">{story.text}</p>
-            </article>
-          ))}
+          {posts.length > 0 ? posts.map((p) => (
+            <Link
+              key={p.id}
+              href={`/community/${p.id}`}
+              className="glass-card p-5 hover:ring-2 ring-africhess-gold/30 block"
+            >
+              <span className="text-[10px] uppercase opacity-50">{p.category}</span>
+              <h3 className="font-semibold text-africhess-gold mb-2 mt-1">{p.title}</h3>
+              <p className="text-sm opacity-80 leading-relaxed line-clamp-3">{p.body}</p>
+              <p className="text-xs opacity-50 mt-3 flex items-center gap-3">
+                <span>{p.author.display_name || p.author.username}</span>
+                <span className="flex items-center gap-1"><Heart size={12} />{p.likes_count}</span>
+                <span className="flex items-center gap-1"><MessageCircle size={12} />{p.comments_count}</span>
+              </p>
+            </Link>
+          )) : (
+            <p className="opacity-60 col-span-full">{t("community.feed.empty")}</p>
+          )}
         </div>
       </section>
 
@@ -76,7 +96,7 @@ export default function CommunityPage() {
               <p className="text-sm opacity-60">{p.country}</p>
             </Link>
           )) : (
-            <p className="opacity-60 col-span-full">Featured players coming soon.</p>
+            <p className="opacity-60 col-span-full">{t("community.players.empty")}</p>
           )}
         </div>
       </section>

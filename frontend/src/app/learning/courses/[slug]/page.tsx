@@ -25,7 +25,7 @@ interface QuizQ {
 export default function CoursePage() {
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuthStore();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [course, setCourse] = useState<{
     title: string;
     description: string;
@@ -40,11 +40,11 @@ export default function CoursePage() {
 
   useEffect(() => {
     if (!slug) return;
-    learningApi.course(slug).then(({ data }) => {
+    learningApi.course(slug, locale).then(({ data }) => {
       setCourse(data);
       if (data.lessons?.length) setActiveLesson(data.lessons[0]);
     });
-  }, [slug]);
+  }, [slug, locale]);
 
   const completeLesson = async (lessonId: number) => {
     if (!user || !slug) return;
@@ -79,12 +79,12 @@ export default function CoursePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <Link href="/learning" className="text-sm text-africhess-gold hover:underline mb-4 inline-block">
-        ← Apprentissage
+        ← {t("learning.back")}
       </Link>
       <h1 className="font-display text-3xl font-bold">{course.title}</h1>
       <p className="opacity-70 mt-2 mb-6">{course.description}</p>
       <p className="text-sm text-africhess-green mb-6">
-        Progression : {course.user_progress?.progress_percent ?? 0}%
+        {t("learning.progress")} : {course.user_progress?.progress_percent ?? 0}%
       </p>
 
       <div className="grid md:grid-cols-[220px_1fr] gap-6">
@@ -108,14 +108,9 @@ export default function CoursePage() {
           <article className="glass-card p-6">
             <h2 className="font-semibold text-xl mb-4">{activeLesson.title}</h2>
             {activeLesson.video_url && (
-              <a
-                href={activeLesson.video_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-africhess-gold mb-4 inline-block"
-              >
-                Voir la vidéo →
-              </a>
+              <div className="mb-6">
+                <VideoEmbed url={activeLesson.video_url} title={activeLesson.title} />
+              </div>
             )}
             <LessonReader content={activeLesson.content} title={activeLesson.title} />
             {user && (
@@ -124,7 +119,7 @@ export default function CoursePage() {
                 onClick={() => completeLesson(activeLesson.id)}
                 className="mt-6 px-5 py-2 rounded-lg african-gradient text-white text-sm"
               >
-                Marquer comme terminée
+                {t("learning.lesson.complete")}
               </button>
             )}
             {msg && <p className="mt-2 text-sm text-africhess-gold">{msg}</p>}
@@ -163,7 +158,7 @@ export default function CoursePage() {
               onClick={() => submitQuiz(q.id)}
               className="px-5 py-2 rounded-lg border border-africhess-green text-africhess-green"
             >
-              Valider le quiz
+              {t("learning.quiz.submit")}
             </button>
           )}
           {quizResult && <p className="mt-3 text-sm">{quizResult}</p>}
