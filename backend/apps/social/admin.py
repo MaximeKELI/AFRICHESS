@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ChatMessage, Club, Friendship
+from .models import ChatMessage, Club, ForumComment, ForumPost, Friendship
 
 
 @admin.register(Friendship)
