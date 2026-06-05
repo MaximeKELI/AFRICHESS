@@ -45,12 +45,33 @@ export default function PuzzlesPage() {
   const [rushQueue, setRushQueue] = useState<Puzzle[]>([]);
   const [rushIndex, setRushIndex] = useState(0);
   const [rushScore, setRushScore] = useState(0);
+  const [rushMisses, setRushMisses] = useState(0);
+  const [rushTimeLeft, setRushTimeLeft] = useState(180);
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    setStreak(getPuzzleStreak());
-  }, []);
+    if (user) {
+      puzzlesApi.streak().then(({ data }) => setStreak(data.daily_streak ?? 0)).catch(() => setStreak(getPuzzleStreak()));
+    } else {
+      setStreak(getPuzzleStreak());
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (tab !== "rush" || rushTimeLeft <= 0 || !puzzle) return;
+    const timer = setInterval(() => {
+      setRushTimeLeft((s) => {
+        if (s <= 1) {
+          setResult(t("puzzles.rush.timeUp", { score: rushScore }));
+          setPuzzle(null);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [tab, rushTimeLeft, puzzle, rushScore, t]);
 
   const loadDaily = () => {
     setResult(null);
@@ -71,9 +92,11 @@ export default function PuzzlesPage() {
     setUciMoves([]);
     setStartTime(Date.now());
     setRushScore(0);
+    setRushMisses(0);
+    setRushTimeLeft(180);
     setLoadError(null);
     puzzlesApi
-      .rush(5)
+      .rush(15)
       .then(({ data }) => {
         const list: Puzzle[] = Array.isArray(data) ? data : data.results ?? [];
         setRushQueue(list);
@@ -139,23 +162,38 @@ export default function PuzzlesPage() {
     try {
       const { data } = await puzzlesApi.submit(puzzle.id, uciMoves, time);
       const solved = Boolean(data.solved);
-      const nextStreak = recordPuzzleSolved(solved);
-      setStreak(nextStreak);
-      if (tab === "rush" && solved) setRushScore((s) => s + 1);
+      let nextStreak = tab === "daily" && data.daily_streak != null
+        ? data.daily_streak
+        : recordPuzzleSolved(solved);
+      if (tab === "daily" && data.daily_streak != null) {
+        setStreak(data.daily_streak);
+      } else {
+        setStreak(nextStreak);
+      }
+      if (tab === "rush") {
+        if (solved) {
+          setRushScore((s) => s + 1);
+        } else {
+          const misses = rushMisses + 1;
+          setRushMisses(misses);
+          if (misses >= 3) {
+            setResult(t("puzzles.rush.threeMisses", { score: rushScore }));
+            setPuzzle(null);
+            return;
+          }
+        }
+      }
       setResult(
         solved
           ? t("puzzles.solved.bravo", {
               streak: nextStreak,
               rush:
                 tab === "rush"
-                  ? t("puzzles.solved.rush", { score: rushScore + 1 })
+                  ? t("puzzles.solved.rush", { score: rushScore + (solved ? 1 : 0) })
                   : "",
             })
           : t("puzzles.solved.wrong")
       );
-      if (tab === "rush" && result === null) {
-        /* rush advance handled in nextRush */
-      }
     } catch {
       setResult(t("puzzles.loginToSubmit"));
     }

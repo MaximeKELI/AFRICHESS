@@ -88,7 +88,7 @@ export default function CommunityPage() {
             <Link key={c.slug} href={`/clubs/${c.slug}`} className="glass-card p-4 hover:ring-2 ring-africhess-green/30">
               <h3 className="font-semibold">{c.name}</h3>
               <p className="text-sm opacity-60">{c.country} · {t("community.clubs.members", { count: c.member_count })}</p>
-            </div>
+            </Link>
           )) : (
             <p className="opacity-60">{t("community.clubs.empty")}</p>
           )}
