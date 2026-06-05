@@ -170,19 +170,32 @@ def subscription_status(request):
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
 def subscription_subscribe(request):
-    """Mock subscribe (dev) — active 30 jours sans paiement réel."""
+    """Stripe Checkout si configuré, sinon mode démo (30 jours)."""
     plan_id = (request.data.get("plan") or "").lower()
     if plan_id not in PLANS:
         return Response({"error": "Plan invalide."}, status=400)
     user = request.user
+    checkout = create_checkout_session(user, plan_id)
+    if checkout.get("mode") == "stripe" and checkout.get("checkout_url"):
+        return Response(checkout)
     user.subscription_tier = PLANS[plan_id]["tier"]
     user.premium_until = timezone.now() + timedelta(days=30)
     user.save(update_fields=["subscription_tier", "premium_until"])
     return Response(
         {
+            "mode": "demo",
             "tier": user.subscription_tier,
             "is_premium": user.is_premium,
             "premium_until": user.premium_until,
             "message": "Abonnement activé (mode démo).",
         }
     )
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def stripe_webhook(request):
+    event, err = handle_webhook(request.body, request.META.get("HTTP_STRIPE_SIGNATURE"))
+    if err:
+        return Response({"error": err}, status=400)
+    return Response({"received": True})

@@ -10,5 +10,6 @@ urlpatterns = [
     path("subscription/plans/", views.subscription_plans, name="subscription-plans"),
     path("subscription/status/", views.subscription_status, name="subscription-status"),
     path("subscription/subscribe/", views.subscription_subscribe, name="subscription-subscribe"),
+    path("subscription/webhook/", views.stripe_webhook, name="stripe-webhook"),
     path("<str:username>/", views.UserDetailView.as_view(), name="user-detail"),
 ]
