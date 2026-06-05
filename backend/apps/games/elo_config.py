@@ -71,6 +71,31 @@ def get_user_elo(user, mode: str = "blitz") -> int:
     return user.initial_elo
 
 
+def normalize_to_preset_elo(elo: int) -> int:
+    """Mappe l'ELO joueur au palier IA correspondant (tranches 500)."""
+    e = clamp_elo(elo)
+    if e < 500:
+        return 250
+    if e < 1000:
+        return 750
+    if e < 1500:
+        return 1250
+    if e < 2000:
+        return 1750
+    if e < 2500:
+        return 2250
+    if e < 3000:
+        return 2750
+    if e < 3500:
+        return 3250
+    return 4000
+
+
+def suggested_ai_elo_for_user(user, mode: str = "blitz") -> int:
+    """Force IA de base recommandée selon le classement réel du joueur."""
+    return normalize_to_preset_elo(get_user_elo(user, mode))
+
+
 def resolve_ai_target_elo(
     user,
     mode: str = "blitz",
@@ -81,7 +106,7 @@ def resolve_ai_target_elo(
     ELO cible de l'IA.
     - ai_elo : choix direct du joueur (100–5000), prioritaire
     - difficulty : curseur 1–20
-    - sinon : blend profil joueur
+    - sinon : palier selon le classement réel du joueur
     """
     if ai_elo is not None:
         return clamp_elo(ai_elo)
