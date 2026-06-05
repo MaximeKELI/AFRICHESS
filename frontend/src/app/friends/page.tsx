@@ -166,7 +166,7 @@ export default function FriendsPage() {
 
       {pending.length > 0 && (
         <div className="glass-card p-4 mb-6">
-          <h2 className="font-semibold mb-3">Demandes reçues</h2>
+          <h2 className="font-semibold mb-3">{t("friends.pending.title")}</h2>
           <ul className="space-y-2">
             {pending.map((f) => (
               <li key={f.id} className="flex justify-between items-center">
