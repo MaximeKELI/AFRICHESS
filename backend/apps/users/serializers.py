@@ -24,6 +24,7 @@ class UserStatsSerializer(serializers.ModelSerializer):
             "current_streak",
             "win_rate",
             "total_play_time_seconds",
+            "daily_puzzle_streak",
         ]
 
 

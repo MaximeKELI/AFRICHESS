@@ -70,7 +70,7 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
 
 class UserDetailView(generics.RetrieveAPIView):
-    queryset = User.objects.all()
+    queryset = User.objects.select_related("stats").all()
     serializer_class = UserPublicSerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = "username"
