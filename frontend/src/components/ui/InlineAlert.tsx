@@ -16,6 +16,7 @@ export function InlineAlert({
   className,
   onDismiss,
 }: InlineAlertProps) {
+  const { t } = useTranslation();
   return (
     <div
       role="alert"
