@@ -60,6 +60,7 @@ class UserSerializer(serializers.ModelSerializer):
             "subscription_tier",
             "premium_until",
             "is_premium",
+            "is_diamond",
             "title",
             "fide_id",
             "stats",
