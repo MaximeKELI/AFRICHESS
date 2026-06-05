@@ -10,30 +10,33 @@ export const CHESS_LEVELS = [
 
 export type ChessLevelId = (typeof CHESS_LEVELS)[number]["id"];
 
-/** Portraits des adversaires IA (pas le profil joueur). */
+/**
+ * Portraits des adversaires IA (pas le profil joueur).
+ * Noms avec titre de respect quand le portrait le suggère (Néné, Nana…).
+ */
 export const AI_AVATARS = [
-  { id: "avatar-1", src: "/avatars/avatar-1.png", name: "Amara" },
+  { id: "avatar-1", src: "/avatars/avatar-1.png", name: "Zara" },
   { id: "avatar-2", src: "/avatars/avatar-2.png", name: "Kwame" },
-  { id: "avatar-3", src: "/avatars/avatar-3.png", name: "Moussa" },
-  { id: "avatar-4", src: "/avatars/avatar-4.png", name: "Zara" },
-  { id: "avatar-5", src: "/avatars/avatar-5.png", name: "David" },
-  { id: "avatar-6", src: "/avatars/avatar-6.png", name: "Nia" },
+  { id: "avatar-3", src: "/avatars/avatar-3.png", name: "Nana Kofi" },
+  { id: "avatar-4", src: "/avatars/avatar-4.png", name: "Amara" },
+  { id: "avatar-5", src: "/avatars/avatar-5.png", name: "Moussa" },
+  { id: "avatar-6", src: "/avatars/avatar-6.png", name: "Néné Amina" },
   { id: "avatar-7", src: "/avatars/avatar-7.png", name: "Kofi" },
-  { id: "avatar-8", src: "/avatars/avatar-8.png", name: "Amina" },
+  { id: "avatar-8", src: "/avatars/avatar-8.png", name: "Nia" },
 ] as const;
 
 export type AiAvatarId = (typeof AI_AVATARS)[number]["id"];
 
-/** Un portrait IA fixe par palier de force (Débutant → Élite). */
+/** Un portrait IA par palier, du plus jeune (Débutant) au plus âgé (Élite). */
 export const AI_LEVEL_AVATAR_IDS: Record<number, AiAvatarId> = {
-  250: "avatar-1",  // Débutant — Amara
-  750: "avatar-2",  // Novice — Kwame
-  1250: "avatar-3", // Amateur — Moussa
-  1750: "avatar-4", // Intermédiaire — Zara
-  2250: "avatar-5", // Confirmé — David
-  2750: "avatar-6", // Expert — Nia
-  3250: "avatar-7", // Maître — Kofi
-  4000: "avatar-8", // Élite — Amina
+  250: "avatar-7",  // Débutant — petit garçon
+  750: "avatar-4",  // Novice — petite fille
+  1250: "avatar-2", // Amateur — jeune homme
+  1750: "avatar-1", // Intermédiaire — jeune femme
+  2250: "avatar-5", // Confirmé — homme adulte
+  2750: "avatar-8", // Expert — femme accomplie
+  3250: "avatar-6", // Maître — Néné Amina (reine)
+  4000: "avatar-3", // Élite — Nana Kofi (sage âgé)
 };
 
 const API_ORIGIN =

@@ -64,7 +64,7 @@ export default function RegisterPage() {
         />
         <p className="text-xs opacity-50 -mt-2">
           Vous pourrez ajouter votre photo de profil plus tard. Les portraits illustrés
-          (Amara, Kwame…) représentent les adversaires IA en partie.
+          (Kofi, Amara, Nana Kofi…) représentent les adversaires IA en partie.
         </p>
 
         <hr className="border-white/10" />

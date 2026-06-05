@@ -60,7 +60,7 @@ export function UserAvatarUpload({
             {uploading ? "Envoi…" : "Choisir une photo"}
           </button>
           <p className="text-xs opacity-50">
-            Les portraits Amara, Kwame, etc. sont réservés aux adversaires IA.
+            Les portraits Kofi, Amara, Nana Kofi, etc. sont réservés aux adversaires IA.
           </p>
         </div>
       </div>
