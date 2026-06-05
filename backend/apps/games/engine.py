@@ -9,6 +9,8 @@ import chess.engine
 from django.conf import settings
 
 from .elo_config import STOCKFISH_UCI_MAX_ELO, clamp_elo
+from .variant_utils import apply_move as variant_apply_move
+from .variant_utils import board_from_fen, pick_variant_move
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +146,17 @@ class ChessEngineService:
         fen: str,
         difficulty: int = 10,
         target_elo: Optional[int] = None,
+        variant: str = "standard",
     ) -> Optional[EngineMove]:
+        if variant in ("chess960", "crazyhouse"):
+            elo = clamp_elo(target_elo) if target_elo else 1200
+            uci = pick_variant_move(fen, variant, elo)
+            if not uci:
+                return None
+            board = board_from_fen(fen, variant)
+            move = chess.Move.from_uci(uci)
+            return EngineMove(uci=uci, san=board.san(move))
+
         board = chess.Board(fen)
         elo = clamp_elo(target_elo) if target_elo else None
         diff_key = min(max(difficulty, 1), 20)

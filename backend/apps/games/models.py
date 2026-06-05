@@ -33,6 +33,7 @@ class Game(models.Model):
     class Variant(models.TextChoices):
         STANDARD = "standard", "Standard"
         CHESS960 = "chess960", "Chess960"
+        CRAZYHOUSE = "crazyhouse", "Crazyhouse"
 
     class Status(models.TextChoices):
         WAITING = "waiting", "Waiting for opponent"
