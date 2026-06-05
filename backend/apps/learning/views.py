@@ -57,6 +57,11 @@ class CourseListView(generics.ListAPIView):
     serializer_class = CourseListSerializer
     permission_classes = [permissions.AllowAny]
 
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["lang"] = (self.request.query_params.get("lang") or "fr")[:2]
+        return ctx
+
     def get_queryset(self):
         qs = Course.objects.filter(is_published=True)
         level = self.request.query_params.get("level")
@@ -70,6 +75,11 @@ class CourseDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
     lookup_field = "slug"
     queryset = Course.objects.filter(is_published=True)
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["lang"] = (self.request.query_params.get("lang") or "fr")[:2]
+        return ctx
 
 
 class LessonDetailView(generics.RetrieveAPIView):

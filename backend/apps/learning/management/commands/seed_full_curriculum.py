@@ -54,12 +54,17 @@ class Command(BaseCommand):
         created_lessons = 0
 
         for course_data in manifest["courses"]:
+            from apps.learning.i18n_meta import COURSES_EN
+
+            en_meta = COURSES_EN.get(course_data["slug"], {})
             course, created = Course.objects.update_or_create(
                 slug=course_data["slug"],
                 defaults={
                     "title": course_data["title"],
+                    "title_en": en_meta.get("title", ""),
                     "level": course_data["level"],
                     "description": course_data["description"],
+                    "description_en": en_meta.get("description", ""),
                     "order": course_data["order"],
                     "xp_reward": course_data.get("xp_reward", 120),
                     "is_published": True,
@@ -75,13 +80,23 @@ class Command(BaseCommand):
                     continue
                 content = path.read_text(encoding="utf-8")
                 word_count = len(content.split())
+                from apps.learning.i18n_meta import LESSON_VIDEOS
+
+                en_path = CURRICULUM_DIR / "en" / les["file"]
+                content_en = en_path.read_text(encoding="utf-8") if en_path.exists() else ""
+                from apps.learning.i18n_meta import COURSES_EN, LESSONS_EN
+
+                les_en = LESSONS_EN.get(course_data["slug"], {}).get(les["file"], "")
+                course_en = COURSES_EN.get(course_data["slug"], {})
                 _, l_created = Lesson.objects.update_or_create(
                     course=course,
                     order=les["order"],
                     defaults={
                         "title": les["title"],
+                        "title_en": les_en,
                         "content": content,
-                        "video_url": "",
+                        "content_en": content_en,
+                        "video_url": les.get("video_url") or LESSON_VIDEOS.get(les["file"], ""),
                         "xp_reward": les.get("xp", 25),
                     },
                 )
