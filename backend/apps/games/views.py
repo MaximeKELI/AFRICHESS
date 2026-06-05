@@ -27,6 +27,7 @@ from .game_actions import (
     offer_draw,
 )
 from .game_access import can_analyze_game, can_play_game, can_view_game, user_is_participant
+from .variant_utils import legal_moves_uci
 from .throttling import EngineEvalThrottle
 from .services import GameService, MatchmakingService
 
@@ -143,6 +144,22 @@ def ai_strength_preview(request):
         "chess_level": request.user.chess_level,
         "mode": mode,
     })
+
+
+@extend_schema(summary="Coups légaux (variantes Chess960 / Crazyhouse)")
+@api_view(["GET"])
+def legal_moves(request, game_id):
+    try:
+        game = Game.objects.get(id=game_id)
+    except Game.DoesNotExist:
+        return Response({"error": "Game not found"}, status=404)
+    if not can_view_game(request.user, game):
+        return Response({"error": "Forbidden"}, status=403)
+    from_sq = request.query_params.get("from")
+    moves = legal_moves_uci(game.fen, game.variant)
+    if from_sq and len(from_sq) == 2:
+        moves = [m for m in moves if m.startswith(from_sq) or m.startswith(from_sq.upper())]
+    return Response({"moves": moves, "variant": game.variant})
 
 
 @extend_schema(
