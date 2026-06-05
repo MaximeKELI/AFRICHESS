@@ -13,6 +13,17 @@ class ClubAdmin(admin.ModelAdmin):
     list_display = ["name", "country", "member_count", "owner"]
 
 
+@admin.register(ForumPost)
+class ForumPostAdmin(admin.ModelAdmin):
+    list_display = ["title", "author", "category", "is_featured", "likes_count", "created_at"]
+    list_filter = ["category", "is_featured"]
+
+
+@admin.register(ForumComment)
+class ForumCommentAdmin(admin.ModelAdmin):
+    list_display = ["post", "author", "created_at"]
+
+
 @admin.register(ChatMessage)
 class ChatMessageAdmin(admin.ModelAdmin):
     list_display = ["sender", "room_type", "room_id", "created_at"]
