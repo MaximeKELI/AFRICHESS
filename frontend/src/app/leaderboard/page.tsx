@@ -5,7 +5,7 @@ import { ratingsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
-import { t } from "@/lib/i18n";
+import { useTranslation } from "@/hooks/useTranslation";
 import { AFRICAN_COUNTRIES } from "@/lib/countries";
 
 interface Entry {
@@ -15,7 +15,7 @@ interface Entry {
 }
 
 export default function LeaderboardPage() {
-  const { locale } = useAuthStore();
+  const { t } = useTranslation();
   const [tab, setTab] = useState<"global" | "african">("african");
   const [mode, setMode] = useState("blitz");
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -33,23 +33,23 @@ export default function LeaderboardPage() {
       })
       .catch((err) => {
         setEntries([]);
-        setError(formatApiError(err, "Impossible de charger le classement."));
+        setError(formatApiError(err, t("leaderboard.error.load")));
       })
       .finally(() => setLoading(false));
-  }, [tab, mode, country]);
+  }, [tab, mode, country, t]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold mb-6">Leaderboards</h1>
+      <h1 className="font-display text-3xl font-bold mb-6">{t("leaderboard.title")}</h1>
       {error && <InlineAlert className="mb-4">{error}</InlineAlert>}
-      {loading && <p className="text-sm opacity-60 mb-4">Chargement…</p>}
+      {loading && <p className="text-sm opacity-60 mb-4">{t("common.loading")}</p>}
 
       <div className="flex flex-wrap gap-2 mb-6">
         <button
           onClick={() => setTab("african")}
           className={`px-4 py-2 rounded-lg ${tab === "african" ? "african-gradient text-white" : "border"}`}
         >
-          {t(locale, "leaderboard.african")}
+          {t("leaderboard.african")}
         </button>
         <button
           onClick={() => setTab("global")}

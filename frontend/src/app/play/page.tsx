@@ -678,11 +678,11 @@ function PlayContent() {
                   wsCancel();
                   gamesApi.leaveQueue().catch(() => {});
                   setSearching(false);
-                  setStatus("Recherche annulée");
+                  setStatus(t("play.status.searchCancelled"));
                 }}
                 className="w-full mt-2 py-1 text-xs opacity-60 hover:opacity-100"
               >
-                Annuler
+                {t("play.online.cancel")}
               </button>
             )}
           </div>
@@ -702,9 +702,14 @@ function PlayContent() {
   );
 }
 
+function PlayFallback() {
+  const { t } = useTranslation();
+  return <div className="p-8 text-center">{t("common.loading")}</div>;
+}
+
 export default function PlayPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center">Chargement…</div>}>
+    <Suspense fallback={<PlayFallback />}>
       <PlayContent />
     </Suspense>
   );
