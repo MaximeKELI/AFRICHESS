@@ -144,8 +144,14 @@ export default function PuzzlesPage() {
       if (tab === "rush" && solved) setRushScore((s) => s + 1);
       setResult(
         solved
-          ? `✓ Bravo ! Série : ${nextStreak}${tab === "rush" ? ` — Rush : ${rushScore + (solved ? 1 : 0)}/5` : ""}`
-          : "✗ Ce n'est pas la bonne ligne"
+          ? t("puzzles.solved.bravo", {
+              streak: nextStreak,
+              rush:
+                tab === "rush"
+                  ? t("puzzles.solved.rush", { score: rushScore + 1 })
+                  : "",
+            })
+          : t("puzzles.solved.wrong")
       );
       if (tab === "rush" && result === null) {
         /* rush advance handled in nextRush */
