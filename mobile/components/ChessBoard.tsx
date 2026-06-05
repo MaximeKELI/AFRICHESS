@@ -180,7 +180,8 @@ export function ChessBoard({
           const sq = `${file}${rank}` as Square;
           const fileIndex = FILES.indexOf(file);
           const isLight = (rank + fileIndex) % 2 === 0;
-          const piece = game.get(sq);
+          const displayGame = serverValidated ? new Chess(displayFen) : game;
+          const piece = displayGame.get(sq);
           const isSelected = selected === sq;
           const isTarget = targets.includes(sq);
           const isLast = lastMove && (lastMove.from === sq || lastMove.to === sq);
