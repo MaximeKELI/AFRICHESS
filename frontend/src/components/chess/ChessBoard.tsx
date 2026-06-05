@@ -9,6 +9,7 @@ import { useAuthStore } from "@/store/auth";
 import { customPiecesForSet } from "@/lib/pieceSets";
 import { usePreferencesStore } from "@/store/preferences";
 import { PromotionDialog } from "./PromotionDialog";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export interface MoveInfo {
   uci: string;
@@ -40,6 +41,7 @@ function ChessBoardInner({
   playerColor,
   playSoundOnFenChange = true,
 }: ChessBoardProps) {
+  const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
   const boardThemeId = usePreferencesStore((s) => s.boardTheme);
   const pieceSet = usePreferencesStore((s) => s.pieceSet);

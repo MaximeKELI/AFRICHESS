@@ -34,7 +34,7 @@ export function InlineAlert({
           type="button"
           onClick={onDismiss}
           className="opacity-60 hover:opacity-100 shrink-0"
-          aria-label="Fermer"
+          aria-label={t("common.close")}
         >
           ×
         </button>
