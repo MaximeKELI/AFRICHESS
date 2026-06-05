@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { gamesApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuthStore } from "@/store/auth";
+import Link from "next/link";
 import clsx from "clsx";
 
 interface MoveAnalysis {
@@ -37,6 +39,7 @@ interface GameAnalysisPanelProps {
 
 export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps) {
   const { t } = useTranslation();
+  const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +86,14 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
     <div className="glass-card p-4 space-y-3">
       <h3 className="font-semibold text-sm">{t("chess.analysis.title")}</h3>
       <p className="text-[10px] opacity-50">{t("chess.analysis.hint")}</p>
+      {!user?.is_premium && (
+        <p className="text-[10px] opacity-60">
+          {t("chess.analysis.freeLimit")}{" "}
+          <Link href="/premium" className="text-africhess-gold hover:underline">
+            {t("premium.title")}
+          </Link>
+        </p>
+      )}
 
       {!analysis && (
         <button

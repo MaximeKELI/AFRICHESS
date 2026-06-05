@@ -12,6 +12,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { chessLevelLabel } from "@/lib/i18n/labels";
 import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
 import { getPuzzleStreak, recordPuzzleSolved } from "@/lib/puzzleStreak";
+import Link from "next/link";
 
 interface Puzzle {
   id: number;
@@ -88,6 +89,10 @@ export default function PuzzlesPage() {
   };
 
   const loadRush = () => {
+    if (!user) {
+      setLoadError(t("puzzles.rush.loginRequired"));
+      return;
+    }
     setResult(null);
     setUciMoves([]);
     setStartTime(Date.now());
@@ -105,7 +110,12 @@ export default function PuzzlesPage() {
       })
       .catch((err) => {
         setPuzzle(null);
-        setLoadError(formatApiError(err, t("puzzles.error.rush")));
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 403) {
+          setLoadError(t("puzzles.rush.premiumLimit"));
+        } else {
+          setLoadError(formatApiError(err, t("puzzles.error.rush")));
+        }
       });
   };
 
@@ -241,6 +251,14 @@ export default function PuzzlesPage() {
       {loadError && (
         <InlineAlert className="mb-4" onDismiss={() => setLoadError(null)}>
           {loadError}
+          {loadError === t("puzzles.rush.premiumLimit") && (
+            <>
+              {" "}
+              <Link href="/premium" className="text-africhess-gold hover:underline">
+                {t("premium.title")}
+              </Link>
+            </>
+          )}
         </InlineAlert>
       )}
 

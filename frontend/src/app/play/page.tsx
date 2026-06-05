@@ -15,7 +15,7 @@ import { defaultAiEloForUser, normalizeToPreset, type AiLevelElo } from "@/lib/a
 import { AiStrengthPicker } from "@/components/chess/AiStrengthPicker";
 import { VariantPicker, type GameVariant } from "@/components/chess/VariantPicker";
 import { PocketBar } from "@/components/chess/PocketBar";
-import { dropUci, parsePocketsFromFen, pocketForPlayer } from "@/lib/crazyhouse";
+import { parsePocketsFromFen, pocketForPlayer } from "@/lib/crazyhouse";
 import {
   buildGameDisplayFromFen,
   buildGameDisplayFromMoves,

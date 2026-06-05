@@ -733,6 +733,13 @@ const fr: Record<string, string> = {
   "live.moves": "coups",
   "pwa.installHint": "Installez AFRICHESS sur votre téléphone pour une expérience mobile.",
   "pwa.install": "Installer",
+  "crazyhouse.pocket": "Réserve",
+  "crazyhouse.pocketEmpty": "Aucune pièce en réserve",
+  "crazyhouse.dropHint": "Cliquez puis choisissez une case",
+  "crazyhouse.cancelDrop": "Annuler",
+  "chess.analysis.freeLimit": "Analyse limitée à 40 coups (Premium : 80).",
+  "puzzles.rush.loginRequired": "Connectez-vous pour le Puzzle Rush.",
+  "puzzles.rush.premiumLimit": "Limite daily atteinte (3 parties). Passez Premium pour l'illimité.",
 };
 
 const en: Record<string, string> = {
@@ -1464,6 +1471,13 @@ const en: Record<string, string> = {
   "live.moves": "moves",
   "pwa.installHint": "Install AFRICHESS on your phone for a native-like experience.",
   "pwa.install": "Install",
+  "crazyhouse.pocket": "Pocket",
+  "crazyhouse.pocketEmpty": "No pieces in pocket",
+  "crazyhouse.dropHint": "Click then choose a square",
+  "crazyhouse.cancelDrop": "Cancel",
+  "chess.analysis.freeLimit": "Analysis limited to 40 moves (Premium: 80).",
+  "puzzles.rush.loginRequired": "Sign in to play Puzzle Rush.",
+  "puzzles.rush.premiumLimit": "Daily limit reached (3 runs). Go Premium for unlimited.",
 };
 
 const ar: Record<string, string> = {
