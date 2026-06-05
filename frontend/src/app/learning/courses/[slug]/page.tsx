@@ -6,6 +6,7 @@ import Link from "next/link";
 import { LessonReader } from "@/components/learning/LessonReader";
 import { learningApi } from "@/lib/learningApi";
 import { useAuthStore } from "@/store/auth";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface Lesson {
   id: number;
@@ -23,6 +24,7 @@ interface QuizQ {
 export default function CoursePage() {
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [course, setCourse] = useState<{
     title: string;
     description: string;
@@ -51,7 +53,7 @@ export default function CoursePage() {
       const { data: refreshed } = await learningApi.course(slug);
       setCourse(refreshed);
     } catch {
-      setMsg("Connectez-vous pour enregistrer la progression");
+      setMsg(t("learning.progress.saveLogin"));
     }
   };
 
@@ -69,7 +71,7 @@ export default function CoursePage() {
     }
   };
 
-  if (!course) return <p className="p-8 text-center">Chargement…</p>;
+  if (!course) return <p className="p-8 text-center">{t("common.loading")}</p>;
 
   const completed = new Set(course.user_progress?.completed_lesson_ids ?? []);
 

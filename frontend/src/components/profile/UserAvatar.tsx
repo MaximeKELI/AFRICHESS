@@ -3,6 +3,7 @@
 import Image from "next/image";
 import clsx from "clsx";
 import { getUserAvatarUrl, userInitials } from "@/lib/avatars";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface UserAvatarProps {
   avatar?: string | null;
@@ -19,6 +20,7 @@ export function UserAvatar({
   size = 40,
   className,
 }: UserAvatarProps) {
+  const { t } = useTranslation();
   const src = getUserAvatarUrl(avatar);
   const initials = userInitials(displayName, username);
 
@@ -30,7 +32,7 @@ export function UserAvatar({
       >
         <Image
           src={src}
-          alt={displayName || username || "Joueur"}
+          alt={displayName || username || t("profile.player")}
           fill
           className="object-cover"
           sizes={`${size}px`}

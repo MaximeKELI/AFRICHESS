@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { learningApi } from "@/lib/learningApi";
 import { useAuthStore } from "@/store/auth";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface MoveAnalysis {
   san: string;
@@ -26,6 +27,7 @@ interface AnalysisResult {
 
 export default function AnalyzePage() {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [pgn, setPgn] = useState("1. e4 e5 2. Nf3 Nc6 3. Bb5");
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -51,7 +53,7 @@ export default function AnalyzePage() {
         <Link href="/learning" className="text-sm text-africhess-gold mb-4 inline-block">
           ← Apprentissage
         </Link>
-        <p>Connectez-vous pour analyser vos parties.</p>
+        <p>{t("learning.analyze.login")}</p>
       </div>
     );
   }
