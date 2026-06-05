@@ -9,6 +9,7 @@ Application native iOS/Android avec **échiquier natif** et parties vs IA.
 - Partie vs IA : choix ELO ou bot nommé
 - Catalogue bots avec lien direct « Défier »
 - Chronomètre blitz (3+2) pendant la partie
+- Puzzle tactique du jour
 - Refresh token automatique
 
 ## Démarrage
@@ -41,9 +42,16 @@ mobile/
   lib/           # API, pièces, storage
 ```
 
+## Dépannage npm
+
+Si `npm install` échoue avec `Invalid Version`, supprimez le lockfile corrompu :
+
+```bash
+rm -rf node_modules package-lock.json && npm install
+```
+
 ## Prochaines étapes
 
-- Puzzle daily mobile
 - WebSocket (abandon, matchmaking)
 - Variantes (960, Crazyhouse)
 - Push notifications (FCM)

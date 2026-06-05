@@ -85,6 +85,25 @@ export interface GameData {
   bot?: Bot;
 }
 
+export interface Puzzle {
+  id: number;
+  fen: string;
+  themes: string[];
+  difficulty: string;
+  rating: number;
+  is_daily?: boolean;
+}
+
+export const puzzlesApi = {
+  daily: () => api.get<Puzzle>("/puzzles/daily/"),
+  submit: (id: number, moves: string[], time_seconds: number) =>
+    api.post<{ solved: boolean; daily_streak?: number }>(`/puzzles/${id}/submit/`, {
+      moves,
+      time_seconds,
+    }),
+  streak: () => api.get<{ daily_streak: number }>("/puzzles/streak/"),
+};
+
 export const gamesApi = {
   bots: () => api.get<Bot[]>("/games/bots/"),
   createAI: (data: {

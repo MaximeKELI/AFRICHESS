@@ -13,7 +13,8 @@ const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 interface ChessBoardProps {
   fen: string;
   orientation?: "white" | "black";
-  playerColor?: "w" | "b";
+  /** Si omis, le joueur peut déplacer le camp dont c'est le trait (puzzles). */
+  playerColor?: "w" | "b" | null;
   disabled?: boolean;
   lastMove?: { from: string; to: string } | null;
   onMove: (uci: string) => void;
@@ -27,7 +28,7 @@ function toChessFen(fen: string): string | undefined {
 export function ChessBoard({
   fen,
   orientation = "white",
-  playerColor = "w",
+  playerColor = null,
   disabled = false,
   lastMove = null,
   onMove,
@@ -64,8 +65,12 @@ export function ChessBoard({
       if (disabled) return false;
       const p = game.get(sq);
       if (!p) return false;
-      if (p.color !== playerColor) return false;
-      if (game.turn() !== playerColor) return false;
+      const turn = game.turn();
+      if (playerColor) {
+        if (p.color !== playerColor || turn !== playerColor) return false;
+      } else if (p.color !== turn) {
+        return false;
+      }
       return true;
     },
     [disabled, game, playerColor]

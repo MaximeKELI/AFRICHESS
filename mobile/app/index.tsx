@@ -50,6 +50,11 @@ export default function HomeScreen() {
             <Text style={styles.btnTextOutline}>Catalogue bots</Text>
           </Pressable>
         </Link>
+        <Link href="/puzzles" asChild>
+          <Pressable style={[styles.btn, styles.btnOutline]}>
+            <Text style={styles.btnTextOutline}>Puzzle du jour</Text>
+          </Pressable>
+        </Link>
         {user && (
           <Pressable style={styles.logoutBtn} onPress={() => logout()}>
             <Text style={styles.logoutText}>Déconnexion</Text>
