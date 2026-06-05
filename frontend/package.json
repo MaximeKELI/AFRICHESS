@@ -8,6 +8,8 @@
     "build:safe": "NEXT_DIST_DIR=.next-build next build",
     "start": "next start",
     "lint": "NEXT_DIST_DIR=${NEXT_DIST_DIR:-.next-build} next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
@@ -36,6 +38,7 @@
     "autoprefixer": "^10.4.0",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.0",
-    "@playwright/test": "^1.49.0"
+    "@playwright/test": "^1.49.0",
+    "vitest": "^3.0.0"
   }
 }
