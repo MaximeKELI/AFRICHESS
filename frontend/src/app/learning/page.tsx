@@ -45,7 +45,7 @@ export default function LearningDashboardPage() {
       })
       .catch((err) => {
         setData(null);
-        setError(formatApiError(err, "Impossible de charger votre progression."));
+        setError(formatApiError(err, t("learning.error.load")));
       })
       .finally(() => setLoading(false));
   }, [user]);
@@ -69,7 +69,7 @@ export default function LearningDashboardPage() {
   if (error || !data) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16">
-        <InlineAlert>{error ?? "Données indisponibles."}</InlineAlert>
+        <InlineAlert>{error ?? t("learning.error.unavailable")}</InlineAlert>
       </div>
     );
   }
@@ -99,10 +99,10 @@ export default function LearningDashboardPage() {
             </span>
           </div>
           <div>
-            <p className="text-sm opacity-60">Niveau</p>
+            <p className="text-sm opacity-60">{t("learning.level")}</p>
             <p className="text-2xl font-bold text-africhess-gold">{profile.xp} XP</p>
             <p className="text-xs opacity-50">
-              {profile.xp_to_next_level} XP avant niveau {profile.level + 1}
+              {t("learning.xpBefore", { xp: profile.xp_to_next_level, next: profile.level + 1 })}
             </p>
           </div>
         </div>
