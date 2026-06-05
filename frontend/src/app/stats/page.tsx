@@ -115,6 +115,7 @@ function StatCard({
 
 export default function StatsPage() {
   const { user } = useAuthStore();
+  const { t, locale } = useTranslation();
   const [data, setData] = useState<StatsPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -129,18 +130,18 @@ export default function StatsPage() {
         setData(d);
         setError(null);
       })
-      .catch((err) => setError(formatApiError(err, "Impossible de charger les statistiques.")))
+      .catch((err) => setError(formatApiError(err, t("stats.error.load"))))
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [user, t]);
 
   const eloLinePoints = useMemo(() => {
     if (!data?.rating_history.length) return [];
     const sorted = [...data.rating_history].reverse();
     return sorted.map((h) => ({
-      x: new Date(h.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }),
+      x: formatLocaleDate(locale, h.created_at, { day: "2-digit", month: "short" }),
       y: h.elo_after,
     }));
-  }, [data?.rating_history]);
+  }, [data?.rating_history, locale]);
 
   if (!user) {
     return (
