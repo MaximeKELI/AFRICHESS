@@ -157,7 +157,7 @@ export default function PuzzlesPage() {
         /* rush advance handled in nextRush */
       }
     } catch {
-      setResult("Connectez-vous pour valider");
+      setResult(t("puzzles.loginToSubmit"));
     }
   };
 
@@ -174,7 +174,7 @@ export default function PuzzlesPage() {
       setPuzzle(rushQueue[next]);
       reset();
     } else {
-      setResult(`Rush terminé — ${rushScore}/5 résolus`);
+      setResult(t("puzzles.rush.done", { score: rushScore }));
       setPuzzle(null);
     }
   };
