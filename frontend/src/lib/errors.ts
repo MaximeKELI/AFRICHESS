@@ -1,59 +1,63 @@
 import { AxiosError } from "axios";
+import { translate, type Locale } from "./i18n";
 
-const FIELD_LABELS: Record<string, string> = {
-  email: "E-mail",
-  username: "Nom d'utilisateur",
-  password: "Mot de passe",
-  password_confirm: "Confirmation",
-  non_field_errors: "",
-  detail: "",
+function getLocale(): Locale {
+  if (typeof window === "undefined") return "fr";
+  const l = localStorage.getItem("locale");
+  if (l === "en" || l === "ar" || l === "pt" || l === "sw") return l;
+  return "fr";
+}
+
+function tr(key: string, locale = getLocale()): string {
+  return translate(locale, key);
+}
+
+const FIELD_KEYS: Record<string, string> = {
+  email: "errors.field.email",
+  username: "errors.field.username",
+  password: "errors.field.password",
+  password_confirm: "errors.field.passwordConfirm",
 };
 
 export function formatApiError(
   error: unknown,
-  fallback = "Une erreur est survenue."
+  fallback?: string
 ): string {
+  const locale = getLocale();
+  const fb = fallback ?? tr("common.error", locale);
+
   if (!(error instanceof AxiosError)) {
-    return fallback;
+    return fb;
   }
 
   if (!error.response) {
-    return (
-      "Impossible de joindre le serveur (API port 8000). " +
-      "Vérifiez que le backend tourne : docker start africhess-backend-1"
-    );
+    return tr("errors.network", locale);
   }
 
   const data = error.response.data;
   if (error.response.status === 404) {
     const path = error.config?.url ?? "";
     if (path.includes("/stats/")) {
-      return (
-        "Endpoint statistiques indisponible. Redémarrez le backend : " +
-        "docker start africhess-backend-1"
-      );
+      return tr("errors.stats404", locale);
     }
   }
 
   if (!data) {
-    return error.message || "Erreur inconnue.";
+    return error.message || tr("errors.unknown", locale);
   }
 
   if (typeof data === "string") {
     if (data.includes("<!DOCTYPE") || data.includes("<html")) {
       if (data.includes("users_userstats")) {
-        return "Erreur technique serveur. Redémarrez le backend puis réessayez.";
+        return tr("errors.serverTechnical", locale);
       }
       if (data.includes("email") || data.includes("username")) {
-        return "Compte ou e-mail déjà utilisé — utilisez la page Connexion.";
+        return tr("errors.emailUsed", locale);
       }
       if (data.includes("is_timed") || data.includes("time_control")) {
-        return (
-          "Base de données à mettre à jour. Lancez : docker exec africhess-backend-1 " +
-          "python manage.py migrate puis redémarrez le backend."
-        );
+        return tr("errors.migration", locale);
       }
-      return "Erreur serveur. Redémarrez le backend (docker start africhess-backend-1).";
+      return tr("errors.serverGeneric", locale);
     }
     return data;
   }
@@ -64,7 +68,7 @@ export function formatApiError(
       data.detail.includes("token not valid") ||
       data.detail.includes("Token is invalid")
     ) {
-      return "Session expirée. Réessayez de vous connecter.";
+      return tr("errors.sessionExpired", locale);
     }
     return data.detail;
   }
@@ -80,26 +84,27 @@ export function formatApiError(
         : "";
     if (!text) continue;
     if (field === "email" && text.includes("déjà")) {
-      messages.push("Cet e-mail a déjà un compte → connectez-vous.");
+      messages.push(tr("errors.emailExists", locale));
       continue;
     }
     if (field === "username" && text.includes("déjà")) {
-      messages.push("Ce nom d'utilisateur est déjà pris.");
+      messages.push(tr("errors.usernameTaken", locale));
       continue;
     }
     if (field === "non_field_errors") {
       messages.push(
         text.includes("log in") || text.includes("credentials")
-          ? "Identifiants incorrects."
+          ? tr("errors.badCredentials", locale)
           : text
       );
       continue;
     }
-    const label = FIELD_LABELS[field];
+    const labelKey = FIELD_KEYS[field];
+    const label = labelKey ? tr(labelKey, locale) : "";
     messages.push(label ? `${label} : ${text}` : text);
   }
 
-  return messages.length > 0 ? messages.join(" ") : "Requête invalide.";
+  return messages.length > 0 ? messages.join(" ") : tr("errors.invalidRequest", locale);
 }
 
 export function isEmailAlreadyUsedError(error: unknown): boolean {
@@ -107,5 +112,5 @@ export function isEmailAlreadyUsedError(error: unknown): boolean {
   const data = error.response?.data;
   if (!data || typeof data !== "object") return false;
   const email = (data as { email?: string[] }).email;
-  return Array.isArray(email) && email.some((m) => m.includes("déjà"));
+  return Array.isArray(email) && email.some((m) => m.includes("déjà") || m.includes("already"));
 }

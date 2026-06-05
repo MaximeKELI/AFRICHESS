@@ -3,6 +3,7 @@ import Cookies from "js-cookie";
 import { AxiosError } from "axios";
 import { authApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
+import { translate } from "@/lib/i18n";
 import { clearAuthCookies } from "@/lib/session";
 
 interface User {
@@ -69,10 +70,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (username, password) => {
     const loginId = username.trim();
     if (loginId.includes("@")) {
-      throw new Error(
-        "Connectez-vous avec votre nom d'utilisateur (ex. DKELI), pas avec l'e-mail. " +
-          "Plusieurs comptes peuvent partager le même e-mail sur ce site."
-      );
+      throw new Error(translate(get().locale, "auth.login.useUsername"));
     }
     Cookies.remove("access_token");
     Cookies.remove("refresh_token");
