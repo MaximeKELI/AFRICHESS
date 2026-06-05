@@ -1,11 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Download, FileJson, Table2 } from "lucide-react";
 import { statsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
+import {
+  BarChart,
+  CHART_COLORS,
+  DonutChart,
+  FormSparkline,
+  HorizontalBarChart,
+  LineChart,
+} from "@/components/stats/StatsCharts";
+import { DataTable } from "@/components/stats/StatsTables";
+import { downloadStatsCsv, downloadStatsJson } from "@/lib/statsExport";
 
 interface ModeBucket {
   mode: string;
@@ -82,10 +93,11 @@ const TERMINATION_LABELS: Record<string, string> = {
   other: "Autre",
 };
 
-const OUTCOME_CLASS: Record<string, string> = {
-  win: "bg-africhess-green/20 text-africhess-green",
-  loss: "bg-africhess-terracotta/20 text-africhess-terracotta",
-  draw: "bg-white/10 opacity-80",
+const MODE_COLORS: Record<string, string> = {
+  bullet: "#ef4444",
+  blitz: CHART_COLORS.gold,
+  rapid: "#3b82f6",
+  classical: "#8b5cf6",
 };
 
 function StatCard({
@@ -109,25 +121,12 @@ function StatCard({
   );
 }
 
-function WdlBar({ won, drawn, lost }: { won: number; drawn: number; lost: number }) {
-  const total = won + drawn + lost || 1;
-  const wp = (won / total) * 100;
-  const dp = (drawn / total) * 100;
-  const lp = (lost / total) * 100;
-  return (
-    <div className="flex h-2 rounded-full overflow-hidden bg-white/5">
-      <div className="bg-africhess-green" style={{ width: `${wp}%` }} />
-      <div className="bg-white/30" style={{ width: `${dp}%` }} />
-      <div className="bg-africhess-terracotta" style={{ width: `${lp}%` }} />
-    </div>
-  );
-}
-
 export default function StatsPage() {
   const { user } = useAuthStore();
   const [data, setData] = useState<StatsPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"charts" | "tables">("charts");
 
   useEffect(() => {
     if (!user) return;
@@ -142,6 +141,15 @@ export default function StatsPage() {
       .finally(() => setLoading(false));
   }, [user]);
 
+  const eloLinePoints = useMemo(() => {
+    if (!data?.rating_history.length) return [];
+    const sorted = [...data.rating_history].reverse();
+    return sorted.map((h) => ({
+      x: new Date(h.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }),
+      y: h.elo_after,
+    }));
+  }, [data?.rating_history]);
+
   if (!user) {
     return (
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
@@ -152,7 +160,7 @@ export default function StatsPage() {
     );
   }
 
-  const maxActivity = Math.max(...(data?.activity.map((a) => a.games) ?? [1]), 1);
+  const username = user.username;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
@@ -160,12 +168,34 @@ export default function StatsPage() {
         <div>
           <h1 className="font-display text-3xl font-bold">Statistiques</h1>
           <p className="opacity-60 text-sm mt-1">
-            {user.display_name || user.username} — parties, ouvertures, ELO et forme récente
+            {user.display_name || user.username} — diagrammes, tableaux et exports
           </p>
         </div>
-        <Link href="/profile" className="text-sm text-africhess-gold hover:underline">
-          ← Profil
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          {data && (
+            <>
+              <button
+                type="button"
+                onClick={() => downloadStatsCsv(data, username)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-africhess-gold/50 text-africhess-gold text-sm hover:bg-africhess-gold/10"
+              >
+                <Download size={14} />
+                CSV
+              </button>
+              <button
+                type="button"
+                onClick={() => downloadStatsJson(data, username)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/20 text-sm hover:bg-white/5"
+              >
+                <FileJson size={14} />
+                JSON
+              </button>
+            </>
+          )}
+          <Link href="/profile" className="text-sm text-africhess-gold hover:underline px-2">
+            ← Profil
+          </Link>
+        </div>
       </div>
 
       {error && <InlineAlert>{error}</InlineAlert>}
@@ -183,243 +213,429 @@ export default function StatsPage() {
             />
             <StatCard
               label="Série actuelle"
-              value={data.summary.current_streak > 0 ? `+${data.summary.current_streak}` : data.summary.current_streak}
+              value={
+                data.summary.current_streak > 0
+                  ? `+${data.summary.current_streak}`
+                  : data.summary.current_streak
+              }
               sub={`Record : ${data.summary.best_win_streak}`}
             />
-            <StatCard
-              label="Temps de jeu"
-              value={`${data.summary.total_play_time_hours}h`}
-            />
+            <StatCard label="Temps de jeu" value={`${data.summary.total_play_time_hours}h`} />
             <StatCard label="Problèmes" value={data.summary.puzzles_solved} />
             <StatCard
               label="vs IA"
               value={data.ai_stats.games_vs_ai}
               sub={
                 data.ai_stats.best_ai_elo_beaten
-                  ? `Meilleure IA battue : ${data.ai_stats.best_ai_elo_beaten}`
+                  ? `Meilleure IA : ${data.ai_stats.best_ai_elo_beaten}`
                   : undefined
               }
             />
           </section>
 
-          <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div className="glass-card p-5">
-              <h2 className="font-semibold mb-4">Par cadence</h2>
-              {data.by_mode.length === 0 ? (
-                <p className="text-sm opacity-50">Aucune partie terminée.</p>
-              ) : (
-                <div className="space-y-4">
-                  {data.by_mode.map((m) => (
-                    <div key={m.mode}>
-                      <div className="flex justify-between text-sm mb-1 capitalize">
-                        <span>{m.mode}</span>
-                        <span className="font-mono text-africhess-gold">{m.win_rate}%</span>
-                      </div>
-                      <WdlBar won={m.won} drawn={m.drawn} lost={m.lost} />
-                      <p className="text-[10px] opacity-45 mt-1">
-                        {m.played} parties — {m.won}V {m.drawn}N {m.lost}D
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("charts")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm ${
+                activeTab === "charts"
+                  ? "african-gradient text-white"
+                  : "border border-white/15 hover:bg-white/5"
+              }`}
+            >
+              <Download size={14} className="rotate-180" />
+              Diagrammes
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("tables")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm ${
+                activeTab === "tables"
+                  ? "african-gradient text-white"
+                  : "border border-white/15 hover:bg-white/5"
+              }`}
+            >
+              <Table2 size={14} />
+              Tableaux
+            </button>
+          </div>
+
+          {activeTab === "charts" && (
+            <>
+              <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="glass-card p-5">
+                  <h2 className="font-semibold mb-4">Répartition V / N / D</h2>
+                  <DonutChart
+                    centerLabel={`${data.summary.win_rate}%`}
+                    centerSub="victoires"
+                    slices={[
+                      { label: "Victoires", value: data.summary.games_won, color: CHART_COLORS.win },
+                      { label: "Nulles", value: data.summary.games_drawn, color: CHART_COLORS.draw },
+                      { label: "Défaites", value: data.summary.games_lost, color: CHART_COLORS.loss },
+                    ]}
+                  />
+                </div>
+
+                <div className="glass-card p-5">
+                  <h2 className="font-semibold mb-4">Par cadence</h2>
+                  {data.by_mode.length === 0 ? (
+                    <p className="text-sm opacity-50">Aucune partie.</p>
+                  ) : (
+                    <BarChart
+                      items={data.by_mode.map((m) => ({
+                        label: m.mode,
+                        value: m.played,
+                        color: MODE_COLORS[m.mode] ?? CHART_COLORS.gold,
+                      }))}
+                    />
+                  )}
+                </div>
+
+                <div className="glass-card p-5">
+                  <h2 className="font-semibold mb-4">Humain vs IA</h2>
+                  <BarChart
+                    items={[
+                      {
+                        label: "En ligne",
+                        value: data.vs_opponent.human.played,
+                        color: CHART_COLORS.green,
+                      },
+                      {
+                        label: "IA",
+                        value: data.vs_opponent.ai.played,
+                        color: CHART_COLORS.terracotta,
+                      },
+                    ]}
+                  />
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                    <div className="text-center p-2 rounded-lg bg-white/5">
+                      <p className="opacity-50">En ligne</p>
+                      <p className="font-mono text-africhess-green">
+                        {data.vs_opponent.human.win_rate}%
                       </p>
                     </div>
-                  ))}
+                    <div className="text-center p-2 rounded-lg bg-white/5">
+                      <p className="opacity-50">IA</p>
+                      <p className="font-mono text-africhess-gold">{data.vs_opponent.ai.win_rate}%</p>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
+              </section>
 
-            <div className="glass-card p-5">
-              <h2 className="font-semibold mb-4">Adversaire & couleur</h2>
-              <div className="space-y-4">
-                {(["human", "ai"] as const).map((key) => {
-                  const b = data.vs_opponent[key];
-                  return (
-                    <div key={key}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>{key === "human" ? "Joueurs en ligne" : "Ordinateur"}</span>
-                        <span className="font-mono">{b.win_rate}%</span>
-                      </div>
-                      <WdlBar won={b.won} drawn={b.drawn} lost={b.lost} />
-                      <p className="text-[10px] opacity-45 mt-1">{b.played} parties</p>
-                    </div>
-                  );
-                })}
-                <hr className="border-white/10" />
-                {(["white", "black"] as const).map((key) => {
-                  const b = data.by_color[key];
-                  return (
-                    <div key={key}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>{key === "white" ? "Blancs" : "Noirs"}</span>
-                        <span className="font-mono">{b.win_rate}%</span>
-                      </div>
-                      <WdlBar won={b.won} drawn={b.drawn} lost={b.lost} />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            <div className="glass-card p-5 lg:col-span-2">
-              <h2 className="font-semibold mb-4">Activité (30 jours)</h2>
-              <div className="flex items-end gap-0.5 h-24">
-                {data.activity.map((a) => (
-                  <div
-                    key={a.date}
-                    className="flex-1 bg-africhess-gold/80 rounded-t min-h-[2px] transition-all"
-                    style={{
-                      height: `${Math.max(4, (a.games / maxActivity) * 100)}%`,
-                      opacity: a.games ? 0.4 + (a.games / maxActivity) * 0.6 : 0.15,
-                    }}
-                    title={`${a.date} : ${a.games} partie(s)`}
+              <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div className="glass-card p-5">
+                  <h2 className="font-semibold mb-4">Activité — 30 jours</h2>
+                  <BarChart
+                    maxHeight={100}
+                    items={data.activity.map((a) => ({
+                      label: a.date.slice(8),
+                      value: a.games,
+                      color: CHART_COLORS.gold,
+                    }))}
                   />
-                ))}
-              </div>
-            </div>
-
-            <div className="glass-card p-5">
-              <h2 className="font-semibold mb-4">Fins de partie</h2>
-              <div className="space-y-2 text-sm">
-                {Object.entries(data.by_termination).map(([k, v]) => (
-                  <div key={k} className="flex justify-between">
-                    <span className="opacity-70">{TERMINATION_LABELS[k] ?? k}</span>
-                    <span className="font-mono">{v}</span>
-                  </div>
-                ))}
-                {Object.keys(data.by_termination).length === 0 && (
-                  <p className="opacity-50 text-sm">—</p>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div className="glass-card p-5">
-              <h2 className="font-semibold mb-4">Ouvertures jouées</h2>
-              {data.openings.length === 0 ? (
-                <p className="text-sm opacity-50">Jouez plus de coups d&apos;ouverture.</p>
-              ) : (
-                <div className="space-y-2">
-                  {data.openings.map((o) => (
-                    <div
-                      key={o.name}
-                      className="flex justify-between items-center text-sm py-1 border-b border-white/5 last:border-0"
-                    >
-                      <span className="truncate pr-2">{o.name}</span>
-                      <span className="shrink-0 font-mono text-xs">
-                        {o.played}× · {o.win_rate}%
-                      </span>
-                    </div>
-                  ))}
                 </div>
-              )}
-            </div>
 
-            <div className="glass-card p-5">
-              <h2 className="font-semibold mb-4">Classements ELO</h2>
-              <div className="space-y-2">
-                {data.ratings.map((r) => (
-                  <div key={r.mode} className="flex justify-between text-sm capitalize">
-                    <span>{r.mode}</span>
-                    <span className="font-mono">
-                      {r.elo}{" "}
-                      <span className="opacity-40 text-xs">pic {r.peak_elo}</span>
-                    </span>
-                  </div>
-                ))}
-                {data.ratings.length === 0 && (
-                  <p className="text-sm opacity-50">Pas encore de classement.</p>
-                )}
-              </div>
-              {data.analysis.games_analyzed > 0 && (
-                <div className="mt-4 pt-4 border-t border-white/10 text-sm">
-                  <p className="font-medium mb-1">Qualité de jeu (analysées)</p>
-                  <p className="opacity-70">
-                    Précision moy. : {data.analysis.avg_accuracy ?? "—"}% · Erreurs graves :{" "}
-                    {data.analysis.avg_blunders ?? "—"}
+                <div className="glass-card p-5">
+                  <h2 className="font-semibold mb-4">Fins de partie</h2>
+                  <HorizontalBarChart
+                    items={Object.entries(data.by_termination).map(([k, v]) => ({
+                      label: TERMINATION_LABELS[k] ?? k,
+                      value: v,
+                      color: CHART_COLORS.blue,
+                    }))}
+                  />
+                </div>
+              </section>
+
+              <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div className="glass-card p-5">
+                  <h2 className="font-semibold mb-4">Top ouvertures</h2>
+                  {data.openings.length === 0 ? (
+                    <p className="text-sm opacity-50">Pas encore d&apos;ouvertures.</p>
+                  ) : (
+                    <HorizontalBarChart
+                      items={data.openings.slice(0, 8).map((o) => ({
+                        label: o.name,
+                        value: o.played,
+                        sub: `${o.win_rate}%`,
+                        color: CHART_COLORS.purple,
+                      }))}
+                    />
+                  )}
+                </div>
+
+                <div className="glass-card p-5">
+                  <h2 className="font-semibold mb-4">Blancs vs Noirs</h2>
+                  <DonutChart
+                    slices={[
+                      {
+                        label: `Blancs (${data.by_color.white.win_rate}%)`,
+                        value: data.by_color.white.played,
+                        color: "#f5f5f5",
+                      },
+                      {
+                        label: `Noirs (${data.by_color.black.win_rate}%)`,
+                        value: data.by_color.black.played,
+                        color: "#374151",
+                      },
+                    ]}
+                  />
+                </div>
+              </section>
+
+              {eloLinePoints.length >= 2 && (
+                <section className="glass-card p-5">
+                  <h2 className="font-semibold mb-2">Évolution ELO (parties en ligne)</h2>
+                  <p className="text-xs opacity-50 mb-4">Historique des changements de classement</p>
+                  <LineChart points={eloLinePoints} />
+                </section>
+              )}
+
+              {data.recent_form.length > 0 && (
+                <section className="glass-card p-5">
+                  <h2 className="font-semibold mb-4">Forme récente</h2>
+                  <FormSparkline
+                    outcomes={data.recent_form.slice(0, 20).map((g) => g.outcome)}
+                  />
+                  <p className="text-xs opacity-40 mt-3">
+                    Dernières {Math.min(20, data.recent_form.length)} parties — V victoire, D défaite, N
+                    nulle
                   </p>
-                  <p className="text-[10px] opacity-40">{data.analysis.games_analyzed} parties analysées</p>
-                </div>
+                </section>
               )}
-            </div>
-          </section>
-
-          {data.rating_history.length > 0 && (
-            <section className="glass-card p-5">
-              <h2 className="font-semibold mb-4">Historique ELO (parties en ligne)</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left opacity-50 text-xs">
-                      <th className="pb-2">Date</th>
-                      <th className="pb-2">Mode</th>
-                      <th className="pb-2">Avant</th>
-                      <th className="pb-2">Après</th>
-                      <th className="pb-2">Δ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.rating_history.slice(0, 15).map((h, i) => (
-                      <tr key={i} className="border-t border-white/5">
-                        <td className="py-2 opacity-70">
-                          {new Date(h.created_at).toLocaleDateString("fr-FR")}
-                        </td>
-                        <td className="capitalize">{h.mode}</td>
-                        <td className="font-mono">{h.elo_before}</td>
-                        <td className="font-mono">{h.elo_after}</td>
-                        <td
-                          className={`font-mono ${
-                            h.change > 0 ? "text-africhess-green" : h.change < 0 ? "text-africhess-terracotta" : ""
-                          }`}
-                        >
-                          {h.change > 0 ? `+${h.change}` : h.change}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+            </>
           )}
 
-          <section className="glass-card p-5">
-            <h2 className="font-semibold mb-4">Forme récente</h2>
-            {data.recent_form.length === 0 ? (
-              <p className="text-sm opacity-50">
-                <Link href="/play" className="text-africhess-gold underline">
-                  Jouez votre première partie
-                </Link>
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {data.recent_form.map((g) => (
-                  <Link
-                    key={g.id}
-                    href={`/watch/${g.id}`}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-white/10 hover:border-africhess-gold/40 hover:bg-white/5 transition-colors"
-                  >
-                    <span
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
-                        OUTCOME_CLASS[g.outcome] ?? "bg-white/10"
-                      }`}
-                    >
-                      {g.outcome === "win" ? "V" : g.outcome === "loss" ? "D" : "N"}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">
-                        {g.opponent}
-                        <span className="opacity-40 font-normal ml-1 capitalize">· {g.mode}</span>
-                      </p>
-                      <p className="text-xs opacity-50 truncate">
-                        {g.opening} · {g.move_count} coups
-                      </p>
-                    </div>
-                    <span className="text-[10px] opacity-40 shrink-0">
-                      {new Date(g.date).toLocaleDateString("fr-FR")}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            )}
+          {activeTab === "tables" && (
+            <>
+              <section className="glass-card p-5 space-y-4">
+                <h2 className="font-semibold">Résumé général</h2>
+                <DataTable
+                  caption="Indicateurs clés de performance"
+                  columns={[
+                    { key: "label", label: "Indicateur" },
+                    { key: "value", label: "Valeur", className: "font-mono text-right" },
+                  ]}
+                  rows={[
+                    { label: "Parties jouées", value: data.summary.games_played },
+                    { label: "Victoires", value: data.summary.games_won },
+                    { label: "Nulles", value: data.summary.games_drawn },
+                    { label: "Défaites", value: data.summary.games_lost },
+                    { label: "Taux de victoire", value: `${data.summary.win_rate}%` },
+                    { label: "Série actuelle", value: data.summary.current_streak },
+                    { label: "Meilleure série", value: data.summary.best_win_streak },
+                    { label: "Temps de jeu (h)", value: data.summary.total_play_time_hours },
+                    { label: "Problèmes résolus", value: data.summary.puzzles_solved },
+                    { label: "Parties vs IA", value: data.ai_stats.games_vs_ai },
+                    {
+                      label: "Meilleure IA battue",
+                      value: data.ai_stats.best_ai_elo_beaten ?? "—",
+                    },
+                  ]}
+                />
+              </section>
+
+              <section className="glass-card p-5 space-y-4">
+                <h2 className="font-semibold">Par cadence</h2>
+                <DataTable
+                  columns={[
+                    { key: "mode", label: "Cadence", className: "capitalize" },
+                    { key: "played", label: "Jouées", className: "font-mono" },
+                    { key: "won", label: "V", className: "font-mono text-africhess-green" },
+                    { key: "drawn", label: "N", className: "font-mono" },
+                    { key: "lost", label: "D", className: "font-mono text-africhess-terracotta" },
+                    {
+                      key: "win_rate",
+                      label: "Win %",
+                      className: "font-mono text-africhess-gold",
+                      render: (r) => `${r.win_rate}%`,
+                    },
+                  ]}
+                  rows={data.by_mode}
+                  emptyMessage="Aucune partie par cadence."
+                />
+              </section>
+
+              <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div className="glass-card p-5 space-y-4">
+                  <h2 className="font-semibold">Adversaire & couleur</h2>
+                  <DataTable
+                    caption="Performance par type d'adversaire"
+                    columns={[
+                      { key: "type", label: "Type" },
+                      { key: "played", label: "Jouées", className: "font-mono" },
+                      { key: "won", label: "V", className: "font-mono" },
+                      { key: "drawn", label: "N", className: "font-mono" },
+                      { key: "lost", label: "D", className: "font-mono" },
+                      {
+                        key: "win_rate",
+                        label: "Win %",
+                        render: (r) => `${r.win_rate}%`,
+                        className: "font-mono",
+                      },
+                    ]}
+                    rows={[
+                      { type: "Joueurs en ligne", ...data.vs_opponent.human },
+                      { type: "Ordinateur", ...data.vs_opponent.ai },
+                      { type: "Blancs", ...data.by_color.white },
+                      { type: "Noirs", ...data.by_color.black },
+                    ]}
+                  />
+                </div>
+
+                <div className="glass-card p-5 space-y-4">
+                  <h2 className="font-semibold">Classements ELO</h2>
+                  <DataTable
+                    columns={[
+                      { key: "mode", label: "Mode", className: "capitalize" },
+                      { key: "elo", label: "ELO", className: "font-mono text-africhess-gold" },
+                      { key: "peak_elo", label: "Pic", className: "font-mono opacity-60" },
+                      { key: "games_count", label: "Parties", className: "font-mono" },
+                    ]}
+                    rows={data.ratings}
+                    emptyMessage="Pas de classement."
+                  />
+                </div>
+              </section>
+
+              <section className="glass-card p-5 space-y-4">
+                <h2 className="font-semibold">Ouvertures</h2>
+                <DataTable
+                  columns={[
+                    { key: "name", label: "Ouverture" },
+                    { key: "played", label: "Jouées", className: "font-mono" },
+                    { key: "won", label: "Victoires", className: "font-mono text-africhess-green" },
+                    {
+                      key: "win_rate",
+                      label: "Win %",
+                      className: "font-mono",
+                      render: (r) => `${r.win_rate}%`,
+                    },
+                  ]}
+                  rows={data.openings}
+                  emptyMessage="Aucune ouverture enregistrée."
+                />
+              </section>
+
+              {data.rating_history.length > 0 && (
+                <section className="glass-card p-5 space-y-4">
+                  <h2 className="font-semibold">Historique ELO</h2>
+                  <DataTable
+                    caption={`${data.rating_history.length} changements de classement`}
+                    columns={[
+                      {
+                        key: "created_at",
+                        label: "Date",
+                        render: (r) =>
+                          new Date(r.created_at as string).toLocaleDateString("fr-FR"),
+                      },
+                      { key: "mode", label: "Mode", className: "capitalize" },
+                      { key: "elo_before", label: "Avant", className: "font-mono" },
+                      { key: "elo_after", label: "Après", className: "font-mono" },
+                      {
+                        key: "change",
+                        label: "Δ",
+                        className: "font-mono",
+                        render: (r) => {
+                          const c = r.change as number;
+                          const cls =
+                            c > 0
+                              ? "text-africhess-green"
+                              : c < 0
+                                ? "text-africhess-terracotta"
+                                : "";
+                          return <span className={cls}>{c > 0 ? `+${c}` : c}</span>;
+                        },
+                      },
+                    ]}
+                    rows={data.rating_history}
+                  />
+                </section>
+              )}
+
+              <section className="glass-card p-5 space-y-4">
+                <h2 className="font-semibold">Parties récentes</h2>
+                <DataTable
+                  columns={[
+                    {
+                      key: "date",
+                      label: "Date",
+                      render: (r) =>
+                        new Date(r.date as string).toLocaleDateString("fr-FR"),
+                    },
+                    { key: "opponent", label: "Adversaire" },
+                    { key: "mode", label: "Cadence", className: "capitalize" },
+                    { key: "opening", label: "Ouverture" },
+                    { key: "move_count", label: "Coups", className: "font-mono" },
+                    {
+                      key: "outcome",
+                      label: "Résultat",
+                      render: (r) => {
+                        const o = r.outcome as string;
+                        const label = o === "win" ? "Victoire" : o === "loss" ? "Défaite" : "Nulle";
+                        const cls =
+                          o === "win"
+                            ? "text-africhess-green"
+                            : o === "loss"
+                              ? "text-africhess-terracotta"
+                              : "";
+                        return <span className={cls}>{label}</span>;
+                      },
+                    },
+                    {
+                      key: "id",
+                      label: "",
+                      render: (r) => (
+                        <Link
+                          href={`/watch/${r.id}`}
+                          className="text-africhess-gold text-xs hover:underline"
+                        >
+                          Replay
+                        </Link>
+                      ),
+                    },
+                  ]}
+                  rows={data.recent_form}
+                  emptyMessage="Aucune partie récente."
+                />
+              </section>
+
+              <section className="glass-card p-5 space-y-4">
+                <h2 className="font-semibold">Activité (30 jours)</h2>
+                <DataTable
+                  columns={[
+                    { key: "date", label: "Date" },
+                    { key: "games", label: "Parties", className: "font-mono" },
+                  ]}
+                  rows={data.activity.filter((a) => a.games > 0)}
+                  emptyMessage="Aucune activité sur cette période."
+                />
+              </section>
+            </>
+          )}
+
+          <section className="glass-card p-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm opacity-60">
+              Téléchargez toutes vos données pour analyse externe (Excel, Google Sheets…)
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => downloadStatsCsv(data, username)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg african-gradient text-white text-sm"
+              >
+                <Download size={14} />
+                Télécharger CSV
+              </button>
+              <button
+                type="button"
+                onClick={() => downloadStatsJson(data, username)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm hover:bg-white/5"
+              >
+                <FileJson size={14} />
+                Télécharger JSON
+              </button>
+            </div>
           </section>
         </>
       )}
