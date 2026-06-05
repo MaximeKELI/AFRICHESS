@@ -64,6 +64,8 @@ class GameListSerializer(serializers.ModelSerializer):
             "ai_target_elo",
             "created_at",
             "ended_at",
+            "days_per_move",
+            "turn_deadline",
         ]
 
 

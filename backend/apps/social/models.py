@@ -37,6 +37,61 @@ class Club(models.Model):
         return self.name
 
 
+class ForumPost(models.Model):
+    class Category(models.TextChoices):
+        GENERAL = "general", "General"
+        AFRICA = "africa", "Africa"
+        NEWS = "news", "News"
+        STRATEGY = "strategy", "Strategy"
+
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="forum_posts",
+    )
+    title = models.CharField(max_length=200)
+    body = models.TextField()
+    category = models.CharField(
+        max_length=20,
+        choices=Category.choices,
+        default=Category.GENERAL,
+    )
+    club = models.ForeignKey(
+        Club,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="forum_posts",
+    )
+    is_featured = models.BooleanField(default=False)
+    likes_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.title
+
+
+class ForumComment(models.Model):
+    post = models.ForeignKey(ForumPost, on_delete=models.CASCADE, related_name="comments")
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="forum_comments",
+    )
+    body = models.TextField(max_length=2000)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"Comment on {self.post_id} by {self.author_id}"
+
+
 class ChatMessage(models.Model):
     class RoomType(models.TextChoices):
         GAME = "game", "Game"

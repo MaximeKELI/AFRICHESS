@@ -256,9 +256,13 @@ class GameService:
         )
         game.move_count += 1
         game.pgn = (game.pgn or "") + f" {game.move_count}. {san}" if is_white_turn else f" {san}"
-        if not game.is_vs_ai:
+        if not game.is_vs_ai and not is_correspondence:
             apply_increment_after_move(game, is_white_turn)
             tick_turn_started(game)
+        if is_correspondence and game.status == Game.Status.ACTIVE:
+            from .correspondence import refresh_turn_deadline
+
+            refresh_turn_deadline(game)
         game.save()
 
         if can_claim_threefold_from_game(game):

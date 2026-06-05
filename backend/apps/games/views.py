@@ -365,3 +365,55 @@ class RematchView(APIView):
         if not new_game:
             return Response({"error": "Impossible"}, status=400)
         return Response(GameSerializer(new_game).data, status=201)
+
+
+class CorrespondenceListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        from .correspondence import my_correspondence_games
+
+        qs = my_correspondence_games(request.user)
+        return Response(GameListSerializer(qs, many=True).data)
+
+
+class CorrespondenceChallengeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        from django.contrib.auth import get_user_model
+
+        from apps.social.views import _are_friends
+
+        from .correspondence import create_correspondence_game
+
+        User = get_user_model()
+        username = request.data.get("username")
+        days = int(request.data.get("days_per_move", 3))
+        try:
+            opponent = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"error": "Joueur introuvable"}, status=404)
+        if opponent == request.user:
+            return Response({"error": "Impossible"}, status=400)
+        if not _are_friends(request.user, opponent):
+            return Response({"error": "Vous devez être amis"}, status=400)
+        color = request.data.get("color", "white")
+        if color == "black":
+            white, black = opponent, request.user
+        else:
+            white, black = request.user, opponent
+        game = create_correspondence_game(white, black, days_per_move=days)
+        return Response(GameSerializer(game).data, status=201)
+
+
+@extend_schema(summary="Recherche d'ouverture par ligne de coups")
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def opening_lookup(request):
+    from .openings_data import lookup_opening
+
+    raw = request.query_params.get("moves", "")
+    locale = (request.query_params.get("lang") or "fr")[:2]
+    moves = [m.strip() for m in raw.split(",") if m.strip()] if raw else []
+    return Response(lookup_opening(moves, locale=locale))
