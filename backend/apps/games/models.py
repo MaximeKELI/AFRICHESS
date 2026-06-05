@@ -17,6 +17,7 @@ class Game(models.Model):
         BLITZ = "blitz", "Blitz (3+2)"
         RAPID = "rapid", "Rapid (10+0)"
         CLASSICAL = "classical", "Classical (30+0)"
+        CORRESPONDENCE = "correspondence", "Correspondence (daily)"
         AI = "ai", "vs Computer"
         PUZZLE = "puzzle", "Puzzle"
 
@@ -99,6 +100,15 @@ class Game(models.Model):
     stats_recorded = models.BooleanField(
         default=False,
         help_text="True une fois les UserStats mises à jour pour cette partie",
+    )
+    days_per_move = models.PositiveSmallIntegerField(
+        default=3,
+        help_text="Jours par coup (parties correspondance)",
+    )
+    turn_deadline = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Date limite pour jouer le coup en cours",
     )
 
     class Meta:

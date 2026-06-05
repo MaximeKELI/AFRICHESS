@@ -43,6 +43,7 @@ class GameSerializer(serializers.ModelSerializer):
             "is_vs_ai", "ai_difficulty", "ai_target_elo", "moves", "analysis",
             "termination_reason",
             "created_at", "started_at", "ended_at",
+            "days_per_move", "turn_deadline",
         ]
 
 

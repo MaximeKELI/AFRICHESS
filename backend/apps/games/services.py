@@ -195,7 +195,9 @@ class GameService:
         if not is_white_turn and game.black_player != user and not game.is_vs_ai:
             return {"error": "Not your turn"}
 
-        if game.is_timed and not game.is_vs_ai:
+        is_correspondence = game.mode == Game.Mode.CORRESPONDENCE
+
+        if not is_correspondence and game.is_timed and not game.is_vs_ai:
             apply_server_clock_before_move(game)
             timed_out = check_timeout(game)
             if timed_out == "white":
@@ -208,7 +210,7 @@ class GameService:
                 game.save()
                 on_game_completed(game)
                 return {"error": "Time out", "game_over": True}
-        elif game.is_timed and spent_ms is not None:
+        elif not is_correspondence and game.is_timed and spent_ms is not None:
             clock = game.white_time_ms if is_white_turn else game.black_time_ms
             if clock <= 0:
                 return {"error": "Time out"}
