@@ -488,7 +488,7 @@ function PlayContent() {
           {isLiveHuman && (
             <div className="space-y-1">
               <p className="text-xs text-center opacity-60">
-                {wsConnected ? "● En direct (WebSocket)" : "○ Connexion temps réel…"}
+                {wsConnected ? t("play.ws.connected") : t("play.ws.connecting")}
               </p>
               {wsError && (
                 <InlineAlert variant="info" className="text-xs">
@@ -506,7 +506,7 @@ function PlayContent() {
           )}
           {movePending && isVsAi && (
             <p className="text-xs text-center text-africhess-gold animate-pulse">
-              L&apos;IA réfléchit…
+              {t("play.ai.thinking")}
             </p>
           )}
           <PlayBoardSection
@@ -535,12 +535,12 @@ function PlayContent() {
                   gameId &&
                   gamesApi
                     .offerDraw(gameId)
-                    .then(() => setStatus("Proposition de nulle envoyée"))
-                    .catch((err) => setStatus(formatApiError(err, "Impossible de proposer la nulle.")))
+                    .then(() => setStatus(t("play.draw.sent")))
+                    .catch((err) => setStatus(formatApiError(err, t("play.error.drawOffer"))))
                 }
                 className="text-xs px-3 py-1 rounded border border-white/20"
               >
-                Proposer nulle
+                {t("play.draw.offer")}
               </button>
               <button
                 type="button"
@@ -549,11 +549,11 @@ function PlayContent() {
                   gamesApi
                     .respondDraw(gameId, true)
                     .then(({ data }) => applyGameResponse(data))
-                    .catch((err) => setStatus(formatApiError(err, "Impossible d'accepter la nulle.")))
+                    .catch((err) => setStatus(formatApiError(err, t("play.error.drawAccept"))))
                 }
                 className="text-xs px-3 py-1 rounded border border-africhess-green text-africhess-green"
               >
-                Accepter nulle
+                {t("play.draw.accept")}
               </button>
             </div>
           )}
@@ -566,13 +566,13 @@ function PlayContent() {
                   .then(({ data }) => {
                     setGameId(data.id);
                     applyGameResponse(data);
-                    setStatus("Revanche lancée");
+                    setStatus(t("play.rematch.started"));
                   })
-                  .catch((err) => setStatus(formatApiError(err, "Revanche impossible.")))
+                  .catch((err) => setStatus(formatApiError(err, t("play.error.rematch"))))
               }
               className="w-full block py-2 text-sm rounded-lg african-gradient text-white"
             >
-              Revanche
+              {t("play.rematch")}
             </button>
           )}
           {isVsAi && gameActive && (
@@ -581,7 +581,7 @@ function PlayContent() {
               onClick={handleUndo}
               className="w-full block py-2 text-sm rounded-lg border border-white/20 hover:bg-white/5"
             >
-              ↩ Annuler le dernier coup (ou 2 avec réponse IA)
+              {t("play.undo.long")}
             </button>
           )}
         </div>
@@ -620,22 +620,20 @@ function PlayContent() {
           </div>
 
           <div className="glass-card p-4">
-            <h2 className="font-semibold mb-3">Jouer vs l&apos;ordinateur</h2>
+            <h2 className="font-semibold mb-3">{t("play.vsAi.title")}</h2>
             {levelLabel && (
-              <p className="text-xs opacity-60 mb-1">Profil : {levelLabel}</p>
+              <p className="text-xs opacity-60 mb-1">{t("play.vsAi.profile", { level: levelLabel })}</p>
             )}
             <p className="text-[10px] opacity-45 mb-2 leading-snug">
-              L&apos;ELO classement ({mode}) vient des parties en ligne. Le palier IA proposé
-              correspond à votre niveau ; la force effective s&apos;ajuste selon vos dernières
-              parties contre l&apos;ordinateur.
+              {t("play.vsAi.hint", { mode: modeLabelText })}
             </p>
             <div className="flex justify-between text-xs mb-2 gap-2">
               <span className="opacity-70">
-                Votre ELO ({mode}) :{" "}
+                {t("play.vsAi.yourElo", { mode: modeLabelText })} :{" "}
                 <strong className="text-africhess-green">{userElo ?? "—"}</strong>
               </span>
               <span className="opacity-70">
-                Force IA effective :{" "}
+                {t("play.vsAi.aiStrength")} :{" "}
                 <strong className="text-africhess-gold">{aiElo ?? "—"}</strong>
               </span>
             </div>
@@ -649,8 +647,8 @@ function PlayContent() {
               }
               className="w-full mb-3 border rounded-lg px-3 py-2 bg-transparent"
             >
-              <option value="white">Blancs</option>
-              <option value="black">Noirs</option>
+              <option value="white">{t("play.color.white")}</option>
+              <option value="black">{t("play.color.black")}</option>
             </select>
             <div className="mb-3 py-2 border-t border-white/10">
               <CommentsToggle />
@@ -659,19 +657,19 @@ function PlayContent() {
               onClick={startAI}
               className="w-full py-2 rounded-lg african-gradient text-white font-medium"
             >
-              Lancer la partie
+              {t("play.vsAi.start")}
             </button>
           </div>
 
           <div className="glass-card p-4">
-            <h2 className="font-semibold mb-3">Joueur en ligne</h2>
+            <h2 className="font-semibold mb-3">{t("play.online.title")}</h2>
             {mmError && <InlineAlert className="mb-3 text-xs">{mmError}</InlineAlert>}
             <button
               onClick={findMatch}
               disabled={searching || wsSearching}
               className="w-full py-2 rounded-lg border-2 border-africhess-green text-africhess-green font-medium hover:bg-africhess-green/10 disabled:opacity-50"
             >
-              {searching || wsSearching ? "Recherche…" : "Trouver un adversaire"}
+              {searching || wsSearching ? t("play.online.searching") : t("play.online.find")}
             </button>
             {(searching || wsSearching) && (
               <button
