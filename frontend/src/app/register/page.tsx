@@ -80,7 +80,7 @@ export default function RegisterPage() {
       await register({
         ...form,
         birth_year: birthYear,
-        registration_locale: locale,
+        registration_locale: form.preferred_language,
       });
       router.push("/play");
     } catch (err) {
