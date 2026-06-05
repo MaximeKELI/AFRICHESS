@@ -23,8 +23,10 @@ import { type Bot, type GameData, type GameVariant, gamesApi } from "../lib/api"
 const AI_ELOS = [750, 1250, 1750, 2250, 2750, 3250];
 const VARIANTS: { id: GameVariant; label: string }[] = [
   { id: "standard", label: "Classique" },
-  { id: "chess960", label: "Chess960" },
-  { id: "crazyhouse", label: "Crazyhouse" },
+  { id: "chess960", label: "960" },
+  { id: "crazyhouse", label: "Crazy" },
+  { id: "kingofthehill", label: "KOTH" },
+  { id: "threecheck", label: "3-check" },
 ];
 
 export default function PlayScreen() {
