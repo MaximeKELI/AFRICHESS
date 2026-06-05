@@ -1,8 +1,9 @@
 "use client";
 
 import type { CustomPieces, Piece } from "react-chessboard/dist/chessboard/types";
+import { renderAfricanSvgPiece } from "./africanPieceSvg";
 
-export type PieceSetId = "classic" | "african";
+export type PieceSetId = "classic" | "african" | "african-svg";
 
 const AFRICAN_SYMBOLS: Record<Piece, string> = {
   wP: "♙",
@@ -21,6 +22,28 @@ const AFRICAN_SYMBOLS: Record<Piece, string> = {
 
 /** react-chessboard v4 exige des fonctions (pas des ReactNode statiques). */
 export function customPiecesForSet(setId: PieceSetId): CustomPieces | undefined {
+  if (setId === "african-svg") {
+    const out: CustomPieces = {};
+    const keys: Piece[] = ["wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK"];
+    for (const key of keys) {
+      out[key] = ({ squareWidth, isDragging }) => (
+        <div
+          style={{
+            width: squareWidth,
+            height: squareWidth,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: isDragging ? 0.85 : 1,
+          }}
+        >
+          {renderAfricanSvgPiece(key, squareWidth)}
+        </div>
+      );
+    }
+    return out;
+  }
+
   if (setId !== "african") return undefined;
 
   const out: CustomPieces = {};
