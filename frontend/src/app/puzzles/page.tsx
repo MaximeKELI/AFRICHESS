@@ -335,7 +335,7 @@ export default function PuzzlesPage() {
                 onClick={nextTraining}
                 className="px-6 py-2 border border-africhess-green text-africhess-green rounded-lg"
               >
-                Suivant →
+                {t("puzzles.next")}
               </button>
             )}
             {tab === "rush" && result && (
@@ -344,14 +344,14 @@ export default function PuzzlesPage() {
                 onClick={nextRush}
                 className="px-6 py-2 border border-africhess-green text-africhess-green rounded-lg"
               >
-                Suivant rush →
+                {t("puzzles.nextRush")}
               </button>
             )}
           </div>
           {result && <p className="mt-4 text-lg font-semibold">{result}</p>}
         </div>
       ) : tab !== "leaderboard" ? (
-        <p>Chargement du problème…</p>
+        <p>{t("puzzles.loading")}</p>
       ) : null}
     </div>
   );
