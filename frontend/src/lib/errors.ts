@@ -25,6 +25,16 @@ export function formatApiError(
   }
 
   const data = error.response.data;
+  if (error.response.status === 404) {
+    const path = error.config?.url ?? "";
+    if (path.includes("/stats/")) {
+      return (
+        "Endpoint statistiques indisponible. Redémarrez le backend : " +
+        "docker start africhess-backend-1"
+      );
+    }
+  }
+
   if (!data) {
     return error.message || "Erreur inconnue.";
   }
