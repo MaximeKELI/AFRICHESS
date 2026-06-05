@@ -146,6 +146,10 @@ export const gamesApi = {
   rematch: (id: string) => api.post(`/games/${id}/rematch/`),
 };
 
+export const statsApi = {
+  me: () => api.get("/stats/me/"),
+};
+
 export const ratingsApi = {
   me: () => api.get("/ratings/me/"),
   globalLeaderboard: (mode = "blitz") =>
