@@ -10,7 +10,7 @@ interface LiveEvalBarProps {
 
 export function LiveEvalBar({ evaluation, turn = "w", loading }: LiveEvalBarProps) {
   const label = loading ? "…" : formatEvalDisplay(evaluation ?? undefined);
-  const cp = evaluation != null ? Math.max(-10, Math.min(10, evaluation)) : 0;
+  const cp = evalForBar(evaluation);
   const whitePct = 50 + (cp / 10) * 45;
 
   return (
