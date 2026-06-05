@@ -1,3 +1,5 @@
+import { normalizeToPreset } from "@/lib/aiStrength";
+
 export const CHESS_LEVELS = [
   { id: "beginner", label: "Débutant", labelEn: "Beginner", elo: 800, description: "Je découvre les échecs" },
   { id: "intermediate", label: "Intermédiaire", labelEn: "Intermediate", elo: 1200, description: "Je connais les règles et quelques ouvertures" },
@@ -22,6 +24,18 @@ export const AI_AVATARS = [
 
 export type AiAvatarId = (typeof AI_AVATARS)[number]["id"];
 
+/** Un portrait IA fixe par palier de force (Débutant → Élite). */
+export const AI_LEVEL_AVATAR_IDS: Record<number, AiAvatarId> = {
+  250: "avatar-1",  // Débutant — Amara
+  750: "avatar-2",  // Novice — Kwame
+  1250: "avatar-3", // Amateur — Moussa
+  1750: "avatar-4", // Intermédiaire — Zara
+  2250: "avatar-5", // Confirmé — David
+  2750: "avatar-6", // Expert — Nia
+  3250: "avatar-7", // Maître — Kofi
+  4000: "avatar-8", // Élite — Amina
+};
+
 const API_ORIGIN =
   process.env.NEXT_PUBLIC_API_ORIGIN ||
   (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api").replace(/\/api\/?$/, "");
@@ -37,11 +51,16 @@ export function getAiAvatarSrc(id?: AiAvatarId | string | null): string {
   return found?.src ?? AI_AVATARS[0].src;
 }
 
-/** Choisit un portrait IA stable selon l'ELO du moteur. */
+/** Portrait IA du palier correspondant (Débutant, Novice, … Élite). */
 export function pickAiAvatar(elo?: number | null) {
-  const e = Math.max(100, elo ?? 1200);
-  const index = Math.min(AI_AVATARS.length - 1, Math.floor((e - 100) / 600));
-  return AI_AVATARS[index];
+  const preset = normalizeToPreset(elo ?? 1250);
+  const id = AI_LEVEL_AVATAR_IDS[preset] ?? "avatar-1";
+  return AI_AVATARS.find((a) => a.id === id) ?? AI_AVATARS[0];
+}
+
+export function aiAvatarForLevelElo(levelElo: number) {
+  const id = AI_LEVEL_AVATAR_IDS[levelElo] ?? "avatar-1";
+  return AI_AVATARS.find((a) => a.id === id) ?? AI_AVATARS[0];
 }
 
 export function getUserAvatarUrl(avatar?: string | null): string | null {
