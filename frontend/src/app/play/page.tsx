@@ -90,7 +90,8 @@ function PlayContent() {
 
   const playerColor = orientation === "white" ? "w" : "b";
   const playerIsWhite = orientation === "white";
-  const levelLabel = CHESS_LEVELS.find((l) => l.id === user?.chess_level)?.label;
+  const levelLabel = user?.chess_level ? chessLevelLabel(t, user.chess_level) : undefined;
+  const modeLabelText = modeLabel(t, mode);
   const gameActive = gameId && gameData.status === "active";
   const gameCompleted = gameData.status === "completed";
   const isLiveHuman = Boolean(gameId && !isVsAi);
@@ -141,9 +142,9 @@ function PlayContent() {
       .catch((err) => {
         setAiEloChoice(defaultAiEloForUser(null, user.chess_level));
         setAiDefaultSet(true);
-        setStatus(formatApiError(err, "Prévisualisation IA indisponible."));
+        setStatus(formatApiError(err, t("play.status.aiPreviewFailed")));
       });
-  }, [user, mode]);
+  }, [user, mode, t]);
 
   useEffect(() => {
     if (!user || !aiDefaultSet) return;
@@ -153,8 +154,8 @@ function PlayContent() {
         setUserElo(data.user_elo);
         setAiElo(data.ai_target_elo);
       })
-      .catch((err) => setStatus(formatApiError(err, "Prévisualisation IA indisponible.")));
-  }, [user, mode, aiEloChoice, aiDefaultSet]);
+      .catch((err) => setStatus(formatApiError(err, t("play.status.aiPreviewFailed"))));
+  }, [user, mode, aiEloChoice, aiDefaultSet, t]);
 
   useEffect(() => {
     const saved = loadActiveGame();
@@ -188,12 +189,12 @@ function PlayContent() {
     if (data.status === "completed") {
       clearActiveGame();
       if (data.termination_reason === "repetition") {
-        setStatus("Nulle — même position 3 fois (répétition)");
+        setStatus(t("play.status.drawRepetition"));
       } else if (data.result) {
-        setStatus(`Fin de partie : ${data.result}`);
+        setStatus(t("play.status.gameEnd", { result: data.result }));
       }
     }
-  }, []);
+  }, [t]);
 
   const wsPendingRef = useRef<WsGamePayload | null>(null);
   const wsRafRef = useRef(0);
@@ -228,7 +229,11 @@ function PlayContent() {
     isLiveHuman,
     handleWsUpdate,
     (payload) => {
-      setStatus(`Fin de partie : ${payload.game.result || "Terminée"}`);
+      setStatus(
+        t("play.status.gameEnd", {
+          result: payload.game.result || t("play.status.gameEndGeneric"),
+        })
+      );
     }
   );
 
@@ -241,10 +246,10 @@ function PlayContent() {
         if (data.white_player?.id === user?.id) setOrientation("white");
         else if (data.black_player?.id === user?.id) setOrientation("black");
         applyGameResponse(data);
-        setStatus("Adversaire trouvé — partie en direct !");
+        setStatus(t("play.status.opponentFound"));
       });
     },
-    [user?.id, applyGameResponse]
+    [user?.id, applyGameResponse, t]
   );
 
   const { searching: wsSearching, mmError, search: wsSearch, cancel: wsCancel } =
@@ -280,10 +285,10 @@ function PlayContent() {
         if (data.white_player?.id === user.id) setOrientation("white");
         else if (data.black_player?.id === user.id) setOrientation("black");
         applyGameResponse(data);
-        setStatus("Partie chargée");
+        setStatus(t("play.status.gameLoaded"));
       })
-      .catch(() => setStatus("Partie introuvable"));
-  }, [user, gameFromUrl, applyGameResponse]);
+      .catch(() => setStatus(t("play.status.gameNotFound")));
+  }, [user, gameFromUrl, applyGameResponse, t]);
 
   const resumeGame = async () => {
     if (!resumeOffer) return;
@@ -295,7 +300,7 @@ function PlayContent() {
       setIsVsAi(true);
       applyGameResponse(data);
       setResumeOffer(null);
-      setStatus("Partie reprise");
+      setStatus(t("play.status.gameResumed"));
     } catch {
       clearActiveGame();
       setResumeOffer(null);
@@ -324,8 +329,8 @@ function PlayContent() {
       });
       setStatus(
         data.ai_target_elo
-          ? `Partie lancée — IA ~${data.ai_target_elo} ELO`
-          : "Partie lancée vs IA"
+          ? t("play.status.gameStartedElo", { elo: data.ai_target_elo })
+          : t("play.status.gameStarted")
       );
     } catch (err) {
       const msg = formatApiError(err);
@@ -342,9 +347,9 @@ function PlayContent() {
     try {
       const { data } = await gamesApi.undo(gameId);
       applyGameResponse(data);
-      setStatus("Coup annulé");
+      setStatus(t("play.status.undoDone"));
     } catch {
-      setStatus("Impossible d'annuler");
+      setStatus(t("play.status.undoFailed"));
     }
   };
 
@@ -371,11 +376,15 @@ function PlayContent() {
         });
         applyGameResponse(data);
         if (data.status === "completed" && data.termination_reason !== "repetition") {
-          setStatus(`Fin de partie : ${data.result || "Terminée"}`);
+          setStatus(
+            t("play.status.gameEnd", {
+              result: data.result || t("play.status.gameEndGeneric"),
+            })
+          );
         }
       } catch {
         gamesApi.get(gameId).then(({ data }) => applyGameResponse(data)).catch(() => {});
-        setStatus("Coup invalide ou temps écoulé");
+        setStatus(t("play.status.invalidMove"));
       } finally {
         setMovePending(false);
       }
@@ -401,8 +410,8 @@ function PlayContent() {
     setSearching(true);
     setStatus(
       useClock
-        ? `Recherche (${timeMinutes} min)…`
-        : "Recherche sans limite de temps…"
+        ? t("play.status.searchTimed", { minutes: timeMinutes })
+        : t("play.status.searchUnlimited")
     );
     try {
       await gamesApi.matchmaking(mode, {
@@ -418,9 +427,9 @@ function PlayContent() {
   if (!user) {
     return (
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
-        <p className="mb-4">Connectez-vous pour jouer en ligne.</p>
+        <p className="mb-4">{t("play.loginRequired")}</p>
         <Link href="/login" className="text-africhess-gold underline">
-          Connexion
+          {t("nav.login")}
         </Link>
       </div>
     );
@@ -430,7 +439,7 @@ function PlayContent() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="flex items-center gap-3 mb-6 flex-wrap">
         <h1 className="font-display text-3xl font-bold capitalize">
-          Jouer — {mode}
+          {t("play.title", { mode: modeLabelText })}
         </h1>
         <span className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5">
           <span className="relative w-9 h-9 rounded-lg overflow-hidden ring-2 ring-africhess-gold shrink-0">
@@ -443,7 +452,7 @@ function PlayContent() {
             />
           </span>
           <span className="text-sm min-w-0">
-            <span className="block text-[10px] uppercase tracking-wide opacity-50">IA</span>
+            <span className="block text-[10px] uppercase tracking-wide opacity-50">{t("play.ai")}</span>
             <span className="font-medium truncate">{headerAi.name}</span>
           </span>
         </span>
@@ -452,14 +461,14 @@ function PlayContent() {
       {resumeOffer && !gameId && (
         <div className="glass-card p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm">
-            Partie en cours sauvegardée ({resumeOffer.mode}, IA {resumeOffer.aiElo})
+            {t("play.resume.saved", { mode: resumeOffer.mode, elo: resumeOffer.aiElo })}
           </p>
           <div className="flex gap-2">
             <button
               onClick={resumeGame}
               className="px-4 py-2 rounded-lg african-gradient text-white text-sm"
             >
-              Reprendre
+              {t("play.resume.continue")}
             </button>
             <button
               onClick={() => {
@@ -468,7 +477,7 @@ function PlayContent() {
               }}
               className="px-4 py-2 rounded-lg border text-sm opacity-70"
             >
-              Nouvelle partie
+              {t("play.resume.new")}
             </button>
           </div>
         </div>
