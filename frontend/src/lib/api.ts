@@ -117,8 +117,10 @@ export const gamesApi = {
     is_timed?: boolean;
     time_minutes?: number | null;
   }) => api.post("/games/ai/", data),
-  aiPreview: (mode: string, aiElo: number) =>
-    api.get("/games/ai/preview/", { params: { mode, ai_elo: aiElo } }),
+  aiPreview: (mode: string, aiElo?: number) =>
+    api.get("/games/ai/preview/", {
+      params: aiElo != null ? { mode, ai_elo: aiElo } : { mode },
+    }),
   active: () => api.get("/games/active/"),
   move: (
     id: string,

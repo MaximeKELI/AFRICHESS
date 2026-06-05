@@ -20,7 +20,8 @@ from .clock_service import (
     tick_turn_started,
 )
 from .commentary import generate_move_comment
-from .elo_config import elo_to_difficulty_label, resolve_ai_target_elo
+from .elo_adapt import resolve_final_ai_elo
+from .elo_config import elo_to_difficulty_label
 from .engine import ChessEngineService
 from .models import Game, MatchmakingQueue, Move
 from .room_utils import ensure_game_room, uci_to_squares
@@ -52,7 +53,7 @@ class GameService:
         timed, white_ms, black_ms, inc_ms, tcm = resolve_time_fields(
             is_timed, time_minutes
         )
-        target_elo = resolve_ai_target_elo(
+        target_elo = resolve_final_ai_elo(
             user, mode=mode, difficulty=difficulty, ai_elo=ai_elo
         )
         display_difficulty = elo_to_difficulty_label(target_elo)

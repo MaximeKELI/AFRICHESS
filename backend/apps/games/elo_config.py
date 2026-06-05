@@ -10,6 +10,9 @@ MAX_AI_ELO = 5000
 # Stockfish UCI_LimitStrength plafonne souvent vers 3190
 STOCKFISH_UCI_MAX_ELO = 3190
 
+# Paliers IA (alignés frontend AI_LEVELS)
+AI_PRESET_ELOS = (250, 750, 1250, 1750, 2250, 2750, 3250, 4000)
+
 # Curseur 1–20 → ELO (800 → 5000)
 DIFFICULTY_STEPS = 20
 
@@ -86,14 +89,7 @@ def resolve_ai_target_elo(
     if difficulty is not None:
         return clamp_elo(difficulty_slider_to_elo(difficulty))
 
-    user_elo = get_user_elo(user, mode)
-    level_elo = LEVEL_ELO.get(user.chess_level, 1200)
-    default_slider = difficulty_slider_to_elo(
-        LEVEL_TO_DIFFICULTY.get(user.chess_level, 10)
-    )
-
-    blended = int(user_elo * 0.5 + level_elo * 0.3 + default_slider * 0.2)
-    return clamp_elo(blended)
+    return suggested_ai_elo_for_user(user, mode)
 
 
 def elo_to_difficulty_label(elo: int) -> int:

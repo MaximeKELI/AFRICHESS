@@ -12,7 +12,7 @@ import { PlayBoardSection } from "@/components/play/PlayBoardSection";
 import { gamesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { CHESS_LEVELS } from "@/lib/avatars";
-import { defaultAiEloForLevel, type AiLevelElo } from "@/lib/aiStrength";
+import { defaultAiEloForUser, normalizeToPreset, type AiLevelElo } from "@/lib/aiStrength";
 import { AiStrengthPicker } from "@/components/chess/AiStrengthPicker";
 import {
   buildGameDisplayFromFen,
@@ -74,7 +74,8 @@ function PlayContent() {
   const [orientation, setOrientation] = useState<"white" | "black">("white");
   const [status, setStatus] = useState<string>("");
   const [searching, setSearching] = useState(false);
-  const [aiEloChoice, setAiEloChoice] = useState<AiLevelElo>(250);
+  const [aiEloChoice, setAiEloChoice] = useState<AiLevelElo>(1250);
+  const [aiDefaultSet, setAiDefaultSet] = useState(false);
   const [useClock, setUseClock] = useState(true);
   const [timeMinutes, setTimeMinutes] = useState<TimeMinutes>(DEFAULT_TIME_MINUTES);
   const [userElo, setUserElo] = useState<number | null>(null);
@@ -123,13 +124,27 @@ function PlayContent() {
   }, [gameData.moves, playerIsWhite]);
 
   useEffect(() => {
-    if (user?.chess_level) {
-      setAiEloChoice(defaultAiEloForLevel(user.chess_level));
-    }
-  }, [user?.chess_level]);
+    if (!user) return;
+    setAiDefaultSet(false);
+    gamesApi
+      .aiPreview(mode)
+      .then(({ data }) => {
+        setUserElo(data.user_elo);
+        const suggested = normalizeToPreset(
+          data.suggested_ai_elo ?? data.user_elo ?? defaultAiEloForUser(null, user.chess_level)
+        );
+        setAiEloChoice(suggested);
+        setAiDefaultSet(true);
+      })
+      .catch((err) => {
+        setAiEloChoice(defaultAiEloForUser(null, user.chess_level));
+        setAiDefaultSet(true);
+        setStatus(formatApiError(err, "Prévisualisation IA indisponible."));
+      });
+  }, [user, mode]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !aiDefaultSet) return;
     gamesApi
       .aiPreview(mode, aiEloChoice)
       .then(({ data }) => {
@@ -137,7 +152,7 @@ function PlayContent() {
         setAiElo(data.ai_target_elo);
       })
       .catch((err) => setStatus(formatApiError(err, "Prévisualisation IA indisponible.")));
-  }, [user, mode, aiEloChoice]);
+  }, [user, mode, aiEloChoice, aiDefaultSet]);
 
   useEffect(() => {
     const saved = loadActiveGame();
@@ -599,16 +614,18 @@ function PlayContent() {
               <p className="text-xs opacity-60 mb-1">Profil : {levelLabel}</p>
             )}
             <p className="text-[10px] opacity-45 mb-2 leading-snug">
-              Le niveau profil est une estimation. L&apos;ELO classement vient des parties en
-              ligne. La force IA est le réglage du moteur (indépendant).
+              L&apos;ELO classement ({mode}) vient des parties en ligne. Le palier IA proposé
+              correspond à votre niveau ; la force effective s&apos;ajuste selon vos dernières
+              parties contre l&apos;ordinateur.
             </p>
             <div className="flex justify-between text-xs mb-2 gap-2">
               <span className="opacity-70">
-                ELO classement :{" "}
+                Votre ELO ({mode}) :{" "}
                 <strong className="text-africhess-green">{userElo ?? "—"}</strong>
               </span>
               <span className="opacity-70">
-                Force IA : <strong className="text-africhess-gold">{aiElo ?? "—"}</strong>
+                Force IA effective :{" "}
+                <strong className="text-africhess-gold">{aiElo ?? "—"}</strong>
               </span>
             </div>
             <div className="mb-3 border-t border-white/10 pt-3">

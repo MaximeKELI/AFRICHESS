@@ -2,7 +2,7 @@
 
 from django.db import models
 
-from .elo_config import clamp_elo, MIN_AI_ELO, MAX_AI_ELO
+from .elo_config import clamp_elo, resolve_ai_target_elo
 from .models import Game
 
 
@@ -39,3 +39,18 @@ def adapt_ai_elo_from_history(user, base_elo: int, mode: str = "blitz") -> int:
 
     delta = wins * 80 - losses * 60
     return clamp_elo(base_elo + delta)
+
+
+def resolve_final_ai_elo(
+    user,
+    mode: str = "blitz",
+    difficulty: int | None = None,
+    ai_elo: int | None = None,
+    *,
+    adapt: bool = True,
+) -> int:
+    """ELO IA final : choix joueur ou palier selon classement, puis ajustement historique."""
+    base = resolve_ai_target_elo(user, mode=mode, difficulty=difficulty, ai_elo=ai_elo)
+    if not adapt:
+        return base
+    return adapt_ai_elo_from_history(user, base, mode=mode)

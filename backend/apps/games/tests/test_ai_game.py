@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.games.engine import EngineMove
@@ -109,6 +110,36 @@ class AIGameAPITests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["ai_target_elo"], 4500)
         self.assertEqual(response.data["max_ai_elo"], 5000)
+
+    def test_ai_preview_suggests_from_user_rating(self):
+        from apps.ratings.models import PlayerRating
+
+        PlayerRating.objects.create(user=self.user, mode="blitz", elo=1320)
+        response = self.client.get("/api/games/ai/preview/", {"mode": "blitz"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["user_elo"], 1320)
+        self.assertEqual(response.data["suggested_ai_elo"], 1250)
+
+    @patch("apps.games.services.GameService.__init__", lambda self: None)
+    def test_create_applies_history_adaptation(self):
+        from apps.games.services import GameService
+
+        Game.objects.create(
+            white_player=self.user,
+            is_vs_ai=True,
+            mode=Game.Mode.AI,
+            status=Game.Status.COMPLETED,
+            result=Game.Result.WHITE_WIN,
+            ended_at=timezone.now(),
+        )
+        mock_engine = MagicMock()
+        mock_engine.get_best_move.return_value = None
+        svc = GameService()
+        svc.engine = mock_engine
+        svc.rating_service = MagicMock()
+
+        game = svc.create_ai_game(self.user, mode="blitz", color="white", ai_elo=1250)
+        self.assertEqual(game.ai_target_elo, 1330)
 
 
 class EngineLimitTests(TestCase):

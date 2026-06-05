@@ -60,26 +60,37 @@ export function isAiLevelElo(elo: number): elo is AiLevelElo {
   return AI_LEVELS.some((l) => l.elo === elo);
 }
 
+/** Même logique que le backend : tranches de 500 ELO → palier IA. */
 export function normalizeToPreset(elo: number): AiLevelElo {
-  let best: AiLevelElo = AI_LEVELS[0].elo;
-  let diff = Math.abs(elo - best);
-  for (const level of AI_LEVELS) {
-    const d = Math.abs(elo - level.elo);
-    if (d < diff) {
-      diff = d;
-      best = level.elo;
-    }
-  }
-  return best;
+  const e = Math.max(MIN_AI_ELO, Math.min(MAX_AI_ELO, elo));
+  if (e < 500) return 250;
+  if (e < 1000) return 750;
+  if (e < 1500) return 1250;
+  if (e < 2000) return 1750;
+  if (e < 2500) return 2250;
+  if (e < 3000) return 2750;
+  if (e < 3500) return 3250;
+  return 4000;
 }
 
 export function defaultAiEloForLevel(levelId?: string | null): AiLevelElo {
   const map: Record<string, AiLevelElo> = {
-    beginner: 250,
+    beginner: 750,
     intermediate: 1250,
     advanced: 1750,
     expert: 2250,
     master: 3250,
   };
   return map[levelId ?? "intermediate"] ?? 1250;
+}
+
+/** Palier IA recommandé : classement réel en priorité, sinon niveau profil. */
+export function defaultAiEloForUser(
+  userElo?: number | null,
+  levelId?: string | null
+): AiLevelElo {
+  if (userElo != null && userElo > 0) {
+    return normalizeToPreset(userElo);
+  }
+  return defaultAiEloForLevel(levelId);
 }
