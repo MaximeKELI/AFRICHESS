@@ -316,12 +316,23 @@ export default function PlayScreen() {
         />
       )}
       {busy && <ActivityIndicator color="#D4A017" style={{ marginBottom: 8 }} />}
+      {activeVariant === "crazyhouse" && game.status === "active" && isMyTurn && (
+        <PocketBar
+          pieces={crazyhousePockets}
+          selected={dropPiece}
+          onSelect={setDropPiece}
+          disabled={busy}
+        />
+      )}
       <ChessBoard
         fen={game.fen}
         orientation={orientation}
         playerColor={playerColor}
         disabled={!isMyTurn || busy || game.status !== "active"}
         lastMove={lastMove}
+        serverValidated={activeVariant !== "standard"}
+        pendingDrop={activeVariant === "crazyhouse" ? dropPiece : null}
+        onDropAtSquare={handleMove}
         onMove={handleMove}
       />
       <View style={styles.gameActions}>
@@ -340,6 +351,8 @@ export default function PlayScreen() {
           onPress={() => {
             setGame(null);
             setStatus("");
+            setActiveVariant("standard");
+            setDropPiece(null);
           }}
         >
           <Text style={styles.secondaryText}>Nouvelle partie</Text>

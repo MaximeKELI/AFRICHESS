@@ -56,6 +56,5 @@ rm -rf node_modules package-lock.json && npm install
 ## Prochaines étapes
 
 - Matchmaking humain (WebSocket file d'attente)
-- Variantes (960, Crazyhouse)
 - Push notifications (FCM)
 - Pièces SVG / images africaines
