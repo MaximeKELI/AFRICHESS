@@ -269,6 +269,10 @@ class MatchmakingView(APIView):
         return Response({"status": "left_queue"})
 
 
+@extend_schema(
+    summary="Évaluation Stockfish d'une position FEN",
+    parameters=[OpenApiParameter(name="fen", type=str, required=True)],
+)
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
 @throttle_classes([EngineEvalThrottle])

@@ -11,6 +11,11 @@ from .serializers import RegisterSerializer, UserPublicSerializer, UserSerialize
 User = get_user_model()
 
 
+@extend_schema(
+    summary="Inscription d'un nouveau joueur",
+    request=RegisterSerializer,
+    responses={201: UserSerializer},
+)
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -37,7 +42,10 @@ class RegisterView(APIView):
         return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
 
+@extend_schema(summary="Profil du joueur connecté (lecture / mise à jour)")
 class ProfileView(generics.RetrieveUpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def get_serializer_class(self):
         if self.request.method in ("PUT", "PATCH"):
             return UserUpdateSerializer
