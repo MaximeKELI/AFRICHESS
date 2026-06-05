@@ -13,6 +13,7 @@ from apps.analytics.events import log_event
 
 from .countries_data import WORLD_COUNTRIES, country_flag
 from .serializers import RegisterSerializer, UserPublicSerializer, UserSerializer, UserUpdateSerializer
+from .premium_utils import DIAMOND_ANALYSIS_MOVES, FREE_ANALYSIS_MOVES, GOLD_ANALYSIS_MOVES
 from .stripe_service import create_checkout_session, handle_webhook, stripe_enabled
 
 User = get_user_model()
@@ -137,19 +138,39 @@ PLANS = {
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
 def subscription_plans(request):
+    from django.conf import settings
+
     return Response(
         {
             "stripe_enabled": stripe_enabled(),
+            "oauth": {
+                "google": bool(getattr(settings, "GOOGLE_OAUTH_CLIENT_ID", "")),
+                "github": bool(getattr(settings, "GITHUB_OAUTH_CLIENT_ID", "")),
+            },
+            "analysis_limits": {
+                "free": FREE_ANALYSIS_MOVES,
+                "gold": GOLD_ANALYSIS_MOVES,
+                "diamond": DIAMOND_ANALYSIS_MOVES,
+            },
             "plans": [
                 {
                     "id": "free",
                     "name": "Free",
                     "price_eur": 0,
                     "features": ["play", "puzzles_daily", "lessons_basic"],
+                    "analysis_moves": FREE_ANALYSIS_MOVES,
                 },
-                {"id": "gold", **{k: v for k, v in PLANS["gold"].items() if k != "tier"}},
-                {"id": "diamond", **{k: v for k, v in PLANS["diamond"].items() if k != "tier"}},
-            ]
+                {
+                    "id": "gold",
+                    **{k: v for k, v in PLANS["gold"].items() if k != "tier"},
+                    "analysis_moves": GOLD_ANALYSIS_MOVES,
+                },
+                {
+                    "id": "diamond",
+                    **{k: v for k, v in PLANS["diamond"].items() if k != "tier"},
+                    "analysis_moves": DIAMOND_ANALYSIS_MOVES,
+                },
+            ],
         }
     )
 
