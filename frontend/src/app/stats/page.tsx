@@ -312,7 +312,7 @@ export default function StatsPage() {
                       </p>
                     </div>
                     <div className="text-center p-2 rounded-lg bg-white/5">
-                      <p className="opacity-50">IA</p>
+                      <p className="opacity-50">{t("stats.chart.ai")}</p>
                       <p className="font-mono text-africhess-gold">{data.vs_opponent.ai.win_rate}%</p>
                     </div>
                   </div>
@@ -321,7 +321,7 @@ export default function StatsPage() {
 
               <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">Activité — 30 jours</h2>
+                  <h2 className="font-semibold mb-4">{t("stats.chart.activity")}</h2>
                   <BarChart
                     maxHeight={100}
                     items={data.activity.map((a) => ({
@@ -333,10 +333,10 @@ export default function StatsPage() {
                 </div>
 
                 <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">Fins de partie</h2>
+                  <h2 className="font-semibold mb-4">{t("stats.chart.terminations")}</h2>
                   <HorizontalBarChart
                     items={Object.entries(data.by_termination).map(([k, v]) => ({
-                      label: TERMINATION_LABELS[k] ?? k,
+                      label: terminationLabel(t, k),
                       value: v,
                       color: CHART_COLORS.blue,
                     }))}
