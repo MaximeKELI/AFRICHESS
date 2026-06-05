@@ -57,6 +57,8 @@ function ChessBoardInner({
   const soundsReadyRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [boardWidth, setBoardWidth] = useState(320);
+  const [focusSquare, setFocusSquare] = useState<Square>("e4");
+  const [boardStatus, setBoardStatus] = useState("");
 
   useEffect(() => {
     if (soundsOn && !soundsReadyRef.current) {
@@ -146,6 +148,16 @@ function ChessBoardInner({
   }, [fen, playSoundOnFenChange, soundsOn, onMovePlayed]);
 
   const turnColor = game.turn();
+
+  useEffect(() => {
+    if (game.isCheckmate()) {
+      setBoardStatus("Échec et mat");
+    } else if (game.inCheck()) {
+      setBoardStatus("Échec");
+    } else {
+      setBoardStatus("");
+    }
+  }, [game]);
 
   const canSelectSquare = useCallback(
     (square: Square) => {

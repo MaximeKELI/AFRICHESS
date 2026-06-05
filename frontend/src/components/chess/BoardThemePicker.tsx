@@ -117,8 +117,10 @@ export function BoardThemePicker({ compact = false, className }: BoardThemePicke
             key={id}
             type="button"
             onClick={() => setPieceSet(id)}
+            aria-pressed={pieceSet === id}
+            aria-label={id === "african" ? "Pièces africaines" : "Pièces classiques"}
             className={clsx(
-              "px-3 py-1 rounded text-xs capitalize border",
+              "px-3 py-1 rounded text-xs capitalize border focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold",
               pieceSet === id
                 ? "border-africhess-gold bg-africhess-gold/20"
                 : "border-white/20"

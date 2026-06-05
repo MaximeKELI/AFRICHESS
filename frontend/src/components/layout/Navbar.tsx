@@ -1,20 +1,37 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { t } from "@/lib/i18n";
 import { getAvatarSrc } from "@/lib/avatars";
-import { Moon, Sun, Wifi, WifiOff } from "lucide-react";
+import { Menu, Moon, Sun, Wifi, WifiOff, X } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 
+const NAV_LINKS = [
+  { href: "/play", key: "nav.play" },
+  { href: "/learning", key: "nav.learn" },
+  { href: "/puzzles", key: "nav.puzzles" },
+  { href: "/live", key: "nav.live" },
+  { href: "/friends", key: "nav.friends" },
+  { href: "/clubs", key: "nav.clubs" },
+  { href: "/tournaments", key: "nav.tournaments" },
+  { href: "/leaderboard", key: "leaderboard.african" },
+  { href: "/community", key: "nav.community" },
+] as const;
+
 export function Navbar() {
-  const { user, locale, setLocale, darkMode, toggleDarkMode, lowBandwidth, setLowBandwidth, logout } = useAuthStore();
+  const { user, locale, setLocale, darkMode, toggleDarkMode, lowBandwidth, setLowBandwidth, logout } =
+    useAuthStore();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const closeMobile = () => setMobileOpen(false);
 
   return (
     <nav className="sticky top-0 z-50 border-b border-white/10 bg-[var(--card)]/90 backdrop-blur-lg">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 group">
+        <Link href="/" className="flex items-center gap-2 group" onClick={closeMobile}>
           <Image src="/images/logo.png" alt="AFRICHESS" width={40} height={40} className="rounded-lg" />
           <span className="font-display text-xl font-bold bg-gradient-to-r from-africhess-gold to-africhess-green bg-clip-text text-transparent">
             AFRICHESS
@@ -22,18 +39,25 @@ export function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <Link href="/play" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.play")}</Link>
-          <Link href="/learning" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.learn")}</Link>
-          <Link href="/puzzles" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.puzzles")}</Link>
-          <Link href="/live" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.live")}</Link>
-          <Link href="/friends" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.friends")}</Link>
-          <Link href="/clubs" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.clubs")}</Link>
-          <Link href="/tournaments" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.tournaments")}</Link>
-          <Link href="/leaderboard" className="hover:text-africhess-gold transition-colors">{t(locale, "leaderboard.african")}</Link>
-          <Link href="/community" className="hover:text-africhess-gold transition-colors">{t(locale, "nav.community")}</Link>
+          {NAV_LINKS.map(({ href, key }) => (
+            <Link key={href} href={href} className="hover:text-africhess-gold transition-colors">
+              {t(locale, key)}
+            </Link>
+          ))}
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setMobileOpen((o) => !o)}
+            className="md:hidden p-2 rounded-lg hover:bg-white/10"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav"
+            aria-label={mobileOpen ? "Fermer le menu" : "Ouvrir le menu"}
+          >
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+
           <select
             value={locale}
             onChange={(e) => setLocale(e.target.value as typeof locale)}
@@ -63,11 +87,11 @@ export function Navbar() {
           {user ? (
             <div className="flex items-center gap-3 ml-2">
               <NotificationBell />
-              <Link href="/profile" className="flex items-center gap-2 hover:opacity-90">
+              <Link href="/profile" className="flex items-center gap-2 hover:opacity-90" onClick={closeMobile}>
                 <span className="relative w-8 h-8 rounded-lg overflow-hidden ring-1 ring-africhess-gold/50 shrink-0">
                   <Image
                     src={getAvatarSrc(user.avatar_preset)}
-                    alt=""
+                    alt={user.display_name || user.username}
                     fill
                     className="object-cover"
                     sizes="32px"
@@ -86,13 +110,36 @@ export function Navbar() {
               <Link href="/login" className="text-sm px-3 py-1.5 rounded-lg hover:bg-white/10">
                 {t(locale, "nav.login")}
               </Link>
-              <Link href="/register" className="text-sm px-4 py-1.5 rounded-lg african-gradient text-white font-medium">
+              <Link
+                href="/register"
+                className="text-sm px-4 py-1.5 rounded-lg african-gradient text-white font-medium"
+              >
                 {t(locale, "nav.signup")}
               </Link>
             </div>
           )}
         </div>
       </div>
+
+      {mobileOpen && (
+        <div
+          id="mobile-nav"
+          className="md:hidden border-t border-white/10 bg-[var(--card)] px-4 py-3"
+        >
+          <div className="flex flex-col gap-1 text-sm font-medium">
+            {NAV_LINKS.map(({ href, key }) => (
+              <Link
+                key={href}
+                href={href}
+                onClick={closeMobile}
+                className="py-2.5 px-2 rounded-lg hover:bg-white/10 hover:text-africhess-gold"
+              >
+                {t(locale, key)}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

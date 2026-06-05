@@ -26,9 +26,10 @@ export function customPiecesForSet(setId: PieceSetId): CustomPieces | undefined 
   const out: CustomPieces = {};
   for (const [key, symbol] of Object.entries(AFRICAN_SYMBOLS) as [Piece, string][]) {
     const isWhite = key.startsWith("w");
+    const pieceName = key.slice(1);
+    const colorLabel = isWhite ? "blanc" : "noir";
     out[key] = ({ squareWidth, isDragging }) => (
       <div
-        aria-hidden
         style={{
           width: squareWidth,
           height: squareWidth,
@@ -44,7 +45,8 @@ export function customPiecesForSet(setId: PieceSetId): CustomPieces | undefined 
             : "drop-shadow(0 0 2px #1a1a1a)",
         }}
       >
-        {symbol}
+        <span className="sr-only">{`${pieceName} ${colorLabel}`}</span>
+        <span aria-hidden>{symbol}</span>
       </div>
     );
   }
