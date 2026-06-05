@@ -456,80 +456,79 @@ export default function StatsPage() {
 
               <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <div className="glass-card p-5 space-y-4">
-                  <h2 className="font-semibold">Adversaire & couleur</h2>
+                  <h2 className="font-semibold">{t("stats.table.opponentColor")}</h2>
                   <DataTable
-                    caption="Performance par type d'adversaire"
+                    caption={t("stats.table.opponentCaption")}
                     columns={[
-                      { key: "type", label: "Type" },
-                      { key: "played", label: "Jouées", className: "font-mono" },
-                      { key: "won", label: "V", className: "font-mono" },
-                      { key: "drawn", label: "N", className: "font-mono" },
-                      { key: "lost", label: "D", className: "font-mono" },
+                      { key: "type", label: t("stats.table.type") },
+                      { key: "played", label: t("stats.table.played"), className: "font-mono" },
+                      { key: "won", label: t("stats.table.won"), className: "font-mono" },
+                      { key: "drawn", label: t("stats.table.drawn"), className: "font-mono" },
+                      { key: "lost", label: t("stats.table.lost"), className: "font-mono" },
                       {
                         key: "win_rate",
-                        label: "Win %",
+                        label: t("stats.table.winPct"),
                         render: (r) => `${r.win_rate}%`,
                         className: "font-mono",
                       },
                     ]}
                     rows={[
-                      { type: "Joueurs en ligne", ...data.vs_opponent.human },
-                      { type: "Ordinateur", ...data.vs_opponent.ai },
-                      { type: "Blancs", ...data.by_color.white },
-                      { type: "Noirs", ...data.by_color.black },
+                      { type: t("stats.table.onlinePlayers"), ...data.vs_opponent.human },
+                      { type: t("stats.table.computer"), ...data.vs_opponent.ai },
+                      { type: t("stats.table.white"), ...data.by_color.white },
+                      { type: t("stats.table.black"), ...data.by_color.black },
                     ]}
                   />
                 </div>
 
                 <div className="glass-card p-5 space-y-4">
-                  <h2 className="font-semibold">Classements ELO</h2>
+                  <h2 className="font-semibold">{t("stats.table.eloRatings")}</h2>
                   <DataTable
                     columns={[
-                      { key: "mode", label: "Mode", className: "capitalize" },
-                      { key: "elo", label: "ELO", className: "font-mono text-africhess-gold" },
-                      { key: "peak_elo", label: "Pic", className: "font-mono opacity-60" },
-                      { key: "games_count", label: "Parties", className: "font-mono" },
+                      { key: "mode", label: t("stats.table.mode"), className: "capitalize" },
+                      { key: "elo", label: t("leaderboard.col.elo"), className: "font-mono text-africhess-gold" },
+                      { key: "peak_elo", label: t("stats.table.peak"), className: "font-mono opacity-60" },
+                      { key: "games_count", label: t("stats.card.games"), className: "font-mono" },
                     ]}
                     rows={data.ratings}
-                    emptyMessage="Pas de classement."
+                    emptyMessage={t("stats.table.noRating")}
                   />
                 </div>
               </section>
 
               <section className="glass-card p-5 space-y-4">
-                <h2 className="font-semibold">Ouvertures</h2>
+                <h2 className="font-semibold">{t("stats.table.openings")}</h2>
                 <DataTable
                   columns={[
-                    { key: "name", label: "Ouverture" },
-                    { key: "played", label: "Jouées", className: "font-mono" },
-                    { key: "won", label: "Victoires", className: "font-mono text-africhess-green" },
+                    { key: "name", label: t("stats.table.opening") },
+                    { key: "played", label: t("stats.table.played"), className: "font-mono" },
+                    { key: "won", label: t("stats.chart.victories"), className: "font-mono text-africhess-green" },
                     {
                       key: "win_rate",
-                      label: "Win %",
+                      label: t("stats.table.winPct"),
                       className: "font-mono",
                       render: (r) => `${r.win_rate}%`,
                     },
                   ]}
                   rows={data.openings}
-                  emptyMessage="Aucune ouverture enregistrée."
+                  emptyMessage={t("stats.table.noOpeningData")}
                 />
               </section>
 
               {data.rating_history.length > 0 && (
                 <section className="glass-card p-5 space-y-4">
-                  <h2 className="font-semibold">Historique ELO</h2>
+                  <h2 className="font-semibold">{t("stats.table.eloHistory")}</h2>
                   <DataTable
-                    caption={`${data.rating_history.length} changements de classement`}
+                    caption={t("stats.table.eloChanges", { n: data.rating_history.length })}
                     columns={[
                       {
                         key: "created_at",
-                        label: "Date",
-                        render: (r) =>
-                          new Date(r.created_at as string).toLocaleDateString("fr-FR"),
+                        label: t("stats.table.date"),
+                        render: (r) => formatLocaleDate(locale, r.created_at as string),
                       },
-                      { key: "mode", label: "Mode", className: "capitalize" },
-                      { key: "elo_before", label: "Avant", className: "font-mono" },
-                      { key: "elo_after", label: "Après", className: "font-mono" },
+                      { key: "mode", label: t("stats.table.mode"), className: "capitalize" },
+                      { key: "elo_before", label: t("stats.table.before"), className: "font-mono" },
+                      { key: "elo_after", label: t("stats.table.after"), className: "font-mono" },
                       {
                         key: "change",
                         label: "Δ",
@@ -552,25 +551,29 @@ export default function StatsPage() {
               )}
 
               <section className="glass-card p-5 space-y-4">
-                <h2 className="font-semibold">Parties récentes</h2>
+                <h2 className="font-semibold">{t("stats.table.recentGames")}</h2>
                 <DataTable
                   columns={[
                     {
                       key: "date",
-                      label: "Date",
-                      render: (r) =>
-                        new Date(r.date as string).toLocaleDateString("fr-FR"),
+                      label: t("stats.table.date"),
+                      render: (r) => formatLocaleDate(locale, r.date as string),
                     },
-                    { key: "opponent", label: "Adversaire" },
-                    { key: "mode", label: "Cadence", className: "capitalize" },
-                    { key: "opening", label: "Ouverture" },
-                    { key: "move_count", label: "Coups", className: "font-mono" },
+                    { key: "opponent", label: t("stats.table.opponent") },
+                    { key: "mode", label: t("stats.table.pace"), className: "capitalize" },
+                    { key: "opening", label: t("stats.table.opening") },
+                    { key: "move_count", label: t("stats.table.moves"), className: "font-mono" },
                     {
                       key: "outcome",
-                      label: "Résultat",
+                      label: t("stats.table.result"),
                       render: (r) => {
                         const o = r.outcome as string;
-                        const label = o === "win" ? "Victoire" : o === "loss" ? "Défaite" : "Nulle";
+                        const label =
+                          o === "win"
+                            ? t("play.recent.win")
+                            : o === "loss"
+                              ? t("play.recent.loss")
+                              : t("play.recent.draw");
                         const cls =
                           o === "win"
                             ? "text-africhess-green"
@@ -588,25 +591,25 @@ export default function StatsPage() {
                           href={`/watch/${r.id}`}
                           className="text-africhess-gold text-xs hover:underline"
                         >
-                          Replay
+                          {t("stats.table.replay")}
                         </Link>
                       ),
                     },
                   ]}
                   rows={data.recent_form}
-                  emptyMessage="Aucune partie récente."
+                  emptyMessage={t("stats.table.noRecent")}
                 />
               </section>
 
               <section className="glass-card p-5 space-y-4">
-                <h2 className="font-semibold">Activité (30 jours)</h2>
+                <h2 className="font-semibold">{t("stats.table.activity30")}</h2>
                 <DataTable
                   columns={[
-                    { key: "date", label: "Date" },
-                    { key: "games", label: "Parties", className: "font-mono" },
+                    { key: "date", label: t("stats.table.date") },
+                    { key: "games", label: t("stats.card.games"), className: "font-mono" },
                   ]}
                   rows={data.activity.filter((a) => a.games > 0)}
-                  emptyMessage="Aucune activité sur cette période."
+                  emptyMessage={t("stats.table.noActivity")}
                 />
               </section>
             </>
