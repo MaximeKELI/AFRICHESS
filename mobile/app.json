@@ -21,7 +21,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0D1117"
       },
-      "package": "com.africhess.app"
+      "package": "com.africhess.app",
+      "usesCleartextTraffic": true
     },
     "plugins": ["expo-router"],
     "extra": {

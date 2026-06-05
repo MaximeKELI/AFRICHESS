@@ -120,7 +120,8 @@ export function ChessBoard({
       {ranks.map((rank, ri) =>
         files.map((file, fi) => {
           const sq = `${file}${rank}` as Square;
-          const isLight = (rank + file.charCodeAt(0)) % 2 === 0;
+          const fileIndex = FILES.indexOf(file);
+          const isLight = (rank + fileIndex) % 2 === 0;
           const piece = game.get(sq);
           const isSelected = selected === sq;
           const isTarget = targets.includes(sq);
