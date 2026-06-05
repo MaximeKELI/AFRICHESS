@@ -18,6 +18,7 @@ const NAV_LINKS = [
   { href: "/clubs", key: "nav.clubs" },
   { href: "/tournaments", key: "nav.tournaments" },
   { href: "/leaderboard", key: "leaderboard.african" },
+  { href: "/stats", key: "nav.stats" },
   { href: "/community", key: "nav.community" },
 ] as const;
 

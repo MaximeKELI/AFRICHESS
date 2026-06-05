@@ -134,6 +134,16 @@ export default function ProfilePage() {
         <CommentsToggle />
       </div>
 
+      <div className="flex justify-between items-center">
+        <h2 className="font-semibold text-lg">Parties & classements</h2>
+        <Link
+          href="/stats"
+          className="text-sm text-africhess-gold hover:underline"
+        >
+          Statistiques détaillées →
+        </Link>
+      </div>
+
       <RecentGamesList />
 
       <div>
