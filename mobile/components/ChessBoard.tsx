@@ -17,6 +17,11 @@ interface ChessBoardProps {
   playerColor?: "w" | "b" | null;
   disabled?: boolean;
   lastMove?: { from: string; to: string } | null;
+  /** Variantes 960 / Crazyhouse : validation serveur uniquement */
+  serverValidated?: boolean;
+  /** Crazyhouse : pièce sélectionnée pour drop */
+  pendingDrop?: string | null;
+  onDropAtSquare?: (uci: string) => void;
   onMove: (uci: string) => void;
 }
 
@@ -31,6 +36,9 @@ export function ChessBoard({
   playerColor = null,
   disabled = false,
   lastMove = null,
+  serverValidated = false,
+  pendingDrop = null,
+  onDropAtSquare,
   onMove,
 }: ChessBoardProps) {
   const boardSize = Dimensions.get("window").width - 32;
