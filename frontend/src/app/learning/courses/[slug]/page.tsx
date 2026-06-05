@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { LessonReader } from "@/components/learning/LessonReader";
+import { VideoEmbed } from "@/components/learning/VideoEmbed";
 import { learningApi } from "@/lib/learningApi";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";

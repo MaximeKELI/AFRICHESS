@@ -6,7 +6,8 @@ export const learningApi = {
   coach: () => api.get("/learning/coach/"),
   courses: (level?: string) =>
     api.get("/learning/courses/", { params: level ? { level } : {} }),
-  course: (slug: string) => api.get(`/learning/courses/${slug}/`),
+  course: (slug: string, lang?: string) =>
+    api.get(`/learning/courses/${slug}/`, { params: lang ? { lang } : {} }),
   completeLesson: (slug: string, lessonId: number) =>
     api.post(`/learning/courses/${slug}/complete-lesson/`, { lesson_id: lessonId }),
   lesson: (id: number) => api.get(`/learning/lessons/${id}/`),

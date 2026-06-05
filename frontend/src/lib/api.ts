@@ -148,6 +148,13 @@ export const gamesApi = {
   respondDraw: (id: string, accept: boolean) =>
     api.post(`/games/${id}/draw/respond/`, { accept }),
   rematch: (id: string) => api.post(`/games/${id}/rematch/`),
+  correspondence: () => api.get("/games/correspondence/"),
+  correspondenceChallenge: (username: string, days_per_move = 3, color = "white") =>
+    api.post("/games/correspondence/challenge/", { username, days_per_move, color }),
+  openingLookup: (moves: string[], lang?: string) =>
+    api.get("/games/openings/lookup/", {
+      params: { moves: moves.join(","), lang },
+    }),
 };
 
 export const statsApi = {
@@ -201,6 +208,12 @@ export const socialApi = {
   joinClub: (slug: string) => api.post(`/social/clubs/${slug}/join/`),
   createClub: (data: { name: string; description?: string; country?: string }) =>
     api.post("/social/clubs/", data),
+  forum: (params?: { featured?: boolean; category?: string }) =>
+    api.get("/social/forum/", { params: { featured: params?.featured ? "1" : undefined, category: params?.category } }),
+  forumPost: (id: number) => api.get(`/social/forum/${id}/`),
+  forumComment: (id: number, body: string) =>
+    api.post(`/social/forum/${id}/comment/`, { body }),
+  forumLike: (id: number) => api.post(`/social/forum/${id}/like/`),
   africanPlayers: () => api.get("/users/featured/african/"),
   directMessages: (username: string) => api.get(`/social/messages/${username}/`),
   sendDirectMessage: (username: string, message: string) =>
