@@ -47,7 +47,7 @@ services:
       - POSTGRES_USER=africhess
       - POSTGRES_PASSWORD=africhess
       - REDIS_URL=redis://redis:6379/0
-      - SECRET_KEY=dev-secret-change-in-production-32b
+      - SECRET_KEY=dev-local-docker-compose-secret-key-minimum-fifty-characters-long
       - DEBUG=True
       - CORS_ALLOWED_ORIGINS=http://localhost:3000
     depends_on:

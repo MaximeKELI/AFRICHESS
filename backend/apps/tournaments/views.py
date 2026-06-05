@@ -29,6 +29,8 @@ class TournamentDetailView(generics.RetrieveAPIView):
 
 
 class RegisterTournamentView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request, slug):
         try:
             tournament = Tournament.objects.get(slug=slug, status=Tournament.Status.REGISTRATION)
@@ -41,6 +43,8 @@ class RegisterTournamentView(APIView):
 
 
 class StartTournamentView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request, slug):
         try:
             tournament = Tournament.objects.get(slug=slug)
@@ -70,6 +74,8 @@ class TournamentStandingsView(APIView):
 
 
 class MyTournamentGameView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request, slug):
         try:
             tournament = Tournament.objects.get(slug=slug)

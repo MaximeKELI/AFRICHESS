@@ -92,12 +92,16 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           DJANGO_SETTINGS_MODULE: config.settings.development
           SECRET_KEY: ci-secret-key-32-bytes-minimum!!
+          STOCKFISH_PATH: /usr/games/stockfish
         run: |
+          sudo apt-get update && sudo apt-get install -y stockfish
           cd backend
           pip install -r requirements.txt
+          mkdir -p staticfiles
           python manage.py migrate --noinput
           daphne -b 127.0.0.1 -p 8000 config.asgi:application &
-          sleep 3
+          sleep 5
+          curl -sf http://127.0.0.1:8000/api/docs/ > /dev/null || (echo "Backend not ready" && exit 1)
       - name: Frontend E2E
         env:
           PLAYWRIGHT_API_URL: http://127.0.0.1:8000/api

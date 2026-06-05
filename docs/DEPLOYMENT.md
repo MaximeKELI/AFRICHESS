@@ -7,10 +7,19 @@
 - Stockfish installé sur le serveur backend
 - HTTPS + **WSS** (`wss://api.votredomaine.com`)
 
+## Checklist production
+
+Avant mise en ligne, vérifier :
+
+- `DEBUG=False` (forcé dans `config.settings.production`)
+- `SECRET_KEY` unique, aléatoire, **≥ 50 caractères** (refus au démarrage sinon)
+- HTTPS actif (`SECURE_SSL_REDIRECT=True` par défaut)
+- WebSockets en **WSS** (`NEXT_PUBLIC_WS_URL=wss://...`)
+
 ## Variables d'environnement
 
 ```env
-SECRET_KEY=<long-random>
+SECRET_KEY=<long-random-50-chars-minimum>
 DEBUG=False
 ALLOWED_HOSTS=api.africhess.com
 CORS_ALLOWED_ORIGINS=https://africhess.com

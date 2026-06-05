@@ -8,11 +8,18 @@ class UsersConfig(AppConfig):
 
     def ready(self):
         import apps.users.signals  # noqa: F401
-        try:
-            from apps.users.social_setup import ensure_oauth_apps
+        from django.db.models.signals import post_migrate
 
-            ensure_oauth_apps()
-        except Exception as exc:
-            import logging
+        def setup_oauth(sender, **kwargs):
+            if kwargs.get("app_config") and kwargs["app_config"].label != self.label:
+                return
+            try:
+                from apps.users.social_setup import ensure_oauth_apps
 
-            logging.getLogger(__name__).warning("User bootstrap skipped: %s", exc)
+                ensure_oauth_apps()
+            except Exception as exc:
+                import logging
+
+                logging.getLogger(__name__).warning("OAuth bootstrap skipped: %s", exc)
+
+        post_migrate.connect(setup_oauth, sender=self)

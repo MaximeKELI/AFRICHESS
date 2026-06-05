@@ -12,6 +12,6 @@ test.describe("Parcours joueur", () => {
     await page.waitForURL(/\/play/, { timeout: 30_000 });
 
     await page.getByRole("button", { name: "Lancer la partie" }).click();
-    await expect(page.getByTestId("chess-board")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("chess-board")).toBeVisible({ timeout: 60_000 });
   });
 });

@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-from rest_framework import generics, status
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -25,6 +25,7 @@ def _are_friends(user_a, user_b) -> bool:
 
 class PendingFriendsView(generics.ListAPIView):
     serializer_class = FriendshipSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return Friendship.objects.filter(
@@ -35,6 +36,7 @@ class PendingFriendsView(generics.ListAPIView):
 
 class FriendsListView(generics.ListAPIView):
     serializer_class = FriendshipSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -46,6 +48,8 @@ class FriendsListView(generics.ListAPIView):
 
 
 class SendFriendRequestView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request):
         username = request.data.get("username")
         try:
@@ -62,6 +66,8 @@ class SendFriendRequestView(APIView):
 
 
 class AcceptFriendView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request, pk):
         try:
             friendship = Friendship.objects.get(pk=pk, to_user=request.user, status=Friendship.Status.PENDING)
@@ -74,6 +80,7 @@ class AcceptFriendView(APIView):
 
 class ClubListView(generics.ListCreateAPIView):
     serializer_class = ClubSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         country = self.request.query_params.get("country")
@@ -90,9 +97,12 @@ class ClubDetailView(generics.RetrieveAPIView):
     queryset = Club.objects.all()
     serializer_class = ClubSerializer
     lookup_field = "slug"
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class JoinClubView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request, slug):
         try:
             club = Club.objects.get(slug=slug)
@@ -105,6 +115,8 @@ class JoinClubView(APIView):
 
 
 class ChallengeFriendView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request):
         username = request.data.get("username")
         mode = request.data.get("mode", "blitz")
@@ -129,6 +141,8 @@ class ChallengeFriendView(APIView):
 
 
 class PostChatMessageView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request, room_type, room_id):
         content = (request.data.get("message") or "").strip()[:500]
         if not content:
@@ -148,6 +162,8 @@ def _dm_room_id(user_a_id: int, user_b_id: int) -> str:
 
 
 class DirectMessageListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request, username):
         try:
             other = User.objects.get(username=username)
@@ -179,6 +195,7 @@ class DirectMessageListView(APIView):
 
 class ChatHistoryView(generics.ListAPIView):
     serializer_class = ChatMessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         room_type = self.kwargs["room_type"]

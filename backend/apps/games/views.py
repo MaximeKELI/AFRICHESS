@@ -1,4 +1,5 @@
 from django.db import models
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.response import Response
@@ -29,6 +30,7 @@ from .throttling import EngineEvalThrottle
 from .services import GameService, MatchmakingService
 
 
+@extend_schema(summary="Historique des parties du joueur connecté")
 class GameListView(generics.ListAPIView):
     serializer_class = GameListSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -44,6 +46,7 @@ class GameListView(generics.ListAPIView):
         )
 
 
+@extend_schema(summary="Détail d'une partie (lecture, replay, spectateur)")
 class GameDetailView(generics.RetrieveAPIView):
     serializer_class = GameSerializer
     lookup_field = "id"
@@ -59,6 +62,11 @@ class GameDetailView(generics.RetrieveAPIView):
         return game
 
 
+@extend_schema(
+    summary="Créer une partie contre l'IA",
+    request=CreateAIGameSerializer,
+    responses={201: GameSerializer},
+)
 class CreateAIGameView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
