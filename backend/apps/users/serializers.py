@@ -32,9 +32,13 @@ class UserSerializer(serializers.ModelSerializer):
     stats = UserStatsSerializer(read_only=True)
     display_name = serializers.ReadOnlyField()
     is_premium = serializers.SerializerMethodField()
+    is_diamond = serializers.SerializerMethodField()
 
     def get_is_premium(self, obj) -> bool:
         return obj.is_premium
+
+    def get_is_diamond(self, obj) -> bool:
+        return obj.is_diamond
 
     class Meta:
         model = User
