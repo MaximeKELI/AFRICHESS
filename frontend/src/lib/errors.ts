@@ -13,15 +13,15 @@ export function formatApiError(
   error: unknown,
   fallback?: string
 ): string {
-  const locale = getLocale();
-  const fb = fallback ?? tr("common.error", locale);
+  const locale = getAppLocale();
+  const fb = fallback ?? translate(locale, "common.error");
 
   if (!(error instanceof AxiosError)) {
     return fb;
   }
 
   if (!error.response) {
-    return tr("errors.network", locale);
+    return translate(locale, "errors.network");
   }
 
   const data = error.response.data;
