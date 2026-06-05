@@ -88,10 +88,16 @@ export default function PlayScreen() {
 
   const applyGame = useCallback((data: GameData) => {
     setGame(data);
+    if (data.variant) setActiveVariant(data.variant);
     if (data.status === "completed") {
       setStatus(`Partie terminée : ${data.result ?? "fin"}`);
     }
   }, []);
+
+  const crazyhousePockets = useMemo(() => {
+    if (!game || activeVariant !== "crazyhouse") return [];
+    return pocketForPlayer(parsePocketsFromFen(game.fen), playerColor);
+  }, [game, activeVariant, playerColor]);
 
   const handleWsUpdate = useCallback(
     (payload: Parameters<typeof wsPayloadToGameData>[0]) => {
@@ -119,7 +125,7 @@ export default function PlayScreen() {
         mode: "blitz",
         color,
         ...(selectedBot ? { bot_slug: selectedBot.slug } : { ai_elo: aiElo }),
-        variant: "standard",
+        variant,
       });
       applyGame(data);
       const opponent = data.bot?.name ?? selectedBot?.name ?? `IA ${data.ai_target_elo}`;
@@ -134,6 +140,7 @@ export default function PlayScreen() {
   const handleMove = useCallback(
     async (uci: string) => {
       if (!game || busy || game.status !== "active") return;
+      setDropPiece(null);
       setBusy(true);
       const poolMs = playerColor === "w" ? game.white_time_ms : game.black_time_ms;
       const spentMs =
@@ -200,6 +207,21 @@ export default function PlayScreen() {
       <ScrollView contentContainerStyle={styles.setup}>
         <Text style={styles.heading}>Jouer vs IA</Text>
         <Text style={styles.user}>Connecté : {user.display_name || user.username}</Text>
+
+        <Text style={styles.label}>Variante</Text>
+        <View style={styles.row}>
+          {VARIANTS.map((v) => (
+            <Pressable
+              key={v.id}
+              onPress={() => setVariant(v.id)}
+              style={[styles.chip, variant === v.id && styles.chipActive]}
+            >
+              <Text style={variant === v.id ? styles.chipTextActive : styles.chipText}>
+                {v.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
 
         <Text style={styles.label}>Couleur</Text>
         <View style={styles.row}>
