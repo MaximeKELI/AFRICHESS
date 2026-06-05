@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import clsx from "clsx";
 import { AI_LEVELS, normalizeToPreset, type AiLevelElo } from "@/lib/aiStrength";
+import { pickAiAvatar } from "@/lib/avatars";
 
 interface AiStrengthPickerProps {
   value: number;
@@ -10,10 +12,27 @@ interface AiStrengthPickerProps {
 
 export function AiStrengthPicker({ value, onChange }: AiStrengthPickerProps) {
   const selected = normalizeToPreset(value);
+  const ai = pickAiAvatar(selected);
 
   return (
     <div>
-      <p className="text-sm font-medium mb-3">Niveau de l&apos;ordinateur</p>
+      <div className="flex items-center gap-3 mb-3">
+        <span className="relative w-12 h-12 rounded-xl overflow-hidden ring-2 ring-africhess-terracotta/50 shrink-0">
+          <Image
+            src={ai.src}
+            alt={ai.name}
+            fill
+            className="object-cover"
+            sizes="48px"
+          />
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-medium">Niveau de l&apos;ordinateur</p>
+          <p className="text-xs text-africhess-gold truncate">
+            {ai.name} · ~{selected} ELO
+          </p>
+        </div>
+      </div>
       <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
         {AI_LEVELS.map((level) => (
           <button
