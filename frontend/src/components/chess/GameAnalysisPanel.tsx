@@ -45,6 +45,9 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
   return (
     <div className="glass-card p-4 space-y-3">
       <h3 className="font-semibold text-sm">Analyse Stockfish</h3>
+      <p className="text-[10px] opacity-50">
+        Peut prendre 30 s à 2 min selon le nombre de coups (max. 80 analysés).
+      </p>
       {!analysis && (
         <button
           type="button"
@@ -52,7 +55,7 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
           disabled={loading}
           className="w-full py-2 rounded-lg border border-africhess-green text-africhess-green text-sm font-medium hover:bg-africhess-green/10 disabled:opacity-50"
         >
-          {loading ? "Analyse en cours…" : "Analyser la partie"}
+          {loading ? "Analyse en cours… (patientez)" : "Analyser la partie"}
         </button>
       )}
       {error && <p className="text-xs text-africhess-terracotta">{error}</p>}

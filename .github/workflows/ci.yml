@@ -47,6 +47,9 @@ jobs:
             apps.social.tests \
             apps.tournaments.tests \
             apps.learning.tests \
+            apps.users.tests \
+            apps.ratings.tests \
+            apps.puzzles.tests \
             --verbosity=1
 
   frontend:

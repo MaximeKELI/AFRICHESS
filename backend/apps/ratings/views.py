@@ -12,9 +12,10 @@ User = get_user_model()
 
 class MyRatingsView(generics.ListAPIView):
     serializer_class = PlayerRatingSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return PlayerRating.objects.filter(user=self.request.user)
+        return PlayerRating.objects.filter(user=self.request.user).order_by("mode")
 
 
 class UserRatingsView(generics.ListAPIView):

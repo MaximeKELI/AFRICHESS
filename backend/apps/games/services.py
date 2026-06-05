@@ -1,5 +1,8 @@
 """Game business logic: creation, moves, matchmaking."""
+import logging
 from datetime import timedelta
+
+logger = logging.getLogger(__name__)
 
 from django.conf import settings
 from django.db import transaction
@@ -377,8 +380,10 @@ class GameService:
                 from apps.tournaments.services import TournamentEngine
 
                 TournamentEngine().record_result(game)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning(
+                    "Tournament result not recorded for game %s: %s", game.id, exc
+                )
 
 
 class MatchmakingService:
@@ -495,5 +500,5 @@ class MatchmakingService:
             }
             for uid in (user_a_id, user_b_id):
                 async_to_sync(layer.group_send)(f"user_{uid}", payload)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Matchmaking WS notify failed: %s", exc)

@@ -9,7 +9,10 @@ from decouple import Csv, config
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = config("SECRET_KEY", default="dev-only-change-in-production")
+SECRET_KEY = config(
+    "SECRET_KEY",
+    default="dev-only-change-in-production-use-32-chars-min",
+)
 DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
 
@@ -167,6 +170,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "200/hour",
         "user": "3000/hour",
+        "engine_eval": "120/hour",
     },
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
@@ -198,9 +202,8 @@ REST_AUTH = {
     "JWT_AUTH_HTTPONLY": False,
     "LOGIN_SERIALIZER": "apps.users.auth_serializers.AfrichessLoginSerializer",
 }
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = True
-ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+ACCOUNT_LOGIN_METHODS = {"email", "username"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "optional"
 
 # Chess engine

@@ -12,5 +12,7 @@ class UsersConfig(AppConfig):
             from apps.users.social_setup import ensure_oauth_apps
 
             ensure_oauth_apps()
-        except Exception:
-            pass
+        except Exception as exc:
+            import logging
+
+            logging.getLogger(__name__).warning("User bootstrap skipped: %s", exc)

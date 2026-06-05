@@ -94,6 +94,10 @@ export default function ProfilePage() {
 
       <div className="glass-card p-6 space-y-6">
         <h2 className="font-semibold text-lg">Personnaliser le profil</h2>
+        <p className="text-xs opacity-55 -mt-2">
+          Le niveau choisi ici sert au profil et aux suggestions. Il est distinct de votre ELO
+          classement (parties en ligne) et de la force IA réglée en partie.
+        </p>
         <AvatarPicker value={avatarPreset} onChange={setAvatarPreset} />
         <LevelPicker value={chessLevel} onChange={setChessLevel} />
         <button

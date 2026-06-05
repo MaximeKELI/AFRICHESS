@@ -231,13 +231,13 @@ class ChessEngineService:
                         logger.warning("Illegal move in analysis: %s", uci)
                         break
                     info_before = engine.analyse(
-                        board, chess.engine.Limit(depth=12)
+                        board, chess.engine.Limit(depth=10)
                     )
                     eval_before = self._score_to_cp(info_before["score"].white())
                     san = board.san(move)
                     board.push(move)
                     info_after = engine.analyse(
-                        board, chess.engine.Limit(depth=12)
+                        board, chess.engine.Limit(depth=10)
                     )
                     eval_after = self._score_to_cp(info_after["score"].white())
                     if played_by_white:

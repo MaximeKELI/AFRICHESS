@@ -546,15 +546,19 @@ function PlayContent() {
           <div className="glass-card p-4">
             <h2 className="font-semibold mb-3">Jouer vs l&apos;ordinateur</h2>
             {levelLabel && (
-              <p className="text-xs opacity-60 mb-2">Votre niveau : {levelLabel}</p>
+              <p className="text-xs opacity-60 mb-1">Profil : {levelLabel}</p>
             )}
+            <p className="text-[10px] opacity-45 mb-2 leading-snug">
+              Le niveau profil est une estimation. L&apos;ELO classement vient des parties en
+              ligne. La force IA est le réglage du moteur (indépendant).
+            </p>
             <div className="flex justify-between text-xs mb-2 gap-2">
               <span className="opacity-70">
-                Votre ELO :{" "}
+                ELO classement :{" "}
                 <strong className="text-africhess-green">{userElo ?? "—"}</strong>
               </span>
               <span className="opacity-70">
-                IA : <strong className="text-africhess-gold">{aiElo ?? "—"}</strong>
+                Force IA : <strong className="text-africhess-gold">{aiElo ?? "—"}</strong>
               </span>
             </div>
             <div className="mb-3 border-t border-white/10 pt-3">

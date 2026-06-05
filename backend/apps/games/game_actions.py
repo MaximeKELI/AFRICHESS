@@ -35,8 +35,12 @@ def accept_draw(game: Game, user) -> dict:
         from apps.tournaments.services import TournamentEngine
 
         TournamentEngine().record_result(game)
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "Tournament result not recorded for game %s: %s", game.id, exc
+        )
     return {"ok": True, "result": "1/2-1/2"}
 
 

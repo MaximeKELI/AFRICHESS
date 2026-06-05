@@ -1,6 +1,6 @@
 from django.db import models
 from rest_framework import generics, permissions, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -25,6 +25,7 @@ from .game_actions import (
     offer_draw,
 )
 from .game_access import can_analyze_game, can_play_game, can_view_game, user_is_participant
+from .throttling import EngineEvalThrottle
 from .services import GameService, MatchmakingService
 
 
@@ -239,7 +240,8 @@ class MatchmakingView(APIView):
 
 
 @api_view(["GET"])
-@permission_classes([permissions.AllowAny])
+@permission_classes([permissions.IsAuthenticated])
+@throttle_classes([EngineEvalThrottle])
 def engine_eval(request):
     fen = request.query_params.get("fen")
     if not fen:

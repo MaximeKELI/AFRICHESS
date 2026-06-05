@@ -60,7 +60,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: celery -A config worker -l info
+    command: sh -c "mkdir -p staticfiles && celery -A config worker -l info"
     volumes:
       - ./backend:/app
     environment:
@@ -75,7 +75,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: celery -A config beat -l info
+    command: sh -c "mkdir -p staticfiles && celery -A config beat -l info"
     volumes:
       - ./backend:/app
     environment:

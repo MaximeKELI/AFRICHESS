@@ -11,8 +11,10 @@ def setup_new_user(user: User) -> None:
         from apps.learning.models import LearningProfile
 
         LearningProfile.objects.get_or_create(user=user)
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging
+
+        logging.getLogger(__name__).warning("UserStats setup failed: %s", exc)
     elo = user.initial_elo
     for mode in ("bullet", "blitz", "rapid", "classical"):
         PlayerRating.objects.get_or_create(
