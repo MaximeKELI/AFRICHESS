@@ -16,6 +16,7 @@ urlpatterns = [
     path("openings/lookup/", views.opening_lookup, name="opening-lookup"),
     path("engine/eval/", views.engine_eval, name="engine-eval"),
     path("<uuid:id>/", views.GameDetailView.as_view(), name="game-detail"),
+    path("<uuid:game_id>/legal-moves/", views.legal_moves, name="game-legal-moves"),
     path("<uuid:game_id>/move/", views.MakeMoveView.as_view(), name="game-move"),
     path("<uuid:game_id>/undo/", views.UndoMoveView.as_view(), name="game-undo"),
     path("<uuid:game_id>/analyze/", views.AnalyzeGameView.as_view(), name="game-analyze"),

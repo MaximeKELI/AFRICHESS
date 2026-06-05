@@ -13,6 +13,7 @@ from apps.analytics.events import log_event
 
 from .countries_data import WORLD_COUNTRIES, country_flag
 from .serializers import RegisterSerializer, UserPublicSerializer, UserSerializer, UserUpdateSerializer
+from .stripe_service import create_checkout_session, handle_webhook, stripe_enabled
 
 User = get_user_model()
 
@@ -138,6 +139,7 @@ PLANS = {
 def subscription_plans(request):
     return Response(
         {
+            "stripe_enabled": stripe_enabled(),
             "plans": [
                 {
                     "id": "free",
