@@ -10,6 +10,7 @@ Application native iOS/Android avec **échiquier natif** et parties vs IA.
 - Catalogue bots avec lien direct « Défier »
 - Chronomètre blitz (3+2) pendant la partie
 - Puzzle tactique du jour
+- Variantes Chess960 et Crazyhouse (drops + réserve)
 - WebSocket : abandon + sync chrono (coups IA via REST)
 - Annuler le dernier coup (vs IA)
 - Refresh token automatique

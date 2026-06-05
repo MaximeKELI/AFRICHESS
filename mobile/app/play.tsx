@@ -12,12 +12,19 @@ import {
 } from "react-native";
 import { ChessBoard } from "../components/ChessBoard";
 import { GameClock } from "../components/GameClock";
+import { PocketBar } from "../components/PocketBar";
 import { useAuth } from "../context/AuthContext";
 import { useGameWebSocket } from "../hooks/useGameWebSocket";
+import { parsePocketsFromFen, pocketForPlayer } from "../lib/crazyhouse";
 import { wsPayloadToGameData } from "../lib/gameState";
-import { type Bot, type GameData, gamesApi } from "../lib/api";
+import { type Bot, type GameData, type GameVariant, gamesApi } from "../lib/api";
 
 const AI_ELOS = [750, 1250, 1750, 2250, 2750, 3250];
+const VARIANTS: { id: GameVariant; label: string }[] = [
+  { id: "standard", label: "Classique" },
+  { id: "chess960", label: "Chess960" },
+  { id: "crazyhouse", label: "Crazyhouse" },
+];
 
 export default function PlayScreen() {
   const { bot: botSlug } = useLocalSearchParams<{ bot?: string }>();
@@ -26,6 +33,9 @@ export default function PlayScreen() {
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
   const [aiElo, setAiElo] = useState(1250);
   const [color, setColor] = useState<"white" | "black">("white");
+  const [variant, setVariant] = useState<GameVariant>("standard");
+  const [activeVariant, setActiveVariant] = useState<GameVariant>("standard");
+  const [dropPiece, setDropPiece] = useState<string | null>(null);
   const [game, setGame] = useState<GameData | null>(null);
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
