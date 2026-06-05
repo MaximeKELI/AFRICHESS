@@ -4,6 +4,8 @@ import Image from "next/image";
 import clsx from "clsx";
 import { AI_LEVELS, normalizeToPreset, type AiLevelElo } from "@/lib/aiStrength";
 import { aiAvatarForLevelElo } from "@/lib/avatars";
+import { useTranslation } from "@/hooks/useTranslation";
+import { aiLevelDesc, aiLevelLabel, aiLevelRange } from "@/lib/i18n/labels";
 
 interface AiStrengthPickerProps {
   value: number;
@@ -11,6 +13,7 @@ interface AiStrengthPickerProps {
 }
 
 export function AiStrengthPicker({ value, onChange }: AiStrengthPickerProps) {
+  const { t } = useTranslation();
   const selected = normalizeToPreset(value);
   const selectedAi = aiAvatarForLevelElo(selected);
 
@@ -27,9 +30,9 @@ export function AiStrengthPicker({ value, onChange }: AiStrengthPickerProps) {
           />
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-medium">Niveau de l&apos;ordinateur</p>
+          <p className="text-sm font-medium">{t("play.aiLevel.title")}</p>
           <p className="text-xs text-africhess-gold truncate">
-            {selectedAi.name} · {AI_LEVELS.find((l) => l.elo === selected)?.label}
+            {selectedAi.name} · {aiLevelLabel(t, selected)}
           </p>
         </div>
       </div>
@@ -61,15 +64,15 @@ export function AiStrengthPicker({ value, onChange }: AiStrengthPickerProps) {
               <span className="min-w-0 flex-1">
                 <div className="flex justify-between items-center gap-2">
                   <span className="font-semibold text-sm">
-                    {level.label}
+                    {aiLevelLabel(t, level.elo)}
                     <span className="font-normal opacity-60 ml-1">· {ai.name}</span>
                   </span>
                   <span className="text-xs font-mono text-africhess-gold shrink-0">
-                    {level.range}
+                    {aiLevelRange(t, level.elo)}
                   </span>
                 </div>
                 <p className="text-xs opacity-60 mt-0.5">
-                  {level.description} · moteur ~{level.elo}
+                  {aiLevelDesc(t, level.elo)} · {t("play.aiLevel.engine", { elo: level.elo })}
                 </p>
               </span>
             </button>

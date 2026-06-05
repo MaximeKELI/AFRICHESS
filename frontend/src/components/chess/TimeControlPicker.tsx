@@ -6,6 +6,7 @@ import {
   TIME_MINUTES_OPTIONS,
   type TimeMinutes,
 } from "@/lib/timeControl";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface TimeControlPickerProps {
   isTimed: boolean;
@@ -22,10 +23,12 @@ export function TimeControlPicker({
   onMinutesChange,
   compact = false,
 }: TimeControlPickerProps) {
+  const { t } = useTranslation();
+
   return (
     <div className={compact ? "space-y-2" : "space-y-3"}>
       <p className={clsx("font-medium", compact ? "text-xs" : "text-sm")}>
-        Chronomètre
+        {t("time.title")}
       </p>
       <div className="flex gap-2">
         <button
@@ -38,7 +41,7 @@ export function TimeControlPicker({
               : "border-white/15 hover:border-white/30"
           )}
         >
-          Sans limite
+          {t("time.unlimited")}
         </button>
         <button
           type="button"
@@ -50,7 +53,7 @@ export function TimeControlPicker({
               : "border-white/15 hover:border-white/30"
           )}
         >
-          Avec temps
+          {t("time.timed")}
         </button>
       </div>
       {isTimed && (
@@ -67,15 +70,15 @@ export function TimeControlPicker({
                   : "border-white/15 hover:border-white/25"
               )}
             >
-              {m} min
+              {t("time.minutes", { n: m })}
             </button>
           ))}
         </div>
       )}
       <p className="text-xs opacity-55">
         {isTimed
-          ? `Chaque joueur : ${minutes || DEFAULT_TIME_MINUTES} minutes.`
-          : "Partie tranquille, sans pression au temps."}
+          ? t("time.hint.timed", { minutes: minutes || DEFAULT_TIME_MINUTES })
+          : t("time.hint.unlimited")}
       </p>
     </div>
   );

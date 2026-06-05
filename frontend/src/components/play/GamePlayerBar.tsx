@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { pickAiAvatar } from "@/lib/avatars";
 import { UserAvatar } from "@/components/profile/UserAvatar";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface GamePlayerBarProps {
   user: {
@@ -15,6 +16,7 @@ interface GamePlayerBarProps {
 }
 
 export function GamePlayerBar({ user, aiElo, playerIsWhite }: GamePlayerBarProps) {
+  const { t } = useTranslation();
   const ai = pickAiAvatar(aiElo);
   const userLabel = user.display_name || user.username;
 
@@ -33,14 +35,16 @@ export function GamePlayerBar({ user, aiElo, playerIsWhite }: GamePlayerBarProps
         user={white.kind === "user" ? user : undefined}
         aiSrc={white.kind === "ai" ? white.src : undefined}
         align="left"
+        roleLabel={white.kind === "ai" ? t("play.playerBar.computer") : t("play.playerBar.you")}
       />
-      <span className="text-xs opacity-40 shrink-0">vs</span>
+      <span className="text-xs opacity-40 shrink-0">{t("play.playerBar.vs")}</span>
       <PlayerChip
         label={black.label}
         kind={black.kind}
         user={black.kind === "user" ? user : undefined}
         aiSrc={black.kind === "ai" ? black.src : undefined}
         align="right"
+        roleLabel={black.kind === "ai" ? t("play.playerBar.computer") : t("play.playerBar.you")}
       />
     </div>
   );
@@ -52,12 +56,14 @@ function PlayerChip({
   user,
   aiSrc,
   align,
+  roleLabel,
 }: {
   label: string;
   kind: "user" | "ai";
   user?: GamePlayerBarProps["user"];
   aiSrc?: string;
   align: "left" | "right";
+  roleLabel: string;
 }) {
   return (
     <div
@@ -77,7 +83,7 @@ function PlayerChip({
       )}
       <div className="min-w-0">
         <p className="text-sm font-medium truncate">{label}</p>
-        <p className="text-[10px] opacity-50">{kind === "ai" ? "Ordinateur" : "Vous"}</p>
+        <p className="text-[10px] opacity-50">{roleLabel}</p>
       </div>
     </div>
   );
