@@ -322,7 +322,7 @@ export const AFRICAN_COUNTRY_CODES = new Set([
 export function countryFlag(code: string): string {
   if (!code || code === "XX" || code.length !== 2) return "🌍";
   const u = code.toUpperCase();
-  return String.fromCodePoint(...[...u].map((c) => 0x1f1e6 - 65 + c.charCodeAt(0)));
+  return String.fromCodePoint(...Array.from(u).map((c) => 0x1f1e6 - 65 + c.charCodeAt(0)));
 }
 
 export function countryName(country: WorldCountry, locale: string): string {
