@@ -5,6 +5,7 @@ import { socialApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
 import { useAuthStore } from "@/store/auth";
 import { InlineAlert } from "@/components/ui/InlineAlert";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface ChatMsg {
   id: number;
@@ -15,6 +16,7 @@ interface ChatMsg {
 
 export function GameChat({ gameId }: { gameId: string }) {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -32,9 +34,9 @@ export function GameChat({ gameId }: { gameId: string }) {
       })
       .catch((err) => {
         setMessages([]);
-        setLoadError(formatApiError(err, "Chat indisponible."));
+        setLoadError(formatApiError(err, t("chat.error.load")));
       });
-  }, [user, gameId]);
+  }, [user, gameId, t]);
 
   useEffect(() => {
     load();
@@ -56,7 +58,7 @@ export function GameChat({ gameId }: { gameId: string }) {
       setText("");
       load();
     } catch (err) {
-      setSendError(formatApiError(err, "Message non envoyé."));
+      setSendError(formatApiError(err, t("chat.error.send")));
     } finally {
       setSending(false);
     }
@@ -64,13 +66,13 @@ export function GameChat({ gameId }: { gameId: string }) {
 
   if (!user) {
     return (
-      <p className="text-xs opacity-60 p-3">Connectez-vous pour chatter en partie.</p>
+      <p className="text-xs opacity-60 p-3">{t("chat.loginRequired")}</p>
     );
   }
 
   return (
     <div className="glass-card flex flex-col h-[220px]">
-      <h3 className="font-semibold text-sm p-3 border-b border-white/10">Chat</h3>
+      <h3 className="font-semibold text-sm p-3 border-b border-white/10">{t("chat.title")}</h3>
       {loadError && (
         <InlineAlert className="m-2 text-xs" onDismiss={() => setLoadError(null)}>
           {loadError}
@@ -78,7 +80,7 @@ export function GameChat({ gameId }: { gameId: string }) {
       )}
       <div className="flex-1 overflow-y-auto p-2 space-y-2 text-xs">
         {messages.length === 0 && !loadError && (
-          <p className="opacity-50 text-center py-4">Aucun message pour l&apos;instant.</p>
+          <p className="opacity-50 text-center py-4">{t("chat.empty")}</p>
         )}
         {messages.map((m) => (
           <div key={m.id}>
@@ -100,17 +102,17 @@ export function GameChat({ gameId }: { gameId: string }) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()}
-          placeholder="Message…"
+          placeholder={t("chat.placeholder")}
           className="flex-1 text-sm px-2 py-1 rounded border bg-transparent"
           maxLength={500}
-          aria-label="Message de chat"
+          aria-label={t("chat.placeholder")}
         />
         <button
           type="button"
           onClick={send}
           disabled={sending || !text.trim()}
           className="px-3 py-1 text-sm rounded-lg african-gradient text-white disabled:opacity-50"
-          aria-label="Envoyer le message"
+          aria-label={t("chat.send")}
         >
           →
         </button>
