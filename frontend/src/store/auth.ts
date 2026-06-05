@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import Cookies from "js-cookie";
+import { AxiosError } from "axios";
 import { authApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
+import { clearAuthCookies } from "@/lib/session";
 
 interface User {
   id: number;
@@ -115,17 +117,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
-    Cookies.remove("access_token");
-    Cookies.remove("refresh_token");
+    clearAuthCookies();
     set({ user: null });
   },
 
   fetchProfile: async () => {
+    if (!Cookies.get("access_token") && !Cookies.get("refresh_token")) {
+      set({ user: null });
+      return;
+    }
     try {
       const { data } = await authApi.profile();
       set({ user: data });
-    } catch {
-      set({ user: null });
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.status === 401) {
+        get().logout();
+      } else {
+        set({ user: null });
+      }
     }
   },
 }));

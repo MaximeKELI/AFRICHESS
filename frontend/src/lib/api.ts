@@ -1,5 +1,6 @@
-import axios from "axios";
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
+import { handleSessionExpired } from "@/lib/session";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -9,7 +10,38 @@ export const api = axios.create({
 });
 
 /** Ne pas envoyer un vieux JWT sur login/inscription (sinon 401 « token not valid »). */
-const NO_AUTH_PATHS = ["/auth/login/", "/auth/registration/", "/users/register/"];
+const NO_AUTH_PATHS = [
+  "/auth/login/",
+  "/auth/registration/",
+  "/auth/token/refresh/",
+  "/users/register/",
+];
+
+let refreshInFlight = false;
+let refreshWaiters: Array<{
+  resolve: (token: string) => void;
+  reject: (err: unknown) => void;
+}> = [];
+
+function flushRefreshWaiters(err: unknown, token?: string) {
+  refreshWaiters.forEach(({ resolve, reject }) => {
+    if (err) reject(err);
+    else if (token) resolve(token);
+  });
+  refreshWaiters = [];
+}
+
+async function refreshAccessToken(): Promise<string> {
+  const refresh = Cookies.get("refresh_token");
+  if (!refresh) throw new Error("No refresh token");
+  const { data } = await axios.post<{ access: string }>(
+    `${API_URL}/auth/token/refresh/`,
+    { refresh }
+  );
+  if (!data.access) throw new Error("Invalid refresh response");
+  Cookies.set("access_token", data.access, { expires: 1 });
+  return data.access;
+}
 
 api.interceptors.request.use((config) => {
   const path = config.url ?? "";
@@ -22,6 +54,47 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    if (!original || error.response?.status !== 401 || original._retry) {
+      return Promise.reject(error);
+    }
+    const path = original.url ?? "";
+    if (NO_AUTH_PATHS.some((p) => path.includes(p))) {
+      return Promise.reject(error);
+    }
+
+    if (refreshInFlight) {
+      return new Promise((resolve, reject) => {
+        refreshWaiters.push({
+          resolve: (token) => {
+            original.headers.Authorization = `Bearer ${token}`;
+            resolve(api(original));
+          },
+          reject,
+        });
+      });
+    }
+
+    original._retry = true;
+    refreshInFlight = true;
+    try {
+      const token = await refreshAccessToken();
+      flushRefreshWaiters(null, token);
+      original.headers.Authorization = `Bearer ${token}`;
+      return api(original);
+    } catch (refreshErr) {
+      flushRefreshWaiters(refreshErr);
+      handleSessionExpired();
+      return Promise.reject(refreshErr);
+    } finally {
+      refreshInFlight = false;
+    }
+  }
+);
 
 export const authApi = {
   login: (username: string, password: string) =>
