@@ -11,7 +11,6 @@ import { GameAnalysisPanel } from "@/components/chess/GameAnalysisPanel";
 import { PlayBoardSection } from "@/components/play/PlayBoardSection";
 import { gamesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
-import { CHESS_LEVELS } from "@/lib/avatars";
 import { defaultAiEloForUser, normalizeToPreset, type AiLevelElo } from "@/lib/aiStrength";
 import { AiStrengthPicker } from "@/components/chess/AiStrengthPicker";
 import {
@@ -39,6 +38,8 @@ import { openingNameFromMoves } from "@/lib/openings";
 import Link from "next/link";
 import Image from "next/image";
 import { pickAiAvatar } from "@/lib/avatars";
+import { useTranslation } from "@/hooks/useTranslation";
+import { chessLevelLabel, modeLabel } from "@/lib/i18n/labels";
 import { GameChat } from "@/components/social/GameChat";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { InlineAlert } from "@/components/ui/InlineAlert";
@@ -69,6 +70,7 @@ function PlayContent() {
   const mode = params.get("mode") || "blitz";
   const gameFromUrl = params.get("game");
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [gameId, setGameId] = useState<string | null>(null);
   const [gameData, setGameData] = useState<GameState>({ fen: "start", moves: [] });
   const [orientation, setOrientation] = useState<"white" | "black">("white");
