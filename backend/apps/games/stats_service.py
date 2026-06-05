@@ -170,19 +170,8 @@ def build_user_stats_payload(user) -> dict[str, Any]:
     user_id = user.id
 
     summary_src = getattr(user, "stats", None)
-    summary = {
-        "games_played": summary_src.games_played if summary_src else 0,
-        "games_won": summary_src.games_won if summary_src else 0,
-        "games_drawn": summary_src.games_drawn if summary_src else 0,
-        "games_lost": summary_src.games_lost if summary_src else 0,
-        "win_rate": summary_src.win_rate if summary_src else 0.0,
-        "current_streak": summary_src.current_streak if summary_src else 0,
-        "best_win_streak": summary_src.best_win_streak if summary_src else 0,
-        "total_play_time_hours": round(
-            (summary_src.total_play_time_seconds if summary_src else 0) / 3600, 1
-        ),
-        "puzzles_solved": summary_src.puzzles_solved if summary_src else 0,
-    }
+    agg_played = agg_won = agg_drawn = agg_lost = 0
+    total_seconds = 0
 
     by_mode: dict[str, dict] = defaultdict(
         lambda: {"played": 0, "won": 0, "drawn": 0, "lost": 0, "win_rate": 0.0}
@@ -202,6 +191,14 @@ def build_user_stats_payload(user) -> dict[str, Any]:
 
     for g in qs:
         outcome = _outcome_for_user(g, user_id)
+        agg_played += 1
+        total_seconds += _play_duration_seconds(g)
+        if outcome == "win":
+            agg_won += 1
+        elif outcome == "draw":
+            agg_drawn += 1
+        elif outcome == "loss":
+            agg_lost += 1
         cadence = effective_cadence(g)
         bucket = by_mode[cadence]
         bucket["played"] += 1
@@ -337,6 +334,18 @@ def build_user_stats_payload(user) -> dict[str, Any]:
         avg_blunders = round(
             sum(x["blunders"] for x in user_analyses) / len(user_analyses), 1
         )
+
+    summary = {
+        "games_played": agg_played,
+        "games_won": agg_won,
+        "games_drawn": agg_drawn,
+        "games_lost": agg_lost,
+        "win_rate": round((agg_won / agg_played) * 100, 1) if agg_played else 0.0,
+        "current_streak": summary_src.current_streak if summary_src else 0,
+        "best_win_streak": summary_src.best_win_streak if summary_src else 0,
+        "total_play_time_hours": round(total_seconds / 3600, 1),
+        "puzzles_solved": summary_src.puzzles_solved if summary_src else 0,
+    }
 
     return {
         "summary": summary,
