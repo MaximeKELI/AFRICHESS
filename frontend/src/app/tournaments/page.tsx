@@ -54,7 +54,7 @@ export default function TournamentsPage() {
 
   const register = async (slug: string) => {
     if (!user) {
-      setStatus("Connectez-vous pour vous inscrire");
+      setStatus(t("tournaments.status.loginRequired"));
       return;
     }
     setStatus("");
