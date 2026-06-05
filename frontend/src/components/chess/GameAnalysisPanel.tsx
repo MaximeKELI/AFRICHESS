@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { gamesApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface AnalysisData {
   blunders_white: number;
@@ -16,6 +17,7 @@ interface GameAnalysisPanelProps {
 }
 
 export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -29,12 +31,12 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
       if (payload?.best_moves_json?.length) {
         setAnalysis(payload);
       } else if (payload) {
-        setError("Aucun coup analysé — vérifiez que la partie contient des coups valides.");
+        setError(t("chess.analysis.noMoves"));
       } else {
-        setError("Réponse serveur incomplète.");
+        setError(t("chess.analysis.incomplete"));
       }
     } catch (err: unknown) {
-      setError(formatApiError(err, "Analyse indisponible (moteur ou partie vide)."));
+      setError(formatApiError(err, t("chess.analysis.unavailable")));
     } finally {
       setLoading(false);
     }
@@ -44,10 +46,8 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
 
   return (
     <div className="glass-card p-4 space-y-3">
-      <h3 className="font-semibold text-sm">Analyse Stockfish</h3>
-      <p className="text-[10px] opacity-50">
-        Peut prendre 30 s à 2 min selon le nombre de coups (max. 80 analysés).
-      </p>
+      <h3 className="font-semibold text-sm">{t("chess.analysis.title")}</h3>
+      <p className="text-[10px] opacity-50">{t("chess.analysis.hint")}</p>
       {!analysis && (
         <button
           type="button"
@@ -55,15 +55,17 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
           disabled={loading}
           className="w-full py-2 rounded-lg border border-africhess-green text-africhess-green text-sm font-medium hover:bg-africhess-green/10 disabled:opacity-50"
         >
-          {loading ? "Analyse en cours… (patientez)" : "Analyser la partie"}
+          {loading ? t("chess.analysis.running") : t("chess.analysis.run")}
         </button>
       )}
       {error && <p className="text-xs text-africhess-terracotta">{error}</p>}
       {analysis && (
         <div className="text-sm space-y-2">
           <p>
-            Gaffes blancs : <strong>{analysis.blunders_white}</strong> · Noirs :{" "}
-            <strong>{analysis.blunders_black}</strong>
+            {t("chess.analysis.blunders", {
+              white: analysis.blunders_white,
+              black: analysis.blunders_black,
+            })}
           </p>
           <ul className="max-h-40 overflow-y-auto text-xs space-y-1 opacity-80">
             {analysis.best_moves_json?.slice(0, 12).map((e, i) => (
