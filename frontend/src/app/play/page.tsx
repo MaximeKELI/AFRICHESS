@@ -37,6 +37,8 @@ import {
 } from "@/lib/gameStorage";
 import { openingNameFromMoves } from "@/lib/openings";
 import Link from "next/link";
+import Image from "next/image";
+import { pickAiAvatar } from "@/lib/avatars";
 import { GameChat } from "@/components/social/GameChat";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { InlineAlert } from "@/components/ui/InlineAlert";
@@ -94,6 +96,8 @@ function PlayContent() {
     gameIsTimed,
     gameData.time_control_minutes ?? timeMinutes
   );
+  const headerAiElo = isVsAi ? (gameData.ai_target_elo ?? aiElo ?? aiEloChoice) : aiEloChoice;
+  const headerAi = pickAiAvatar(headerAiElo);
   const timeOpts = useMemo(
     () => ({ isTimed: useClock, timeMinutes }),
     [useClock, timeMinutes]
@@ -407,9 +411,26 @@ function PlayContent() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold mb-6 capitalize">
-        Jouer — {mode}
-      </h1>
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
+        <h1 className="font-display text-3xl font-bold capitalize">
+          Jouer — {mode}
+        </h1>
+        <span className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5">
+          <span className="relative w-9 h-9 rounded-lg overflow-hidden ring-2 ring-africhess-gold shrink-0">
+            <Image
+              src={headerAi.src}
+              alt={headerAi.name}
+              fill
+              className="object-cover"
+              sizes="36px"
+            />
+          </span>
+          <span className="text-sm min-w-0">
+            <span className="block text-[10px] uppercase tracking-wide opacity-50">IA</span>
+            <span className="font-medium truncate">{headerAi.name}</span>
+          </span>
+        </span>
+      </div>
 
       {resumeOffer && !gameId && (
         <div className="glass-card p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
