@@ -69,6 +69,8 @@ export interface GameMove {
   move_number: number;
 }
 
+export type GameVariant = "standard" | "chess960" | "crazyhouse";
+
 export interface GameData {
   id: string;
   fen: string;
@@ -111,7 +113,7 @@ export const gamesApi = {
     color: "white" | "black";
     ai_elo?: number;
     bot_slug?: string;
-    variant?: string;
+    variant?: GameVariant;
   }) => api.post<GameData>("/games/ai/", data),
   get: (id: string) => api.get<GameData>(`/games/${id}/`),
   move: (id: string, uci: string, opts?: { spentMs?: number }) =>
