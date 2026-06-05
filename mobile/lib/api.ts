@@ -69,7 +69,12 @@ export interface GameMove {
   move_number: number;
 }
 
-export type GameVariant = "standard" | "chess960" | "crazyhouse";
+export type GameVariant =
+  | "standard"
+  | "chess960"
+  | "crazyhouse"
+  | "kingofthehill"
+  | "threecheck";
 
 export interface PublicUser {
   id: number;
@@ -106,6 +111,8 @@ export interface Puzzle {
 
 export const puzzlesApi = {
   daily: () => api.get<Puzzle>("/puzzles/daily/"),
+  rush: (count = 15) =>
+    api.get<Puzzle[]>("/puzzles/rush/", { params: { count } }),
   submit: (id: number, moves: string[], time_seconds: number) =>
     api.post<{ solved: boolean; daily_streak?: number }>(`/puzzles/${id}/submit/`, {
       moves,
