@@ -23,7 +23,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](docker-compose.yml)
-[![Tests](https://img.shields.io/badge/Tests-53+backend-D4A017?style=for-the-badge)](.github/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/Tests-53+backend_7+frontend-D4A017?style=for-the-badge)](.github/workflows/ci.yml)
 
 <br />
 
