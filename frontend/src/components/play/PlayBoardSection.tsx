@@ -20,6 +20,8 @@ interface PlayBoardSectionProps {
   incrementMs: number;
   clockLabel: string;
   serverValidated?: boolean;
+  pendingDrop?: string | null;
+  onDropAtSquare?: (uci: string) => void;
 }
 
 function PlayBoardSectionInner({
@@ -36,6 +38,8 @@ function PlayBoardSectionInner({
   incrementMs,
   clockLabel,
   serverValidated = false,
+  pendingDrop = null,
+  onDropAtSquare,
 }: PlayBoardSectionProps) {
   const turn = turnFromFen(fen);
   const lastMove = lastMoveFromMoves(moves);
@@ -62,6 +66,8 @@ function PlayBoardSectionInner({
         lastMove={lastMove}
         playSoundOnFenChange={true}
         serverValidated={serverValidated}
+        pendingDrop={pendingDrop}
+        onDropAtSquare={onDropAtSquare}
       />
     </div>
   );

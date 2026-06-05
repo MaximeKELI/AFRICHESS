@@ -14,6 +14,8 @@ interface User {
   chess_level?: string;
   country: string;
   is_staff?: boolean;
+  subscription_tier?: string;
+  is_premium?: boolean;
   stats?: {
     games_played: number;
     win_rate: number;

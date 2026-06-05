@@ -158,9 +158,18 @@ class PuzzleLeaderboardView(APIView):
 
 class PuzzleRushView(APIView):
     """Lot de puzzles — mode rush (3 min, 3 erreurs max côté client)."""
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
+        from apps.users.premium_utils import can_start_puzzle_rush, record_puzzle_rush_start
+
+        ok, code = can_start_puzzle_rush(request.user)
+        if not ok:
+            return Response(
+                {"error": "Daily Puzzle Rush limit reached. Upgrade to Premium.", "code": code},
+                status=403,
+            )
+        record_puzzle_rush_start(request.user)
         count = min(int(request.query_params.get("count", 15)), 20)
         puzzles = random_queryset(Puzzle.objects.all(), count)
         return Response(PuzzleSerializer(puzzles, many=True).data)

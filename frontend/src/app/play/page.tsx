@@ -14,6 +14,8 @@ import { useAuthStore } from "@/store/auth";
 import { defaultAiEloForUser, normalizeToPreset, type AiLevelElo } from "@/lib/aiStrength";
 import { AiStrengthPicker } from "@/components/chess/AiStrengthPicker";
 import { VariantPicker, type GameVariant } from "@/components/chess/VariantPicker";
+import { PocketBar } from "@/components/chess/PocketBar";
+import { dropUci, parsePocketsFromFen, pocketForPlayer } from "@/lib/crazyhouse";
 import {
   buildGameDisplayFromFen,
   buildGameDisplayFromMoves,
@@ -89,6 +91,8 @@ function PlayContent() {
   const [isVsAi, setIsVsAi] = useState(false);
   const [resumeOffer, setResumeOffer] = useState<ReturnType<typeof loadActiveGame>>(null);
   const [movePending, setMovePending] = useState(false);
+  const [dropPiece, setDropPiece] = useState<string | null>(null);
+  const [activeVariant, setActiveVariant] = useState<GameVariant>("standard");
   const { aiCommentsEnabled } = usePreferencesStore();
   const turnStartRef = useRef(Date.now());
 
@@ -187,7 +191,9 @@ function PlayContent() {
       time_control_minutes: data.time_control_minutes,
       is_vs_ai: data.is_vs_ai,
       ai_target_elo: data.ai_target_elo,
+      variant: (data.variant as GameVariant) ?? "standard",
     });
+    if (data.variant) setActiveVariant(data.variant as GameVariant);
     if (data.ai_target_elo) setAiElo(data.ai_target_elo);
     if (data.is_vs_ai !== undefined) setIsVsAi(data.is_vs_ai);
     if (data.status === "completed") {
@@ -362,9 +368,18 @@ function PlayContent() {
     }
   };
 
+  const crazyhousePockets = useMemo(
+    () =>
+      activeVariant === "crazyhouse"
+        ? pocketForPlayer(parsePocketsFromFen(gameData.fen), playerColor as "w" | "b")
+        : [],
+    [activeVariant, gameData.fen, playerColor]
+  );
+
   const handleMove = useCallback(
     async (uci: string) => {
       if (!gameId || gameCompleted) return;
+      setDropPiece(null);
       const poolMs = playerIsWhite ? gameData.white_time_ms : gameData.black_time_ms;
       const spentMs = gameIsTimed
         ? Math.min(Date.now() - turnStartRef.current, poolMs ?? 999_999)
@@ -535,8 +550,18 @@ function PlayContent() {
             )}
             incrementMs={gameData.increment_ms ?? 0}
             clockLabel={clockLabel}
-            serverValidated={variant !== "standard"}
+            serverValidated={activeVariant !== "standard"}
+            pendingDrop={activeVariant === "crazyhouse" ? dropPiece : null}
+            onDropAtSquare={(uci) => handleMove(uci)}
           />
+          {activeVariant === "crazyhouse" && gameId && isMyTurn && (
+            <PocketBar
+              pieces={crazyhousePockets}
+              selected={dropPiece}
+              onSelect={setDropPiece}
+              disabled={!gameActive || movePending}
+            />
+          )}
           {isLiveHuman && gameActive && (
             <div className="flex flex-wrap gap-2 justify-center w-full">
               <button

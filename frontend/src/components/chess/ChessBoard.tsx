@@ -31,6 +31,9 @@ interface ChessBoardProps {
   playSoundOnFenChange?: boolean;
   /** Variantes (960, Crazyhouse) : validation côté serveur uniquement */
   serverValidated?: boolean;
+  /** Crazyhouse : pièce sélectionnée dans le pocket pour drop */
+  pendingDrop?: string | null;
+  onDropAtSquare?: (uci: string) => void;
 }
 
 function normalizeFenForDisplay(fen: string): string {
@@ -48,6 +51,8 @@ function ChessBoardInner({
   playerColor,
   playSoundOnFenChange = true,
   serverValidated = false,
+  pendingDrop = null,
+  onDropAtSquare,
 }: ChessBoardProps) {
   const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
@@ -272,6 +277,11 @@ function ChessBoardInner({
     (square: Square) => {
       if (disabled) return;
 
+      if (pendingDrop && onDropAtSquare) {
+        onDropAtSquare(`${pendingDrop.toUpperCase()}@${square}`);
+        return;
+      }
+
       if (selectedSquare && legalTargets.includes(square)) {
         applyMove(selectedSquare, square);
         return;
@@ -292,7 +302,7 @@ function ChessBoardInner({
       setSelectedSquare(null);
       setLegalTargets([]);
     },
-    [disabled, selectedSquare, legalTargets, applyMove, canSelectSquare, highlightTargets]
+    [disabled, selectedSquare, legalTargets, applyMove, canSelectSquare, highlightTargets, pendingDrop, onDropAtSquare]
   );
 
   const onDrop = useCallback(

@@ -34,6 +34,9 @@ services:
       sh -c "mkdir -p staticfiles &&
              python manage.py migrate &&
              python manage.py seed_puzzles 2>/dev/null || true &&
+             python manage.py seed_bots 2>/dev/null || true &&
+             python manage.py seed_league 2>/dev/null || true &&
+             watchmedo auto-restart -d /app/apps -p '*.py' -R --
              daphne -b 0.0.0.0 -p 8000 config.asgi:application"
     volumes:
       - ./backend:/app

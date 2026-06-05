@@ -130,6 +130,8 @@ class UserStats(models.Model):
     total_play_time_seconds = models.PositiveBigIntegerField(default=0)
     daily_puzzle_streak = models.PositiveIntegerField(default=0)
     daily_puzzle_last_date = models.DateField(null=True, blank=True)
+    puzzle_rush_daily_count = models.PositiveSmallIntegerField(default=0)
+    puzzle_rush_last_date = models.DateField(null=True, blank=True)
 
     @property
     def win_rate(self):

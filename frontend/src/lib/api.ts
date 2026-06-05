@@ -159,6 +159,8 @@ export const gamesApi = {
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),
   live: () => api.get("/games/live/"),
   liveTv: () => api.get("/games/live/"),
+  legalMoves: (id: string, from?: string) =>
+    api.get(`/games/${id}/legal-moves/`, { params: from ? { from } : {} }),
   offerDraw: (id: string) => api.post(`/games/${id}/draw/`),
   respondDraw: (id: string, accept: boolean) =>
     api.post(`/games/${id}/draw/respond/`, { accept }),

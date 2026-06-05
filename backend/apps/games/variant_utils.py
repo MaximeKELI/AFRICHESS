@@ -37,6 +37,20 @@ def apply_move(fen: str, uci: str, variant: str = "standard") -> tuple[str, str,
         return None
 
 
+def parse_pockets(fen: str) -> dict[str, list[str]]:
+    """Pocket Crazyhouse depuis le FEN ([PN]…)."""
+    import re
+
+    m = re.search(r"\[([^\]]*)\]", fen)
+    if not m:
+        return {"white": [], "black": []}
+    raw = m.group(1)
+    return {
+        "white": [c for c in raw if c.isupper()],
+        "black": [c for c in raw if c.islower()],
+    }
+
+
 def legal_moves_uci(fen: str, variant: str = "standard") -> list[str]:
     board = board_from_fen(fen, variant)
     return [m.uci() for m in board.legal_moves]

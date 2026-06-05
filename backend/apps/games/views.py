@@ -27,7 +27,7 @@ from .game_actions import (
     offer_draw,
 )
 from .game_access import can_analyze_game, can_play_game, can_view_game, user_is_participant
-from .variant_utils import legal_moves_uci
+from .variant_utils import legal_moves_uci, parse_pockets
 from .throttling import EngineEvalThrottle
 from .services import GameService, MatchmakingService
 
@@ -159,7 +159,10 @@ def legal_moves(request, game_id):
     moves = legal_moves_uci(game.fen, game.variant)
     if from_sq and len(from_sq) == 2:
         moves = [m for m in moves if m.startswith(from_sq) or m.startswith(from_sq.upper())]
-    return Response({"moves": moves, "variant": game.variant})
+    payload: dict = {"moves": moves, "variant": game.variant}
+    if game.variant == "crazyhouse":
+        payload["pockets"] = parse_pockets(game.fen)
+    return Response(payload)
 
 
 @extend_schema(
@@ -237,11 +240,14 @@ class AnalyzeGameView(APIView):
             return Response({"error": "Forbidden"}, status=403)
         if game.status != Game.Status.COMPLETED:
             return Response({"error": "Game not completed"}, status=400)
-        from .analysis_utils import MAX_ANALYZED_MOVES, compute_accuracies
+        from apps.users.premium_utils import max_analysis_moves
 
+        from .analysis_utils import compute_accuracies
+
+        limit = max_analysis_moves(request.user)
         move_rows = list(
             game.moves.order_by("move_number").values_list("uci", "played_by_white")
-        )[:MAX_ANALYZED_MOVES]
+        )[:limit]
         if not move_rows:
             return Response({"error": "No moves to analyze"}, status=400)
         engine = ChessEngineService()
