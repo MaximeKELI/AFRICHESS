@@ -1,6 +1,14 @@
 # AFRICHESS Mobile (Expo)
 
-Application native iOS/Android — scaffold Phase 3.
+Application native iOS/Android avec **échiquier natif** et parties vs IA.
+
+## Fonctionnalités
+
+- Connexion JWT (stockage sécurisé)
+- Échiquier tactile 8×8 (pièces Unicode, thème AFRICHESS)
+- Partie vs IA : choix ELO ou bot nommé
+- Catalogue bots (aperçu)
+- Refresh token automatique
 
 ## Démarrage
 
@@ -10,16 +18,31 @@ npm install
 npx expo start
 ```
 
-## Configuration
+Puis `a` (Android) ou `i` (iOS simulateur).
 
-Dans `app.json`, section `extra.apiUrl` :
+## URL API (`app.json` → `extra.apiUrl`)
 
-- Dev Android émulateur : `http://10.0.2.2:8000/api`
-- Dev iOS simulateur : `http://localhost:8000/api`
-- Appareil physique : IP LAN de votre machine
+| Environnement | URL |
+|---------------|-----|
+| Android émulateur | `http://10.0.2.2:8000/api` |
+| iOS simulateur | `http://localhost:8000/api` |
+| Appareil physique | `http://<IP-LAN>:8000/api` |
+
+Le backend doit être accessible (CORS + `ALLOWED_HOSTS`). Pour Android physique, autorisez le trafic HTTP si besoin.
+
+## Structure
+
+```
+mobile/
+  app/           # écrans (expo-router)
+  components/    # ChessBoard natif
+  context/       # Auth JWT
+  lib/           # API, pièces, storage
+```
 
 ## Prochaines étapes
 
-- Auth JWT + stockage sécurisé
-- Échiquier natif (`react-native-chessboard` ou WebView)
-- Notifications push (FCM / APNs)
+- Puzzle daily mobile
+- Chronomètre live
+- Push notifications (FCM)
+- Pièces SVG / images africaines
