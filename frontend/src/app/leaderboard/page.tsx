@@ -66,7 +66,7 @@ export default function LeaderboardPage() {
           >
             {AFRICAN_COUNTRIES.map((c) => (
               <option key={c.code || "all"} value={c.code}>
-                {c.name}
+                {c.code ? `${countryFlag(c.code)} ${c.name}` : c.name}
               </option>
             ))}
           </select>
@@ -101,7 +101,12 @@ export default function LeaderboardPage() {
                   {e.user.title && <span className="text-africhess-terracotta mr-1">{e.user.title}</span>}
                   {e.user.display_name || e.user.username}
                 </td>
-                <td className="p-4">{e.user.country}</td>
+                <td className="p-4">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span>{countryFlag(e.user.country)}</span>
+                    <span>{displayCountry(e.user.country, locale)}</span>
+                  </span>
+                </td>
                 <td className="p-4 text-right font-mono font-bold">{e.elo}</td>
                 <td className="p-4 text-right opacity-60">{e.games_count}</td>
               </tr>
