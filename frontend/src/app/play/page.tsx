@@ -450,6 +450,13 @@ function PlayContent() {
               )}
             </div>
           )}
+          {isVsAi && gameId && user && (
+            <GamePlayerBar
+              user={user}
+              aiElo={gameData.ai_target_elo ?? aiElo}
+              playerIsWhite={playerIsWhite}
+            />
+          )}
           {movePending && isVsAi && (
             <p className="text-xs text-center text-africhess-gold animate-pulse">
               L&apos;IA réfléchit…

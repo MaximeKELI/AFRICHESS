@@ -39,8 +39,8 @@ export function getAiAvatarSrc(id?: AiAvatarId | string | null): string {
 
 /** Choisit un portrait IA stable selon l'ELO du moteur. */
 export function pickAiAvatar(elo?: number | null) {
-  const e = elo ?? 1200;
-  const index = Math.min(AI_AVATARS.length - 1, Math.max(0, Math.floor(e / 650) - 1));
+  const e = Math.max(100, elo ?? 1200);
+  const index = Math.min(AI_AVATARS.length - 1, Math.floor((e - 100) / 600));
   return AI_AVATARS[index];
 }
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { gamesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { formatApiError } from "@/lib/errors";
+import { pickAiAvatar } from "@/lib/avatars";
 
 export interface RecentGameRow {
   id: string;
@@ -24,8 +25,9 @@ function opponentLabel(
   userId: number
 ): string {
   if (game.is_vs_ai) {
+    const ai = pickAiAvatar(game.ai_target_elo);
     const elo = game.ai_target_elo;
-    return elo ? `Ordinateur (${elo})` : "Ordinateur";
+    return elo ? `${ai.name} (${elo})` : ai.name;
   }
   const isWhite = game.white_player?.id === userId;
   const opp = isWhite ? game.black_player : game.white_player;

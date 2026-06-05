@@ -78,6 +78,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "avatar",
+            "chess_level",
             "bio",
             "country",
             "city",
@@ -89,7 +90,6 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True)
-    avatar_preset = serializers.CharField(max_length=20, required=False, default="avatar-1")
     chess_level = serializers.ChoiceField(
         choices=User.ChessLevel.choices,
         required=False,
@@ -105,15 +105,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             "password_confirm",
             "country",
             "preferred_language",
-            "avatar_preset",
             "chess_level",
         ]
-
-    def validate_avatar_preset(self, value):
-        allowed = {f"avatar-{i}" for i in range(1, 9)}
-        if value not in allowed:
-            raise serializers.ValidationError("Avatar invalide.")
-        return value
 
     def validate_username(self, value):
         if User.objects.filter(username__iexact=value).exists():
@@ -137,7 +130,6 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         validated_data.pop("password_confirm", None)
         password = validated_data.pop("password")
-        validated_data.setdefault("avatar_preset", "avatar-1")
         validated_data.setdefault("chess_level", User.ChessLevel.INTERMEDIATE)
         user = User(**validated_data)
         user.set_password(password)
