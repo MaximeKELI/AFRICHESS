@@ -278,7 +278,7 @@ export default function FriendsPage() {
                   onClick={sendDm}
                   className="px-4 py-2 rounded-lg african-gradient text-white text-sm"
                 >
-                  Envoyer
+                  {t("friends.messages.send")}
                 </button>
               </div>
             </>
