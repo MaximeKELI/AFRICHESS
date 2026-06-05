@@ -5,7 +5,7 @@ from datetime import timedelta
 logger = logging.getLogger(__name__)
 
 from django.conf import settings
-from django.db import transaction
+from django.db import models, transaction
 from django.utils import timezone
 
 from apps.ratings.services import RatingService
@@ -24,7 +24,8 @@ from .elo_adapt import resolve_final_ai_elo
 from .elo_config import elo_to_difficulty_label
 from .stats_service import on_game_completed
 from .engine import ChessEngineService
-from .models import Game, MatchmakingQueue, Move
+from .models import ChessBot, Game, MatchmakingQueue, Move
+from .variant_utils import generate_chess960_start
 from .room_utils import ensure_game_room, uci_to_squares
 
 MODE_TIME_CONFIG = {
@@ -50,19 +51,33 @@ class GameService:
         ai_elo=None,
         is_timed=True,
         time_minutes=None,
+        bot=None,
+        variant=Game.Variant.STANDARD,
     ):
         timed, white_ms, black_ms, inc_ms, tcm = resolve_time_fields(
             is_timed, time_minutes
         )
-        target_elo = resolve_final_ai_elo(
-            user, mode=mode, difficulty=difficulty, ai_elo=ai_elo
-        )
+        if bot:
+            target_elo = bot.elo
+        else:
+            target_elo = resolve_final_ai_elo(
+                user, mode=mode, difficulty=difficulty, ai_elo=ai_elo
+            )
         display_difficulty = elo_to_difficulty_label(target_elo)
+
+        start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        chess960_pos = None
+        if variant == Game.Variant.CHESS960:
+            start_fen, chess960_pos = generate_chess960_start()
 
         game = Game.objects.create(
             white_player=user if color == "white" else None,
             black_player=None if color == "white" else user,
             mode=Game.Mode.AI,
+            variant=variant,
+            chess960_position_id=chess960_pos,
+            bot=bot,
+            fen=start_fen,
             status=Game.Status.ACTIVE,
             is_vs_ai=True,
             ai_difficulty=display_difficulty,
@@ -75,6 +90,10 @@ class GameService:
             started_at=timezone.now(),
             turn_started_at=timezone.now() if timed else None,
         )
+        if bot:
+            ChessBot.objects.filter(pk=bot.pk).update(
+                games_played=models.F("games_played") + 1
+            )
         if color == "black":
             ai_move = self.engine.get_best_move(
                 game.fen, display_difficulty, target_elo=target_elo

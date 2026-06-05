@@ -13,6 +13,7 @@ import { gamesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { defaultAiEloForUser, normalizeToPreset, type AiLevelElo } from "@/lib/aiStrength";
 import { AiStrengthPicker } from "@/components/chess/AiStrengthPicker";
+import { VariantPicker, type GameVariant } from "@/components/chess/VariantPicker";
 import {
   buildGameDisplayFromFen,
   buildGameDisplayFromMoves,
@@ -69,6 +70,7 @@ function PlayContent() {
   const params = useSearchParams();
   const mode = params.get("mode") || "blitz";
   const gameFromUrl = params.get("game");
+  const botFromUrl = params.get("bot");
   const { user } = useAuthStore();
   const { t } = useTranslation();
   const [gameId, setGameId] = useState<string | null>(null);
@@ -77,6 +79,8 @@ function PlayContent() {
   const [status, setStatus] = useState<string>("");
   const [searching, setSearching] = useState(false);
   const [aiEloChoice, setAiEloChoice] = useState<AiLevelElo>(1250);
+  const [selectedBot, setSelectedBot] = useState<string | null>(botFromUrl);
+  const [variant, setVariant] = useState<GameVariant>("standard");
   const [aiDefaultSet, setAiDefaultSet] = useState(false);
   const [useClock, setUseClock] = useState(true);
   const [timeMinutes, setTimeMinutes] = useState<TimeMinutes>(DEFAULT_TIME_MINUTES);
@@ -307,11 +311,16 @@ function PlayContent() {
     }
   };
 
+  useEffect(() => {
+    if (botFromUrl) setSelectedBot(botFromUrl);
+  }, [botFromUrl]);
+
   const startAI = async () => {
     try {
       const { data } = await gamesApi.createAI({
         mode,
-        ai_elo: aiEloChoice,
+        ...(selectedBot ? { bot_slug: selectedBot } : { ai_elo: aiEloChoice }),
+        variant,
         color: orientation,
         include_comments: aiCommentsEnabled,
         is_timed: useClock,
@@ -650,8 +659,27 @@ function PlayContent() {
               </span>
             </div>
             <div className="mb-3 border-t border-white/10 pt-3">
-              <AiStrengthPicker value={aiEloChoice} onChange={setAiEloChoice} />
+              <VariantPicker value={variant} onChange={setVariant} />
             </div>
+            {selectedBot ? (
+              <div className="mb-3 p-2 rounded-lg border border-africhess-gold/30 text-sm">
+                <p>{t("play.botSelected", { slug: selectedBot })}</p>
+                <button
+                  type="button"
+                  onClick={() => setSelectedBot(null)}
+                  className="text-xs text-africhess-gold hover:underline mt-1"
+                >
+                  {t("play.botClear")}
+                </button>
+              </div>
+            ) : (
+              <div className="mb-3 border-t border-white/10 pt-3">
+                <AiStrengthPicker value={aiEloChoice} onChange={setAiEloChoice} />
+              </div>
+            )}
+            <Link href="/bots" className="text-xs text-africhess-gold hover:underline block mb-3">
+              {t("play.browseBots")}
+            </Link>
             <select
               value={orientation}
               onChange={(e) =>

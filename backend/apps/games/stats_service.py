@@ -131,6 +131,16 @@ def record_game_stats(game: Game) -> None:
 def on_game_completed(game: Game) -> None:
     record_game_stats(game)
     try:
+        from apps.ratings.league_service import record_league_result
+
+        for player in (game.white_player, game.black_player):
+            if player and not game.is_vs_ai:
+                outcome = _outcome_for_user(game, player.id)
+                if outcome in ("win", "draw", "loss"):
+                    record_league_result(player, outcome)
+    except Exception:
+        pass
+    try:
         from apps.analytics.events import log_event
 
         for player in (game.white_player, game.black_player):

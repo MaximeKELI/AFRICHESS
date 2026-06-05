@@ -31,6 +31,10 @@ class UserStatsSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     stats = UserStatsSerializer(read_only=True)
     display_name = serializers.ReadOnlyField()
+    is_premium = serializers.SerializerMethodField()
+
+    def get_is_premium(self, obj) -> bool:
+        return obj.is_premium
 
     class Meta:
         model = User
@@ -49,13 +53,23 @@ class UserSerializer(serializers.ModelSerializer):
             "preferred_language",
             "is_african_highlight",
             "low_bandwidth_mode",
+            "subscription_tier",
+            "premium_until",
+            "is_premium",
             "title",
             "fide_id",
             "stats",
             "date_joined",
             "is_staff",
         ]
-        read_only_fields = ["id", "date_joined", "is_african_highlight", "is_staff"]
+        read_only_fields = [
+            "id",
+            "date_joined",
+            "is_african_highlight",
+            "is_staff",
+            "subscription_tier",
+            "premium_until",
+        ]
 
 
 class UserStatsPublicSerializer(serializers.ModelSerializer):

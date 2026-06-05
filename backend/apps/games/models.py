@@ -4,7 +4,36 @@ from django.conf import settings
 from django.db import models
 
 
+class ChessBot(models.Model):
+    """Adversaire IA nommé (catalogue type Chess.com)."""
+
+    slug = models.SlugField(unique=True)
+    name = models.CharField(max_length=100)
+    name_en = models.CharField(max_length=100, blank=True)
+    country = models.CharField(max_length=2, default="SN")
+    elo = models.PositiveIntegerField()
+    avatar_id = models.CharField(max_length=20, default="avatar-1")
+    personality = models.CharField(max_length=50, blank=True)
+    opening_style = models.CharField(max_length=100, blank=True)
+    description = models.TextField(blank=True)
+    description_en = models.TextField(blank=True)
+    is_premium = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    games_played = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["elo", "name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.elo})"
+
+
 class Game(models.Model):
+    class Variant(models.TextChoices):
+        STANDARD = "standard", "Standard"
+        CHESS960 = "chess960", "Chess960"
+
     class Status(models.TextChoices):
         WAITING = "waiting", "Waiting for opponent"
         ACTIVE = "active", "In progress"
@@ -42,6 +71,23 @@ class Game(models.Model):
     )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.WAITING)
     mode = models.CharField(max_length=20, choices=Mode.choices, default=Mode.BLITZ)
+    variant = models.CharField(
+        max_length=20,
+        choices=Variant.choices,
+        default=Variant.STANDARD,
+    )
+    chess960_position_id = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text="Position Chess960 (0–959)",
+    )
+    bot = models.ForeignKey(
+        ChessBot,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="games",
+    )
     result = models.CharField(max_length=10, choices=Result.choices, blank=True)
     fen = models.CharField(max_length=100, default="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
     pgn = models.TextField(blank=True)

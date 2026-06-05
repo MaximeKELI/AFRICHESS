@@ -2,11 +2,19 @@ from django.contrib.auth import get_user_model
 from rest_framework import generics, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.users.countries_data import AFRICAN_COUNTRY_CODES
 
-from .models import PlayerRating, RatingHistory
-from .serializers import LeaderboardEntrySerializer, PlayerRatingSerializer, RatingHistorySerializer
+from .league_service import get_or_create_active_season, get_or_create_standing, league_standings_for_season
+from .models import LeagueSeason, LeagueStanding, PlayerRating, RatingHistory
+from .serializers import (
+    LeaderboardEntrySerializer,
+    LeagueSeasonSerializer,
+    LeagueStandingSerializer,
+    PlayerRatingSerializer,
+    RatingHistorySerializer,
+)
 from .services import RatingService
 
 User = get_user_model()
@@ -80,3 +88,35 @@ def rating_summary(request, username):
     user = User.objects.get(username=username)
     ratings = PlayerRating.objects.filter(user=user)
     return Response(PlayerRatingSerializer(ratings, many=True).data)
+
+
+class LeagueSeasonView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        season = get_or_create_active_season()
+        return Response(LeagueSeasonSerializer(season).data)
+
+
+class LeagueStandingsView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        season = get_or_create_active_season()
+        tier = request.query_params.get("tier")
+        standings = league_standings_for_season(season, tier=tier or None)
+        return Response(
+            {
+                "season": LeagueSeasonSerializer(season).data,
+                "standings": LeagueStandingSerializer(standings, many=True).data,
+            }
+        )
+
+
+class MyLeagueStandingView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        season = get_or_create_active_season()
+        standing = get_or_create_standing(request.user, season)
+        return Response(LeagueStandingSerializer(standing).data)

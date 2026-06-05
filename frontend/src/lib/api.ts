@@ -108,6 +108,10 @@ export const authApi = {
 
 export const usersApi = {
   get: (username: string) => api.get(`/users/${username}/`),
+  subscriptionPlans: () => api.get("/users/subscription/plans/"),
+  subscriptionStatus: () => api.get("/users/subscription/status/"),
+  subscribe: (plan: "gold" | "diamond") =>
+    api.post("/users/subscription/subscribe/", { plan }),
 };
 
 export const gamesApi = {
@@ -116,11 +120,21 @@ export const gamesApi = {
   createAI: (data: {
     mode: string;
     color: string;
-    ai_elo: number;
+    ai_elo?: number;
+    bot_slug?: string;
+    variant?: "standard" | "chess960";
     include_comments?: boolean;
     is_timed?: boolean;
     time_minutes?: number | null;
   }) => api.post("/games/ai/", data),
+  bots: (params?: { q?: string; premium?: boolean }) =>
+    api.get("/games/bots/", {
+      params: {
+        q: params?.q,
+        premium: params?.premium === true ? "1" : params?.premium === false ? "0" : undefined,
+      },
+    }),
+  bot: (slug: string) => api.get(`/games/bots/${slug}/`),
   aiPreview: (mode: string, aiElo?: number) =>
     api.get("/games/ai/preview/", {
       params: aiElo != null ? { mode, ai_elo: aiElo } : { mode },
@@ -144,6 +158,7 @@ export const gamesApi = {
   leaveQueue: () => api.delete("/games/matchmaking/"),
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),
   live: () => api.get("/games/live/"),
+  liveTv: () => api.get("/games/live/"),
   offerDraw: (id: string) => api.post(`/games/${id}/draw/`),
   respondDraw: (id: string, accept: boolean) =>
     api.post(`/games/${id}/draw/respond/`, { accept }),
@@ -177,6 +192,10 @@ export const ratingsApi = {
     api.get("/ratings/leaderboard/global/", { params: { mode } }),
   africanLeaderboard: (mode = "blitz", country?: string) =>
     api.get("/ratings/leaderboard/african/", { params: { mode, country } }),
+  league: () => api.get("/ratings/league/"),
+  leagueStandings: (tier?: string) =>
+    api.get("/ratings/league/standings/", { params: { tier } }),
+  myLeague: () => api.get("/ratings/league/me/"),
 };
 
 export const puzzlesApi = {

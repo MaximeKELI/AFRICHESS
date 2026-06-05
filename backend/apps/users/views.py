@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.decorators import api_view, permission_classes
@@ -104,3 +107,80 @@ def countries_list(request):
         )
     rows.sort(key=lambda r: (not r["is_african"], r["name"]))
     return Response(rows)
+
+
+PLANS = {
+    "gold": {
+        "tier": User.SubscriptionTier.GOLD,
+        "price_eur": 4.99,
+        "features": [
+            "bots_premium",
+            "puzzle_rush_unlimited",
+            "no_ads",
+        ],
+    },
+    "diamond": {
+        "tier": User.SubscriptionTier.DIAMOND,
+        "price_eur": 9.99,
+        "features": [
+            "bots_premium",
+            "puzzle_rush_unlimited",
+            "deep_game_review",
+            "lessons_unlimited",
+            "no_ads",
+        ],
+    },
+}
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def subscription_plans(request):
+    return Response(
+        {
+            "plans": [
+                {
+                    "id": "free",
+                    "name": "Free",
+                    "price_eur": 0,
+                    "features": ["play", "puzzles_daily", "lessons_basic"],
+                },
+                {"id": "gold", **{k: v for k, v in PLANS["gold"].items() if k != "tier"}},
+                {"id": "diamond", **{k: v for k, v in PLANS["diamond"].items() if k != "tier"}},
+            ]
+        }
+    )
+
+
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def subscription_status(request):
+    user = request.user
+    return Response(
+        {
+            "tier": user.subscription_tier,
+            "is_premium": user.is_premium,
+            "premium_until": user.premium_until,
+        }
+    )
+
+
+@api_view(["POST"])
+@permission_classes([permissions.IsAuthenticated])
+def subscription_subscribe(request):
+    """Mock subscribe (dev) — active 30 jours sans paiement réel."""
+    plan_id = (request.data.get("plan") or "").lower()
+    if plan_id not in PLANS:
+        return Response({"error": "Plan invalide."}, status=400)
+    user = request.user
+    user.subscription_tier = PLANS[plan_id]["tier"]
+    user.premium_until = timezone.now() + timedelta(days=30)
+    user.save(update_fields=["subscription_tier", "premium_until"])
+    return Response(
+        {
+            "tier": user.subscription_tier,
+            "is_premium": user.is_premium,
+            "premium_until": user.premium_until,
+            "message": "Abonnement activé (mode démo).",
+        }
+    )

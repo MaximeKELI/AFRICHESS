@@ -8,8 +8,9 @@ from rest_framework.views import APIView
 from apps.ratings.models import PlayerRating
 
 from .engine import ChessEngineService
-from .models import Game, GameAnalysis
+from .models import ChessBot, Game, GameAnalysis
 from .serializers import (
+    ChessBotSerializer,
     CreateAIGameSerializer,
     GameListSerializer,
     GameSerializer,
@@ -79,6 +80,18 @@ class CreateAIGameView(APIView):
         ser = CreateAIGameSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
         vd = ser.validated_data
+        bot = None
+        bot_slug = (vd.get("bot_slug") or "").strip()
+        if bot_slug:
+            try:
+                bot = ChessBot.objects.get(slug=bot_slug, is_active=True)
+            except ChessBot.DoesNotExist:
+                return Response({"error": "Bot introuvable."}, status=404)
+            if bot.is_premium and not request.user.is_premium:
+                return Response(
+                    {"error": "Ce bot nécessite un abonnement Gold ou Diamond."},
+                    status=403,
+                )
         game = GameService().create_ai_game(
             request.user,
             mode=vd["mode"],
@@ -88,6 +101,8 @@ class CreateAIGameView(APIView):
             ai_elo=vd.get("ai_elo"),
             is_timed=vd.get("is_timed", True),
             time_minutes=vd.get("time_minutes"),
+            bot=bot,
+            variant=vd.get("variant", Game.Variant.STANDARD),
         )
         return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
 
@@ -306,12 +321,54 @@ def engine_eval(request):
     return Response({"evaluation": eval_score})
 
 
+@extend_schema(summary="Catalogue des bots IA")
+class BotListView(generics.ListAPIView):
+    serializer_class = ChessBotSerializer
+    permission_classes = [permissions.AllowAny]
+    pagination_class = None
+
+    def get_queryset(self):
+        qs = ChessBot.objects.filter(is_active=True)
+        premium = self.request.query_params.get("premium")
+        if premium == "1":
+            qs = qs.filter(is_premium=True)
+        elif premium == "0":
+            qs = qs.filter(is_premium=False)
+        q = self.request.query_params.get("q", "").strip()
+        if q:
+            qs = qs.filter(models.Q(name__icontains=q) | models.Q(name_en__icontains=q))
+        return qs.order_by("elo", "name")
+
+
+@extend_schema(summary="Détail d'un bot IA")
+class BotDetailView(generics.RetrieveAPIView):
+    serializer_class = ChessBotSerializer
+    permission_classes = [permissions.AllowAny]
+    lookup_field = "slug"
+    queryset = ChessBot.objects.filter(is_active=True)
+
+
 class LiveGamesView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        games = live_games_queryset()
-        return Response(GameSerializer(games, many=True).data)
+        games = list(live_games_queryset())
+        featured = sorted(
+            games,
+            key=lambda g: (
+                (getattr(g.white_player, "is_african_highlight", False) or False)
+                + (getattr(g.black_player, "is_african_highlight", False) or False),
+                g.move_count,
+            ),
+            reverse=True,
+        )[:5]
+        return Response(
+            {
+                "channel": "AFRICHESS Live TV",
+                "games": GameSerializer(games, many=True).data,
+                "featured": GameSerializer(featured, many=True).data,
+            }
+        )
 
 
 class DrawOfferView(APIView):

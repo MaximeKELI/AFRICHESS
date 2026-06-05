@@ -78,6 +78,19 @@ class User(AbstractUser):
         help_text="Featured African chess player on homepage",
     )
     low_bandwidth_mode = models.BooleanField(default=False)
+
+    class SubscriptionTier(models.TextChoices):
+        FREE = "free", "Free"
+        GOLD = "gold", "Gold"
+        DIAMOND = "diamond", "Diamond"
+
+    subscription_tier = models.CharField(
+        max_length=20,
+        choices=SubscriptionTier.choices,
+        default=SubscriptionTier.FREE,
+    )
+    premium_until = models.DateTimeField(null=True, blank=True)
+
     title = models.CharField(max_length=20, blank=True)  # GM, IM, FM, etc.
     fide_id = models.CharField(max_length=20, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -90,6 +103,16 @@ class User(AbstractUser):
     @property
     def initial_elo(self):
         return self.LEVEL_ELO.get(self.chess_level, 1200)
+
+    @property
+    def is_premium(self) -> bool:
+        from django.utils import timezone
+
+        if self.subscription_tier == self.SubscriptionTier.FREE:
+            return False
+        if self.premium_until and self.premium_until < timezone.now():
+            return False
+        return True
 
     def __str__(self):
         return self.username

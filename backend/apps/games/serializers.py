@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.users.serializers import UserPublicSerializer
 
-from .models import Game, GameAnalysis, Move
+from .models import ChessBot, Game, GameAnalysis, Move
 
 
 class MoveSerializer(serializers.ModelSerializer):
@@ -27,16 +27,37 @@ class GameAnalysisSerializer(serializers.ModelSerializer):
         fields = ["accuracy_white", "accuracy_black", "blunders_white", "blunders_black", "best_moves_json"]
 
 
+class ChessBotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChessBot
+        fields = [
+            "slug",
+            "name",
+            "name_en",
+            "country",
+            "elo",
+            "avatar_id",
+            "personality",
+            "opening_style",
+            "description",
+            "description_en",
+            "is_premium",
+            "games_played",
+        ]
+
+
 class GameSerializer(serializers.ModelSerializer):
     white_player = UserPublicSerializer(read_only=True)
     black_player = UserPublicSerializer(read_only=True)
     moves = MoveSerializer(many=True, read_only=True)
     analysis = GameAnalysisSerializer(read_only=True)
+    bot = ChessBotSerializer(read_only=True)
 
     class Meta:
         model = Game
         fields = [
-            "id", "white_player", "black_player", "status", "mode", "result",
+            "id", "white_player", "black_player", "status", "mode", "variant",
+            "chess960_position_id", "bot", "result",
             "fen", "pgn", "move_count", "white_time_ms", "black_time_ms",
             "increment_ms",
             "is_timed", "time_control_minutes",
@@ -73,6 +94,10 @@ class CreateAIGameSerializer(serializers.Serializer):
     mode = serializers.ChoiceField(choices=["bullet", "blitz", "rapid"], default="blitz")
     difficulty = serializers.IntegerField(min_value=1, max_value=20, required=False)
     ai_elo = serializers.IntegerField(min_value=100, max_value=5000, required=False)
+    bot_slug = serializers.SlugField(required=False, allow_blank=True)
+    variant = serializers.ChoiceField(
+        choices=["standard", "chess960"], default="standard", required=False
+    )
     color = serializers.ChoiceField(choices=["white", "black"], default="white")
     include_comments = serializers.BooleanField(default=False, required=False)
     is_timed = serializers.BooleanField(default=True, required=False)

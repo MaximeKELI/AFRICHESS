@@ -7,5 +7,8 @@ urlpatterns = [
     path("profile/", views.ProfileView.as_view(), name="profile"),
     path("featured/african/", views.AfricanPlayersView.as_view(), name="african-players"),
     path("meta/countries/", views.countries_list, name="countries"),
+    path("subscription/plans/", views.subscription_plans, name="subscription-plans"),
+    path("subscription/status/", views.subscription_status, name="subscription-status"),
+    path("subscription/subscribe/", views.subscription_subscribe, name="subscription-subscribe"),
     path("<str:username>/", views.UserDetailView.as_view(), name="user-detail"),
 ]

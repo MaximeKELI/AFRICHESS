@@ -9,4 +9,7 @@ urlpatterns = [
     path("leaderboard/african/", views.AfricanLeaderboardView.as_view(), name="african-leaderboard"),
     path("leaderboard/country/<str:country_code>/", views.CountryLeaderboardView.as_view(), name="country-leaderboard"),
     path("user/<str:username>/", views.UserRatingsView.as_view(), name="user-ratings"),
+    path("league/", views.LeagueSeasonView.as_view(), name="league-season"),
+    path("league/standings/", views.LeagueStandingsView.as_view(), name="league-standings"),
+    path("league/me/", views.MyLeagueStandingView.as_view(), name="league-me"),
 ]
