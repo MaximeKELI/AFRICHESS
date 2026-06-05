@@ -34,6 +34,8 @@ class Game(models.Model):
         STANDARD = "standard", "Standard"
         CHESS960 = "chess960", "Chess960"
         CRAZYHOUSE = "crazyhouse", "Crazyhouse"
+        KING_OF_THE_HILL = "kingofthehill", "King of the Hill"
+        THREE_CHECK = "threecheck", "Three-check"
 
     class Status(models.TextChoices):
         WAITING = "waiting", "Waiting for opponent"

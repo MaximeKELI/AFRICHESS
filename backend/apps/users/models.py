@@ -114,6 +114,16 @@ class User(AbstractUser):
             return False
         return True
 
+    @property
+    def is_diamond(self) -> bool:
+        from django.utils import timezone
+
+        if self.subscription_tier != self.SubscriptionTier.DIAMOND:
+            return False
+        if self.premium_until and self.premium_until < timezone.now():
+            return False
+        return True
+
     def __str__(self):
         return self.username
 

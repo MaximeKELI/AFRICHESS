@@ -96,7 +96,7 @@ class CreateAIGameSerializer(serializers.Serializer):
     ai_elo = serializers.IntegerField(min_value=100, max_value=5000, required=False)
     bot_slug = serializers.SlugField(required=False, allow_blank=True)
     variant = serializers.ChoiceField(
-        choices=["standard", "chess960", "crazyhouse"],
+        choices=["standard", "chess960", "crazyhouse", "kingofthehill", "threecheck"],
         default="standard",
         required=False,
     )

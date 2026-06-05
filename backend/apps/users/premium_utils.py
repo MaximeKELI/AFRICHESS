@@ -1,18 +1,30 @@
-"""Limites fonctionnelles Free vs Premium."""
+"""Limites fonctionnelles Free vs Gold vs Diamond."""
 
 from __future__ import annotations
 
 from django.utils import timezone
 
 FREE_ANALYSIS_MOVES = 40
-PREMIUM_ANALYSIS_MOVES = 80
+GOLD_ANALYSIS_MOVES = 80
+DIAMOND_ANALYSIS_MOVES = 120
 FREE_RUSH_PER_DAY = 3
 
 
 def max_analysis_moves(user) -> int:
-    if user and user.is_authenticated and user.is_premium:
-        return PREMIUM_ANALYSIS_MOVES
+    if user and user.is_authenticated:
+        if getattr(user, "is_diamond", False):
+            return DIAMOND_ANALYSIS_MOVES
+        if user.is_premium:
+            return GOLD_ANALYSIS_MOVES
     return FREE_ANALYSIS_MOVES
+
+
+def analysis_engine_depth(user) -> int:
+    if user and getattr(user, "is_diamond", False):
+        return 16
+    if user and user.is_premium:
+        return 14
+    return 12
 
 
 def can_start_puzzle_rush(user) -> tuple[bool, str | None]:

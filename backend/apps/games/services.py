@@ -73,6 +73,14 @@ class GameService:
             import chess.variant
 
             start_fen = chess.variant.CrazyhouseBoard().fen()
+        elif variant == Game.Variant.KING_OF_THE_HILL:
+            import chess.variant
+
+            start_fen = chess.variant.KingOfTheHillBoard().fen()
+        elif variant == Game.Variant.THREE_CHECK:
+            import chess.variant
+
+            start_fen = chess.variant.ThreeCheckBoard().fen()
 
         game = Game.objects.create(
             white_player=user if color == "white" else None,

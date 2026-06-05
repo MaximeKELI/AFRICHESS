@@ -30,7 +30,10 @@ class MoveEvaluation:
     eval_before: float
     eval_after: float
     centipawn_loss: int
-    classification: str  # best, good, inaccuracy, mistake, blunder
+    classification: str  # brilliant, great, best, good, inaccuracy, mistake, blunder
+    best_uci: str | None = None
+    best_san: str | None = None
+    pv_san: str | None = None
 
 
 class ChessEngineService:
@@ -226,7 +229,7 @@ class ChessEngineService:
         return self.analyze_game_moves(self._moves_from_pgn(pgn))
 
     def analyze_game_moves(
-        self, moves: list[tuple[str, bool]]
+        self, moves: list[tuple[str, bool]], depth: int = 12
     ) -> list[MoveEvaluation]:
         """Analyse une partie à partir des coups UCI (uci, played_by_white)."""
         board = chess.Board()
@@ -243,19 +246,36 @@ class ChessEngineService:
                         logger.warning("Illegal move in analysis: %s", uci)
                         break
                     info_before = engine.analyse(
-                        board, chess.engine.Limit(depth=10)
+                        board, chess.engine.Limit(depth=depth)
                     )
                     eval_before = self._score_to_cp(info_before["score"].white())
+                    pv = info_before.get("pv") or []
+                    best_move = pv[0] if pv else None
+                    best_san = board.san(best_move) if best_move else None
+                    best_uci = best_move.uci() if best_move else None
+                    pv_san = None
+                    if pv:
+                        tmp = board.copy()
+                        sans = []
+                        for pv_move in pv[:4]:
+                            if pv_move not in tmp.legal_moves:
+                                break
+                            sans.append(tmp.san(pv_move))
+                            tmp.push(pv_move)
+                        pv_san = " ".join(sans) if sans else None
                     san = board.san(move)
                     board.push(move)
                     info_after = engine.analyse(
-                        board, chess.engine.Limit(depth=10)
+                        board, chess.engine.Limit(depth=depth)
                     )
                     eval_after = self._score_to_cp(info_after["score"].white())
                     if played_by_white:
                         cp_loss = max(0, eval_before - eval_after)
+                        eval_gain = eval_after - eval_before
                     else:
                         cp_loss = max(0, eval_after - eval_before)
+                        eval_gain = eval_before - eval_after
+                    is_best = best_move is not None and move == best_move
                     evaluations.append(
                         MoveEvaluation(
                             uci=move.uci(),
@@ -263,7 +283,12 @@ class ChessEngineService:
                             eval_before=eval_before / 100,
                             eval_after=eval_after / 100,
                             centipawn_loss=cp_loss,
-                            classification=self._classify_move(cp_loss),
+                            classification=self._classify_move(
+                                cp_loss, eval_gain, is_best
+                            ),
+                            best_uci=best_uci,
+                            best_san=best_san,
+                            pv_san=pv_san,
                         )
                     )
         except Exception as e:
@@ -277,7 +302,11 @@ class ChessEngineService:
         return score.score() or 0
 
     @staticmethod
-    def _classify_move(cp_loss: int) -> str:
+    def _classify_move(cp_loss: int, eval_gain: int = 0, is_best: bool = False) -> str:
+        if cp_loss <= 3 and eval_gain >= 120:
+            return "brilliant"
+        if cp_loss <= 5 and is_best and eval_gain >= 40:
+            return "great"
         if cp_loss <= 10:
             return "best"
         if cp_loss <= 25:
@@ -300,7 +329,7 @@ class ChessEngineService:
         self, fen: str, uci: str, variant: str = "standard"
     ) -> Optional[tuple[str, str, bool]]:
         """Returns (new_fen, san, is_game_over) or None if illegal."""
-        if variant in ("chess960", "crazyhouse"):
+        if variant in ("chess960", "crazyhouse", "kingofthehill", "threecheck"):
             return variant_apply_move(fen, uci, variant)
         board = chess.Board(fen)
         try:
