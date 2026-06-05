@@ -145,12 +145,12 @@ export default function FriendsPage() {
       )}
 
       <div className="glass-card p-4 mb-6">
-        <h2 className="font-semibold mb-3">Ajouter un ami</h2>
+        <h2 className="font-semibold mb-3">{t("friends.add.title")}</h2>
         <div className="flex gap-2">
           <input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Nom d'utilisateur"
+            placeholder={t("friends.add.placeholder")}
             className="flex-1 border rounded-lg px-3 py-2 bg-transparent"
           />
           <button
@@ -158,7 +158,7 @@ export default function FriendsPage() {
             onClick={addFriend}
             className="px-4 py-2 rounded-lg african-gradient text-white"
           >
-            Ajouter
+            {t("friends.add.button")}
           </button>
         </div>
         {msg && <p className="text-sm text-africhess-gold mt-2">{msg}</p>}
