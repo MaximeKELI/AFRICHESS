@@ -300,7 +300,10 @@ export default function PuzzlesPage() {
                   className="flex justify-between text-sm border-b border-white/5 pb-2"
                 >
                   <span>
-                    {row.rank}. {row.display_name || row.username}
+                    {row.rank}.{" "}
+                    <a href={`/profile/${row.username}`} className="hover:text-africhess-gold hover:underline">
+                      {row.display_name || row.username}
+                    </a>
                   </span>
                   <span className="text-africhess-gold">
                     {t("puzzles.leaderboard.solved", { n: row.solved_count })}
@@ -376,7 +379,7 @@ export default function PuzzlesPage() {
                 {t("puzzles.next")}
               </button>
             )}
-            {tab === "rush" && result && (
+            {tab === "rush" && result && puzzle && (
               <button
                 type="button"
                 onClick={nextRush}
@@ -384,6 +387,12 @@ export default function PuzzlesPage() {
               >
                 {t("puzzles.nextRush")}
               </button>
+            )}
+            {tab === "rush" && puzzle && (
+              <span className="text-sm font-mono text-africhess-gold ml-auto">
+                {Math.floor(rushTimeLeft / 60)}:{String(rushTimeLeft % 60).padStart(2, "0")}
+                {" · "}{t("puzzles.rush.misses", { n: rushMisses })}
+              </span>
             )}
           </div>
           {result && <p className="mt-4 text-lg font-semibold">{result}</p>}
