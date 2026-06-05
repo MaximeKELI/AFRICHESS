@@ -9,9 +9,11 @@ class Course(models.Model):
         ADVANCED = "advanced", "Avancé"
 
     title = models.CharField(max_length=200)
+    title_en = models.CharField(max_length=200, blank=True)
     slug = models.SlugField(unique=True)
     level = models.CharField(max_length=20, choices=Level.choices, default=Level.BEGINNER)
     description = models.TextField(blank=True)
+    description_en = models.TextField(blank=True)
     thumbnail = models.URLField(blank=True)
     is_published = models.BooleanField(default=True)
     order = models.PositiveIntegerField(default=0)
@@ -32,7 +34,9 @@ class Course(models.Model):
 class Lesson(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="lessons")
     title = models.CharField(max_length=200)
+    title_en = models.CharField(max_length=200, blank=True)
     content = models.TextField(help_text="Contenu markdown ou texte")
+    content_en = models.TextField(blank=True)
     video_url = models.URLField(blank=True)
     order = models.PositiveIntegerField(default=0)
     xp_reward = models.PositiveIntegerField(default=15)
