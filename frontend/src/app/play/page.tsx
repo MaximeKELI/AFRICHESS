@@ -597,7 +597,7 @@ function PlayContent() {
           />
           {isVsAi && (
             <div className="glass-card p-4">
-              <h3 className="font-semibold text-sm mb-3">Commentaires</h3>
+              <h3 className="font-semibold text-sm mb-3">{t("play.comments")}</h3>
               <AiCommentaryPanel
                 comments={moveComments}
                 enabled={aiCommentsEnabled}

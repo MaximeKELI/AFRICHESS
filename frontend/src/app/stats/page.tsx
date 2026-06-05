@@ -261,14 +261,14 @@ export default function StatsPage() {
             <>
               <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">Répartition V / N / D</h2>
+                  <h2 className="font-semibold mb-4">{t("stats.chart.outcomes")}</h2>
                   <DonutChart
                     centerLabel={`${data.summary.win_rate}%`}
-                    centerSub="victoires"
+                    centerSub={t("stats.chart.wins")}
                     slices={[
-                      { label: "Victoires", value: data.summary.games_won, color: CHART_COLORS.win },
-                      { label: "Nulles", value: data.summary.games_drawn, color: CHART_COLORS.draw },
-                      { label: "Défaites", value: data.summary.games_lost, color: CHART_COLORS.loss },
+                      { label: t("stats.chart.victories"), value: data.summary.games_won, color: CHART_COLORS.win },
+                      { label: t("stats.chart.draws"), value: data.summary.games_drawn, color: CHART_COLORS.draw },
+                      { label: t("stats.chart.losses"), value: data.summary.games_lost, color: CHART_COLORS.loss },
                     ]}
                   />
                 </div>
@@ -362,16 +362,16 @@ export default function StatsPage() {
                 </div>
 
                 <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">Blancs vs Noirs</h2>
+                  <h2 className="font-semibold mb-4">{t("stats.chart.colors")}</h2>
                   <DonutChart
                     slices={[
                       {
-                        label: `Blancs (${data.by_color.white.win_rate}%)`,
+                        label: t("stats.chart.white", { rate: data.by_color.white.win_rate }),
                         value: data.by_color.white.played,
                         color: "#f5f5f5",
                       },
                       {
-                        label: `Noirs (${data.by_color.black.win_rate}%)`,
+                        label: t("stats.chart.black", { rate: data.by_color.black.win_rate }),
                         value: data.by_color.black.played,
                         color: "#374151",
                       },
