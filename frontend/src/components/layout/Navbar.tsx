@@ -73,15 +73,15 @@ export function Navbar() {
             <option value="sw">SW</option>
           </select>
 
-          <button onClick={toggleDarkMode} className="p-2 rounded-lg hover:bg-white/10" aria-label="Toggle theme">
+          <button onClick={toggleDarkMode} className="p-2 rounded-lg hover:bg-white/10" aria-label={t("nav.theme")}>
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
           <button
             onClick={() => setLowBandwidth(!lowBandwidth)}
             className="p-2 rounded-lg hover:bg-white/10"
-            title={lowBandwidth ? "Mode fluide activé" : "Activer le mode fluide (plus rapide)"}
-            aria-label="Mode fluide"
+            title={lowBandwidth ? t("nav.lowBandwidth.on") : t("nav.lowBandwidth.off")}
+            aria-label={t("nav.lowBandwidth")}
           >
             {lowBandwidth ? <WifiOff size={18} /> : <Wifi size={18} />}
           </button>
@@ -101,7 +101,7 @@ export function Navbar() {
                 </span>
               </Link>
               <button onClick={logout} className="text-sm text-africhess-terracotta hover:underline">
-                Logout
+                {t("nav.logout")}
               </button>
             </div>
           ) : (
