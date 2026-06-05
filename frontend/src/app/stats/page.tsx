@@ -407,26 +407,26 @@ export default function StatsPage() {
           {activeTab === "tables" && (
             <>
               <section className="glass-card p-5 space-y-4">
-                <h2 className="font-semibold">Résumé général</h2>
+                <h2 className="font-semibold">{t("stats.table.summary")}</h2>
                 <DataTable
-                  caption="Indicateurs clés de performance"
+                  caption={t("stats.table.summaryCaption")}
                   columns={[
-                    { key: "label", label: "Indicateur" },
-                    { key: "value", label: "Valeur", className: "font-mono text-right" },
+                    { key: "label", label: t("stats.table.indicator") },
+                    { key: "value", label: t("stats.table.value"), className: "font-mono text-right" },
                   ]}
                   rows={[
-                    { label: "Parties jouées", value: data.summary.games_played },
-                    { label: "Victoires", value: data.summary.games_won },
-                    { label: "Nulles", value: data.summary.games_drawn },
-                    { label: "Défaites", value: data.summary.games_lost },
-                    { label: "Taux de victoire", value: `${data.summary.win_rate}%` },
-                    { label: "Série actuelle", value: data.summary.current_streak },
-                    { label: "Meilleure série", value: data.summary.best_win_streak },
-                    { label: "Temps de jeu (h)", value: data.summary.total_play_time_hours },
-                    { label: "Problèmes résolus", value: data.summary.puzzles_solved },
-                    { label: "Parties vs IA", value: data.ai_stats.games_vs_ai },
+                    { label: t("stats.table.gamesPlayed"), value: data.summary.games_played },
+                    { label: t("stats.chart.victories"), value: data.summary.games_won },
+                    { label: t("stats.chart.draws"), value: data.summary.games_drawn },
+                    { label: t("stats.chart.losses"), value: data.summary.games_lost },
+                    { label: t("stats.table.winRate"), value: `${data.summary.win_rate}%` },
+                    { label: t("stats.table.currentStreak"), value: data.summary.current_streak },
+                    { label: t("stats.table.bestStreak"), value: data.summary.best_win_streak },
+                    { label: t("stats.table.playTimeH"), value: data.summary.total_play_time_hours },
+                    { label: t("stats.table.puzzlesSolved"), value: data.summary.puzzles_solved },
+                    { label: t("stats.table.gamesVsAi"), value: data.ai_stats.games_vs_ai },
                     {
-                      label: "Meilleure IA battue",
+                      label: t("stats.table.bestAiBeaten"),
                       value: data.ai_stats.best_ai_elo_beaten ?? "—",
                     },
                   ]}
@@ -434,23 +434,23 @@ export default function StatsPage() {
               </section>
 
               <section className="glass-card p-5 space-y-4">
-                <h2 className="font-semibold">Par cadence</h2>
+                <h2 className="font-semibold">{t("stats.table.byMode")}</h2>
                 <DataTable
                   columns={[
-                    { key: "mode", label: "Cadence", className: "capitalize" },
-                    { key: "played", label: "Jouées", className: "font-mono" },
-                    { key: "won", label: "V", className: "font-mono text-africhess-green" },
-                    { key: "drawn", label: "N", className: "font-mono" },
-                    { key: "lost", label: "D", className: "font-mono text-africhess-terracotta" },
+                    { key: "mode", label: t("stats.table.pace"), className: "capitalize" },
+                    { key: "played", label: t("stats.table.played"), className: "font-mono" },
+                    { key: "won", label: t("stats.table.won"), className: "font-mono text-africhess-green" },
+                    { key: "drawn", label: t("stats.table.drawn"), className: "font-mono" },
+                    { key: "lost", label: t("stats.table.lost"), className: "font-mono text-africhess-terracotta" },
                     {
                       key: "win_rate",
-                      label: "Win %",
+                      label: t("stats.table.winPct"),
                       className: "font-mono text-africhess-gold",
                       render: (r) => `${r.win_rate}%`,
                     },
                   ]}
                   rows={data.by_mode}
-                  emptyMessage="Aucune partie par cadence."
+                  emptyMessage={t("stats.table.noModeGames")}
                 />
               </section>
 
