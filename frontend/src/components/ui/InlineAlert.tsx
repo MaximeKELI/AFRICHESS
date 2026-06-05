@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface InlineAlertProps {
   variant?: "error" | "info";

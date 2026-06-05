@@ -41,7 +41,7 @@ export default function AnalyzePage() {
       const { data } = await learningApi.analyzePgn(pgn);
       setResult(data);
     } catch {
-      setError("Analyse impossible — vérifiez le PGN.");
+      setError(t("learning.analyze.error"));
     } finally {
       setLoading(false);
     }

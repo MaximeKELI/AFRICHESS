@@ -49,7 +49,7 @@ export default function CoursePage() {
     if (!user || !slug) return;
     try {
       const { data } = await learningApi.completeLesson(slug, lessonId);
-      setMsg(data.xp_gained ? `+${data.xp_gained} XP` : "Leçon déjà complétée");
+      setMsg(data.xp_gained ? `+${data.xp_gained} XP` : t("learning.lesson.alreadyDone"));
       const { data: refreshed } = await learningApi.course(slug);
       setCourse(refreshed);
     } catch {
