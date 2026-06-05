@@ -87,6 +87,14 @@ class CreateAIGameView(APIView):
         return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
 
 
+@extend_schema(
+    summary="Prévisualiser la force IA selon le profil",
+    parameters=[
+        OpenApiParameter(name="mode", type=str, required=False),
+        OpenApiParameter(name="difficulty", type=int, required=False),
+        OpenApiParameter(name="ai_elo", type=int, required=False),
+    ],
+)
 @api_view(["GET"])
 def ai_strength_preview(request):
     if not request.user.is_authenticated:
@@ -113,6 +121,11 @@ def ai_strength_preview(request):
     })
 
 
+@extend_schema(
+    summary="Jouer un coup (UCI)",
+    request=MakeMoveSerializer,
+    responses={200: GameSerializer},
+)
 class MakeMoveView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -167,6 +180,10 @@ def active_games(request):
     return Response(GameSerializer(games, many=True).data)
 
 
+@extend_schema(
+    summary="Analyser les coups d'une partie terminée (Stockfish)",
+    responses={200: GameSerializer},
+)
 class AnalyzeGameView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -213,6 +230,11 @@ class AnalyzeGameView(APIView):
         return Response(GameSerializer(game).data)
 
 
+@extend_schema(
+    summary="Rejoindre ou quitter la file de matchmaking",
+    request=MatchmakingJoinSerializer,
+    responses={201: GameSerializer},
+)
 class MatchmakingView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
