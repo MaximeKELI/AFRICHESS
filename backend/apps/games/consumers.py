@@ -265,6 +265,9 @@ class ChessConsumer(AsyncWebsocketConsumer):
             game.save()
             if game.white_player and game.black_player:
                 GameService().rating_service.update_ratings(game)
+            from .stats_service import on_game_completed
+
+            on_game_completed(game)
         return build_ws_payload(game, {"game_over": True, "reason": "resignation"})
 
     @database_sync_to_async

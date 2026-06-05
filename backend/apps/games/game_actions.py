@@ -5,6 +5,7 @@ from django.utils import timezone
 from .models import Game
 from .room_utils import ensure_game_room
 from .services import GameService
+from .stats_service import on_game_completed
 from .time_control import resolve_time_fields
 
 

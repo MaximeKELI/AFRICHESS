@@ -96,6 +96,10 @@ class Game(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     started_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
+    stats_recorded = models.BooleanField(
+        default=False,
+        help_text="True une fois les UserStats mises à jour pour cette partie",
+    )
 
     class Meta:
         ordering = ["-created_at"]

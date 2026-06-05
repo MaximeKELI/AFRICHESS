@@ -22,6 +22,7 @@ from .clock_service import (
 from .commentary import generate_move_comment
 from .elo_adapt import resolve_final_ai_elo
 from .elo_config import elo_to_difficulty_label
+from .stats_service import on_game_completed
 from .engine import ChessEngineService
 from .models import Game, MatchmakingQueue, Move
 from .room_utils import ensure_game_room, uci_to_squares
