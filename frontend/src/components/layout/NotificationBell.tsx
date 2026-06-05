@@ -95,21 +95,21 @@ export function NotificationBell() {
       {open && (
         <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto glass-card shadow-xl z-50 text-sm">
           <div className="p-3 border-b border-white/10 flex justify-between items-center">
-            <span className="font-semibold">Notifications</span>
+            <span className="font-semibold">{t("notifications.title")}</span>
             {unread > 0 && (
               <button
                 type="button"
                 className="text-xs text-africhess-gold"
                 onClick={() => notificationsApi.markAllRead().then(load)}
               >
-                Tout lire
+                {t("notifications.markAll")}
               </button>
             )}
           </div>
           {loadError ? (
             <p className="p-4 text-africhess-terracotta text-center text-xs">{loadError}</p>
           ) : items.length === 0 ? (
-            <p className="p-4 opacity-60 text-center">Aucune notification</p>
+            <p className="p-4 opacity-60 text-center">{t("notifications.empty")}</p>
           ) : (
             items.slice(0, 20).map((n) => (
               <div
@@ -127,7 +127,7 @@ export function NotificationBell() {
                     }}
                     className="text-xs text-africhess-green mt-2 inline-block hover:underline"
                   >
-                    Rejoindre la partie →
+                    {t("notifications.joinGame")}
                   </Link>
                 )}
               </div>
