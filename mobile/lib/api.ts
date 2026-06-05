@@ -79,7 +79,7 @@ export interface GameData {
   is_vs_ai: boolean;
   ai_target_elo?: number;
   moves?: GameMove[];
-  variant?: string;
+  variant?: GameVariant;
   is_timed?: boolean;
   white_time_ms?: number;
   black_time_ms?: number;

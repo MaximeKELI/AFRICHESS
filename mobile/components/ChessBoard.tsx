@@ -172,6 +172,13 @@ export function ChessBoard({
   );
 
   const displayFen = serverValidated ? toChessFen(fen) : game.fen();
+  const displayGame = useMemo(() => {
+    try {
+      return new Chess(displayFen);
+    } catch {
+      return game;
+    }
+  }, [displayFen, game]);
 
   return (
     <View style={[styles.board, { width: boardSize, height: boardSize }]}>
@@ -180,8 +187,7 @@ export function ChessBoard({
           const sq = `${file}${rank}` as Square;
           const fileIndex = FILES.indexOf(file);
           const isLight = (rank + fileIndex) % 2 === 0;
-          const displayGame = serverValidated ? new Chess(displayFen) : game;
-          const piece = displayGame.get(sq);
+          const piece = (serverValidated ? displayGame : game).get(sq);
           const isSelected = selected === sq;
           const isTarget = targets.includes(sq);
           const isLast = lastMove && (lastMove.from === sq || lastMove.to === sq);
