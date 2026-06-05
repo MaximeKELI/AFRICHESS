@@ -40,6 +40,7 @@ import Link from "next/link";
 import { GameChat } from "@/components/social/GameChat";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { InlineAlert } from "@/components/ui/InlineAlert";
+import { GamePlayerBar } from "@/components/play/GamePlayerBar";
 import {
   useGameWebSocket,
   useMatchmakingWebSocket,

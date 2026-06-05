@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { t } from "@/lib/i18n";
-import { getAvatarSrc } from "@/lib/avatars";
+import { UserAvatar } from "@/components/profile/UserAvatar";
 import { Menu, Moon, Sun, Wifi, WifiOff, X } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 
@@ -88,15 +88,12 @@ export function Navbar() {
             <div className="flex items-center gap-3 ml-2">
               <NotificationBell />
               <Link href="/profile" className="flex items-center gap-2 hover:opacity-90" onClick={closeMobile}>
-                <span className="relative w-8 h-8 rounded-lg overflow-hidden ring-1 ring-africhess-gold/50 shrink-0">
-                  <Image
-                    src={getAvatarSrc(user.avatar_preset)}
-                    alt={user.display_name || user.username}
-                    fill
-                    className="object-cover"
-                    sizes="32px"
-                  />
-                </span>
+                <UserAvatar
+                  avatar={user.avatar}
+                  displayName={user.display_name}
+                  username={user.username}
+                  size={32}
+                />
                 <span className="text-sm font-medium hidden sm:inline hover:text-africhess-gold">
                   {user.display_name || user.username}
                 </span>

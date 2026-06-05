@@ -38,6 +38,7 @@ class UserSerializer(serializers.ModelSerializer):
             "last_name",
             "display_name",
             "avatar",
+            "chess_level",
             "bio",
             "country",
             "city",

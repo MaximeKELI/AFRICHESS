@@ -1,4 +1,4 @@
-"""Synchronise Tournament.participants M2M → TournamentParticipant."""
+from django.db import migrations
 
 
 def sync_m2m_to_standings(apps, schema_editor):
@@ -21,9 +21,6 @@ def sync_m2m_to_standings(apps, schema_editor):
 
 def noop_reverse(apps, schema_editor):
     pass
-
-
-from django.db import migrations
 
 
 class Migration(migrations.Migration):

@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
-import { AvatarPicker } from "@/components/profile/AvatarPicker";
 import { LevelPicker } from "@/components/profile/LevelPicker";
-import type { AvatarId, ChessLevelId } from "@/lib/avatars";
+import type { ChessLevelId } from "@/lib/avatars";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -16,7 +15,6 @@ export default function RegisterPage() {
     password: "",
     password_confirm: "",
     country: "SN",
-    avatar_preset: "avatar-1" as AvatarId,
     chess_level: "intermediate" as ChessLevelId,
   });
   const [error, setError] = useState("");
@@ -60,15 +58,14 @@ export default function RegisterPage() {
       <p className="text-center opacity-70 mb-8 text-sm">Créez votre profil de joueur africain</p>
 
       <form onSubmit={handleSubmit} className="glass-card p-8 space-y-6">
-        <AvatarPicker
-          value={form.avatar_preset}
-          onChange={(avatar_preset) => setForm({ ...form, avatar_preset })}
-        />
-
         <LevelPicker
           value={form.chess_level}
           onChange={(chess_level) => setForm({ ...form, chess_level })}
         />
+        <p className="text-xs opacity-50 -mt-2">
+          Vous pourrez ajouter votre photo de profil plus tard. Les portraits illustrés
+          (Amara, Kwame…) représentent les adversaires IA en partie.
+        </p>
 
         <hr className="border-white/10" />
 

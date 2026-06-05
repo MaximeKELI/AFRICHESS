@@ -14,7 +14,6 @@ export default async function globalSetup() {
       password: PASSWORD,
       password_confirm: PASSWORD,
       country: "SN",
-      avatar_preset: "avatar-1",
       chess_level: "intermediate",
     },
   });

@@ -102,7 +102,8 @@ export const authApi = {
   register: (data: Record<string, string>) =>
     api.post("/users/register/", data),
   profile: () => api.get("/users/profile/"),
-  updateProfile: (data: Record<string, string>) => api.patch("/users/profile/", data),
+  updateProfile: (data: Record<string, string> | FormData) =>
+    api.patch("/users/profile/", data, data instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined),
 };
 
 export const gamesApi = {

@@ -1,23 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { ratingsApi, authApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
-import { AvatarPicker } from "@/components/profile/AvatarPicker";
+import { UserAvatar } from "@/components/profile/UserAvatar";
+import { UserAvatarUpload } from "@/components/profile/UserAvatarUpload";
 import { LevelPicker } from "@/components/profile/LevelPicker";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
-import { AVATARS, CHESS_LEVELS, getAvatarSrc, type AvatarId, type ChessLevelId } from "@/lib/avatars";
+import { CHESS_LEVELS, type ChessLevelId } from "@/lib/avatars";
 
 export default function ProfilePage() {
   const { user, fetchProfile } = useAuthStore();
   const [ratings, setRatings] = useState<Array<{ mode: string; elo: number; peak_elo: number }>>([]);
-  const [avatarPreset, setAvatarPreset] = useState<AvatarId>("avatar-1");
   const [chessLevel, setChessLevel] = useState<ChessLevelId>("intermediate");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -40,8 +39,6 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
-      const preset = AVATARS.find((a) => a.id === user.avatar_preset)?.id ?? "avatar-1";
-      setAvatarPreset(preset);
       const level = CHESS_LEVELS.find((l) => l.id === user.chess_level)?.id ?? "intermediate";
       setChessLevel(level);
     }
@@ -52,7 +49,7 @@ export default function ProfilePage() {
     setSaved(false);
     setSaveError(null);
     try {
-      await authApi.updateProfile({ avatar_preset: avatarPreset, chess_level: chessLevel });
+      await authApi.updateProfile({ chess_level: chessLevel });
       await fetchProfile();
       setSaved(true);
     } catch (err) {
@@ -77,14 +74,13 @@ export default function ProfilePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
       <div className="flex items-center gap-4">
-        <div className="relative w-20 h-20 rounded-2xl overflow-hidden ring-2 ring-africhess-gold shrink-0">
-          <Image
-            src={getAvatarSrc(user.avatar_preset)}
-            alt="Avatar"
-            fill
-            className="object-cover"
-          />
-        </div>
+        <UserAvatar
+          avatar={user.avatar}
+          displayName={user.display_name}
+          username={user.username}
+          size={80}
+          className="rounded-2xl ring-2"
+        />
         <div>
           <h1 className="font-display text-3xl font-bold">{user.display_name || user.username}</h1>
           <p className="opacity-60">
@@ -108,18 +104,24 @@ export default function ProfilePage() {
 
       <div className="glass-card p-6 space-y-6">
         <h2 className="font-semibold text-lg">Personnaliser le profil</h2>
+        <UserAvatarUpload
+          avatar={user.avatar}
+          displayName={user.display_name}
+          username={user.username}
+          onUpdated={fetchProfile}
+        />
+        <hr className="border-white/10" />
         <p className="text-xs opacity-55 -mt-2">
           Le niveau choisi ici sert au profil et aux suggestions. Il est distinct de votre ELO
           classement (parties en ligne) et de la force IA réglée en partie.
         </p>
-        <AvatarPicker value={avatarPreset} onChange={setAvatarPreset} />
         <LevelPicker value={chessLevel} onChange={setChessLevel} />
         <button
           onClick={saveProfile}
           disabled={saving}
           className="w-full py-2.5 rounded-lg african-gradient text-white font-medium disabled:opacity-50"
         >
-          {saving ? "Enregistrement…" : "Enregistrer"}
+          {saving ? "Enregistrement…" : "Enregistrer le niveau"}
         </button>
         {saved && <p className="text-sm text-africhess-green text-center">Profil mis à jour !</p>}
         {saveError && <InlineAlert>{saveError}</InlineAlert>}
