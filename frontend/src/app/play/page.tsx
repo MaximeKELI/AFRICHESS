@@ -66,6 +66,7 @@ interface GameState {
   time_control_minutes?: number | null;
   is_vs_ai?: boolean;
   ai_target_elo?: number;
+  variant?: GameVariant;
 }
 
 function PlayContent() {
