@@ -11,7 +11,17 @@ interface GameClockProps {
   incrementMs?: number;
 }
 
-function ClockRow({ ms, active, label, running }: { ms: number; active: boolean; label: string; running: boolean }) {
+function ClockRow({
+  ms,
+  active,
+  label,
+  running,
+}: {
+  ms: number;
+  active: boolean;
+  label: string;
+  running: boolean;
+}) {
   const low = ms < 10_000 && running && active;
   return (
     <View style={[styles.row, active && running && styles.rowActive]}>
@@ -64,8 +74,18 @@ export function GameClock({
       {incrementMs > 0 && (
         <Text style={styles.inc}>+{incrementMs / 1000}s par coup</Text>
       )}
-      <ClockRow ms={topMs} active={topTurn} label={topIsWhite ? "Blancs" : "Noirs"} running={running} />
-      <ClockRow ms={bottomMs} active={!topTurn} label={topIsWhite ? "Noirs" : "Blancs"} running={running} />
+      <ClockRow
+        ms={topMs}
+        active={topTurn}
+        label={topIsWhite ? "Blancs" : "Noirs"}
+        running={running}
+      />
+      <ClockRow
+        ms={bottomMs}
+        active={!topTurn}
+        label={topIsWhite ? "Noirs" : "Blancs"}
+        running={running}
+      />
     </View>
   );
 }
