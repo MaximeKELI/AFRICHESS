@@ -7,6 +7,8 @@ import {
   type BoardTheme,
 } from "@/lib/boardThemes";
 import { usePreferencesStore } from "@/store/preferences";
+import { useTranslation } from "@/hooks/useTranslation";
+import { boardThemeLabel } from "@/lib/i18n/labels";
 
 interface BoardThemePickerProps {
   compact?: boolean;
@@ -31,17 +33,19 @@ function ThemeButton({
   selected,
   compact,
   onSelect,
+  label,
 }: {
   theme: BoardTheme;
   selected: boolean;
   compact: boolean;
   onSelect: () => void;
+  label: string;
 }) {
   return (
     <button
       type="button"
       onClick={onSelect}
-      title={theme.labelFr}
+      title={label}
       className={clsx(
         "flex flex-col items-center gap-1.5 p-2 rounded-lg border-2 transition-all hover:scale-[1.02]",
         selected
@@ -49,11 +53,11 @@ function ThemeButton({
           : "border-white/15 hover:border-white/30"
       )}
       aria-pressed={selected}
-      aria-label={`Plateau ${theme.labelFr}`}
+      aria-label={`${label}`}
     >
       <ThemeSwatch theme={theme} size={compact ? "sm" : "md"} />
       <span className={clsx("leading-tight text-center", compact ? "text-[10px]" : "text-xs")}>
-        {theme.labelFr}
+        {label}
       </span>
     </button>
   );
@@ -61,6 +65,7 @@ function ThemeButton({
 
 export function BoardThemePicker({ compact = false, className }: BoardThemePickerProps) {
   const { boardTheme, setBoardTheme, pieceSet, setPieceSet } = usePreferencesStore();
+  const { t } = useTranslation();
   const classic = BOARD_THEMES.filter((t) => !t.floral);
   const floral = BOARD_THEMES.filter((t) => t.floral);
 
@@ -72,14 +77,14 @@ export function BoardThemePicker({ compact = false, className }: BoardThemePicke
   return (
     <div className={className}>
       <h3 className={clsx("font-semibold", compact ? "text-sm mb-2" : "mb-3")}>
-        Plateau
+        {t("board.picker.title")}
       </h3>
       <p className={clsx("opacity-60 mb-3", compact ? "text-xs" : "text-sm")}>
-        Classiques ou jardins fleuris (♣)
+        {t("board.picker.hint")}
       </p>
 
       <p className={clsx("opacity-50 mb-2 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs")}>
-        Classiques
+        {t("board.picker.classics")}
       </p>
       <div className={clsx(gridClass, "mb-4")}>
         {classic.map((theme) => (
@@ -89,12 +94,13 @@ export function BoardThemePicker({ compact = false, className }: BoardThemePicke
             compact={compact}
             selected={boardTheme === theme.id}
             onSelect={() => setBoardTheme(theme.id)}
+            label={boardThemeLabel(t, theme.id, theme.labelFr)}
           />
         ))}
       </div>
 
       <p className={clsx("opacity-50 mb-2 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs")}>
-        Fleurs ♣
+        {t("board.picker.floral")}
       </p>
       <div className={gridClass}>
         {floral.map((theme) => (
@@ -104,12 +110,13 @@ export function BoardThemePicker({ compact = false, className }: BoardThemePicke
             compact={compact}
             selected={boardTheme === theme.id}
             onSelect={() => setBoardTheme(theme.id)}
+            label={boardThemeLabel(t, theme.id, theme.labelFr)}
           />
         ))}
       </div>
 
       <p className={clsx("opacity-50 mb-2 mt-4 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs")}>
-        Pièces
+        {t("board.picker.pieces")}
       </p>
       <div className="flex gap-2">
         {(["classic", "african"] as const).map((id) => (
@@ -118,7 +125,7 @@ export function BoardThemePicker({ compact = false, className }: BoardThemePicke
             type="button"
             onClick={() => setPieceSet(id)}
             aria-pressed={pieceSet === id}
-            aria-label={id === "african" ? "Pièces africaines" : "Pièces classiques"}
+            aria-label={id === "african" ? t("board.picker.african") : t("board.picker.classic")}
             className={clsx(
               "px-3 py-1 rounded text-xs capitalize border focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold",
               pieceSet === id
@@ -126,7 +133,7 @@ export function BoardThemePicker({ compact = false, className }: BoardThemePicke
                 : "border-white/20"
             )}
           >
-            {id === "african" ? "Africain ♛" : "Classique"}
+            {id === "african" ? t("board.picker.african") : t("board.picker.classic")}
           </button>
         ))}
       </div>
