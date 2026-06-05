@@ -120,7 +120,7 @@ export default function FriendsPage() {
       const { data } = await socialApi.challengeFriend(name, mode);
       router.push(`/play?game=${data.id}&mode=${mode}`);
     } catch {
-      setMsg("Impossible d'envoyer le défi");
+      setMsg(t("friends.challenge.failed"));
     }
   };
 
@@ -131,7 +131,7 @@ export default function FriendsPage() {
       setDmText("");
       loadDm(dmUser);
     } catch {
-      setMsg("Message non envoyé");
+      setMsg(t("friends.message.failed"));
     }
   };
 
