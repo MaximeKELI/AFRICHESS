@@ -201,10 +201,12 @@ class GameService:
             if timed_out == "white":
                 self._finalize_game_on_timeout(game, winner_white=False)
                 game.save()
+                on_game_completed(game)
                 return {"error": "Time out", "game_over": True}
             if timed_out == "black":
                 self._finalize_game_on_timeout(game, winner_white=True)
                 game.save()
+                on_game_completed(game)
                 return {"error": "Time out", "game_over": True}
         elif game.is_timed and spent_ms is not None:
             clock = game.white_time_ms if is_white_turn else game.black_time_ms
@@ -260,6 +262,7 @@ class GameService:
         if can_claim_threefold_from_game(game):
             finalize_repetition_draw(game)
             game.save()
+            on_game_completed(game)
             return {
                 "move": move,
                 "fen": game.fen,
@@ -314,6 +317,7 @@ class GameService:
                     if can_claim_threefold_from_game(game):
                         finalize_repetition_draw(game)
                         game.save()
+                        on_game_completed(game)
                         response["game_over"] = True
                         response["result"] = game.result
                         response["termination_reason"] = "repetition"
@@ -322,6 +326,7 @@ class GameService:
 
         if is_over:
             self._finalize_game(game)
+            on_game_completed(game)
 
         return response
 

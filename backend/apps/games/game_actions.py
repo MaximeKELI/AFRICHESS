@@ -32,6 +32,7 @@ def accept_draw(game: Game, user) -> dict:
     game.save()
     if game.white_player and game.black_player:
         GameService().rating_service.update_ratings(game)
+    on_game_completed(game)
     try:
         from apps.tournaments.services import TournamentEngine
 

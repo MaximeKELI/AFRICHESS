@@ -43,3 +43,6 @@ def _award_forfeit(game: Game, winner_white: bool, reason: str):
     game.save()
     if game.white_player and game.black_player:
         GameService().rating_service.update_ratings(game)
+    from .stats_service import on_game_completed
+
+    on_game_completed(game)
