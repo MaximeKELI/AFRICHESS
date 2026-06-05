@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "apps.tournaments",
     "apps.notifications",
     "apps.learning",
+    "apps.analytics",
 ]
 
 MIDDLEWARE = [

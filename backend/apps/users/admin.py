@@ -12,12 +12,57 @@ class UserStatsInline(admin.StackedInline):
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     inlines = [UserStatsInline]
-    list_display = ["username", "email", "country", "title", "is_african_highlight", "is_staff"]
-    list_filter = ["country", "is_african_highlight", "preferred_language"]
+    list_display = [
+        "username",
+        "email",
+        "country",
+        "gender",
+        "discovery_source",
+        "date_joined",
+        "last_login",
+        "title",
+        "is_staff",
+    ]
+    list_filter = [
+        "country",
+        "gender",
+        "discovery_source",
+        "registration_locale",
+        "preferred_language",
+        "chess_level",
+        "is_african_highlight",
+        "is_staff",
+    ]
     fieldsets = BaseUserAdmin.fieldsets + (
-        ("AFRICHESS", {"fields": ("avatar", "avatar_preset", "chess_level", "bio", "country", "city",
-                                   "preferred_language", "is_african_highlight", "low_bandwidth_mode",
-                                   "title", "fide_id")}),
+        (
+            "AFRICHESS",
+            {
+                "fields": (
+                    "avatar",
+                    "avatar_preset",
+                    "chess_level",
+                    "bio",
+                    "country",
+                    "city",
+                    "preferred_language",
+                    "is_african_highlight",
+                    "low_bandwidth_mode",
+                    "title",
+                    "fide_id",
+                )
+            },
+        ),
+        (
+            "Analytics inscription",
+            {
+                "fields": (
+                    "birth_year",
+                    "gender",
+                    "discovery_source",
+                    "registration_locale",
+                )
+            },
+        ),
     )
 
 

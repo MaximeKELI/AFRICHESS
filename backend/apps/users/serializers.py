@@ -52,8 +52,9 @@ class UserSerializer(serializers.ModelSerializer):
             "fide_id",
             "stats",
             "date_joined",
+            "is_staff",
         ]
-        read_only_fields = ["id", "date_joined", "is_african_highlight"]
+        read_only_fields = ["id", "date_joined", "is_african_highlight", "is_staff"]
 
 
 class UserPublicSerializer(serializers.ModelSerializer):

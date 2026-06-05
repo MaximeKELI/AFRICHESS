@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { UserAvatar } from "@/components/profile/UserAvatar";
-import { Menu, Moon, Sun, Wifi, WifiOff, X } from "lucide-react";
+import { Menu, Moon, Shield, Sun, Wifi, WifiOff, X } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 
 const NAV_LINKS = [
@@ -88,6 +88,16 @@ export function Navbar() {
 
           {user ? (
             <div className="flex items-center gap-3 ml-2">
+              {user.is_staff && (
+                <Link
+                  href="/admin"
+                  className="hidden sm:flex items-center gap-1 text-sm text-africhess-gold hover:underline"
+                  title={t("admin.title")}
+                >
+                  <Shield size={16} />
+                  {t("nav.admin")}
+                </Link>
+              )}
               <NotificationBell />
               <Link href="/profile" className="flex items-center gap-2 hover:opacity-90" onClick={closeMobile}>
                 <UserAvatar

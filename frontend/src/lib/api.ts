@@ -150,6 +150,15 @@ export const statsApi = {
   me: () => api.get("/stats/me/"),
 };
 
+export const adminApi = {
+  overview: () => api.get("/analytics/admin/overview/"),
+  registrations: () => api.get("/analytics/admin/registrations/"),
+  users: (params?: { q?: string; limit?: number; offset?: number }) =>
+    api.get("/analytics/admin/users/", { params }),
+  userDetail: (id: number, params?: { limit?: number; offset?: number }) =>
+    api.get(`/analytics/admin/users/${id}/`, { params }),
+};
+
 export const ratingsApi = {
   me: () => api.get("/ratings/me/"),
   globalLeaderboard: (mode = "blitz") =>

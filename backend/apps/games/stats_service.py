@@ -130,6 +130,24 @@ def record_game_stats(game: Game) -> None:
 
 def on_game_completed(game: Game) -> None:
     record_game_stats(game)
+    try:
+        from apps.analytics.events import log_event
+
+        for player in (game.white_player, game.black_player):
+            if player:
+                log_event(
+                    "game_end",
+                    user=player,
+                    path=f"/play/game/{game.id}",
+                    metadata={
+                        "game_id": str(game.id),
+                        "mode": game.mode,
+                        "is_vs_ai": game.is_vs_ai,
+                        "result": game.result,
+                    },
+                )
+    except Exception:
+        pass
 
 
 def _result_counts(games_qs, user_id: int) -> dict[str, Any]:

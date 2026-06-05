@@ -13,6 +13,7 @@ interface User {
   avatar?: string | null;
   chess_level?: string;
   country: string;
+  is_staff?: boolean;
   stats?: {
     games_played: number;
     win_rate: number;

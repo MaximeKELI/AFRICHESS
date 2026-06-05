@@ -6,6 +6,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.analytics.events import log_event
+
 from .countries_data import WORLD_COUNTRIES, country_flag
 from .serializers import RegisterSerializer, UserPublicSerializer, UserSerializer, UserUpdateSerializer
 
@@ -40,6 +42,17 @@ class RegisterView(APIView):
             else:
                 detail = "Nom d'utilisateur ou e-mail déjà utilisé."
             return Response({"detail": detail}, status=status.HTTP_400_BAD_REQUEST)
+        log_event(
+            "register",
+            user=user,
+            path="/register",
+            metadata={
+                "country": user.country,
+                "discovery_source": user.discovery_source,
+                "registration_locale": user.registration_locale,
+            },
+            request=request,
+        )
         return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
 

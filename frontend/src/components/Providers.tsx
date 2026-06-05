@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/auth";
+import { ActivityTracker } from "@/components/analytics/ActivityTracker";
 import Cookies from "js-cookie";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -32,5 +33,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
   }, [locale]);
 
-  return <>{children}</>;
+  return (
+    <>
+      <ActivityTracker />
+      {children}
+    </>
+  );
 }
