@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
-import { t } from "@/lib/i18n";
+import { useTranslation } from "@/hooks/useTranslation";
 import { UserAvatar } from "@/components/profile/UserAvatar";
 import { Menu, Moon, Sun, Wifi, WifiOff, X } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
@@ -25,6 +25,7 @@ const NAV_LINKS = [
 export function Navbar() {
   const { user, locale, setLocale, darkMode, toggleDarkMode, lowBandwidth, setLowBandwidth, logout } =
     useAuthStore();
+  const { t } = useTranslation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const closeMobile = () => setMobileOpen(false);
@@ -54,7 +55,7 @@ export function Navbar() {
             className="md:hidden p-2 rounded-lg hover:bg-white/10"
             aria-expanded={mobileOpen}
             aria-controls="mobile-nav"
-            aria-label={mobileOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            aria-label={mobileOpen ? t("nav.menu.close") : t("nav.menu.open")}
           >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -63,7 +64,7 @@ export function Navbar() {
             value={locale}
             onChange={(e) => setLocale(e.target.value as typeof locale)}
             className="bg-transparent text-sm border border-white/20 rounded-lg px-2 py-1"
-            aria-label="Language"
+            aria-label={t("nav.language")}
           >
             <option value="en">EN</option>
             <option value="fr">FR</option>

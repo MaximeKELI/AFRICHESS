@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
+import { useTranslation } from "@/hooks/useTranslation";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
 
 function LoginContent() {
@@ -11,14 +12,15 @@ function LoginContent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const { login, isLoading } = useAuthStore();
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
     if (searchParams.get("expired") === "1") {
-      setError("Session expirée. Reconnectez-vous.");
+      setError(t("auth.login.expired"));
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,17 +29,17 @@ function LoginContent() {
       await login(username, password);
       router.push("/play");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Identifiants incorrects.");
+      setError(err instanceof Error ? err.message : t("common.error"));
     }
   };
 
   return (
     <div className="max-w-md mx-auto px-4 py-16">
-      <h1 className="font-display text-3xl font-bold mb-8 text-center">Connexion</h1>
+      <h1 className="font-display text-3xl font-bold mb-8 text-center">{t("auth.login.title")}</h1>
       <form onSubmit={handleSubmit} className="glass-card p-8 space-y-4">
         <input
           type="text"
-          placeholder="Nom d'utilisateur (ex. DKELI)"
+          placeholder={t("auth.login.username")}
           autoComplete="username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
@@ -46,7 +48,7 @@ function LoginContent() {
         />
         <input
           type="password"
-          placeholder="Mot de passe"
+          placeholder={t("auth.login.password")}
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -63,17 +65,14 @@ function LoginContent() {
           disabled={isLoading}
           className="w-full py-3 african-gradient text-white rounded-lg font-medium disabled:opacity-50"
         >
-          {isLoading ? "Connexion…" : "Se connecter"}
+          {isLoading ? t("auth.login.submitting") : t("auth.login.submit")}
         </button>
         <OAuthButtons />
-        <p className="text-center text-xs opacity-70">
-          Si votre e-mail a déjà un compte, utilisez le nom d&apos;utilisateur choisi à l&apos;inscription,
-          pas l&apos;e-mail seul.
-        </p>
+        <p className="text-center text-xs opacity-70">{t("auth.login.hint")}</p>
         <p className="text-center text-sm">
-          Pas encore de compte ?{" "}
+          {t("auth.login.noAccount")}{" "}
           <Link href="/register" className="text-africhess-gold underline">
-            S&apos;inscrire
+            {t("auth.login.signup")}
           </Link>
         </p>
       </form>
@@ -82,8 +81,9 @@ function LoginContent() {
 }
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   return (
-    <Suspense fallback={<div className="p-8 text-center">Chargement…</div>}>
+    <Suspense fallback={<div className="p-8 text-center">{t("common.loading")}</div>}>
       <LoginContent />
     </Suspense>
   );
