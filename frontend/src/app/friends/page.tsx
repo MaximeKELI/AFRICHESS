@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { socialApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
+import { formatApiError } from "@/lib/errors";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import Link from "next/link";
 
 interface UserPublic {
@@ -39,18 +41,24 @@ export default function FriendsPage() {
   const [dmMessages, setDmMessages] = useState<ChatMsg[]>([]);
   const [dmText, setDmText] = useState("");
   const [dmLoading, setDmLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(() => {
-    socialApi.friends().then(({ data }) => {
-      const list: Friendship[] = Array.isArray(data) ? data : [];
-      const users = list.map((f) =>
-        f.from_user.id === user?.id ? f.to_user : f.from_user
-      );
-      setFriends(users);
-    });
-    socialApi.pendingFriends().then(({ data }) => {
-      setPending(Array.isArray(data) ? data : []);
-    });
+    setLoadError(null);
+    Promise.all([socialApi.friends(), socialApi.pendingFriends()])
+      .then(([friendsRes, pendingRes]) => {
+        const list: Friendship[] = Array.isArray(friendsRes.data) ? friendsRes.data : [];
+        const users = list.map((f) =>
+          f.from_user.id === user?.id ? f.to_user : f.from_user
+        );
+        setFriends(users);
+        setPending(Array.isArray(pendingRes.data) ? pendingRes.data : []);
+      })
+      .catch((err) => {
+        setFriends([]);
+        setPending([]);
+        setLoadError(formatApiError(err, "Impossible de charger vos amis."));
+      });
   }, [user?.id]);
 
   const loadDm = useCallback(
@@ -125,6 +133,11 @@ export default function FriendsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold mb-6">Amis & défis</h1>
+      {loadError && (
+        <InlineAlert className="mb-4" onDismiss={() => setLoadError(null)}>
+          {loadError}
+        </InlineAlert>
+      )}
 
       <div className="glass-card p-4 mb-6">
         <h2 className="font-semibold mb-3">Ajouter un ami</h2>

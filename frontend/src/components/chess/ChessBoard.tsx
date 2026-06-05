@@ -253,6 +253,36 @@ function ChessBoardInner({
     [disabled, applyMove]
   );
 
+  const onBoardKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (disabled) return;
+      const file = focusSquare.charCodeAt(0) - 97;
+      const rank = parseInt(focusSquare[1], 10) - 1;
+
+      if (e.key === "ArrowLeft" && file > 0) {
+        e.preventDefault();
+        setFocusSquare(`${String.fromCharCode(97 + file - 1)}${rank + 1}` as Square);
+      } else if (e.key === "ArrowRight" && file < 7) {
+        e.preventDefault();
+        setFocusSquare(`${String.fromCharCode(97 + file + 1)}${rank + 1}` as Square);
+      } else if (e.key === "ArrowUp" && rank < 7) {
+        e.preventDefault();
+        setFocusSquare(`${focusSquare[0]}${rank + 2}` as Square);
+      } else if (e.key === "ArrowDown" && rank > 0) {
+        e.preventDefault();
+        setFocusSquare(`${focusSquare[0]}${rank}` as Square);
+      } else if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onSquareClick(focusSquare);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        setSelectedSquare(null);
+        setLegalTargets([]);
+      }
+    },
+    [disabled, focusSquare, onSquareClick]
+  );
+
   const customSquareStyles = useMemo(() => {
     const styles: Record<string, React.CSSProperties> = {};
 
@@ -272,6 +302,14 @@ function ChessBoardInner({
         : { ...squareStyles.legalDot };
     }
 
+    if (!disabled) {
+      styles[focusSquare] = {
+        ...styles[focusSquare],
+        outline: `2px solid ${accentRgba(theme.accent, 0.9)}`,
+        outlineOffset: "-2px",
+      };
+    }
+
     const kingDanger = lowBandwidth ? null : getKingDangerStyle(game);
     if (kingDanger) {
       const kingSquare = findKingSquare(game, game.turn());
@@ -284,13 +322,17 @@ function ChessBoardInner({
     }
 
     return styles;
-  }, [lastMove, selectedSquare, legalTargets, game, squareStyles, lowBandwidth]);
+  }, [lastMove, selectedSquare, legalTargets, game, squareStyles, lowBandwidth, focusSquare, disabled, theme.accent]);
 
   return (
     <div
       ref={containerRef}
       data-testid="chess-board"
-      className="w-full aspect-square mx-auto rounded-xl overflow-hidden shadow-lg"
+      role="application"
+      aria-label="Échiquier d'échecs — flèches pour naviguer, Entrée pour sélectionner"
+      tabIndex={disabled ? -1 : 0}
+      onKeyDown={onBoardKeyDown}
+      className="w-full aspect-square mx-auto rounded-xl overflow-hidden shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold"
       style={
         lowBandwidth
           ? undefined
@@ -313,6 +355,11 @@ function ChessBoardInner({
         autoPromoteToQueen={false}
         {...(customPieces ? { customPieces } : {})}
       />
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {boardStatus}
+        {selectedSquare ? ` Case sélectionnée : ${selectedSquare}` : ""}
+        {focusSquare ? ` Focus : ${focusSquare}` : ""}
+      </p>
       {promotionPending && (
         <PromotionDialog
           color={game.turn()}

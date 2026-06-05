@@ -38,6 +38,7 @@ import {
 import { openingNameFromMoves } from "@/lib/openings";
 import Link from "next/link";
 import { GameChat } from "@/components/social/GameChat";
+import { RecentGamesList } from "@/components/game/RecentGamesList";
 import {
   useGameWebSocket,
   useMatchmakingWebSocket,
@@ -467,7 +468,13 @@ function PlayContent() {
             <div className="flex flex-wrap gap-2 justify-center w-full">
               <button
                 type="button"
-                onClick={() => gameId && gamesApi.offerDraw(gameId)}
+                onClick={() =>
+                  gameId &&
+                  gamesApi
+                    .offerDraw(gameId)
+                    .then(() => setStatus("Proposition de nulle envoyée"))
+                    .catch((err) => setStatus(formatApiError(err, "Impossible de proposer la nulle.")))
+                }
                 className="text-xs px-3 py-1 rounded border border-white/20"
               >
                 Proposer nulle
@@ -476,7 +483,10 @@ function PlayContent() {
                 type="button"
                 onClick={() =>
                   gameId &&
-                  gamesApi.respondDraw(gameId, true).then(({ data }) => applyGameResponse(data))
+                  gamesApi
+                    .respondDraw(gameId, true)
+                    .then(({ data }) => applyGameResponse(data))
+                    .catch((err) => setStatus(formatApiError(err, "Impossible d'accepter la nulle.")))
                 }
                 className="text-xs px-3 py-1 rounded border border-africhess-green text-africhess-green"
               >
@@ -488,11 +498,14 @@ function PlayContent() {
             <button
               type="button"
               onClick={() =>
-                gamesApi.rematch(gameId).then(({ data }) => {
-                  setGameId(data.id);
-                  applyGameResponse(data);
-                  setStatus("Revanche lancée");
-                })
+                gamesApi
+                  .rematch(gameId)
+                  .then(({ data }) => {
+                    setGameId(data.id);
+                    applyGameResponse(data);
+                    setStatus("Revanche lancée");
+                  })
+                  .catch((err) => setStatus(formatApiError(err, "Revanche impossible.")))
               }
               className="w-full block py-2 text-sm rounded-lg african-gradient text-white"
             >
@@ -613,6 +626,8 @@ function PlayContent() {
           <div className="glass-card p-4">
             <BoardThemePicker compact />
           </div>
+
+          {!gameId && <RecentGamesList limit={8} showTitle />}
 
           {status && (
             <p className="text-sm text-africhess-gold">{status}</p>

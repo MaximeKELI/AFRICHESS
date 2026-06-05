@@ -5,6 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { ratingsApi, authApi } from "@/lib/api";
+import { formatApiError } from "@/lib/errors";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import { AvatarPicker } from "@/components/profile/AvatarPicker";
 import { LevelPicker } from "@/components/profile/LevelPicker";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
@@ -19,10 +21,21 @@ export default function ProfilePage() {
   const [chessLevel, setChessLevel] = useState<ChessLevelId>("intermediate");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [ratingsError, setRatingsError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProfile();
-    ratingsApi.me().then(({ data }) => setRatings(data)).catch(() => {});
+    ratingsApi
+      .me()
+      .then(({ data }) => {
+        setRatings(data);
+        setRatingsError(null);
+      })
+      .catch((err) => {
+        setRatings([]);
+        setRatingsError(formatApiError(err, "Impossible de charger les classements."));
+      });
   }, [fetchProfile]);
 
   useEffect(() => {
@@ -37,12 +50,13 @@ export default function ProfilePage() {
   const saveProfile = async () => {
     setSaving(true);
     setSaved(false);
+    setSaveError(null);
     try {
       await authApi.updateProfile({ avatar_preset: avatarPreset, chess_level: chessLevel });
       await fetchProfile();
       setSaved(true);
-    } catch {
-      /* ignore */
+    } catch (err) {
+      setSaveError(formatApiError(err, "Impossible d'enregistrer le profil."));
     } finally {
       setSaving(false);
     }
@@ -108,6 +122,7 @@ export default function ProfilePage() {
           {saving ? "Enregistrement…" : "Enregistrer"}
         </button>
         {saved && <p className="text-sm text-africhess-green text-center">Profil mis à jour !</p>}
+        {saveError && <InlineAlert>{saveError}</InlineAlert>}
       </div>
 
       <div className="glass-card p-6 space-y-6">
@@ -120,6 +135,7 @@ export default function ProfilePage() {
 
       <div>
         <h2 className="font-semibold mb-4">Classements ELO</h2>
+        {ratingsError && <InlineAlert className="mb-3">{ratingsError}</InlineAlert>}
         <div className="space-y-2">
           {ratings.map((r) => (
             <div key={r.mode} className="glass-card p-4 flex justify-between">

@@ -54,8 +54,16 @@ interface RecentGamesListProps {
   showTitle?: boolean;
 }
 
+const LOCALE_MAP: Record<string, string> = {
+  fr: "fr-FR",
+  en: "en-GB",
+  ar: "ar-EG",
+  pt: "pt-PT",
+  sw: "sw-KE",
+};
+
 export function RecentGamesList({ limit = 15, showTitle = true }: RecentGamesListProps) {
-  const { user } = useAuthStore();
+  const { user, locale } = useAuthStore();
   const [games, setGames] = useState<RecentGameRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +107,7 @@ export function RecentGamesList({ limit = 15, showTitle = true }: RecentGamesLis
             const outcome = outcomeLabel(g, user.id);
             const date = g.ended_at || g.created_at;
             const when = date
-              ? new Date(date).toLocaleDateString("fr-FR", {
+              ? new Date(date).toLocaleDateString(LOCALE_MAP[locale] ?? "fr-FR", {
                   day: "numeric",
                   month: "short",
                   hour: "2-digit",
