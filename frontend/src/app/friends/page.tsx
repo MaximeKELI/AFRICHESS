@@ -7,6 +7,7 @@ import { useAuthStore } from "@/store/auth";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import Link from "next/link";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface UserPublic {
   id: number;
@@ -31,6 +32,7 @@ interface ChatMsg {
 
 export default function FriendsPage() {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const router = useRouter();
   const [friends, setFriends] = useState<UserPublic[]>([]);
   const [pending, setPending] = useState<Friendship[]>([]);

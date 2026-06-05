@@ -43,7 +43,7 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-6 text-sm font-medium">
           {NAV_LINKS.map(({ href, key }) => (
             <Link key={href} href={href} className="hover:text-africhess-gold transition-colors">
-              {t(locale, key)}
+              {t(key)}
             </Link>
           ))}
         </div>
@@ -107,13 +107,13 @@ export function Navbar() {
           ) : (
             <div className="flex gap-2 ml-2">
               <Link href="/login" className="text-sm px-3 py-1.5 rounded-lg hover:bg-white/10">
-                {t(locale, "nav.login")}
+                {t("nav.login")}
               </Link>
               <Link
                 href="/register"
                 className="text-sm px-4 py-1.5 rounded-lg african-gradient text-white font-medium"
               >
-                {t(locale, "nav.signup")}
+                {t("nav.signup")}
               </Link>
             </div>
           )}
@@ -133,7 +133,7 @@ export function Navbar() {
                 onClick={closeMobile}
                 className="py-2.5 px-2 rounded-lg hover:bg-white/10 hover:text-africhess-gold"
               >
-                {t(locale, key)}
+                {t(key)}
               </Link>
             ))}
           </div>

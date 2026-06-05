@@ -616,9 +616,7 @@ export default function StatsPage() {
           )}
 
           <section className="glass-card p-4 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm opacity-60">
-              Téléchargez toutes vos données pour analyse externe (Excel, Google Sheets…)
-            </p>
+            <p className="text-sm opacity-60">{t("stats.export.hint")}</p>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -626,7 +624,7 @@ export default function StatsPage() {
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg african-gradient text-white text-sm"
               >
                 <Download size={14} />
-                Télécharger CSV
+                {t("stats.export.csv")}
               </button>
               <button
                 type="button"
@@ -634,7 +632,7 @@ export default function StatsPage() {
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm hover:bg-white/5"
               >
                 <FileJson size={14} />
-                Télécharger JSON
+                {t("stats.export.json")}
               </button>
             </div>
           </section>

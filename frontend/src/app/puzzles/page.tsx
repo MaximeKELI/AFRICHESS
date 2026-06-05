@@ -8,6 +8,8 @@ import { puzzlesApi } from "@/lib/api";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { formatApiError } from "@/lib/errors";
 import { useAuthStore } from "@/store/auth";
+import { useTranslation } from "@/hooks/useTranslation";
+import { chessLevelLabel } from "@/lib/i18n/labels";
 import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
 import { getPuzzleStreak, recordPuzzleSolved } from "@/lib/puzzleStreak";
 
@@ -30,6 +32,7 @@ type Tab = "daily" | "training" | "rush" | "leaderboard";
 
 export default function PuzzlesPage() {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>("daily");
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [trainingQueue, setTrainingQueue] = useState<Puzzle[]>([]);
@@ -59,7 +62,7 @@ export default function PuzzlesPage() {
       .then(({ data }) => setPuzzle(data))
       .catch((err) => {
         setPuzzle(null);
-        setLoadError(formatApiError(err, "Problème du jour indisponible."));
+        setLoadError(formatApiError(err, t("puzzles.error.daily")));
       });
   };
 
@@ -79,7 +82,7 @@ export default function PuzzlesPage() {
       })
       .catch((err) => {
         setPuzzle(null);
-        setLoadError(formatApiError(err, "Mode rush indisponible."));
+        setLoadError(formatApiError(err, t("puzzles.error.rush")));
       });
   };
 
@@ -90,7 +93,7 @@ export default function PuzzlesPage() {
       .then(({ data }) => setLeaderboard(Array.isArray(data) ? data : []))
       .catch((err) => {
         setLeaderboard([]);
-        setLoadError(formatApiError(err, "Classement puzzles indisponible."));
+        setLoadError(formatApiError(err, t("puzzles.error.leaderboard")));
       });
   };
 
@@ -109,7 +112,7 @@ export default function PuzzlesPage() {
       })
       .catch((err) => {
         setPuzzle(null);
-        setLoadError(formatApiError(err, "Entraînement indisponible."));
+        setLoadError(formatApiError(err, t("puzzles.error.training")));
       });
   };
 
@@ -183,9 +186,9 @@ export default function PuzzlesPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold mb-2">Problèmes</h1>
+      <h1 className="font-display text-3xl font-bold mb-2">{t("puzzles.title")}</h1>
       <p className="opacity-70 mb-4">
-        Problème du jour et entraînement par niveau
+        {t("puzzles.subtitle")}
         {streak > 0 && (
           <span className="ml-2 text-africhess-gold">🔥 Série : {streak}</span>
         )}
@@ -203,28 +206,28 @@ export default function PuzzlesPage() {
           onClick={() => setTab("daily")}
           className={`px-4 py-2 rounded-lg ${tab === "daily" ? "african-gradient text-white" : "border"}`}
         >
-          Du jour
+          {t("puzzles.tab.daily")}
         </button>
         <button
           type="button"
           onClick={() => setTab("training")}
           className={`px-4 py-2 rounded-lg ${tab === "training" ? "african-gradient text-white" : "border"}`}
         >
-          Entraînement
+          {t("puzzles.tab.training")}
         </button>
         <button
           type="button"
           onClick={() => setTab("rush")}
           className={`px-4 py-2 rounded-lg ${tab === "rush" ? "african-gradient text-white" : "border"}`}
         >
-          Rush (5)
+          {t("puzzles.tab.rush")}
         </button>
         <button
           type="button"
           onClick={() => setTab("leaderboard")}
           className={`px-4 py-2 rounded-lg ${tab === "leaderboard" ? "african-gradient text-white" : "border"}`}
         >
-          Classement
+          {t("puzzles.tab.leaderboard")}
         </button>
         {tab === "training" && (
           <select
@@ -232,10 +235,10 @@ export default function PuzzlesPage() {
             onChange={(e) => setDifficulty(e.target.value)}
             className="px-3 py-2 rounded-lg border bg-transparent text-sm"
           >
-            <option value="beginner">Débutant</option>
-            <option value="intermediate">Intermédiaire</option>
-            <option value="advanced">Avancé</option>
-            <option value="expert">Expert</option>
+            <option value="beginner">{chessLevelLabel(t, "beginner")}</option>
+            <option value="intermediate">{chessLevelLabel(t, "intermediate")}</option>
+            <option value="advanced">{chessLevelLabel(t, "advanced")}</option>
+            <option value="expert">{chessLevelLabel(t, "expert")}</option>
           </select>
         )}
       </div>

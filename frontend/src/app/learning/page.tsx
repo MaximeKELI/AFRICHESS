@@ -9,7 +9,7 @@ import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { ProgressRing } from "@/components/learning/ProgressRing";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
-import { t } from "@/lib/i18n";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface Dashboard {
   profile: {
@@ -28,7 +28,8 @@ interface Dashboard {
 }
 
 export default function LearningDashboardPage() {
-  const { user, locale } = useAuthStore();
+  const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [data, setData] = useState<Dashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,17 +53,17 @@ export default function LearningDashboardPage() {
   if (!user) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <h1 className="font-display text-3xl font-bold mb-4">{t(locale, "nav.learn")}</h1>
-        <p className="mb-6 opacity-80">Connectez-vous pour accéder à vos cours et votre progression.</p>
+        <h1 className="font-display text-3xl font-bold mb-4">{t("learning.title")}</h1>
+        <p className="mb-6 opacity-80">{t("learning.loginRequired")}</p>
         <Link href="/login" className="px-6 py-2 rounded-lg african-gradient text-white">
-          Connexion
+          {t("learning.loginButton")}
         </Link>
       </div>
     );
   }
 
   if (loading) {
-    return <p className="p-8 text-center opacity-60">Chargement…</p>;
+    return <p className="p-8 text-center opacity-60">{t("common.loading")}</p>;
   }
 
   if (error || !data) {
@@ -80,7 +81,7 @@ export default function LearningDashboardPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold mb-2">{t(locale, "nav.learn")}</h1>
+      <h1 className="font-display text-3xl font-bold mb-2">{t("learning.title")}</h1>
       <p className="opacity-70 mb-4">
         Parcours complet : <strong>10 volumes</strong>, <strong>40 documents</strong> (~20 pages chacun),
         tous les plans du jeu.
