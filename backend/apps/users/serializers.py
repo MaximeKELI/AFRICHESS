@@ -1,6 +1,9 @@
+from datetime import date
+
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from .countries_data import VALID_COUNTRY_CODES
 from .models import UserStats
 
 User = get_user_model()

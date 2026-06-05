@@ -1,67 +1,11 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from .countries_data import VALID_COUNTRY_CODES
+
 
 class User(AbstractUser):
     """Extended user model with African chess identity."""
-
-    class Country(models.TextChoices):
-        # Sample of African countries — extend as needed
-        DZ = "DZ", "Algeria"
-        AO = "AO", "Angola"
-        BJ = "BJ", "Benin"
-        BW = "BW", "Botswana"
-        BF = "BF", "Burkina Faso"
-        BI = "BI", "Burundi"
-        CM = "CM", "Cameroon"
-        CV = "CV", "Cape Verde"
-        CF = "CF", "Central African Republic"
-        TD = "TD", "Chad"
-        KM = "KM", "Comoros"
-        CG = "CG", "Congo"
-        CD = "CD", "DR Congo"
-        CI = "CI", "Côte d'Ivoire"
-        DJ = "DJ", "Djibouti"
-        EG = "EG", "Egypt"
-        GQ = "GQ", "Equatorial Guinea"
-        ER = "ER", "Eritrea"
-        SZ = "SZ", "Eswatini"
-        ET = "ET", "Ethiopia"
-        GA = "GA", "Gabon"
-        GM = "GM", "Gambia"
-        GH = "GH", "Ghana"
-        GN = "GN", "Guinea"
-        GW = "GW", "Guinea-Bissau"
-        KE = "KE", "Kenya"
-        LS = "LS", "Lesotho"
-        LR = "LR", "Liberia"
-        LY = "LY", "Libya"
-        MG = "MG", "Madagascar"
-        MW = "MW", "Malawi"
-        ML = "ML", "Mali"
-        MR = "MR", "Mauritania"
-        MU = "MU", "Mauritius"
-        MA = "MA", "Morocco"
-        MZ = "MZ", "Mozambique"
-        NA = "NA", "Namibia"
-        NE = "NE", "Niger"
-        NG = "NG", "Nigeria"
-        RW = "RW", "Rwanda"
-        ST = "ST", "São Tomé and Príncipe"
-        SN = "SN", "Senegal"
-        SC = "SC", "Seychelles"
-        SL = "SL", "Sierra Leone"
-        SO = "SO", "Somalia"
-        ZA = "ZA", "South Africa"
-        SS = "SS", "South Sudan"
-        SD = "SD", "Sudan"
-        TZ = "TZ", "Tanzania"
-        TG = "TG", "Togo"
-        TN = "TN", "Tunisia"
-        UG = "UG", "Uganda"
-        ZM = "ZM", "Zambia"
-        ZW = "ZW", "Zimbabwe"
-        OTHER = "XX", "Other"
 
     class Language(models.TextChoices):
         EN = "en", "English"
@@ -98,8 +42,22 @@ class User(AbstractUser):
         default=ChessLevel.INTERMEDIATE,
     )
     bio = models.TextField(max_length=500, blank=True)
-    country = models.CharField(max_length=2, choices=Country.choices, default=Country.OTHER)
+    country = models.CharField(max_length=2, default="SN")
     city = models.CharField(max_length=100, blank=True)
+    birth_year = models.PositiveSmallIntegerField(null=True, blank=True)
+    gender = models.CharField(
+        max_length=20,
+        choices=Gender.choices,
+        blank=True,
+        default="",
+    )
+    discovery_source = models.CharField(
+        max_length=20,
+        choices=DiscoverySource.choices,
+        blank=True,
+        default="",
+    )
+    registration_locale = models.CharField(max_length=5, blank=True, default="")
     preferred_language = models.CharField(
         max_length=5, choices=Language.choices, default=Language.EN
     )

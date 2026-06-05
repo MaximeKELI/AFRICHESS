@@ -3,6 +3,8 @@ from rest_framework import generics, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
+from apps.users.countries_data import AFRICAN_COUNTRY_CODES
+
 from .models import PlayerRating, RatingHistory
 from .serializers import LeaderboardEntrySerializer, PlayerRatingSerializer, RatingHistorySerializer
 from .services import RatingService
