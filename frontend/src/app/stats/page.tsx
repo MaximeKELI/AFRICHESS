@@ -17,6 +17,8 @@ import {
 } from "@/components/stats/StatsCharts";
 import { DataTable } from "@/components/stats/StatsTables";
 import { downloadStatsCsv, downloadStatsJson } from "@/lib/statsExport";
+import { useTranslation } from "@/hooks/useTranslation";
+import { formatLocaleDate, terminationLabel } from "@/lib/i18n/labels";
 
 interface ModeBucket {
   mode: string;
@@ -82,16 +84,6 @@ interface StatsPayload {
     best_ai_elo_beaten: number | null;
   };
 }
-
-const TERMINATION_LABELS: Record<string, string> = {
-  resignation: "Abandon",
-  timeout: "Temps écoulé",
-  draw_agreement: "Nulle acceptée",
-  repetition: "Répétition",
-  checkmate: "Mat",
-  disconnect: "Déconnexion",
-  other: "Autre",
-};
 
 const MODE_COLORS: Record<string, string> = {
   bullet: "#ef4444",

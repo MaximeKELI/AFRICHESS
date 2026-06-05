@@ -55,7 +55,7 @@ export default function LeaderboardPage() {
           onClick={() => setTab("global")}
           className={`px-4 py-2 rounded-lg ${tab === "global" ? "african-gradient text-white" : "border"}`}
         >
-          {t(locale, "leaderboard.global")}
+          {t("leaderboard.global")}
         </button>
         {tab === "african" && (
           <select
@@ -85,11 +85,11 @@ export default function LeaderboardPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/10">
-              <th className="text-left p-4">#</th>
-              <th className="text-left p-4">Player</th>
-              <th className="text-left p-4">Country</th>
-              <th className="text-right p-4">ELO</th>
-              <th className="text-right p-4">Games</th>
+              <th className="text-left p-4">{t("leaderboard.col.rank")}</th>
+              <th className="text-left p-4">{t("leaderboard.col.player")}</th>
+              <th className="text-left p-4">{t("leaderboard.col.country")}</th>
+              <th className="text-right p-4">{t("leaderboard.col.elo")}</th>
+              <th className="text-right p-4">{t("leaderboard.col.games")}</th>
             </tr>
           </thead>
           <tbody>
@@ -108,7 +108,7 @@ export default function LeaderboardPage() {
           </tbody>
         </table>
         {entries.length === 0 && (
-          <p className="p-8 text-center opacity-60">No ratings yet. Be the first to play!</p>
+          <p className="p-8 text-center opacity-60">{t("leaderboard.empty")}</p>
         )}
       </div>
     </div>

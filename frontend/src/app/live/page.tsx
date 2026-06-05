@@ -5,6 +5,7 @@ import Link from "next/link";
 import { gamesApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface LiveGame {
   id: string;
@@ -14,6 +15,7 @@ interface LiveGame {
 }
 
 export default function LiveGamesPage() {
+  const { t } = useTranslation();
   const [games, setGames] = useState<LiveGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,26 +30,26 @@ export default function LiveGamesPage() {
         })
         .catch((err) => {
           setGames([]);
-          setError(formatApiError(err, "Impossible de charger les parties en direct."));
+          setError(formatApiError(err, t("live.error.load")));
         })
         .finally(() => setLoading(false));
     };
     load();
     const id = setInterval(load, 15000);
     return () => clearInterval(id);
-  }, []);
+  }, [t]);
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold mb-6">Parties en direct</h1>
+      <h1 className="font-display text-3xl font-bold mb-6">{t("live.title")}</h1>
       {error && (
         <InlineAlert className="mb-4" onDismiss={() => setError(null)}>
           {error}
         </InlineAlert>
       )}
-      {loading && <p className="text-sm opacity-60 mb-4">Chargement…</p>}
+      {loading && <p className="text-sm opacity-60 mb-4">{t("common.loading")}</p>}
       {!loading && !error && games.length === 0 ? (
-        <p className="opacity-60">Aucune partie humaine en cours.</p>
+        <p className="opacity-60">{t("live.empty")}</p>
       ) : (
         <ul className="space-y-3">
           {games.map((g) => (
@@ -62,7 +64,7 @@ export default function LiveGamesPage() {
                 href={`/watch/${g.id}`}
                 className="text-sm text-africhess-gold hover:underline"
               >
-                Observer →
+                {t("live.watch")}
               </Link>
             </li>
           ))}

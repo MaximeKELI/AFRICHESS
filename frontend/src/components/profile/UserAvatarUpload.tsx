@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { authApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
 import { UserAvatar } from "./UserAvatar";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface UserAvatarUploadProps {
   avatar?: string | null;
@@ -18,17 +19,18 @@ export function UserAvatarUpload({
   username,
   onUpdated,
 }: UserAvatarUploadProps) {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      setError("Choisissez une image (JPG, PNG, WebP).");
+      setError(t("profile.avatar.error.type"));
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      setError("Image trop lourde (max 2 Mo).");
+      setError(t("profile.avatar.error.size"));
       return;
     }
     setUploading(true);
@@ -39,7 +41,7 @@ export function UserAvatarUpload({
       await authApi.updateProfile(fd);
       onUpdated();
     } catch (err) {
-      setError(formatApiError(err, "Impossible d'envoyer la photo."));
+      setError(formatApiError(err, t("profile.avatar.error.upload")));
     } finally {
       setUploading(false);
     }
@@ -47,7 +49,7 @@ export function UserAvatarUpload({
 
   return (
     <div>
-      <p className="text-sm font-medium mb-3">Votre photo de profil</p>
+      <p className="text-sm font-medium mb-3">{t("profile.avatar.title")}</p>
       <div className="flex items-center gap-4">
         <UserAvatar avatar={avatar} displayName={displayName} username={username} size={72} />
         <div className="space-y-2">
@@ -57,11 +59,9 @@ export function UserAvatarUpload({
             disabled={uploading}
             className="text-sm px-4 py-2 rounded-lg border border-africhess-gold text-africhess-gold hover:bg-africhess-gold/10 disabled:opacity-50"
           >
-            {uploading ? "Envoi…" : "Choisir une photo"}
+            {uploading ? t("profile.avatar.uploading") : t("profile.avatar.choose")}
           </button>
-          <p className="text-xs opacity-50">
-            Les portraits Kofi, Amara, Nana Kofi, etc. sont réservés aux adversaires IA.
-          </p>
+          <p className="text-xs opacity-50">{t("profile.avatar.hint2")}</p>
         </div>
       </div>
       <input
