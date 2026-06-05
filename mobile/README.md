@@ -10,6 +10,8 @@ Application native iOS/Android avec **échiquier natif** et parties vs IA.
 - Catalogue bots avec lien direct « Défier »
 - Chronomètre blitz (3+2) pendant la partie
 - Puzzle tactique du jour
+- WebSocket : abandon + sync chrono (coups IA via REST)
+- Annuler le dernier coup (vs IA)
 - Refresh token automatique
 
 ## Démarrage
@@ -52,7 +54,7 @@ rm -rf node_modules package-lock.json && npm install
 
 ## Prochaines étapes
 
-- WebSocket (abandon, matchmaking)
+- Matchmaking humain (WebSocket file d'attente)
 - Variantes (960, Crazyhouse)
 - Push notifications (FCM)
 - Pièces SVG / images africaines

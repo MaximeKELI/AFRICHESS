@@ -114,7 +114,12 @@ export const gamesApi = {
     variant?: string;
   }) => api.post<GameData>("/games/ai/", data),
   get: (id: string) => api.get<GameData>(`/games/${id}/`),
-  move: (id: string, uci: string) => api.post<GameData>(`/games/${id}/move/`, { uci }),
+  move: (id: string, uci: string, opts?: { spentMs?: number }) =>
+    api.post<GameData>(`/games/${id}/move/`, {
+      uci,
+      ...(opts?.spentMs != null ? { spent_ms: opts.spentMs } : {}),
+    }),
+  undo: (id: string) => api.post<GameData>(`/games/${id}/undo/`),
 };
 
 export { API_ORIGIN };

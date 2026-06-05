@@ -27,6 +27,7 @@
     "plugins": ["expo-router"],
     "extra": {
       "apiUrl": "http://10.0.2.2:8000/api",
+      "wsUrl": "ws://10.0.2.2:8000",
       "router": {
         "origin": false
       }

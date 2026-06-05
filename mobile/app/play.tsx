@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Pressable,
   ScrollView,
@@ -12,6 +13,8 @@ import {
 import { ChessBoard } from "../components/ChessBoard";
 import { GameClock } from "../components/GameClock";
 import { useAuth } from "../context/AuthContext";
+import { useGameWebSocket } from "../hooks/useGameWebSocket";
+import { wsPayloadToGameData } from "../lib/gameState";
 import { type Bot, type GameData, gamesApi } from "../lib/api";
 
 const AI_ELOS = [750, 1250, 1750, 2250, 2750, 3250];
@@ -27,6 +30,7 @@ export default function PlayScreen() {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [loadingBots, setLoadingBots] = useState(true);
+  const turnStartRef = useRef(Date.now());
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -48,6 +52,10 @@ export default function PlayScreen() {
     if (match) setSelectedBot(match);
   }, [botSlug, bots]);
 
+  useEffect(() => {
+    turnStartRef.current = Date.now();
+  }, [game?.fen, game?.status]);
+
   const orientation = color;
   const playerColor = color === "white" ? "w" : "b";
   const turn = useMemo<"w" | "b">(() => {
@@ -56,8 +64,8 @@ export default function PlayScreen() {
   }, [game?.fen]);
   const isMyTurn = useMemo(() => {
     if (!game?.fen) return false;
-    const turn = game.fen.includes(" w ") ? "w" : "b";
-    return turn === playerColor && game.status === "active";
+    const activeTurn = game.fen.includes(" w ") ? "w" : "b";
+    return activeTurn === playerColor && game.status === "active";
   }, [game, playerColor]);
 
   const lastMove = useMemo(() => {
@@ -67,6 +75,31 @@ export default function PlayScreen() {
     if (m.uci.length < 4) return null;
     return { from: m.uci.slice(0, 2), to: m.uci.slice(2, 4) };
   }, [game?.moves]);
+
+  const applyGame = useCallback((data: GameData) => {
+    setGame(data);
+    if (data.status === "completed") {
+      setStatus(`Partie terminée : ${data.result ?? "fin"}`);
+    }
+  }, []);
+
+  const handleWsUpdate = useCallback(
+    (payload: Parameters<typeof wsPayloadToGameData>[0]) => {
+      applyGame(wsPayloadToGameData(payload));
+    },
+    [applyGame]
+  );
+
+  const { connected: wsConnected, wsError, resign: wsResign } = useGameWebSocket(
+    game?.id ?? null,
+    Boolean(game && game.status === "active"),
+    handleWsUpdate,
+    (payload) => {
+      const data = wsPayloadToGameData(payload);
+      setStatus(`Partie terminée : ${data.result ?? payload.reason ?? "fin"}`);
+      applyGame(data);
+    }
+  );
 
   const startGame = async () => {
     setBusy(true);
@@ -78,7 +111,7 @@ export default function PlayScreen() {
         ...(selectedBot ? { bot_slug: selectedBot.slug } : { ai_elo: aiElo }),
         variant: "standard",
       });
-      setGame(data);
+      applyGame(data);
       const opponent = data.bot?.name ?? selectedBot?.name ?? `IA ${data.ai_target_elo}`;
       setStatus(`Partie vs ${opponent}`);
     } catch {
@@ -92,22 +125,57 @@ export default function PlayScreen() {
     async (uci: string) => {
       if (!game || busy || game.status !== "active") return;
       setBusy(true);
+      const poolMs = playerColor === "w" ? game.white_time_ms : game.black_time_ms;
+      const spentMs =
+        game.is_timed && poolMs != null
+          ? Math.min(Date.now() - turnStartRef.current, poolMs)
+          : undefined;
+      turnStartRef.current = Date.now();
       try {
-        const { data } = await gamesApi.move(game.id, uci);
-        setGame(data);
-        if (data.status === "completed") {
-          setStatus(`Partie terminée : ${data.result ?? "fin"}`);
-        }
+        const { data } = await gamesApi.move(game.id, uci, { spentMs });
+        applyGame(data);
       } catch {
         setStatus("Coup refusé — rechargement…");
         const { data } = await gamesApi.get(game.id);
-        setGame(data);
+        applyGame(data);
       } finally {
         setBusy(false);
       }
     },
-    [game, busy]
+    [game, busy, playerColor, applyGame]
   );
+
+  const handleUndo = async () => {
+    if (!game?.is_vs_ai || busy) return;
+    setBusy(true);
+    try {
+      const { data } = await gamesApi.undo(game.id);
+      applyGame(data);
+      setStatus("Coup annulé");
+    } catch {
+      setStatus("Impossible d'annuler le coup");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmResign = () => {
+    if (!game || game.status !== "active") return;
+    Alert.alert("Abandonner", "Confirmer l'abandon de la partie ?", [
+      { text: "Annuler", style: "cancel" },
+      {
+        text: "Abandonner",
+        style: "destructive",
+        onPress: () => {
+          if (wsResign()) {
+            setStatus("Abandon envoyé…");
+          } else {
+            setStatus("WebSocket indisponible — reconnectez-vous");
+          }
+        },
+      },
+    ]);
+  };
 
   if (authLoading || !user) {
     return (
@@ -202,6 +270,9 @@ export default function PlayScreen() {
   return (
     <ScrollView contentContainerStyle={styles.game}>
       <Text style={styles.status}>{status}</Text>
+      <Text style={styles.wsStatus}>
+        {wsConnected ? "● Temps réel connecté" : wsError ?? "Connexion temps réel…"}
+      </Text>
       {showClock && (
         <GameClock
           whiteMs={game.white_time_ms!}
@@ -222,6 +293,16 @@ export default function PlayScreen() {
         onMove={handleMove}
       />
       <View style={styles.gameActions}>
+        {game.is_vs_ai && game.status === "active" && (
+          <Pressable style={styles.secondaryBtn} onPress={handleUndo} disabled={busy}>
+            <Text style={styles.secondaryText}>Annuler coup</Text>
+          </Pressable>
+        )}
+        {game.status === "active" && (
+          <Pressable style={[styles.secondaryBtn, styles.dangerBtn]} onPress={confirmResign}>
+            <Text style={styles.dangerText}>Abandonner</Text>
+          </Pressable>
+        )}
         <Pressable
           style={styles.secondaryBtn}
           onPress={() => {
@@ -270,8 +351,9 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   startText: { color: "#fff", fontWeight: "700", fontSize: 16 },
-  status: { color: "#aaa", textAlign: "center", marginBottom: 12, fontSize: 14 },
-  gameActions: { marginTop: 20, width: "100%" },
+  status: { color: "#aaa", textAlign: "center", marginBottom: 4, fontSize: 14 },
+  wsStatus: { color: "#666", textAlign: "center", marginBottom: 12, fontSize: 11 },
+  gameActions: { marginTop: 20, width: "100%", gap: 10 },
   secondaryBtn: {
     borderWidth: 1,
     borderColor: "#D4A017",
@@ -280,4 +362,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   secondaryText: { color: "#D4A017", fontWeight: "600" },
+  dangerBtn: { borderColor: "#E07A5F" },
+  dangerText: { color: "#E07A5F", fontWeight: "600" },
 });
