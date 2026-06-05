@@ -7,7 +7,8 @@ Application native iOS/Android avec **échiquier natif** et parties vs IA.
 - Connexion JWT (stockage sécurisé)
 - Échiquier tactile 8×8 (pièces Unicode, thème AFRICHESS)
 - Partie vs IA : choix ELO ou bot nommé
-- Catalogue bots (aperçu)
+- Catalogue bots avec lien direct « Défier »
+- Chronomètre blitz (3+2) pendant la partie
 - Refresh token automatique
 
 ## Démarrage
@@ -43,6 +44,7 @@ mobile/
 ## Prochaines étapes
 
 - Puzzle daily mobile
-- Chronomètre live
+- WebSocket (abandon, matchmaking)
+- Variantes (960, Crazyhouse)
 - Push notifications (FCM)
 - Pièces SVG / images africaines

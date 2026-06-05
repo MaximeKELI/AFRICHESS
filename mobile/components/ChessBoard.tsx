@@ -19,7 +19,8 @@ interface ChessBoardProps {
   onMove: (uci: string) => void;
 }
 
-function normalizeFen(fen: string): string {
+function toChessFen(fen: string): string | undefined {
+  if (!fen || fen === "start") return undefined;
   return fen.replace(/\[.*?\]/g, "");
 }
 
@@ -34,13 +35,13 @@ export function ChessBoard({
   const boardSize = Dimensions.get("window").width - 32;
   const squareSize = boardSize / 8;
 
-  const [game, setGame] = useState(() => new Chess(normalizeFen(fen === "start" ? undefined : fen)));
+  const [game, setGame] = useState(() => new Chess(toChessFen(fen)));
   const [selected, setSelected] = useState<Square | null>(null);
   const [targets, setTargets] = useState<Square[]>([]);
 
   useEffect(() => {
     try {
-      const g = new Chess(normalizeFen(fen === "start" ? undefined : fen));
+      const g = new Chess(toChessFen(fen));
       setGame(g);
       setSelected(null);
       setTargets([]);
