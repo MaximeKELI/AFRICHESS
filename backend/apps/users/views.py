@@ -201,7 +201,7 @@ def subscription_subscribe(request):
     checkout = create_checkout_session(user, plan_id)
     if checkout.get("mode") == "stripe" and checkout.get("checkout_url"):
         return Response(checkout)
-    if not settings.DEBUG:
+    if not (settings.DEBUG and getattr(settings, "PREMIUM_DEMO_ALLOWED", False)):
         return Response(
             {"error": "Paiement non configuré. Contactez le support."},
             status=503,
