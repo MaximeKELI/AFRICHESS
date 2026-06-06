@@ -145,18 +145,14 @@ for i in range({count}):
     tokens.append(str(RefreshToken.for_user(u).access_token))
 print(json.dumps(tokens))
 """
-    for name in ("africhess-backend-1",):
-        containers = [name]
-        break
-    else:
-        try:
-            out = subprocess.run(
-                ["docker", "ps", "--format", "{{.Names}}"],
-                capture_output=True, text=True, timeout=10,
-            )
-            containers = [l for l in out.stdout.splitlines() if "backend" in l]
-        except Exception:
-            containers = []
+    try:
+        out = subprocess.run(
+            ["docker", "ps", "--format", "{{.Names}}"],
+            capture_output=True, text=True, timeout=10,
+        )
+        containers = [l for l in out.stdout.splitlines() if "backend" in l]
+    except Exception:
+        containers = []
     for cname in containers:
         try:
             r = subprocess.run(
