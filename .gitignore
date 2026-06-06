@@ -35,6 +35,10 @@ Thumbs.db
 # Docker
 *.log
 
+# Backups (données sensibles)
+backups/
+*.dump
+
 # Build
 dist/
 build/

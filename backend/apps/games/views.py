@@ -28,6 +28,8 @@ from .game_actions import (
 )
 from .game_access import can_analyze_game, can_play_game, can_view_game, user_is_participant
 from .variant_utils import legal_moves_uci, parse_pockets
+from apps.common.throttles import AnalyzeThrottle
+
 from .throttling import EngineEvalThrottle
 from .services import GameService, MatchmakingService
 

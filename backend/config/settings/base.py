@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "django_filters",
     "channels",
@@ -169,9 +170,11 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "200/hour",
-        "user": "3000/hour",
+        "anon": "300/hour",
+        "user": "5000/hour",
         "engine_eval": "120/hour",
+        "auth": "20/hour",
+        "analyze": "30/hour",
     },
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
@@ -201,6 +204,10 @@ SPECTACULAR_SETTINGS = {
 REST_AUTH = {
     "USE_JWT": True,
     "JWT_AUTH_HTTPONLY": False,
+    "JWT_AUTH_COOKIE": "access_token",
+    "JWT_AUTH_REFRESH_COOKIE": "refresh_token",
+    "JWT_AUTH_SAMESITE": "Lax",
+    "JWT_AUTH_SECURE": not DEBUG,
     "LOGIN_SERIALIZER": "apps.users.auth_serializers.AfrichessLoginSerializer",
 }
 ACCOUNT_LOGIN_METHODS = {"email", "username"}

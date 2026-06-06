@@ -12,6 +12,18 @@ from rest_framework_simplejwt.tokens import AccessToken
 User = get_user_model()
 
 
+def _extract_ws_token(scope) -> str | None:
+    """Préfère Sec-WebSocket-Protocol bearer.<token> (pas de fuite dans les logs URL)."""
+    for name, value in scope.get("headers", []):
+        if name == b"sec-websocket-protocol":
+            for proto in value.decode().split(","):
+                proto = proto.strip()
+                if proto.startswith("bearer."):
+                    return proto[7:]
+    query = parse_qs(scope.get("query_string", b"").decode())
+    return query.get("token", [None])[0]
+
+
 @database_sync_to_async
 def _user_from_token(token: str):
     try:
@@ -24,14 +36,13 @@ def _user_from_token(token: str):
 
 class JwtAuthMiddleware(BaseMiddleware):
     """
-    Authentifie via ?token=<access_jwt> (recommandé pour Next.js).
-    Complète AuthMiddlewareStack (session) si token absent.
+    Authentifie via Sec-WebSocket-Protocol: bearer.<jwt> (recommandé)
+    ou ?token=<access_jwt> (rétrocompatibilité).
     """
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "websocket":
-            query = parse_qs(scope.get("query_string", b"").decode())
-            token = query.get("token", [None])[0]
+            token = _extract_ws_token(scope)
             if token:
                 user = await _user_from_token(token)
                 if user:
