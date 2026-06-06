@@ -68,13 +68,11 @@ class UserSerializer(serializers.ModelSerializer):
             "fide_id",
             "stats",
             "date_joined",
-            "is_staff",
         ]
         read_only_fields = [
             "id",
             "date_joined",
             "is_african_highlight",
-            "is_staff",
             "subscription_tier",
             "premium_until",
         ]
@@ -119,6 +117,9 @@ class UserPublicSerializer(serializers.ModelSerializer):
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
+    def validate_avatar(self, value):
+        return validate_uploaded_image(value)
+
     class Meta:
         model = User
         fields = [
@@ -184,20 +185,19 @@ class RegisterSerializer(serializers.ModelSerializer):
             )
         return value
 
-    def validate_username(self, value):
-        if User.objects.filter(username__iexact=value).exists():
-            raise serializers.ValidationError("Ce nom d'utilisateur est déjà pris.")
-        return value
-
-    def validate_email(self, value):
-        if User.objects.filter(email__iexact=value).exists():
-            raise serializers.ValidationError("Cet e-mail est déjà utilisé.")
-        return value
-
     def validate(self, data):
         if data["password"] != data["password_confirm"]:
             raise serializers.ValidationError(
                 {"password_confirm": "Les mots de passe ne correspondent pas."}
+            )
+        validate_password(data["password"])
+        if User.objects.filter(username__iexact=data["username"]).exists():
+            raise serializers.ValidationError(
+                {"detail": "Impossible de créer ce compte. Vérifiez vos informations."}
+            )
+        if User.objects.filter(email__iexact=data["email"]).exists():
+            raise serializers.ValidationError(
+                {"detail": "Impossible de créer ce compte. Vérifiez vos informations."}
             )
         return data
 

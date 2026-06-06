@@ -30,6 +30,7 @@ User = get_user_model()
 )
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [AuthAnonThrottle]
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -44,12 +45,8 @@ class RegisterView(APIView):
                     "Erreur technique à l'inscription. "
                     "Redémarrez le serveur backend (docker compose restart backend) puis réessayez."
                 )
-            elif "username" in msg:
-                detail = "Ce nom d'utilisateur est déjà pris."
-            elif "email" in msg:
-                detail = "Cet e-mail est déjà utilisé."
             else:
-                detail = "Nom d'utilisateur ou e-mail déjà utilisé."
+                detail = "Impossible de créer ce compte. Vérifiez vos informations."
             return Response({"detail": detail}, status=status.HTTP_400_BAD_REQUEST)
         log_event(
             "register",
@@ -204,6 +201,11 @@ def subscription_subscribe(request):
     checkout = create_checkout_session(user, plan_id)
     if checkout.get("mode") == "stripe" and checkout.get("checkout_url"):
         return Response(checkout)
+    if not settings.DEBUG:
+        return Response(
+            {"error": "Paiement non configuré. Contactez le support."},
+            status=503,
+        )
     user.subscription_tier = PLANS[plan_id]["tier"]
     user.premium_until = timezone.now() + timedelta(days=30)
     user.save(update_fields=["subscription_tier", "premium_until"])
@@ -213,9 +215,22 @@ def subscription_subscribe(request):
             "tier": user.subscription_tier,
             "is_premium": user.is_premium,
             "premium_until": user.premium_until,
-            "message": "Abonnement activé (mode démo).",
+            "message": "Abonnement activé (mode démo, DEBUG uniquement).",
         }
     )
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+@throttle_classes([AuthAnonThrottle])
+def oauth_exchange(request):
+    """Échange un code OAuth one-time contre des JWT."""
+    code = (request.data.get("code") or "").strip()
+    user = consume_oauth_code(code)
+    if not user:
+        return Response({"error": "Code invalide ou expiré"}, status=400)
+    refresh = RefreshToken.for_user(user)
+    return Response({"access": str(refresh.access_token), "refresh": str(refresh)})
 
 
 @api_view(["POST"])

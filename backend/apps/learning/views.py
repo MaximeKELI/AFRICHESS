@@ -1,3 +1,4 @@
+from django.db import models
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -6,7 +7,9 @@ from apps.puzzles.models import Puzzle, PuzzleAttempt
 from apps.puzzles.serializers import PuzzleSerializer, SubmitPuzzleSerializer
 
 from .coach import generate_coach_tips
-from .models import Badge, Course, LearningProfile, Lesson, Quiz, UserBadge, UserProgress
+from apps.common.throttles import AnalyzeThrottle
+
+from .models import Badge, Course, LearningProfile, Lesson, Quiz, QuizAttempt, UserBadge, UserProgress
 from .pgn_analysis import analyze_pgn
 from .progression import add_xp, get_or_create_profile, record_puzzle_result, update_course_progress
 from .puzzle_adaptive import get_adaptive_puzzles, get_daily_puzzle
@@ -85,7 +88,7 @@ class CourseDetailView(generics.RetrieveAPIView):
 class LessonDetailView(generics.RetrieveAPIView):
     serializer_class = LessonSerializer
     permission_classes = [permissions.IsAuthenticated]
-    queryset = Lesson.objects.all()
+    queryset = Lesson.objects.filter(course__is_published=True)
 
 
 class CompleteLessonView(APIView):
@@ -132,7 +135,9 @@ class CompleteLessonView(APIView):
 class QuizDetailView(generics.RetrieveAPIView):
     serializer_class = QuizPublicSerializer
     permission_classes = [permissions.IsAuthenticated]
-    queryset = Quiz.objects.all()
+    queryset = Quiz.objects.filter(
+        models.Q(course__is_published=True) | models.Q(lesson__course__is_published=True)
+    )
 
 
 class SubmitQuizView(APIView):
@@ -160,11 +165,22 @@ class SubmitQuizView(APIView):
         score = int((correct / len(questions)) * 100) if questions else 0
         passed = score >= quiz.passing_score
 
-        if passed:
+        attempt, created = QuizAttempt.objects.get_or_create(
+            user=request.user,
+            quiz=quiz,
+            defaults={"score": score, "passed": passed},
+        )
+        xp_gained = 0
+        if passed and not attempt.xp_awarded:
             profile = get_or_create_profile(request.user)
             profile.quizzes_passed += 1
             profile.save(update_fields=["quizzes_passed", "updated_at"])
             add_xp(request.user, quiz.xp_reward)
+            xp_gained = quiz.xp_reward
+            attempt.xp_awarded = True
+            attempt.score = score
+            attempt.passed = True
+            attempt.save(update_fields=["xp_awarded", "score", "passed"])
             if quiz.course:
                 prog, _ = UserProgress.objects.get_or_create(
                     user=request.user, course=quiz.course
@@ -172,18 +188,25 @@ class SubmitQuizView(APIView):
                 prog.quiz_passed = True
                 prog.progress_percent = 100
                 prog.save()
+        elif not created:
+            attempt.score = max(attempt.score, score)
+            if passed:
+                attempt.passed = True
+            attempt.save(update_fields=["score", "passed"])
 
         return Response({
             "score": score,
             "passed": passed,
             "correct": correct,
             "total": len(questions),
-            "xp_gained": quiz.xp_reward if passed else 0,
+            "xp_gained": xp_gained,
+            "already_passed": attempt.xp_awarded,
         })
 
 
 class AnalyzePgnView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [AnalyzeThrottle]
 
     def post(self, request):
         ser = AnalyzePgnSerializer(data=request.data)

@@ -230,6 +230,7 @@ def active_games(request):
 )
 class AnalyzeGameView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [AnalyzeThrottle]
 
     def post(self, request, game_id):
         try:
