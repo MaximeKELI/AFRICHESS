@@ -14,7 +14,7 @@ IN_MEMORY_CHANNEL = {
 }
 
 
-@override_settings(CHANNEL_LAYERS=IN_MEMORY_CHANNEL)
+@override_settings(CHANNEL_LAYERS=IN_MEMORY_CHANNEL, WS_ALLOW_QUERY_TOKEN=True)
 class ChessConsumerTests(TransactionTestCase):
     def test_participant_receives_game_state(self):
         async_to_sync(self._test_participant_receives_game_state)()
@@ -28,8 +28,7 @@ class ChessConsumerTests(TransactionTestCase):
         token = str(AccessToken.for_user(user))
         communicator = WebsocketCommunicator(
             application,
-            f"/ws/game/{game.id}/",
-            subprotocols=[f"bearer.{token}"],
+            f"/ws/game/{game.id}/?token={token}",
         )
         connected, _ = await communicator.connect()
         self.assertTrue(connected)

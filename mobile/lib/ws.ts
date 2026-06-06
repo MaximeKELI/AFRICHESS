@@ -16,5 +16,5 @@ export function wsMatchmakingPath(): string {
 }
 
 export function wsAuthProtocols(token: string): string[] {
-  return [`bearer.${token}`];
+  return ["bearer", token];
 }

@@ -15,7 +15,7 @@ export function wsNotificationsUrl(): string {
   return `${base}/ws/notifications/`;
 }
 
-/** Protocole bearer.<jwt> — évite les fuites dans les logs proxy. */
+/** Deux sous-protocoles bearer + jwt (les points du JWT cassent un seul token). */
 export function wsAuthProtocols(token: string): string[] {
-  return [`bearer.${token}`];
+  return ["bearer", token];
 }

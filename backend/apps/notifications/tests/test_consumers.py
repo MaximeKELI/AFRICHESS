@@ -15,7 +15,7 @@ IN_MEMORY_CHANNEL = {
 }
 
 
-@override_settings(CHANNEL_LAYERS=IN_MEMORY_CHANNEL)
+@override_settings(CHANNEL_LAYERS=IN_MEMORY_CHANNEL, WS_ALLOW_QUERY_TOKEN=True)
 class NotificationConsumerTests(TransactionTestCase):
     def test_connect_receives_snapshot(self):
         async_to_sync(self._test_connect_receives_snapshot)()
@@ -31,8 +31,7 @@ class NotificationConsumerTests(TransactionTestCase):
         token = str(AccessToken.for_user(user))
         communicator = WebsocketCommunicator(
             application,
-            "/ws/notifications/",
-            subprotocols=[f"bearer.{token}"],
+            f"/ws/notifications/?token={token}",
         )
         connected, _ = await communicator.connect()
         self.assertTrue(connected)
@@ -49,8 +48,7 @@ class NotificationConsumerTests(TransactionTestCase):
         token = str(AccessToken.for_user(user))
         communicator = WebsocketCommunicator(
             application,
-            "/ws/notifications/",
-            subprotocols=[f"bearer.{token}"],
+            f"/ws/notifications/?token={token}",
         )
         connected, _ = await communicator.connect()
         self.assertTrue(connected)

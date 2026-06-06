@@ -16,13 +16,16 @@ User = get_user_model()
 
 
 def _extract_ws_token(scope) -> str | None:
-    """Auth via Sec-WebSocket-Protocol uniquement (sauf WS_ALLOW_QUERY_TOKEN)."""
+    """Auth via Sec-WebSocket-Protocol: bearer,<jwt> (sauf WS_ALLOW_QUERY_TOKEN)."""
+    protocols: list[str] = []
     for name, value in scope.get("headers", []):
         if name == b"sec-websocket-protocol":
-            for proto in value.decode().split(","):
-                proto = proto.strip()
-                if proto.startswith("bearer."):
-                    return proto[7:]
+            protocols = [p.strip() for p in value.decode().split(",")]
+    if len(protocols) >= 2 and protocols[0] == "bearer" and len(protocols[1]) > 20:
+        return protocols[1]
+    for proto in protocols:
+        if proto.startswith("bearer."):
+            return proto[7:]
     if getattr(settings, "WS_ALLOW_QUERY_TOKEN", False):
         query = parse_qs(scope.get("query_string", b"").decode())
         return query.get("token", [None])[0]
