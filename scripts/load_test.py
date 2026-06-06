@@ -284,6 +284,7 @@ def extrapolate(results: list[LevelResult], target_users: int) -> str:
         f"    · CDN pour le frontend\n"
         f"    · Pool WebSocket dédié (pas 1 Daphne)\n"
         f"  Chess.com : milliers de serveurs — pas comparable en local.\n"
+        f"  Note : throttle actuel anon=200/h, user=3000/h — à relever en prod.\n"
         f"{'═' * 60}"
     )
 
