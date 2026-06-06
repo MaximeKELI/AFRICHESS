@@ -233,6 +233,16 @@ def oauth_exchange(request):
     return Response({"access": str(refresh.access_token), "refresh": str(refresh)})
 
 
+@api_view(["POST", "GET"])
+@permission_classes([permissions.AllowAny])
+def registration_deprecated(request):
+    """Ancien endpoint dj-rest-auth — désactivé."""
+    return Response(
+        {"detail": "Utilisez POST /api/users/register/ pour créer un compte."},
+        status=status.HTTP_410_GONE,
+    )
+
+
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def stripe_webhook(request):
