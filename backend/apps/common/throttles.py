@@ -2,12 +2,12 @@ from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
 
 class AuthAnonThrottle(AnonRateThrottle):
-    rate = "20/hour"
+    scope = "auth"
 
 
 class AuthUserThrottle(UserRateThrottle):
-    rate = "60/hour"
+    scope = "auth"
 
 
 class AnalyzeThrottle(UserRateThrottle):
-    rate = "30/hour"
+    scope = "analyze"

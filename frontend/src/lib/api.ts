@@ -1,5 +1,6 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
+import { setAccessToken } from "@/lib/cookies";
 import { handleSessionExpired } from "@/lib/session";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
@@ -39,7 +40,7 @@ async function refreshAccessToken(): Promise<string> {
     { refresh }
   );
   if (!data.access) throw new Error("Invalid refresh response");
-  Cookies.set("access_token", data.access, { expires: 1 });
+  setAccessToken(data.access);
   return data.access;
 }
 

@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Cookies from "js-cookie";
+import { wsAuthProtocols, wsGameUrl, wsMatchmakingUrl } from "@/lib/gameWs";
 import { tr } from "@/lib/i18n/labels";
-
-const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
 
 export interface WsGamePayload {
   game: {
@@ -78,8 +77,7 @@ export function useGameWebSocket(
 
     const connect = () => {
       if (cancelled) return;
-      const url = `${WS_BASE}/ws/game/${gameId}/?token=${encodeURIComponent(token)}`;
-      const ws = new WebSocket(url);
+      const ws = new WebSocket(wsGameUrl(gameId), wsAuthProtocols(token));
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -194,8 +192,7 @@ export function useMatchmakingWebSocket(
       wsRef.current.close();
     }
 
-    const url = `${WS_BASE}/ws/matchmaking/?token=${encodeURIComponent(token)}`;
-    const ws = new WebSocket(url);
+    const ws = new WebSocket(wsMatchmakingUrl(), wsAuthProtocols(token));
     wsRef.current = ws;
     setSearching(true);
     setMmError(null);

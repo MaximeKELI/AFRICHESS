@@ -2,6 +2,7 @@ import { create } from "zustand";
 import Cookies from "js-cookie";
 import { AxiosError } from "axios";
 import { authApi } from "@/lib/api";
+import { setAccessToken, setRefreshToken } from "@/lib/cookies";
 import { formatApiError } from "@/lib/errors";
 import { translate } from "@/lib/i18n";
 import { clearAuthCookies } from "@/lib/session";
@@ -90,8 +91,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (!data.access) {
         throw new Error(translate(get().locale, "auth.login.invalidResponse"));
       }
-      Cookies.set("access_token", data.access, { expires: 1 });
-      Cookies.set("refresh_token", data.refresh, { expires: 7 });
+      setAccessToken(data.access);
+      setRefreshToken(data.refresh);
       await get().fetchProfile();
     } catch (error) {
       throw new Error(formatApiError(error));

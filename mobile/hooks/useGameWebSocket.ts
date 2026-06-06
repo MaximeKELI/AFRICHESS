@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { WsGamePayload } from "../lib/gameState";
 import { getAccessToken } from "../lib/storage";
-import { WS_BASE } from "../lib/ws";
+import { wsAuthProtocols, wsGamePath } from "../lib/ws";
 
 const MAX_WS_RETRIES = 5;
 
@@ -43,8 +43,7 @@ export function useGameWebSocket(
         return;
       }
 
-      const url = `${WS_BASE}/ws/game/${gameId}/?token=${encodeURIComponent(token)}`;
-      const ws = new WebSocket(url);
+      const ws = new WebSocket(wsGamePath(gameId), wsAuthProtocols(token));
       wsRef.current = ws;
 
       ws.onopen = () => {

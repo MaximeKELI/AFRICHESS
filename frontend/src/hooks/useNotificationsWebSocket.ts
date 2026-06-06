@@ -2,8 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Cookies from "js-cookie";
-
-const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
+import { wsAuthProtocols, wsNotificationsUrl } from "@/lib/gameWs";
 
 export interface WsNotification {
   id: number;
@@ -34,8 +33,7 @@ export function useNotificationsWebSocket(
     const token = Cookies.get("access_token");
     if (!token) return;
 
-    const url = `${WS_BASE}/ws/notifications/?token=${encodeURIComponent(token)}`;
-    const ws = new WebSocket(url);
+    const ws = new WebSocket(wsNotificationsUrl(), wsAuthProtocols(token));
 
     ws.onmessage = (ev) => {
       try {

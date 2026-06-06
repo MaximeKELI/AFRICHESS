@@ -1,21 +1,21 @@
-/** Helpers WebSocket — voir aussi hooks/useGameWebSocket.ts */
+/** Helpers WebSocket — auth via Sec-WebSocket-Protocol (pas de JWT dans l'URL). */
 
-export function wsGameUrl(gameId: string, token: string): string {
+export function wsGameUrl(gameId: string): string {
   const base = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
-  return `${base}/ws/game/${gameId}/?token=${encodeURIComponent(token)}`;
+  return `${base}/ws/game/${gameId}/`;
 }
 
-export function wsMatchmakingUrl(token: string): string {
+export function wsMatchmakingUrl(): string {
   const base = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
-  return `${base}/ws/matchmaking/?token=${encodeURIComponent(token)}`;
+  return `${base}/ws/matchmaking/`;
 }
 
-/**
- * Exemple connexion brute (navigateur / console) :
- *
- * const token = document.cookie.match(/access_token=([^;]+)/)?.[1];
- * const ws = new WebSocket(`ws://localhost:8000/ws/game/GAME_UUID/?token=${token}`);
- * ws.onmessage = (e) => console.log(JSON.parse(e.data));
- * ws.onopen = () => ws.send(JSON.stringify({ event: "rejoindre_partie" }));
- * ws.send(JSON.stringify({ event: "jouer_coup", uci: "e2e4", spent_ms: 1200 }));
- */
+export function wsNotificationsUrl(): string {
+  const base = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
+  return `${base}/ws/notifications/`;
+}
+
+/** Protocole bearer.<jwt> — évite les fuites dans les logs proxy. */
+export function wsAuthProtocols(token: string): string[] {
+  return [`bearer.${token}`];
+}

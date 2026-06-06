@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getAccessToken } from "../lib/storage";
-import { WS_BASE } from "../lib/ws";
+import { wsAuthProtocols, wsMatchmakingPath } from "../lib/ws";
 
 export function useMatchmakingWebSocket(
   enabled: boolean,
@@ -25,8 +25,7 @@ export function useMatchmakingWebSocket(
     }
 
     wsRef.current?.close();
-    const url = `${WS_BASE}/ws/matchmaking/?token=${encodeURIComponent(token)}`;
-    const ws = new WebSocket(url);
+    const ws = new WebSocket(wsMatchmakingPath(), wsAuthProtocols(token));
     wsRef.current = ws;
     setSearching(true);
     setMmError(null);
