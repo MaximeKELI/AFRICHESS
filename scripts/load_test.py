@@ -300,13 +300,20 @@ async def main():
     if args.ws:
         ws_base = args.base.replace("http://", "ws://").replace("https://", "wss://")
         ws_levels = [l for l in levels if l <= 200]
-        print(f"\nWebSocket matchmaking : {ws_levels}")
-        for c in ws_levels:
-            r = await run_ws_level(ws_base, c)
-            print_result("WebSocket", r)
-            if r.error_rate > 30:
-                break
-            await asyncio.sleep(1)
+        max_ws = max(ws_levels) if ws_levels else 50
+        print(f"\nCréation de {max_ws} comptes JWT pour WebSocket…")
+        tokens = await fetch_tokens(args.base, max_ws)
+        print(f"  {len(tokens)} tokens obtenus")
+        if not tokens:
+            print("  ⚠ Pas de JWT — test WS ignoré")
+        else:
+            print(f"WebSocket matchmaking : {ws_levels}")
+            for c in ws_levels:
+                r = await run_ws_level(ws_base, c, tokens)
+                print_result("WebSocket", r)
+                if r.error_rate > 30:
+                    break
+                await asyncio.sleep(1)
 
     print(extrapolate(rest_results, args.target))
 
