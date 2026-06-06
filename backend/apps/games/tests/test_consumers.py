@@ -28,7 +28,8 @@ class ChessConsumerTests(TransactionTestCase):
         token = str(AccessToken.for_user(user))
         communicator = WebsocketCommunicator(
             application,
-            f"/ws/game/{game.id}/?token={token}",
+            f"/ws/game/{game.id}/",
+            subprotocols=[f"bearer.{token}"],
         )
         connected, _ = await communicator.connect()
         self.assertTrue(connected)

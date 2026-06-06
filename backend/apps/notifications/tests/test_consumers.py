@@ -31,7 +31,8 @@ class NotificationConsumerTests(TransactionTestCase):
         token = str(AccessToken.for_user(user))
         communicator = WebsocketCommunicator(
             application,
-            f"/ws/notifications/?token={token}",
+            "/ws/notifications/",
+            subprotocols=[f"bearer.{token}"],
         )
         connected, _ = await communicator.connect()
         self.assertTrue(connected)
@@ -48,7 +49,8 @@ class NotificationConsumerTests(TransactionTestCase):
         token = str(AccessToken.for_user(user))
         communicator = WebsocketCommunicator(
             application,
-            f"/ws/notifications/?token={token}",
+            "/ws/notifications/",
+            subprotocols=[f"bearer.{token}"],
         )
         connected, _ = await communicator.connect()
         self.assertTrue(connected)

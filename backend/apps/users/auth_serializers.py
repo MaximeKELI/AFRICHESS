@@ -1,8 +1,6 @@
 """Connexion / inscription sécurisées — pas d'énumération."""
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError as DjangoValidationError
 from dj_rest_auth.serializers import LoginSerializer
 from rest_framework.exceptions import ValidationError
 
@@ -31,10 +29,3 @@ class AfrichessLoginSerializer(LoginSerializer):
             raise ValidationError({"non_field_errors": [_GENERIC_LOGIN_ERROR]}) from None
 
 
-class DeprecatedRegistrationSerializer(LoginSerializer):
-    """Bloque l'ancien endpoint dj-rest-auth avec message générique."""
-
-    def validate(self, attrs):
-        raise ValidationError(
-            {"detail": "Utilisez POST /api/users/register/ pour créer un compte."}
-        )
