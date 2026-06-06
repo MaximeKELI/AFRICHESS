@@ -2,6 +2,7 @@ from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from apps.common.validators import validate_uploaded_image
@@ -190,7 +191,10 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"password_confirm": "Les mots de passe ne correspondent pas."}
             )
-        validate_password(data["password"])
+        try:
+            validate_password(data["password"])
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({"password": list(exc.messages)})
         if User.objects.filter(username__iexact=data["username"]).exists():
             raise serializers.ValidationError(
                 {"detail": "Impossible de créer ce compte. Vérifiez vos informations."}

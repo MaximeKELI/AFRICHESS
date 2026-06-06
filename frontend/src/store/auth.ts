@@ -130,6 +130,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
+    const refresh = Cookies.get("refresh_token");
+    if (refresh) {
+      authApi.logout(refresh).catch(() => undefined);
+    }
     clearAuthCookies();
     set({ user: null });
   },
