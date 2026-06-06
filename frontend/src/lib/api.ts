@@ -101,6 +101,7 @@ api.interceptors.response.use(
 export const authApi = {
   login: (username: string, password: string) =>
     api.post("/auth/login/", { username, password }),
+  logout: (refresh: string) => api.post("/auth/logout/", { refresh }),
   register: (data: Record<string, string | number>) =>
     api.post("/users/register/", data),
   profile: () => api.get("/users/profile/"),
