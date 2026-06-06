@@ -3,6 +3,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path("auth/oauth/exchange/", views.oauth_exchange, name="oauth-exchange"),
     path("register/", views.RegisterView.as_view(), name="register"),
     path("profile/", views.ProfileView.as_view(), name="profile"),
     path("featured/african/", views.AfricanPlayersView.as_view(), name="african-players"),

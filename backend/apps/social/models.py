@@ -92,6 +92,19 @@ class ForumComment(models.Model):
         return f"Comment on {self.post_id} by {self.author_id}"
 
 
+class ForumPostLike(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="forum_likes",
+    )
+    post = models.ForeignKey(ForumPost, on_delete=models.CASCADE, related_name="likes")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ["user", "post"]
+
+
 class ChatMessage(models.Model):
     class RoomType(models.TextChoices):
         GAME = "game", "Game"

@@ -14,12 +14,10 @@ class AfrichessLoginSerializer(LoginSerializer):
             matches = User.objects.filter(email__iexact=login)
             count = matches.count()
             if count > 1:
-                names = ", ".join(matches.order_by("username").values_list("username", flat=True)[:5])
                 raise ValidationError(
                     {
                         "non_field_errors": [
-                            "Plusieurs comptes utilisent cet e-mail. "
-                            f"Connectez-vous avec votre nom d'utilisateur : {names}."
+                            "Identifiants invalides. Connectez-vous avec votre nom d'utilisateur."
                         ]
                     }
                 )

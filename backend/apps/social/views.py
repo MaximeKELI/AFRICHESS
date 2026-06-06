@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import Q
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,7 +9,8 @@ from apps.games.serializers import GameSerializer
 from apps.games.services import GameService
 from apps.notifications.models import Notification
 
-from .models import ChatMessage, Club, ForumComment, ForumPost, Friendship
+from .chat_access import user_can_access_chat_room
+from .models import ChatMessage, Club, ForumComment, ForumPost, ForumPostLike, Friendship
 from .serializers import (
     ChatMessageSerializer,
     ClubSerializer,
@@ -25,6 +27,13 @@ def _are_friends(user_a, user_b) -> bool:
     return Friendship.objects.filter(
         status=Friendship.Status.ACCEPTED,
     ).filter(
+        models.Q(from_user=user_a, to_user=user_b)
+        | models.Q(from_user=user_b, to_user=user_a)
+    ).exists()
+
+
+def _is_blocked(user_a, user_b) -> bool:
+    return Friendship.objects.filter(status=Friendship.Status.BLOCKED).filter(
         models.Q(from_user=user_a, to_user=user_b)
         | models.Q(from_user=user_b, to_user=user_a)
     ).exists()
@@ -65,6 +74,8 @@ class SendFriendRequestView(APIView):
             return Response({"error": "User not found"}, status=404)
         if to_user == request.user:
             return Response({"error": "Cannot friend yourself"}, status=400)
+        if _is_blocked(request.user, to_user):
+            return Response({"error": "Action non autorisée"}, status=403)
         friendship, created = Friendship.objects.get_or_create(
             from_user=request.user, to_user=to_user,
             defaults={"status": Friendship.Status.PENDING},
@@ -117,10 +128,15 @@ class ClubListView(generics.ListCreateAPIView):
 
 
 class ClubDetailView(generics.RetrieveAPIView):
-    queryset = Club.objects.all()
     serializer_class = ClubSerializer
     lookup_field = "slug"
     permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated:
+            return Club.objects.filter(Q(is_public=True) | Q(members=user)).distinct()
+        return Club.objects.filter(is_public=True)
 
 
 class JoinClubView(APIView):
@@ -131,6 +147,9 @@ class JoinClubView(APIView):
             club = Club.objects.get(slug=slug)
         except Club.DoesNotExist:
             return Response({"error": "Not found"}, status=404)
+        if not club.is_public and not club.members.filter(pk=request.user.pk).exists():
+            if club.owner_id != request.user.id:
+                return Response({"error": "Club privé"}, status=403)
         club.members.add(request.user)
         club.member_count = club.members.count()
         club.save()
@@ -167,6 +186,8 @@ class PostChatMessageView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, room_type, room_id):
+        if not user_can_access_chat_room(request.user, room_type, room_id):
+            return Response({"error": "Accès refusé"}, status=403)
         content = (request.data.get("message") or "").strip()[:500]
         if not content:
             return Response({"error": "Message vide"}, status=400)
@@ -192,6 +213,8 @@ class DirectMessageListView(APIView):
             other = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
+        if _is_blocked(request.user, other):
+            return Response({"error": "Action non autorisée"}, status=403)
         room_id = _dm_room_id(request.user.id, other.id)
         msgs = ChatMessage.objects.filter(
             room_type=ChatMessage.RoomType.DIRECT, room_id=room_id
@@ -203,6 +226,8 @@ class DirectMessageListView(APIView):
             other = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
+        if _is_blocked(request.user, other):
+            return Response({"error": "Action non autorisée"}, status=403)
         content = (request.data.get("message") or "").strip()[:500]
         if not content:
             return Response({"error": "Empty"}, status=400)
@@ -271,14 +296,23 @@ class ForumLikeView(APIView):
             post = ForumPost.objects.get(pk=pk)
         except ForumPost.DoesNotExist:
             return Response({"error": "Not found"}, status=404)
-        post.likes_count += 1
-        post.save(update_fields=["likes_count"])
-        return Response({"likes_count": post.likes_count})
+        _, created = ForumPostLike.objects.get_or_create(user=request.user, post=post)
+        if created:
+            post.likes_count += 1
+            post.save(update_fields=["likes_count"])
+        return Response({"likes_count": post.likes_count, "liked": True})
 
 
 class ChatHistoryView(generics.ListAPIView):
     serializer_class = ChatMessageSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        room_type = self.kwargs["room_type"]
+        room_id = self.kwargs["room_id"]
+        if not user_can_access_chat_room(request.user, room_type, room_id):
+            return Response({"error": "Accès refusé"}, status=403)
+        return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
         room_type = self.kwargs["room_type"]

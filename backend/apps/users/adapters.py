@@ -1,9 +1,10 @@
-"""Redirection OAuth vers le frontend avec jetons JWT."""
+"""Redirection OAuth vers le frontend avec code échangeable (pas de JWT dans l'URL)."""
 
 from django.conf import settings
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+
+from .oauth_exchange import create_oauth_code
 
 
 class AfrichessSocialAccountAdapter(DefaultSocialAccountAdapter):
@@ -11,9 +12,6 @@ class AfrichessSocialAccountAdapter(DefaultSocialAccountAdapter):
         user = request.user
         if not user.is_authenticated:
             return settings.FRONTEND_URL
-        refresh = RefreshToken.for_user(user)
+        code = create_oauth_code(user)
         base = settings.FRONTEND_URL.rstrip("/")
-        return (
-            f"{base}/auth/callback"
-            f"?access={refresh.access_token}&refresh={refresh}"
-        )
+        return f"{base}/auth/callback?code={code}"

@@ -1,7 +1,10 @@
 from datetime import date
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
+
+from apps.common.validators import validate_uploaded_image
 
 from .countries_data import VALID_COUNTRY_CODES
 from .models import UserStats

@@ -3,6 +3,9 @@ import json
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from apps.common.ws_ratelimit import allow_ws_event
+
+from .chat_access import user_can_access_chat_room
 from .models import ChatMessage
 
 
@@ -14,7 +17,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.user = self.scope.get("user")
 
         if not self.user or not self.user.is_authenticated:
-            await self.close()
+            await self.close(code=4001)
+            return
+
+        allowed = await database_sync_to_async(user_can_access_chat_room)(
+            self.user, self.room_type, self.room_id
+        )
+        if not allowed:
+            await self.close(code=4003)
             return
 
         await self.channel_layer.group_add(self.room_group, self.channel_name)
@@ -24,8 +34,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.room_group, self.channel_name)
 
     async def receive(self, text_data):
-        data = json.loads(text_data)
-        message = data.get("message", "").strip()[:500]
+        if not allow_ws_event(self.user.id, f"chat_{self.room_type}_{self.room_id}", limit=30):
+            return
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError:
+            return
+        message = (data.get("message") or "").strip()[:500]
         if not message:
             return
         await self._save_message(message)

@@ -70,6 +70,22 @@ class Quiz(models.Model):
         return self.title
 
 
+class QuizAttempt(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="quiz_attempts",
+    )
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="attempts")
+    score = models.PositiveIntegerField(default=0)
+    passed = models.BooleanField(default=False)
+    xp_awarded = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ["user", "quiz"]
+
+
 class UserProgress(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="course_progress"
