@@ -72,12 +72,14 @@ async def one_request(
     path: str,
     body: dict | None,
     sem: asyncio.Semaphore,
+    token: str | None = None,
 ) -> tuple[bool, float]:
     async with sem:
         url = f"{base}{path}"
         t0 = time.perf_counter()
         try:
-            kwargs = {"timeout": aiohttp.ClientTimeout(total=30)}
+            headers = {"Authorization": f"Bearer {token}"} if token else {}
+            kwargs = {"timeout": aiohttp.ClientTimeout(total=30), "headers": headers}
             if method == "GET":
                 async with session.get(url, **kwargs) as resp:
                     await resp.read()
@@ -91,7 +93,9 @@ async def one_request(
             return False, (time.perf_counter() - t0) * 1000
 
 
-async def run_rest_level(base: str, concurrency: int, requests_per_worker: int) -> LevelResult:
+async def run_rest_level(
+    base: str, concurrency: int, requests_per_worker: int, tokens: list[str] | None = None
+) -> LevelResult:
     sem = asyncio.Semaphore(concurrency)
     latencies: list[float] = []
     success = errors = 0
@@ -101,7 +105,8 @@ async def run_rest_level(base: str, concurrency: int, requests_per_worker: int) 
         tasks = []
         for i in range(concurrency * requests_per_worker):
             method, path, body = API_PATHS[i % len(API_PATHS)]
-            tasks.append(one_request(session, base, method, path, body, sem))
+            tok = tokens[i % len(tokens)] if tokens else None
+            tasks.append(one_request(session, base, method, path, body, sem, tok))
         results = await asyncio.gather(*tasks)
     duration = time.perf_counter() - t0
     for ok, ms in results:
