@@ -10,6 +10,8 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
+from apps.common.ws_ratelimit import allow_ws_event
+
 from .models import Game
 from .realtime_services import build_ws_payload
 from .room_utils import ensure_game_room, set_player_connected, try_start_game
@@ -48,6 +50,9 @@ class ChessConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
+        if not allow_ws_event(self.user.id, f"game_{self.game_id}", limit=90):
+            await self._send_event("error", {"message": "Trop de messages — ralentissez"})
+            return
         try:
             data = json.loads(text_data)
         except json.JSONDecodeError:
@@ -304,6 +309,8 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.user_group, self.channel_name)
 
     async def receive(self, text_data):
+        if not allow_ws_event(self.user.id, "matchmaking", limit=30):
+            return
         try:
             data = json.loads(text_data)
         except json.JSONDecodeError:

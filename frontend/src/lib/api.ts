@@ -16,6 +16,7 @@ const NO_AUTH_PATHS = [
   "/auth/registration/",
   "/auth/token/refresh/",
   "/users/register/",
+  "/users/auth/oauth/exchange/",
 ];
 
 let refreshInFlight = false;
