@@ -10,10 +10,10 @@ import argparse
 import asyncio
 import json
 import statistics
+import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
-from typing import Callable, Awaitable
 
 try:
     import aiohttp
@@ -125,6 +125,49 @@ async def run_rest_level(
         rps=total / duration if duration else 0,
         latencies_ms=latencies,
     )
+
+
+def fetch_tokens_docker(count: int) -> list[str]:
+    """Crée des JWT via Django dans le conteneur Docker (bypass throttle REST)."""
+    script = f"""
+import os, django, json
+os.environ.setdefault('DJANGO_SETTINGS_MODULE','config.settings.development')
+django.setup()
+from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.tokens import RefreshToken
+User = get_user_model()
+tokens = []
+for i in range({count}):
+    u, _ = User.objects.get_or_create(
+        username=f'loadbench_{{i}}',
+        defaults={{'email': f'loadbench_{{i}}@bench.local'}},
+    )
+    tokens.append(str(RefreshToken.for_user(u).access_token))
+print(json.dumps(tokens))
+"""
+    for name in ("africhess-backend-1",):
+        containers = [name]
+        break
+    else:
+        try:
+            out = subprocess.run(
+                ["docker", "ps", "--format", "{{.Names}}"],
+                capture_output=True, text=True, timeout=10,
+            )
+            containers = [l for l in out.stdout.splitlines() if "backend" in l]
+        except Exception:
+            containers = []
+    for cname in containers:
+        try:
+            r = subprocess.run(
+                ["docker", "exec", cname, "python", "-c", script],
+                capture_output=True, text=True, timeout=120,
+            )
+            if r.returncode == 0 and r.stdout.strip().startswith("["):
+                return json.loads(r.stdout.strip())
+        except Exception:
+            continue
+    return []
 
 
 async def fetch_tokens(base: str, count: int) -> list[str]:
@@ -286,7 +329,10 @@ async def main():
     print("Création comptes JWT (contourne throttle anon 200/h)…")
     tokens = await fetch_tokens(args.base, max(levels))
     if not tokens:
-        print("  ⚠ Registration throttled — test en mode anonyme (résultats biaisés)")
+        print("  Registration API throttled → tokens via Docker…")
+        tokens = fetch_tokens_docker(max(levels))
+    if not tokens:
+        print("  ⚠ Pas de JWT — test anonyme (limité à 200 req/h par IP)")
     else:
         print(f"  {len(tokens)} tokens prêts")
     print("Preflight endpoints :")
