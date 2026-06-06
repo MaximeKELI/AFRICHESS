@@ -19,6 +19,10 @@ REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["anon"] = "120/hour"  # noqa: F405
 REST_AUTH["JWT_AUTH_SECURE"] = True  # noqa: F405
 REST_AUTH["JWT_AUTH_SAMESITE"] = "Strict"  # noqa: F405
 
+WS_ALLOW_QUERY_TOKEN = False
+PREMIUM_DEMO_ALLOWED = False
+ALLOW_PUBLIC_API_DOCS = False
+
 _INSECURE_SECRET_KEYS = {
     "dev-only-change-in-production-use-32-chars-min",
     "dev-secret-change-in-production-32b",

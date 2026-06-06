@@ -8,7 +8,8 @@ export const authCookieOptions = {
 };
 
 export function setAccessToken(token: string) {
-  Cookies.set("access_token", token, { ...authCookieOptions, expires: 1 });
+  // Aligné sur ACCESS_TOKEN_LIFETIME backend (15 min) — marge cookie 1 h
+  Cookies.set("access_token", token, { ...authCookieOptions, expires: 1 / 24 });
 }
 
 export function setRefreshToken(token: string) {

@@ -21,7 +21,7 @@ class EventIngestThrottle(UserRateThrottle):
 
 
 class EventIngestAnonThrottle(AnonRateThrottle):
-    rate = "60/min"
+    rate = "30/min"
 
 
 @extend_schema(summary="Ingestion batch d'événements (clics, pages, etc.)")

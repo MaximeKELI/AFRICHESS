@@ -15,9 +15,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+RUN chmod +x /app/docker-entrypoint.sh
+
 ENV STOCKFISH_PATH=/usr/games/stockfish
 ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
