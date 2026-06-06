@@ -249,14 +249,17 @@ def extrapolate(results: list[LevelResult], target_users: int) -> str:
     )
 
 
-async def preflight(base: str) -> list[tuple[str, str, dict | None]]:
+async def preflight(base: str, token: str | None = None) -> list[tuple[str, str, dict | None]]:
     """Ne garde que les endpoints qui répondent 2xx."""
     ok_paths: list[tuple[str, str, dict | None]] = []
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
     async with aiohttp.ClientSession() as session:
         for method, path, body in API_PATHS:
             url = f"{base}{path}"
             try:
-                async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                async with session.get(
+                    url, headers=headers, timeout=aiohttp.ClientTimeout(total=10)
+                ) as resp:
                     status = resp.status
                     await resp.read()
                 if 200 <= status < 400:
@@ -280,18 +283,24 @@ async def main():
     levels = [int(x) for x in args.levels.split(",")]
 
     print(f"AFRICHESS Load Test → {args.base}")
+    print("Création comptes JWT (contourne throttle anon 200/h)…")
+    tokens = await fetch_tokens(args.base, max(levels))
+    if not tokens:
+        print("  ⚠ Registration throttled — test en mode anonyme (résultats biaisés)")
+    else:
+        print(f"  {len(tokens)} tokens prêts")
     print("Preflight endpoints :")
     global API_PATHS
-    API_PATHS = await preflight(args.base)
+    API_PATHS = await preflight(args.base, tokens[0] if tokens else None)
     if not API_PATHS:
-        print("Aucun endpoint disponible — backend down ?")
+        print("Aucun endpoint disponible — backend down ou rate-limited ?")
         sys.exit(1)
     print(f"Paliers REST : {levels}")
 
     rest_results: list[LevelResult] = []
     for c in levels:
         try:
-            r = await run_rest_level(args.base, c, args.per_worker)
+            r = await run_rest_level(args.base, c, args.per_worker, tokens or None)
             print_result("REST API", r)
             rest_results.append(r)
             if r.error_rate > 20 or r.p95 > 5000:
@@ -306,15 +315,16 @@ async def main():
         ws_base = args.base.replace("http://", "ws://").replace("https://", "wss://")
         ws_levels = [l for l in levels if l <= 200]
         max_ws = max(ws_levels) if ws_levels else 50
-        print(f"\nCréation de {max_ws} comptes JWT pour WebSocket…")
-        tokens = await fetch_tokens(args.base, max_ws)
-        print(f"  {len(tokens)} tokens obtenus")
-        if not tokens:
+        ws_tokens = tokens if len(tokens) >= max_ws else await fetch_tokens(args.base, max_ws)
+        if len(ws_tokens) < max_ws and tokens:
+            ws_tokens = tokens
+        print(f"\nWebSocket : {len(ws_tokens)} tokens disponibles")
+        if not ws_tokens:
             print("  ⚠ Pas de JWT — test WS ignoré")
         else:
             print(f"WebSocket matchmaking : {ws_levels}")
             for c in ws_levels:
-                r = await run_ws_level(ws_base, c, tokens)
+                r = await run_ws_level(ws_base, c, ws_tokens)
                 print_result("WebSocket", r)
                 if r.error_rate > 30:
                     break
