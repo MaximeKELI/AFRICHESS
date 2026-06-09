@@ -508,8 +508,8 @@ function PlayContent() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] xl:grid-cols-[minmax(480px,1.55fr)_minmax(300px,380px)] gap-5 lg:gap-6 items-start">
-        <div className="w-full min-w-0 space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(260px,340px)] gap-5 lg:gap-6 items-start">
+        <div className="w-full min-w-0 max-w-full space-y-3">
           {isLiveHuman && (
             <div className="space-y-1">
               <p className="text-xs text-center opacity-60">

@@ -1,7 +1,6 @@
 /** Export des statistiques en CSV ou JSON. */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type StatsExportData = Record<string, any>;
+export type StatsExportData = Record<string, unknown>;
 
 function escapeCsv(value: unknown): string {
   const s = String(value ?? "");

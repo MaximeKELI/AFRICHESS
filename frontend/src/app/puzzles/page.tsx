@@ -356,7 +356,8 @@ export default function PuzzlesPage() {
             ))}
           </div>
 
-          <div className="grid md:grid-cols-[1fr_240px_200px] gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(200px,260px)] xl:grid-cols-[minmax(0,1fr)_minmax(200px,260px)_minmax(160px,200px)] gap-4 lg:gap-6 items-start">
+            <div className="w-full min-w-0">
             <ChessBoard
               fen={display.fen}
               onMove={handleMove}
@@ -365,6 +366,7 @@ export default function PuzzlesPage() {
               lastMove={display.lastMove}
               playSoundOnFenChange={false}
             />
+            </div>
             <GameSidePanel
               moves={display.moveRows}
               captured={display.captured}

@@ -30,7 +30,7 @@ User = get_user_model()
 )
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [AuthAnonThrottle]
+    throttle_classes = [] if settings.DEBUG else [AuthAnonThrottle]
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)

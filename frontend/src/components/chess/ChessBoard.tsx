@@ -85,22 +85,39 @@ function ChessBoardInner({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+
     const update = () => {
-      const w = el.getBoundingClientRect().width;
-      if (w <= 0) return;
-      const desktop =
-        typeof window !== "undefined" &&
-        window.matchMedia("(min-width: 1024px)").matches;
-      const cap = desktop ? Math.min(window.innerWidth * 0.72, 920) : w;
-      setBoardWidth(Math.floor(Math.min(w, cap)));
+      const rect = el.getBoundingClientRect();
+      const containerW = rect.width;
+      if (containerW <= 0) return;
+
+      const viewportH = window.visualViewport?.height ?? window.innerHeight;
+      const viewportW = window.visualViewport?.width ?? window.innerWidth;
+      const reservedTop = Math.max(0, rect.top);
+      const reservedBottom = 32;
+      const maxByHeight = viewportH - reservedTop - reservedBottom;
+
+      const horizontalPad = 16;
+      const maxByWidth = viewportW - horizontalPad;
+
+      const desktop = window.matchMedia("(min-width: 1024px)").matches;
+      const desktopCap = desktop ? Math.min(viewportW * 0.58, 720) : maxByWidth;
+
+      const size = Math.min(containerW, maxByHeight, desktopCap);
+      setBoardWidth(Math.max(240, Math.floor(size)));
     };
+
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
     window.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("scroll", update);
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("scroll", update);
     };
   }, []);
 
@@ -392,7 +409,7 @@ function ChessBoardInner({
       aria-label={t("chess.board.aria")}
       tabIndex={disabled ? -1 : 0}
       onKeyDown={onBoardKeyDown}
-      className="w-full aspect-square mx-auto rounded-xl overflow-hidden shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold"
+      className="chess-board-shell w-full min-w-0 aspect-square mx-auto rounded-xl overflow-hidden shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold"
       style={
         lowBandwidth
           ? undefined
@@ -401,26 +418,31 @@ function ChessBoardInner({
             }
       }
     >
-      <Chessboard
-        boardWidth={boardWidth}
-        position={
-          serverValidated
-            ? displayFen === "start"
-              ? "start"
-              : displayFen
-            : game.fen()
-        }
-        onPieceDrop={onDrop}
-        onSquareClick={onSquareClick}
-        boardOrientation={orientation}
-        customSquareStyles={customSquareStyles}
-        customDarkSquareStyle={squareBase.dark as Record<string, string>}
-        customLightSquareStyle={squareBase.light as Record<string, string>}
-        animationDuration={pieceAnimMs}
-        arePiecesDraggable={!disabled}
-        autoPromoteToQueen={false}
-        {...(customPieces ? { customPieces } : {})}
-      />
+      <div
+        className="mx-auto"
+        style={{ width: boardWidth, height: boardWidth, maxWidth: "100%" }}
+      >
+        <Chessboard
+          boardWidth={boardWidth}
+          position={
+            serverValidated
+              ? displayFen === "start"
+                ? "start"
+                : displayFen
+              : game.fen()
+          }
+          onPieceDrop={onDrop}
+          onSquareClick={onSquareClick}
+          boardOrientation={orientation}
+          customSquareStyles={customSquareStyles}
+          customDarkSquareStyle={squareBase.dark as Record<string, string>}
+          customLightSquareStyle={squareBase.light as Record<string, string>}
+          animationDuration={pieceAnimMs}
+          arePiecesDraggable={!disabled}
+          autoPromoteToQueen={false}
+          {...(customPieces ? { customPieces } : {})}
+        />
+      </div>
       <p className="sr-only" aria-live="polite" aria-atomic="true">
         {boardStatus}
         {selectedSquare ? ` Case sélectionnée : ${selectedSquare}` : ""}

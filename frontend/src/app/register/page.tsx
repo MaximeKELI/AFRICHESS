@@ -68,8 +68,16 @@ export default function RegisterPage() {
     }
 
     const birthYear = form.birth_year ? parseInt(form.birth_year, 10) : undefined;
-    if (form.birth_year && (Number.isNaN(birthYear) || birthYear! < 1940)) {
+    const maxBirthYear = new Date().getFullYear() - 5;
+    if (
+      form.birth_year &&
+      (Number.isNaN(birthYear) || birthYear! < 1940 || birthYear! > maxBirthYear)
+    ) {
       setError(t("auth.register.error.birthYear"));
+      return;
+    }
+    if (/^\d+$/.test(form.password)) {
+      setError(t("auth.register.error.passwordNumeric"));
       return;
     }
 
@@ -139,6 +147,7 @@ export default function RegisterPage() {
             required
             minLength={8}
           />
+          <p className="text-[11px] opacity-50 -mt-2">{t("auth.register.passwordHint")}</p>
           <input
             type="password"
             placeholder={t("auth.register.passwordConfirm")}

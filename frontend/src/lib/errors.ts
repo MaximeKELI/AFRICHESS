@@ -24,6 +24,10 @@ export function formatApiError(
     return translate(locale, "errors.network");
   }
 
+  if (error.response.status === 429) {
+    return translate(locale, "errors.throttled");
+  }
+
   const data = error.response.data;
   if (error.response.status === 404) {
     const path = error.config?.url ?? "";
@@ -52,15 +56,27 @@ export function formatApiError(
     return data;
   }
 
-  if (typeof data.detail === "string") {
-    if (data.detail.includes("Plusieurs comptes")) return data.detail;
+  const detailText = Array.isArray(data.detail)
+    ? data.detail.join(" ")
+    : typeof data.detail === "string"
+      ? data.detail
+      : "";
+  if (detailText) {
+    if (detailText.includes("Plusieurs comptes")) return detailText;
     if (
-      data.detail.includes("token not valid") ||
-      data.detail.includes("Token is invalid")
+      detailText.includes("token not valid") ||
+      detailText.includes("Token is invalid")
     ) {
       return translate(locale, "errors.sessionExpired");
     }
-    return data.detail;
+    if (
+      detailText.includes("e-mail") ||
+      detailText.includes("compte") ||
+      detailText.includes("already")
+    ) {
+      return translate(locale, "errors.emailExists");
+    }
+    return detailText;
   }
 
   if (Array.isArray(data)) return data.join(" ");

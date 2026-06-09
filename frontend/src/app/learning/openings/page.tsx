@@ -79,7 +79,7 @@ export default function OpeningExplorerPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="max-w-md mx-auto w-full">
+        <div className="w-full min-w-0 max-w-md mx-auto">
           <p className="text-xs opacity-50 mb-2 text-center">{t("openings.boardHint")}</p>
           <ChessBoard
             fen={display?.fen ?? fen}

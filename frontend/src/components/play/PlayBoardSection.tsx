@@ -45,7 +45,7 @@ function PlayBoardSectionInner({
   const lastMove = lastMoveFromMoves(moves);
 
   return (
-    <div className="space-y-3 w-full">
+    <div className="space-y-3 w-full min-w-0 max-w-full">
       {showClock && (
         <GameClock
           whiteMs={whiteMs}

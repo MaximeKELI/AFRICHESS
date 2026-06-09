@@ -59,6 +59,18 @@ body {
   background-color: #B58863;
 }
 
+.chess-board-shell {
+  width: 100%;
+  min-width: 0;
+  max-width: min(100%, calc(100dvh - 10rem));
+}
+
+@media (max-width: 640px) {
+  .chess-board-shell {
+    max-width: min(100%, calc(100dvh - 8rem));
+  }
+}
+
 /* Case du roi en échec / mat */
 @keyframes king-check-blood {
   0%,

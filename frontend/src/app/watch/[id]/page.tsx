@@ -125,7 +125,8 @@ export default function WatchGamePage() {
           />
         </div>
       )}
-      <div className="grid md:grid-cols-[1fr_220px] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(200px,240px)] gap-4 lg:gap-6 items-start">
+        <div className="w-full min-w-0">
         <ChessBoard
           fen={display.fen}
           orientation="white"
@@ -133,6 +134,7 @@ export default function WatchGamePage() {
           playerColor="w"
           lastMove={display.lastMove}
         />
+        </div>
         <GameSidePanel
           moves={display.moveRows}
           captured={display.captured}

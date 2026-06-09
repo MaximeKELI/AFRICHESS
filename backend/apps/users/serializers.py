@@ -12,6 +12,21 @@ from .models import UserStats
 
 User = get_user_model()
 
+_PASSWORD_ERRORS_FR = {
+    "This password is too short. It must contain at least 8 characters.": (
+        "Le mot de passe doit contenir au moins 8 caractères."
+    ),
+    "This password is too short.": "Le mot de passe est trop court.",
+    "This password is too common.": "Ce mot de passe est trop courant (évitez 12345678, password, etc.).",
+    "This password is entirely numeric.": "Le mot de passe ne peut pas être entièrement numérique.",
+    "The password is too similar to the username.": "Le mot de passe est trop proche du nom d'utilisateur.",
+    "The password is too similar to the email address.": "Le mot de passe est trop proche de l'e-mail.",
+}
+
+
+def _password_errors_fr(messages: list[str]) -> list[str]:
+    return [_PASSWORD_ERRORS_FR.get(msg, msg) for msg in messages]
+
 
 class UserStatsSerializer(serializers.ModelSerializer):
     win_rate = serializers.ReadOnlyField()
@@ -192,16 +207,19 @@ class RegisterSerializer(serializers.ModelSerializer):
                 {"password_confirm": "Les mots de passe ne correspondent pas."}
             )
         try:
-            validate_password(data["password"])
+            validate_password(
+                data["password"],
+                user=User(username=data["username"], email=data["email"]),
+            )
         except DjangoValidationError as exc:
-            raise serializers.ValidationError({"password": list(exc.messages)})
+            raise serializers.ValidationError({"password": _password_errors_fr(list(exc.messages))})
         if User.objects.filter(username__iexact=data["username"]).exists():
             raise serializers.ValidationError(
-                {"detail": "Impossible de créer ce compte. Vérifiez vos informations."}
+                {"username": ["Ce nom d'utilisateur est déjà pris."]}
             )
         if User.objects.filter(email__iexact=data["email"]).exists():
             raise serializers.ValidationError(
-                {"detail": "Impossible de créer ce compte. Vérifiez vos informations."}
+                {"email": ["Un compte existe déjà avec cet e-mail."]}
             )
         return data
 

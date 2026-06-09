@@ -94,6 +94,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       setAccessToken(data.access);
       setRefreshToken(data.refresh);
       await get().fetchProfile();
+      if (!get().user) {
+        throw new Error(translate(get().locale, "errors.profileLoadFailed"));
+      }
     } catch (error) {
       throw new Error(formatApiError(error));
     } finally {

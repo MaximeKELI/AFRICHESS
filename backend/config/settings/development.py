@@ -15,3 +15,6 @@ REST_FRAMEWORK["DEFAULT_PERMISSION_CLASSES"] = [  # noqa: F405
 PREMIUM_DEMO_ALLOWED = config("PREMIUM_DEMO_ALLOWED", default=True, cast=bool)
 ALLOW_PUBLIC_API_DOCS = config("ALLOW_PUBLIC_API_DOCS", default=False, cast=bool)
 WS_ALLOW_QUERY_TOKEN = config("WS_ALLOW_QUERY_TOKEN", default=False, cast=bool)
+
+# Inscription / connexion : limite plus souple en local (évite blocage après tests)
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["auth"] = "200/hour"  # noqa: F405
