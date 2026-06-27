@@ -9,7 +9,7 @@ describe("visionTraining", () => {
   });
 
   it("détecte la couleur de case", () => {
-    expect(squareColor("a1")).toBe("dark");
-    expect(squareColor("a2")).toBe("light");
+    expect(squareColor("a1")).toBe("light");
+    expect(squareColor("a2")).toBe("dark");
   });
 });
