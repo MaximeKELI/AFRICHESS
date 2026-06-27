@@ -226,10 +226,33 @@ class GameAnalysis(models.Model):
     blunders_white = models.PositiveSmallIntegerField(default=0)
     blunders_black = models.PositiveSmallIntegerField(default=0)
     best_moves_json = models.JSONField(default=list)
+    summary_fr = models.TextField(blank=True)
+    key_moments_json = models.JSONField(default=list)
     evaluated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Analysis: {self.game_id}"
+
+
+class AnalysisJob(models.Model):
+    """Analyse cloud asynchrone (Celery)."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        RUNNING = "running", "Running"
+        COMPLETED = "completed", "Completed"
+        FAILED = "failed", "Failed"
+
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="analysis_jobs")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    depth = models.PositiveSmallIntegerField(default=18)
+    error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
 
 
 class MatchmakingQueue(models.Model):

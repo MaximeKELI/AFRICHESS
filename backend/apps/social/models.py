@@ -140,6 +140,42 @@ class ForumPostLike(models.Model):
         unique_together = ["user", "post"]
 
 
+class StreamerProfile(models.Model):
+    """Profil streamer (Twitch / YouTube)."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="streamer_profile"
+    )
+    twitch_username = models.CharField(max_length=80, blank=True)
+    youtube_channel_id = models.CharField(max_length=80, blank=True)
+    display_name = models.CharField(max_length=120, blank=True)
+    bio = models.TextField(blank=True)
+    is_featured = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.display_name or self.user.username
+
+
+class CoachProfile(models.Model):
+    """Coach humain — marketplace (sans Stripe Connect pour l'instant)."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="coach_profile"
+    )
+    bio = models.TextField(blank=True)
+    fide_title = models.CharField(max_length=10, blank=True)
+    hourly_rate_eur = models.PositiveIntegerField(default=25)
+    languages = models.CharField(max_length=120, default="fr,en")
+    timezone = models.CharField(max_length=40, default="UTC")
+    is_available = models.BooleanField(default=True)
+    booking_url = models.URLField(blank=True, help_text="Calendly ou lien externe")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Coach {self.user.username}"
+
+
 class ChatMessage(models.Model):
     class RoomType(models.TextChoices):
         GAME = "game", "Game"

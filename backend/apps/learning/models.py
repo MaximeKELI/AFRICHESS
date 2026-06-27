@@ -150,6 +150,120 @@ class LearningProfile(models.Model):
 
         return level_from_xp(self.xp)
 
+
+class Video(models.Model):
+    """Vidéothèque pédagogique."""
+
+    title = models.CharField(max_length=200)
+    title_en = models.CharField(max_length=200, blank=True)
+    url = models.URLField(help_text="YouTube ou Vimeo")
+    description = models.TextField(blank=True)
+    category = models.CharField(max_length=50, default="general")
+    course = models.ForeignKey(
+        Course, on_delete=models.SET_NULL, null=True, blank=True, related_name="videos"
+    )
+    is_premium = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["order", "title"]
+
+    def __str__(self):
+        return self.title
+
+
+class OpeningRepertoire(models.Model):
+    """Répertoire d'ouvertures personnel."""
+
+    class Color(models.TextChoices):
+        WHITE = "white", "White"
+        BLACK = "black", "Black"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="repertoires"
+    )
+    name = models.CharField(max_length=120)
+    color = models.CharField(max_length=10, choices=Color.choices, default=Color.WHITE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user_id} — {self.name}"
+
+
+class RepertoireLine(models.Model):
+    repertoire = models.ForeignKey(
+        OpeningRepertoire, on_delete=models.CASCADE, related_name="lines"
+    )
+    name = models.CharField(max_length=120)
+    moves_san = models.JSONField(default=list, help_text="Liste de coups SAN")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return self.name
+
+
+class StudyLine(models.Model):
+    """Ligne d'étude type Chessable (PGN / séquence de coups)."""
+
+    class Color(models.TextChoices):
+        WHITE = "white", "White"
+        BLACK = "black", "Black"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="study_lines"
+    )
+    name = models.CharField(max_length=120)
+    color = models.CharField(max_length=10, choices=Color.choices, default=Color.WHITE)
+    moves_uci = models.JSONField(default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.name
+
+
+class LineReview(models.Model):
+    """Planification spaced repetition (SM-2 simplifié)."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    line = models.ForeignKey(StudyLine, on_delete=models.CASCADE, related_name="reviews")
+    ease_factor = models.FloatField(default=2.5)
+    interval_days = models.PositiveIntegerField(default=1)
+    repetitions = models.PositiveIntegerField(default=0)
+    next_review = models.DateTimeField()
+    last_review = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ["user", "line"]
+
+
+class ClassroomSession(models.Model):
+    """Salle de cours — plateau partagé (REST, sans WebRTC)."""
+
+    host = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="classrooms_hosted"
+    )
+    code = models.CharField(max_length=8, unique=True)
+    title = models.CharField(max_length=120, blank=True)
+    current_fen = models.CharField(max_length=100, default="startpos")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Classroom {self.code}"
+
     @property
     def xp_to_next_level(self) -> int:
         from .progression import xp_for_level, xp_for_next_level
