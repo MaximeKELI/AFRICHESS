@@ -31,19 +31,19 @@
 
 | # | Fonctionnalité | Statut | Notes |
 |---|----------------|--------|-------|
-| 16 | Jeu classé multi-cadences | 🔄 | Bullet/blitz/rapid OK ; classical absent du matchmaking |
-| 17 | Jeu non classé | 🔄 | Ami + IA ; pas de seek unrated dédié |
-| 18 | Daily Chess | 🔄 | Correspondance + défi ami ; pas de pool ouvert, pas vacances |
+| 16 | Jeu classé multi-cadences | ✅ | Bullet/blitz/rapid/classical + horloges `MODE_TIME_CONFIG` |
+| 17 | Jeu non classé | ✅ | Toggle classée/amicale, champ `is_rated`, matchmaking filtré |
+| 18 | Daily Chess | 🔄 | Pool ouvert + vacances ; pas de forfeit Celery auto |
 | 19 | Puzzles quotidiens | ✅ | Daily + streak |
-| 20 | Puzzles notés | 🔄 | Rating puzzle (difficulté) ; pas d'Elo puzzle joueur |
+| 20 | Puzzles notés | ✅ | Elo puzzle joueur via `SubmitPuzzleView` + profil |
 | 21 | Puzzle Rush | 🔄 | Mode rush ; timer côté client ; limite free 3/j |
 | 22 | Puzzle Battles | ❌ | — |
 | 23 | Custom Puzzles | 🔄 | Training par thème ; pas de builder custom |
 | 24 | Analyse de partie | ✅ | Stockfish, accuracy, classifications |
-| 25 | Self Analysis | 🔄 | `/learning/analyze` PGN ; pas de board éditeur libre |
+| 25 | Self Analysis | ✅ | `/learning/analyze/board` — éditeur FEN + Stockfish |
 | 26 | Système de Ligues | ✅ | Wood → Legend, saisons |
-| 27 | Tournois Swiss | 🔄 | 1 ronde auto ; pas d'avancement multi-rondes |
-| 28 | Tournois Arena | 🔄 | Pairing initial ; pas de re-pairing continu |
+| 27 | Tournois Swiss | 🔄 | Avancement multi-rondes auto ; pairing simplifié |
+| 28 | Tournois Arena | 🔄 | Re-pairing après chaque partie ; pas de WS live |
 | 29 | Tournois Daily | ❌ | — |
 | 30 | Clubs / Équipes | 🔄 | CRUD + join ; pas chat club ni events |
 | 31 | Vote Chess | ❌ | — |
@@ -51,8 +51,8 @@
 | 33 | Odds Chess | ❌ | — |
 | 34 | Simuls | ❌ | — |
 | 35 | Explorateur d'ouvertures | 🔄 | `/learning/openings` + lookup API |
-| 36 | Vision Training | ❌ | — |
-| 37 | Solo Chess | ❌ | — |
+| 36 | Vision Training | ✅ | `/training/vision` — coordonnées + couleur cases |
+| 37 | Solo Chess | ✅ | `/training/solo` — 4 niveaux capture-only |
 
 ---
 
