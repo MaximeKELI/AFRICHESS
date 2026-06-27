@@ -1,7 +1,6 @@
 """Coach personnalisé — conseils automatiques en français."""
 
 from apps.puzzles.models import PuzzleAttempt
-from apps.users.models import UserStats
 
 from .models import LearningProfile, UserProgress
 
@@ -39,13 +38,12 @@ def generate_coach_tips(user) -> list[dict]:
                 "priority": 3,
             })
 
-    # Thèmes faibles via tentatives ratées
     failed = (
         PuzzleAttempt.objects.filter(user=user, solved=False)
         .select_related("puzzle")
         .order_by("-created_at")[:20]
     )
-    theme_miss = {}
+    theme_miss: dict[str, int] = {}
     for att in failed:
         for theme in att.puzzle.themes or []:
             theme_miss[theme] = theme_miss.get(theme, 0) + 1
@@ -58,7 +56,6 @@ def generate_coach_tips(user) -> list[dict]:
                 "priority": 1,
             })
 
-    # Progression cours
     stalled = UserProgress.objects.filter(user=user, progress_percent__lt=100, progress_percent__gt=0)
     if stalled.count() >= 2:
         tips.append({
@@ -74,15 +71,28 @@ def generate_coach_tips(user) -> list[dict]:
             "priority": 3,
         })
 
-    # Plan d'entraînement hebdomadaire
+    tips.sort(key=lambda t: t["priority"])
+    return tips[:5]
+
+
+def generate_training_plan(user) -> list[dict]:
+    stats = getattr(user, "stats", None)
+    profile = LearningProfile.objects.filter(user=user).first()
+    stalled = UserProgress.objects.filter(user=user, progress_percent__lt=100, progress_percent__gt=0)
+
     plan = []
     if stats and stats.games_played >= 3:
         plan.append({"day": "Lun–Mer", "focus": "2 parties rapides + 5 puzzles"})
     if profile and profile.puzzles_solved_learning < 10:
         plan.append({"day": "Jeu", "focus": "10 puzzles tactiques"})
-    if stalled.count() if 'stalled' in dir() else UserProgress.objects.filter(user=user, progress_percent__lt=100, progress_percent__gt=0).count() >= 1:
+    if stalled.exists():
         plan.append({"day": "Ven", "focus": "1 leçon cours AFRICHESS"})
     plan.append({"day": "Sam", "focus": "Revue d'une partie analysée"})
+    return plan[:4]
 
-    tips.sort(key=lambda t: t["priority"])
-    return {"tips": tips[:5], "training_plan": plan[:4]}
+
+def generate_coach_payload(user) -> dict:
+    return {
+        "tips": generate_coach_tips(user),
+        "training_plan": generate_training_plan(user),
+    }

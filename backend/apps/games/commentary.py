@@ -124,6 +124,7 @@ def generate_move_comment(
     move_number: int,
     eval_before: Optional[float] = None,
     eval_after: Optional[float] = None,
+    best_san: Optional[str] = None,
 ) -> str:
     """Génère un commentaire court en français pour un coup."""
     board = chess.Board(fen_before)
