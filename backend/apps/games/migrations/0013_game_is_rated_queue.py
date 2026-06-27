@@ -1,9 +1,11 @@
+from django.conf import settings
 from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
     dependencies = [
         ("games", "0012_alter_game_variant"),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
@@ -39,7 +41,7 @@ class Migration(migrations.Migration):
                     "user",
                     models.OneToOneField(
                         on_delete=models.deletion.CASCADE,
-                        to="users.user",
+                        to=settings.AUTH_USER_MODEL,
                     ),
                 ),
             ],
