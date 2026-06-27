@@ -156,7 +156,7 @@ export const gamesApi = {
   undo: (id: string) => api.post(`/games/${id}/undo/`),
   matchmaking: (
     mode: string,
-    opts?: { is_timed?: boolean; time_minutes?: number | null }
+    opts?: { is_timed?: boolean; time_minutes?: number | null; is_rated?: boolean }
   ) => api.post("/games/matchmaking/", { mode, ...opts }),
   leaveQueue: () => api.delete("/games/matchmaking/"),
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),
@@ -173,6 +173,9 @@ export const gamesApi = {
   correspondence: () => api.get("/games/correspondence/"),
   correspondenceChallenge: (username: string, days_per_move = 3, color = "white") =>
     api.post("/games/correspondence/challenge/", { username, days_per_move, color }),
+  correspondenceSeek: (days_per_move = 3) =>
+    api.post("/games/correspondence/seek/", { days_per_move }),
+  leaveCorrespondenceQueue: () => api.delete("/games/correspondence/seek/"),
   openingLookup: (moves: string[], lang?: string) =>
     api.get("/games/openings/lookup/", {
       params: { moves: moves.join(","), lang },

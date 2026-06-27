@@ -178,7 +178,7 @@ export function useMatchmakingWebSocket(
   enabled: boolean,
   mode: string,
   onMatch: (gameId: string, roomId: string) => void,
-  timeOpts?: { isTimed: boolean; timeMinutes: number }
+  timeOpts?: { isTimed: boolean; timeMinutes: number; isRated?: boolean }
 ) {
   const wsRef = useRef<WebSocket | null>(null);
   const [searching, setSearching] = useState(false);
@@ -203,7 +203,13 @@ export function useMatchmakingWebSocket(
           event: "rejoindre_file",
           mode,
           is_timed: timeOpts?.isTimed ?? true,
-          time_minutes: timeOpts?.isTimed ? timeOpts.timeMinutes : null,
+          is_rated: timeOpts?.isRated ?? true,
+          time_minutes:
+            timeOpts?.isRated && timeOpts?.isTimed
+              ? null
+              : timeOpts?.isTimed
+                ? timeOpts.timeMinutes
+                : null,
         })
       );
     };

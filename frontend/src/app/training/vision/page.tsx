@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { Chessboard } from "react-chessboard";
 import { useTranslation } from "@/hooks/useTranslation";
-import { randomCoordinate, squareColor, isValidSquare } from "@/lib/visionTraining";
+import { randomCoordinate, squareColor } from "@/lib/visionTraining";
 import { getBoardTheme, getThemedSquareStyles } from "@/lib/boardThemes";
 import { usePreferencesStore } from "@/store/preferences";
 

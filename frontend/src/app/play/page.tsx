@@ -24,6 +24,7 @@ import {
 } from "@/lib/chessDisplay";
 import { usePreferencesStore } from "@/store/preferences";
 import { formatTimeControlLabel } from "@/lib/timeControl";
+import { MODE_CLOCK_LABEL } from "@/lib/clock";
 import {
   DEFAULT_TIME_MINUTES,
   type TimeMinutes,
@@ -90,6 +91,7 @@ function PlayContent() {
   const [variant, setVariant] = useState<GameVariant>("standard");
   const [aiDefaultSet, setAiDefaultSet] = useState(false);
   const [useClock, setUseClock] = useState(true);
+  const [isRated, setIsRated] = useState(true);
   const [timeMinutes, setTimeMinutes] = useState<TimeMinutes>(DEFAULT_TIME_MINUTES);
   const [userElo, setUserElo] = useState<number | null>(null);
   const [aiElo, setAiElo] = useState<number | null>(null);
@@ -116,9 +118,10 @@ function PlayContent() {
   const headerAiElo = isVsAi ? (gameData.ai_target_elo ?? aiElo ?? aiEloChoice) : aiEloChoice;
   const headerAi = pickAiAvatar(headerAiElo);
   const timeOpts = useMemo(
-    () => ({ isTimed: useClock, timeMinutes }),
-    [useClock, timeMinutes]
+    () => ({ isTimed: useClock, timeMinutes, isRated }),
+    [useClock, timeMinutes, isRated]
   );
+  const ratedClockLabel = MODE_CLOCK_LABEL[mode] ?? "10+0";
 
   const panelDisplay = useMemo(() => {
     if (gameData.moves && gameData.moves.length > 0) {
