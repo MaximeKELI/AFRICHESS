@@ -65,15 +65,14 @@ class BurstResult:
 
 
 @override_settings(REST_FRAMEWORK=_NO_THROTTLE)
-class ThroughputCapacityTests(TestCase):
+class ThroughputCapacityTests(TransactionTestCase):
     """Mesure le débit API Django/DRF sur une fenêtre de 1 seconde."""
 
     burst_seconds = 1.0
 
-    @classmethod
-    def setUpTestData(cls):
-        cls.users = [
-            User.objects.create_user(username=f"cap_{i}", email=f"cap_{i}@bench.local", password="x")
+    def setUp(self):
+        self.users = [
+            User.objects.create_user(username=f"cap_{i}_{id(self)}", email=f"cap_{i}@bench.local", password="x")
             for i in range(80)
         ]
 
@@ -133,8 +132,6 @@ class ThroughputCapacityTests(TestCase):
             user = self.users[idx % len(self.users)]
             client.force_authenticate(user=user)
             resp = client.post("/api/games/ai/", {"mode": "blitz", "color": "white"}, format="json")
-            if resp.status_code not in (200, 201) and idx == 0:
-                print(f"    [debug] game start: {resp.status_code} {getattr(resp, 'data', resp.content[:120])}")
             return resp.status_code in (200, 201)
 
         result = self._run_burst("Parties démarrées vs IA/s", start, pool_size=40)
@@ -180,7 +177,7 @@ class ThroughputCapacityTests(TestCase):
 
 
 @override_settings(REST_FRAMEWORK=_NO_THROTTLE)
-class InProcessServiceCapacityTests(TestCase):
+class InProcessServiceCapacityTests(TransactionTestCase):
     """Plafond in-process (service Django, sans HTTP)."""
 
     @patch("apps.games.services.ChessEngineService")
