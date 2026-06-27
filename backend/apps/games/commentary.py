@@ -166,9 +166,10 @@ def generate_move_comment(
             if gain >= 0.8:
                 return pick(STRONG_PLAYER)
             if gain <= -1.2:
+                hint = f" Mieux valait {best_san}." if best_san else ""
                 return (
                     f"{pick(WEAK_PLAYER)} La position s'est dégradée d'environ "
-                    f"{abs(gain):.1f} pions."
+                    f"{abs(gain):.1f} pions.{hint}"
                 )
         else:
             if gain >= 0.8:
