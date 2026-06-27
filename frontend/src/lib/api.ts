@@ -240,6 +240,8 @@ export const socialApi = {
   forumComment: (id: number, body: string) =>
     api.post(`/social/forum/${id}/comment/`, { body }),
   forumLike: (id: number) => api.post(`/social/forum/${id}/like/`),
+  createForumPost: (data: { title: string; body: string; category?: string }) =>
+    api.post("/social/forum/", data),
   africanPlayers: () => api.get("/users/featured/african/"),
   directMessages: (username: string) => api.get(`/social/messages/${username}/`),
   sendDirectMessage: (username: string, message: string) =>

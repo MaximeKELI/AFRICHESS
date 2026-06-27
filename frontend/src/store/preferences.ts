@@ -33,15 +33,25 @@ interface PreferencesState {
   boardTheme: BoardThemeId;
   pieceSet: PieceSetId;
   aiCommentsEnabled: boolean;
+  zenMode: boolean;
   setBoardTheme: (id: BoardThemeId) => void;
   setPieceSet: (id: PieceSetId) => void;
   setAiCommentsEnabled: (enabled: boolean) => void;
+  setZenMode: (enabled: boolean) => void;
+}
+
+const ZEN_KEY = "zen_mode";
+
+function readZenMode(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(ZEN_KEY) === "1";
 }
 
 export const usePreferencesStore = create<PreferencesState>((set) => ({
   boardTheme: readBoardTheme(),
   pieceSet: readPieceSet(),
   aiCommentsEnabled: readAiComments(),
+  zenMode: readZenMode(),
   setBoardTheme: (id) => {
     localStorage.setItem(BOARD_THEME_KEY, id);
     set({ boardTheme: id });
@@ -53,5 +63,12 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
   setAiCommentsEnabled: (enabled) => {
     localStorage.setItem(AI_COMMENTS_KEY, enabled ? "1" : "0");
     set({ aiCommentsEnabled: enabled });
+  },
+  setZenMode: (enabled) => {
+    localStorage.setItem(ZEN_KEY, enabled ? "1" : "0");
+    if (typeof document !== "undefined") {
+      document.documentElement.classList.toggle("zen-mode", enabled);
+    }
+    set({ zenMode: enabled });
   },
 }));

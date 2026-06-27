@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { UserAvatar } from "@/components/profile/UserAvatar";
-import { Menu, Moon, Shield, Sun, Wifi, WifiOff, X } from "lucide-react";
+import { usePreferencesStore } from "@/store/preferences";
+import { Menu, Moon, Shield, Sun, Wifi, WifiOff, X, Leaf } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 
 const NAV_LINKS = [
@@ -30,6 +31,7 @@ const NAV_LINKS = [
 export function Navbar() {
   const { user, locale, setLocale, darkMode, toggleDarkMode, lowBandwidth, setLowBandwidth, logout } =
     useAuthStore();
+  const { zenMode, setZenMode } = usePreferencesStore();
   const { t } = useTranslation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -80,6 +82,16 @@ export function Navbar() {
 
           <button onClick={toggleDarkMode} className="p-2 rounded-lg hover:bg-white/10" aria-label={t("nav.theme")}>
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+
+          <button
+            onClick={() => setZenMode(!zenMode)}
+            className={`p-2 rounded-lg hover:bg-white/10 ${zenMode ? "text-africhess-green" : ""}`}
+            title={t("nav.zenMode")}
+            aria-label={t("nav.zenMode")}
+            aria-pressed={zenMode}
+          >
+            <Leaf size={18} />
           </button>
 
           <button

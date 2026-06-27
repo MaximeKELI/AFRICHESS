@@ -101,3 +101,8 @@ body {
   animation: none !important;
   transition: none !important;
 }
+
+/* Mode Zen — masque ratings et distractions */
+.zen-mode .hide-in-zen {
+  display: none !important;
+}

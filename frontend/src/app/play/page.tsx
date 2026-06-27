@@ -56,6 +56,10 @@ import {
 interface GameState {
   fen: string;
   moves?: ApiMove[];
+  pgn?: string;
+  result?: string;
+  white_player?: { username: string };
+  black_player?: { username: string };
   white_time_ms?: number;
   black_time_ms?: number;
   increment_ms?: number;

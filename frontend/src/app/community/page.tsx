@@ -7,7 +7,7 @@ import { InlineAlert } from "@/components/ui/InlineAlert";
 import Link from "next/link";
 import { useTranslation } from "@/hooks/useTranslation";
 import { formatLocaleDate } from "@/lib/i18n/labels";
-import { Heart, MessageCircle } from "lucide-react";
+import { ForumCreateForm } from "@/components/community/ForumCreateForm";
 
 interface ForumPost {
   id: number;
@@ -27,6 +27,12 @@ export default function CommunityPage() {
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const loadForum = () => {
+    socialApi.forum({ featured: true }).then((forumRes) => {
+      setPosts(Array.isArray(forumRes.data) ? forumRes.data : forumRes.data.results ?? []);
+    });
+  };
 
   useEffect(() => {
     setLoading(true);
