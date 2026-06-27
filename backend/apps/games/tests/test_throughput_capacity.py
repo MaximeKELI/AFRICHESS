@@ -120,7 +120,7 @@ class ThroughputCapacityTests(TestCase):
         self.assertGreater(result.success, 0)
         self.assertGreater(result.per_second, 10, result.report())
 
-    @patch("apps.games.views.ChessEngineService")
+    @patch("apps.games.services.ChessEngineService")
     def test_simultaneous_games_started_per_second(self, mock_engine_cls):
         """Joueurs simultanés : démarrage de parties vs IA (moteur mocké)."""
         mock_engine = MagicMock()
@@ -136,18 +136,18 @@ class ThroughputCapacityTests(TestCase):
         self.assertGreater(result.success, 0)
         print(f"  → Joueurs simultanés (démarrage partie) : ~{result.per_second:.0f}/s")
 
-    @patch("apps.games.views.ChessEngineService")
     @patch("apps.games.services.ChessEngineService")
-    def test_simultaneous_moves_per_second(self, mock_svc_engine, mock_view_engine):
+    def test_simultaneous_moves_per_second(self, mock_engine_cls):
         """Coups joués en parallèle sur des parties actives."""
-        for mock in (mock_svc_engine, mock_view_engine):
-            mock.return_value.get_best_move.return_value = EngineMove(uci="e7e5", san="e5")
-            mock.return_value.apply_move.return_value = (
-                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
-                "e4",
-                False,
-            )
-            mock.return_value.analyze_position.return_value = 0.0
+        mock_engine = MagicMock()
+        mock_engine.get_best_move.return_value = EngineMove(uci="e7e5", san="e5")
+        mock_engine.apply_move.return_value = (
+            "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+            "e4",
+            False,
+        )
+        mock_engine.analyze_position.return_value = 0.0
+        mock_engine_cls.return_value = mock_engine
 
         svc = GameService()
         games = []
