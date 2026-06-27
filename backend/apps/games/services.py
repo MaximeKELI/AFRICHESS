@@ -191,21 +191,26 @@ class GameService:
         is_timed=True,
         time_minutes=None,
         is_rated=True,
+        starting_fen=None,
+        odds_preset="",
     ):
         timed, white_ms, black_ms, inc_ms, tcm = resolve_time_fields(
             is_timed, time_minutes
         )
+        fen = starting_fen or "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         game = Game.objects.create(
             white_player=white,
             black_player=black,
             mode=mode,
             status=Game.Status.ACTIVE,
+            fen=fen,
             is_timed=timed,
             time_control_minutes=tcm,
             white_time_ms=white_ms,
             black_time_ms=black_ms,
             increment_ms=inc_ms,
             is_rated=is_rated,
+            odds_preset=odds_preset or "",
             started_at=timezone.now(),
             turn_started_at=timezone.now() if timed else None,
         )

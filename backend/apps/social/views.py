@@ -171,7 +171,19 @@ class ChallengeFriendView(APIView):
         if not _are_friends(request.user, opponent):
             return Response({"error": "Vous devez être amis"}, status=400)
 
-        game = GameService().create_friend_game(request.user, opponent, mode=mode)
+        odds = request.data.get("odds", "none")
+        is_rated = request.data.get("is_rated", True)
+        from apps.games.odds import fen_for_odds
+
+        starting_fen = fen_for_odds(odds)
+        game = GameService().create_friend_game(
+            request.user,
+            opponent,
+            mode=mode,
+            is_rated=bool(is_rated),
+            starting_fen=starting_fen,
+            odds_preset=odds if odds and odds != "none" else "",
+        )
         Notification.objects.create(
             user=opponent,
             type=Notification.Type.GAME_INVITE,
