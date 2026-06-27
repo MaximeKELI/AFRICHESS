@@ -19,7 +19,7 @@ from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.db import close_old_connections
-from django.test import TestCase, override_settings
+from django.test import TransactionTestCase, override_settings
 from rest_framework.test import APIClient
 
 from apps.games.engine import EngineMove
@@ -130,8 +130,11 @@ class ThroughputCapacityTests(TestCase):
         mock_engine_cls.return_value = mock_engine
 
         def start(client: APIClient, idx: int) -> bool:
-            client.force_authenticate(user=self.users[idx % len(self.users)])
+            user = self.users[idx % len(self.users)]
+            client.force_authenticate(user=user)
             resp = client.post("/api/games/ai/", {"mode": "blitz", "color": "white"}, format="json")
+            if resp.status_code not in (200, 201) and idx == 0:
+                print(f"    [debug] game start: {resp.status_code} {getattr(resp, 'data', resp.content[:120])}")
             return resp.status_code in (200, 201)
 
         result = self._run_burst("Parties démarrées vs IA/s", start, pool_size=40)
