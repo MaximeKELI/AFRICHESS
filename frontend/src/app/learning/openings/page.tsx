@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Chess } from "chess.js";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { gamesApi } from "@/lib/api";
 import { useTranslation } from "@/hooks/useTranslation";
-import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
 import { openingNameFromMoves } from "@/lib/openings";
 import { BookOpen } from "lucide-react";
 
@@ -15,11 +15,25 @@ interface OpeningInfo {
   path: string;
 }
 
+const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+function fenFromSans(sans: string[]): string {
+  const g = new Chess();
+  for (const san of sans) {
+    try {
+      g.move(san);
+    } catch {
+      break;
+    }
+  }
+  return g.fen();
+}
+
 export default function OpeningExplorerPage() {
   const { t, locale } = useTranslation();
   const [moves, setMoves] = useState<string[]>([]);
   const [info, setInfo] = useState<OpeningInfo | null>(null);
-  const [fen, setFen] = useState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+  const [fen, setFen] = useState(START_FEN);
 
   const refresh = useCallback(
     (line: string[]) => {
@@ -35,30 +49,16 @@ export default function OpeningExplorerPage() {
 
   useEffect(() => {
     refresh(moves);
+    setFen(fenFromSans(moves));
   }, [moves, refresh]);
 
-  const display = buildGameDisplayFromUciList(fen, []);
-
   const playSan = (san: string) => {
-    setMoves((prev) => {
-      const next = [...prev, san];
-      refresh(next);
-      return next;
-    });
+    setMoves((prev) => [...prev, san]);
   };
 
-  const reset = () => {
-    setMoves([]);
-    setFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-  };
+  const reset = () => setMoves([]);
 
-  const pop = () => {
-    setMoves((prev) => {
-      const next = prev.slice(0, -1);
-      refresh(next);
-      return next;
-    });
-  };
+  const pop = () => setMoves((prev) => prev.slice(0, -1));
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
@@ -80,13 +80,7 @@ export default function OpeningExplorerPage() {
 
       <div className="grid md:grid-cols-2 gap-6">
         <div className="w-full min-w-0 max-w-md mx-auto">
-          <p className="text-xs opacity-50 mb-2 text-center">{t("openings.boardHint")}</p>
-          <ChessBoard
-            fen={display?.fen ?? fen}
-            orientation="white"
-            playerColor="w"
-            playSoundOnFenChange={false}
-          />
+          <ChessBoard fen={fen} orientation="white" playerColor="w" playSoundOnFenChange={false} disabled />
         </div>
 
         <div className="space-y-4">

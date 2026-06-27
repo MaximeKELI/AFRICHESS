@@ -11,6 +11,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { displayCountry } from "@/lib/countries";
 import { countryFlag } from "@/lib/worldCountries";
 import { Users, ArrowLeft } from "lucide-react";
+import { ClubChat } from "@/components/social/ClubChat";
 
 interface ClubDetail {
   id: number;
@@ -92,7 +93,10 @@ export default function ClubDetailPage() {
 
           {user ? (
             club.is_member ? (
-              <p className="text-sm text-africhess-green">{t("clubs.alreadyMember")}</p>
+              <div className="space-y-6">
+                <p className="text-sm text-africhess-green">{t("clubs.alreadyMember")}</p>
+                <ClubChat slug={slug} />
+              </div>
             ) : (
               <button
                 type="button"
