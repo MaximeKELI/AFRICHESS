@@ -182,6 +182,15 @@ export const gamesApi = {
     api.get("/games/openings/lookup/", {
       params: { moves: moves.join(","), lang },
     }),
+  simulList: () => api.get("/games/simul/"),
+  createSimul: (title: string, max_boards = 10) =>
+    api.post("/games/simul/", { title, max_boards }),
+  joinSimul: (id: number) => api.post(`/games/simul/${id}/join/`),
+  createVoteGame: (club_white: string, club_black: string, mode = "rapid") =>
+    api.post("/games/vote/create/", { club_white, club_black, mode }),
+  castVote: (gameId: string, move_uci: string) =>
+    api.post(`/games/${gameId}/vote/`, { move_uci }),
+  applyVote: (gameId: string) => api.post(`/games/${gameId}/vote/apply/`),
 };
 
 export const statsApi = {
@@ -218,6 +227,18 @@ export const puzzlesApi = {
     api.post(`/puzzles/${id}/submit/`, { moves, time_seconds }),
   leaderboard: () => api.get("/puzzles/leaderboard/"),
   rush: (count = 15) => api.get("/puzzles/rush/", { params: { count } }),
+  rushStart: () => api.post("/puzzles/rush/start/"),
+  rushSubmit: (sessionId: number, moves: string[], time_seconds: number) =>
+    api.post(`/puzzles/rush/${sessionId}/submit/`, { moves, time_seconds }),
+  rushLeaderboard: () => api.get("/puzzles/rush/leaderboard/"),
+  battleQueue: () => api.post("/puzzles/battle/queue/"),
+  battleLeave: () => api.delete("/puzzles/battle/queue/"),
+  battleGet: (id: number) => api.get(`/puzzles/battle/${id}/`),
+  battleSubmit: (id: number, moves: string[], time_seconds: number) =>
+    api.post(`/puzzles/battle/${id}/`, { moves, time_seconds }),
+  createCustom: (data: { fen: string; solution_moves: string[]; themes?: string[]; is_public?: boolean }) =>
+    api.post("/puzzles/custom/", data),
+  customMine: () => api.get("/puzzles/custom/"),
   streak: () => api.get("/puzzles/streak/"),
 };
 
@@ -227,8 +248,8 @@ export const socialApi = {
   requestFriend: (username: string) =>
     api.post("/social/friends/request/", { username }),
   acceptFriend: (id: number) => api.post(`/social/friends/${id}/accept/`),
-  challengeFriend: (username: string, mode = "blitz") =>
-    api.post("/social/friends/challenge/", { username, mode }),
+  challengeFriend: (username: string, mode = "blitz", opts?: { odds?: string; is_rated?: boolean }) =>
+    api.post("/social/friends/challenge/", { username, mode, ...opts }),
   chatHistory: (roomType: string, roomId: string) =>
     api.get(`/social/chat/${roomType}/${roomId}/`),
   sendChat: (roomType: string, roomId: string, message: string) =>
@@ -237,6 +258,11 @@ export const socialApi = {
     api.get("/social/clubs/", { params: { country } }),
   club: (slug: string) => api.get(`/social/clubs/${slug}/`),
   joinClub: (slug: string) => api.post(`/social/clubs/${slug}/join/`),
+  clubEvents: (slug: string) => api.get(`/social/clubs/${slug}/events/`),
+  createClubEvent: (slug: string, data: { title: string; description?: string; event_type?: string; starts_at?: string }) =>
+    api.post(`/social/clubs/${slug}/events/`, data),
+  clubArena: (slug: string, opponent_club: string, mode = "blitz") =>
+    api.post(`/social/clubs/${slug}/arena/`, { opponent_club, mode }),
   createClub: (data: { name: string; description?: string; country?: string }) =>
     api.post("/social/clubs/", data),
   forum: (params?: { featured?: boolean; category?: string }) =>
