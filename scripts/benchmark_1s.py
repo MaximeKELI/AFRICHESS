@@ -122,12 +122,23 @@ async def main():
 
     connector = aiohttp.TCPConnector(limit=args.workers + 20)
     async with aiohttp.ClientSession(connector=connector) as session:
-        # 1) Utilisateurs actifs (navigation API)
+        # Sonde : endpoint public
+        async with session.get(f"{args.base}/api/puzzles/daily/") as resp:
+            daily_ok = resp.status == 200
+
+        # 1) Utilisateurs actifs (navigation API authentifiée)
         ok, err, dur = await burst(
             session, args.base, "GET", "/api/games/bots/", tokens, args.workers, args.seconds
         )
-        users_per_s = ok / dur
-        print(f"👤 Utilisateurs (req API auth/s) : {ok} OK, {err} err → {users_per_s:.1f}/s")
+        if ok == 0 and daily_ok:
+            ok, err, dur = await burst(
+                session, args.base, "GET", "/api/puzzles/daily/", tokens, args.workers, args.seconds
+            )
+            label = "Utilisateurs (puzzle daily/s)"
+        else:
+            label = "Utilisateurs (req API auth/s)"
+        users_per_s = ok / dur if dur else 0
+        print(f"👤 {label} : {ok} OK, {err} err → {users_per_s:.1f}/s")
 
         # 2) Parties démarrées vs IA
         ok2, err2, dur2 = await burst(
@@ -140,16 +151,19 @@ async def main():
             args.seconds,
             body_factory=lambda _i: {"mode": "blitz", "color": "white"},
         )
-        games_per_s = ok2 / dur2
+        games_per_s = ok2 / dur2 if dur2 else 0
         print(f"♟️  Parties démarrées vs IA/s    : {ok2} OK, {err2} err → {games_per_s:.1f}/s")
 
+    active_players = min(users_per_s * 5, games_per_s * 15) if games_per_s else users_per_s * 5
     print("\n" + "═" * 50)
-    print(f"  EN 1 SECONDE (backend actuel, {args.workers} workers)")
+    print(f"  EN 1 SECONDE (backend HTTP, {args.workers} workers)")
     print(f"  · ~{users_per_s:.0f} requêtes utilisateur/s")
     print(f"  · ~{games_per_s:.0f} parties simultanées démarrées/s")
-    print(f"  · Joueurs actifs estimés (1 req/5s + 1 partie) : ~{min(users_per_s * 5, games_per_s * 10):.0f}")
+    print(f"  · Joueurs actifs estimés : ~{active_players:.0f}")
     print("═" * 50)
-    print("\nNote : Docker local 1 processus Daphne — production nécessite scaling horizontal.")
+    print("\nTest unitaire Django (plus précis, moteur mocké) :")
+    print("  docker compose exec backend python manage.py test \\")
+    print("    apps.games.tests.test_throughput_capacity --keepdb -v 2")
 
 
 if __name__ == "__main__":
