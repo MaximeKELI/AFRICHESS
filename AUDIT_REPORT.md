@@ -33,24 +33,24 @@
 |---|----------------|--------|-------|
 | 16 | Jeu classé multi-cadences | ✅ | Bullet/blitz/rapid/classical + horloges `MODE_TIME_CONFIG` |
 | 17 | Jeu non classé | ✅ | Toggle classée/amicale, champ `is_rated`, matchmaking filtré |
-| 18 | Daily Chess | 🔄 | Pool ouvert + vacances ; pas de forfeit Celery auto |
+| 18 | Daily Chess | ✅ | Pool + vacances + forfeit Celery (`forfeit_overdue_correspondence_games`) |
 | 19 | Puzzles quotidiens | ✅ | Daily + streak |
 | 20 | Puzzles notés | ✅ | Elo puzzle joueur via `SubmitPuzzleView` + profil |
-| 21 | Puzzle Rush | 🔄 | Mode rush ; timer côté client ; limite free 3/j |
-| 22 | Puzzle Battles | ❌ | — |
-| 23 | Custom Puzzles | 🔄 | Training par thème ; pas de builder custom |
+| 21 | Puzzle Rush | ✅ | Sessions serveur `PuzzleRushStartView` / `rushSubmit`, timer sync |
+| 22 | Puzzle Battles | ✅ | File d'attente + combat 1v1 (`PuzzleBattle`) |
+| 23 | Custom Puzzles | ✅ | Builder `/puzzles/build`, API `CustomPuzzleCreateView` |
 | 24 | Analyse de partie | ✅ | Stockfish, accuracy, classifications |
 | 25 | Self Analysis | ✅ | `/learning/analyze/board` — éditeur FEN + Stockfish |
 | 26 | Système de Ligues | ✅ | Wood → Legend, saisons |
-| 27 | Tournois Swiss | 🔄 | Avancement multi-rondes auto ; pairing simplifié |
-| 28 | Tournois Arena | 🔄 | Re-pairing après chaque partie ; pas de WS live |
-| 29 | Tournois Daily | ❌ | — |
-| 30 | Clubs / Équipes | 🔄 | CRUD + join ; pas chat club ni events |
-| 31 | Vote Chess | ❌ | — |
-| 32 | Club vs Club Arena | ❌ | — |
-| 33 | Odds Chess | ❌ | — |
-| 34 | Simuls | ❌ | — |
-| 35 | Explorateur d'ouvertures | 🔄 | `/learning/openings` + lookup API |
+| 27 | Tournois Swiss | 🔄 | Multi-rondes auto ; pairing simplifié |
+| 28 | Tournois Arena | 🔄 | Re-pairing ; pas de WS live dédié |
+| 29 | Tournois Daily | ✅ | Format `daily`, `days_per_move`, parties correspondence |
+| 30 | Clubs / Équipes | ✅ | CRUD + chat club REST + événements `ClubEvent` |
+| 31 | Vote Chess | 🔄 | MVP create/vote/apply ; flow adversaire simplifié |
+| 32 | Club vs Club Arena | ✅ | Format `club_arena`, `ClubArenaChallengeView` |
+| 33 | Odds Chess | ✅ | Presets FEN, défi ami avec handicap |
+| 34 | Simuls | ✅ | `SimulSession`, list/create/join `/simul` |
+| 35 | Explorateur d'ouvertures | 🔄 | Lookup API + navigation coups chess.js (pas master DB) |
 | 36 | Vision Training | ✅ | `/training/vision` — coordonnées + couleur cases |
 | 37 | Solo Chess | ✅ | `/training/solo` — 4 niveaux capture-only |
 

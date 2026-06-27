@@ -27,9 +27,34 @@
 | **Solo Chess** | `/training/solo`, `soloChess.ts` | 4 niveaux |
 | **Self-analysis board** | `/learning/analyze/board` | Éditeur + eval Stockfish |
 
+---
+
+## Fonctionnalités implémentées — Niveau 2 (complément)
+
+| Feature | Fichiers | Description |
+|---------|----------|-------------|
+| **Daily forfeit Celery** | `games/tasks.py`, `settings/base.py` | Forfait auto parties correspondence en retard |
+| **Puzzle Rush sessions** | `puzzles/rush_battle.py`, `PuzzleRushSession`, frontend rush API | Timer serveur, score/misses persistés |
+| **Puzzle Battles** | `PuzzleBattle`, `PuzzleBattleQueue`, onglet Combat | File + combat 1v1 |
+| **Custom puzzles** | `CustomPuzzleCreateView`, `/puzzles/build` | Builder FEN + solution |
+| **Tournois Daily** | `Tournament.Format.DAILY`, migration `0006` | Parties correspondence en tournoi |
+| **Club chat & events** | `ClubChat`, `ClubEvent`, page club | Chat REST + calendrier événements |
+| **Club vs Club Arena** | `club_arena` format, `ClubArenaChallengeView` | Défi inter-clubs |
+| **Vote Chess MVP** | `VoteGame`, `GameVote`, `/play/vote` | Création + votes par coup |
+| **Odds Chess** | `games/odds.py`, défi ami | Handicaps matériels (cavalier→dame) |
+| **Simultanées** | `SimulSession`, `/simul` | Hôte + rejoindre |
+| **Openings explorer fix** | `learning/openings/page.tsx` | FEN avance au clic sur un coup |
+
+### Migrations Level 2
+
+- `games/0014_level2_extended.py` — vote, simul, odds fields
+- `puzzles/0004_level2_features.py` — rush, battle, custom puzzle fields
+- `social/0005_clubevent.py`
+- `tournaments/0006_level2_daily_club.py`
+
 ### Tests ajoutés
 
-- `visionTraining.test.ts`, `soloChess.test.ts`
+- `backend/apps/games/tests/test_odds.py`
 
 ---
 
