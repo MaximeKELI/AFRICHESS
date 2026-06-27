@@ -11,8 +11,8 @@ class OddsPresetsTests(SimpleTestCase):
 
     def test_queen_has_fen(self):
         fen = fen_for_odds("queen")
-        self.assertIn("fen_for_odds", dir())
-        self.assertTrue(fen and " " in fen)
+        self.assertIsNotNone(fen)
+        self.assertIn("rnb1kbnr", fen)
 
     def test_all_presets_defined(self):
         self.assertIn("knight", ODDS_PRESETS)
