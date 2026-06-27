@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { gamesApi } from "@/lib/api";
+import { usersApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { formatApiError } from "@/lib/errors";
