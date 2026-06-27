@@ -102,8 +102,8 @@ class TournamentEngine:
         rnd = TournamentRound.objects.create(
             tournament=tournament, round_number=round_no
         )
-        svc = GameService()
         paired = set()
+        for i, sa in enumerate(standings):
             if sa.user_id in paired:
                 continue
             opponent = None
@@ -156,7 +156,7 @@ class TournamentEngine:
 
         if tournament.format == Tournament.Format.SWISS:
             self._maybe_advance_swiss(tournament)
-        elif tournament.format == Tournament.Format.ARENA:
+        if tournament.format in (Tournament.Format.ARENA, Tournament.Format.CLUB_ARENA):
             self._arena_repair(tournament, game)
 
     def _round_complete(self, tournament: Tournament, round_no: int) -> bool:
@@ -194,7 +194,6 @@ class TournamentEngine:
         )
         played = self._played_pairs(tournament)
         used = set()
-        svc = GameService()
         current_round = (
             TournamentRound.objects.filter(tournament=tournament)
             .order_by("-round_number")
@@ -213,6 +212,9 @@ class TournamentEngine:
                 key = tuple(sorted([a.user_id, b.user_id]))
                 if key in played:
                     continue
+                if tournament.format == Tournament.Format.CLUB_ARENA:
+                    if a.club_id and b.club_id and a.club_id == b.club_id:
+                        continue
                 partner = b
                 break
             if not partner:
@@ -222,12 +224,10 @@ class TournamentEngine:
             white, black = a.user, partner.user
             if random.random() > 0.5:
                 white, black = black, white
-            game = svc.create_friend_game(
-                white=white, black=black, mode=tournament.mode, is_rated=False
-            )
-            game.tournament = tournament
-            game.save(update_fields=["tournament"])
-            current_round.games.add(game)
+            new_game = self._create_tournament_game(tournament, white, black)
+            new_game.tournament = tournament
+            new_game.save(update_fields=["tournament"])
+            current_round.games.add(new_game)
             TournamentParticipant.objects.filter(
                 tournament=tournament, user__in=[white, black]
             ).update(is_available=False)
