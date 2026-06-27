@@ -55,13 +55,11 @@ export default function PuzzlesPage() {
   useEffect(() => {
     if (user) {
       puzzlesApi.streak().then(({ data }) => setStreak(data.daily_streak ?? 0)).catch(() => setStreak(getPuzzleStreak()));
-      import("@/lib/api").then(({ ratingsApi }) =>
-        ratingsApi.me().then(({ data }) => {
-          const list = Array.isArray(data) ? data : data.results ?? [];
-          const pr = list.find((r: { mode: string }) => r.mode === "puzzle");
-          if (pr) setPuzzleElo(pr.elo);
-        }).catch(() => {})
-      );
+      ratingsApi.me().then(({ data }) => {
+        const list = Array.isArray(data) ? data : data.results ?? [];
+        const pr = list.find((r: { mode: string }) => r.mode === "puzzle");
+        if (pr) setPuzzleElo(pr.elo);
+      }).catch(() => {});
     } else {
       setStreak(getPuzzleStreak());
     }
@@ -254,6 +252,9 @@ export default function PuzzlesPage() {
         {t("puzzles.subtitle")}
         {streak > 0 && (
           <span className="ml-2 text-africhess-gold">🔥 {t("puzzles.streak", { n: streak })}</span>
+        )}
+        {puzzleElo != null && user && (
+          <span className="ml-2 text-africhess-green">{t("puzzles.playerElo", { elo: puzzleElo })}</span>
         )}
       </p>
 
