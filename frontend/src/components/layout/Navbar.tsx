@@ -14,6 +14,7 @@ import { NotificationBell } from "./NotificationBell";
 const NAV_LINKS = [
   { href: "/play", key: "nav.play" },
   { href: "/play/daily", key: "nav.daily" },
+  { href: "/simul", key: "nav.simul" },
   { href: "/learning", key: "nav.learn" },
   { href: "/learning/openings", key: "nav.openings" },
   { href: "/puzzles", key: "nav.puzzles" },

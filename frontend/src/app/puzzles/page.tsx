@@ -476,6 +476,27 @@ export default function PuzzlesPage() {
         </div>
       )}
 
+      {tab === "battle" && !puzzle && (
+        <div className="glass-card p-6 text-center space-y-4">
+          {battleStatus === "waiting" ? (
+            <>
+              <p className="opacity-70">{t("puzzles.battle.waiting")}</p>
+              <button type="button" onClick={leaveBattleQueue} className="px-4 py-2 border rounded-lg text-sm">
+                {t("puzzles.battle.leave")}
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="opacity-70">{t("puzzles.battle.find")}</p>
+              <button type="button" onClick={findBattle} className="px-6 py-2 african-gradient text-white rounded-lg">
+                {t("puzzles.battle.find")}
+              </button>
+            </>
+          )}
+          {result && <p className="font-semibold">{result}</p>}
+        </div>
+      )}
+
       {tab !== "leaderboard" && puzzle && display ? (
         <div key={puzzle.id}>
           <div className="flex flex-wrap gap-2 mb-4">
@@ -490,6 +511,11 @@ export default function PuzzlesPage() {
               <span className="px-3 py-1 rounded-full bg-white/10 text-sm">
                 {(tab === "training" ? trainingIndex : rushIndex) + 1}/
                 {(tab === "training" ? trainingQueue : rushQueue).length}
+              </span>
+            )}
+            {tab === "battle" && battleOpponent && (
+              <span className="px-3 py-1 rounded-full bg-africhess-green/20 text-sm">
+                vs {battleOpponent} · {t("puzzles.battle.score", { you: battleScoreYou, opp: battleScoreOpp })}
               </span>
             )}
             {puzzle.themes?.map((t) => (
@@ -560,7 +586,7 @@ export default function PuzzlesPage() {
           </div>
           {result && <p className="mt-4 text-lg font-semibold">{result}</p>}
         </div>
-      ) : tab !== "leaderboard" ? (
+      ) : tab !== "leaderboard" && tab !== "battle" ? (
         <p>{t("puzzles.loading")}</p>
       ) : null}
     </div>

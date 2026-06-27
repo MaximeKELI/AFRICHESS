@@ -24,19 +24,38 @@ interface ClubDetail {
   owner: { username: string; display_name: string };
 }
 
+interface ClubEventRow {
+  id: number;
+  title: string;
+  description: string;
+  event_type: string;
+  starts_at: string;
+}
+
 export default function ClubDetailPage() {
   const params = useParams();
   const slug = String(params.slug || "");
   const { user } = useAuthStore();
   const { t, locale } = useTranslation();
   const [club, setClub] = useState<ClubDetail | null>(null);
+  const [events, setEvents] = useState<ClubEventRow[]>([]);
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [arenaOpponent, setArenaOpponent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
 
   const load = () => {
     socialApi
       .club(slug)
-      .then(({ data }) => setClub(data))
+      .then(({ data }) => {
+        setClub(data);
+        if (data.is_member) {
+          socialApi.clubEvents(slug).then(({ data: ev }) => {
+            setEvents(Array.isArray(ev) ? ev : []);
+          }).catch(() => setEvents([]));
+        }
+      })
       .catch((err) => setError(formatApiError(err, t("clubs.error.load"))));
   };
 
@@ -56,6 +75,31 @@ export default function ClubDetailPage() {
       setError(formatApiError(err, t("clubs.error.join")));
     } finally {
       setJoining(false);
+    }
+  };
+
+  const createEvent = async () => {
+    if (!eventTitle.trim()) return;
+    try {
+      await socialApi.createClubEvent(slug, {
+        title: eventTitle.trim(),
+        starts_at: eventDate || new Date().toISOString(),
+      });
+      setEventTitle("");
+      setEventDate("");
+      load();
+    } catch (err) {
+      setError(formatApiError(err, t("clubs.error.load")));
+    }
+  };
+
+  const startArena = async () => {
+    if (!arenaOpponent.trim()) return;
+    try {
+      const { data } = await socialApi.clubArena(slug, arenaOpponent.trim());
+      window.location.href = `/tournaments/${data.id}`;
+    } catch (err) {
+      setError(formatApiError(err, t("clubs.error.load")));
     }
   };
 

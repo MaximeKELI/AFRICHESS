@@ -38,6 +38,7 @@ export default function FriendsPage() {
   const [pending, setPending] = useState<Friendship[]>([]);
   const [username, setUsername] = useState("");
   const [mode, setMode] = useState("blitz");
+  const [odds, setOdds] = useState("none");
   const [msg, setMsg] = useState("");
   const [dmUser, setDmUser] = useState<UserPublic | null>(null);
   const [dmMessages, setDmMessages] = useState<ChatMsg[]>([]);
@@ -117,7 +118,8 @@ export default function FriendsPage() {
   const challenge = async (name: string) => {
     setMsg("");
     try {
-      const { data } = await socialApi.challengeFriend(name, mode);
+      const opts = odds !== "none" ? { odds } : undefined;
+      const { data } = await socialApi.challengeFriend(name, mode, opts);
       router.push(`/play?game=${data.id}&mode=${mode}`);
     } catch {
       setMsg(t("friends.challenge.failed"));
@@ -196,6 +198,18 @@ export default function FriendsPage() {
               <option value="bullet">Bullet</option>
               <option value="blitz">Blitz</option>
               <option value="rapid">Rapide</option>
+            </select>
+            <select
+              value={odds}
+              onChange={(e) => setOdds(e.target.value)}
+              className="text-sm border rounded-lg px-2 py-1 bg-transparent"
+              title={t("friends.odds.label")}
+            >
+              <option value="none">{t("friends.odds.none")}</option>
+              <option value="knight">{t("friends.odds.knight")}</option>
+              <option value="bishop">{t("friends.odds.bishop")}</option>
+              <option value="rook">{t("friends.odds.rook")}</option>
+              <option value="queen">{t("friends.odds.queen")}</option>
             </select>
           </div>
           {friends.length === 0 ? (
