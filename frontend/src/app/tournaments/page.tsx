@@ -37,11 +37,17 @@ interface Tournament {
 export default function TournamentsPage() {
   const { user } = useAuthStore();
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
   const [list, setList] = useState<Tournament[]>([]);
   const [africanOnly, setAfricanOnly] = useState(true);
   const [status, setStatus] = useState("");
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const [standings, setStandings] = useState<StandingRow[]>([]);
+
+  useEffect(() => {
+    const open = searchParams.get("open");
+    if (open) setExpandedSlug(open);
+  }, [searchParams]);
 
   const load = useCallback(() => {
     tournamentsApi.list(africanOnly).then(({ data }) => {
