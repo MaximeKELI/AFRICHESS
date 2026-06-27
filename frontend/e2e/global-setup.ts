@@ -1,13 +1,13 @@
 import { request } from "@playwright/test";
 
-const API = process.env.PLAYWRIGHT_API_URL || "http://127.0.0.1:8000/api";
+const API = (process.env.PLAYWRIGHT_API_URL || "http://127.0.0.1:8000/api").replace(/\/$/, "");
 const USERNAME = process.env.E2E_USERNAME || "e2e_player";
 const PASSWORD = process.env.E2E_PASSWORD || "E2eTestPass123!";
 
 export default async function globalSetup() {
-  const ctx = await request.newContext({ baseURL: API });
+  const ctx = await request.newContext();
 
-  const register = await ctx.post("/users/register/", {
+  const register = await ctx.post(`${API}/users/register/`, {
     data: {
       username: USERNAME,
       email: "e2e@test.africhess.com",
@@ -21,7 +21,7 @@ export default async function globalSetup() {
     console.warn("E2E register:", register.status(), await register.text());
   }
 
-  const login = await ctx.post("/auth/login/", {
+  const login = await ctx.post(`${API}/auth/login/`, {
     data: { username: USERNAME, password: PASSWORD },
   });
   if (!login.ok()) {
