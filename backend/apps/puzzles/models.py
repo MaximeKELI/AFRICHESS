@@ -11,7 +11,7 @@ class Puzzle(models.Model):
 
     fen = models.CharField(max_length=100)
     solution_moves = models.JSONField(help_text="List of UCI moves for solution")
-    themes = models.JSONField(default=list)  # fork, pin, mate, etc.
+    themes = models.JSONField(default=list)
     difficulty = models.CharField(max_length=20, choices=Difficulty.choices, default=Difficulty.MEDIUM)
     rating = models.PositiveIntegerField(default=1200)
     plays_count = models.PositiveIntegerField(default=0)
@@ -36,6 +36,9 @@ class Puzzle(models.Model):
             models.Index(fields=["difficulty"]),
             models.Index(fields=["author", "source"]),
         ]
+
+    def __str__(self):
+        return f"Puzzle #{self.pk} ({self.difficulty})"
 
 
 class PuzzleRushSession(models.Model):
@@ -93,10 +96,9 @@ class PuzzleBattle(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Puzzle #{self.pk} ({self.difficulty})"
+class PuzzleBattleQueue(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    joined_at = models.DateTimeField(auto_now_add=True)
 
 
 class PuzzleAttempt(models.Model):
