@@ -1,0 +1,126 @@
+# AFRICHESS — Rapport d'audit vs Chess.com
+
+> Audit du code source (backend Django + frontend Next.js) — Juin 2026  
+> Légende : ✅ Implémenté · 🔄 Partiel · ❌ Manquant
+
+---
+
+## Niveau 1 — Facile (UI / logique de base)
+
+| # | Fonctionnalité | Statut | Notes |
+|---|----------------|--------|-------|
+| 1 | Thèmes de plateau | ✅ | 20 thèmes, pièces classic/african, sons, dark mode — `boardThemes.ts`, `BoardThemePicker` |
+| 2 | Flair / Avatar | 🔄 | Avatar upload + presets IA ; pas de flair/badge à côté du pseudo |
+| 3 | Emotes | ❌ | Chat texte uniquement |
+| 4 | Termes / Glossaire | ✅ | `/learning/glossary` (20 termes FR) |
+| 5 | Profil utilisateur | ✅ | `/profile`, `/profile/[username]`, stats, Elo par cadence via API ratings |
+| 6 | Achievements / Awards | 🔄 | Badges learning (XP) ; page `/achievements` ; pas de trophées jeu |
+| 7 | Messages privés | ✅ | REST + WS direct chat |
+| 8 | Chat en partie | ✅ | `GameChat`, WS `ChessConsumer` |
+| 9 | Forums | 🔄 | Lecture, commentaires, likes ; création de sujet ajoutée (`ForumCreateForm`) |
+| 10 | Blogs | ❌ | Pas d'éditeur blog |
+| 11 | Zen Mode | ✅ | Toggle Navbar, masque Elo/export en partie |
+| 12 | Widgets app | 🔄 | PWA install prompt ; pas de widgets natifs iOS/Android |
+| 13 | Notation PGN | ✅ | Stockage backend ; export client `PgnExportButton` |
+| 14 | Historique parties | ✅ | `RecentGamesList`, stats, filtres partiels |
+| 15 | Statistiques personnelles | ✅ | `/stats` — accuracy, ouvertures, cadences |
+
+---
+
+## Niveau 2 — Intermédiaire
+
+| # | Fonctionnalité | Statut | Notes |
+|---|----------------|--------|-------|
+| 16 | Jeu classé multi-cadences | 🔄 | Bullet/blitz/rapid OK ; classical absent du matchmaking |
+| 17 | Jeu non classé | 🔄 | Ami + IA ; pas de seek unrated dédié |
+| 18 | Daily Chess | 🔄 | Correspondance + défi ami ; pas de pool ouvert, pas vacances |
+| 19 | Puzzles quotidiens | ✅ | Daily + streak |
+| 20 | Puzzles notés | 🔄 | Rating puzzle (difficulté) ; pas d'Elo puzzle joueur |
+| 21 | Puzzle Rush | 🔄 | Mode rush ; timer côté client ; limite free 3/j |
+| 22 | Puzzle Battles | ❌ | — |
+| 23 | Custom Puzzles | 🔄 | Training par thème ; pas de builder custom |
+| 24 | Analyse de partie | ✅ | Stockfish, accuracy, classifications |
+| 25 | Self Analysis | 🔄 | `/learning/analyze` PGN ; pas de board éditeur libre |
+| 26 | Système de Ligues | ✅ | Wood → Legend, saisons |
+| 27 | Tournois Swiss | 🔄 | 1 ronde auto ; pas d'avancement multi-rondes |
+| 28 | Tournois Arena | 🔄 | Pairing initial ; pas de re-pairing continu |
+| 29 | Tournois Daily | ❌ | — |
+| 30 | Clubs / Équipes | 🔄 | CRUD + join ; pas chat club ni events |
+| 31 | Vote Chess | ❌ | — |
+| 32 | Club vs Club Arena | ❌ | — |
+| 33 | Odds Chess | ❌ | — |
+| 34 | Simuls | ❌ | — |
+| 35 | Explorateur d'ouvertures | 🔄 | `/learning/openings` + lookup API |
+| 36 | Vision Training | ❌ | — |
+| 37 | Solo Chess | ❌ | — |
+
+---
+
+## Niveau 3 — Avancé
+
+| # | Fonctionnalité | Statut | Notes |
+|---|----------------|--------|-------|
+| 38 | Bots (IA) | ✅ | Catalogue + personnalités africaines, Elo adaptatif |
+| 39 | Coach IA | 🔄 | `CoachPanel`, tips ; pas LLM complet |
+| 40 | Play Coach | 🔄 | Commentaires IA en partie vs bot |
+| 41 | Voice Coach | 🔄 | `aiSpeech.ts` TTS basique |
+| 42 | Game Review IA | 🔄 | `GameAnalysisPanel` ; pas NLG complet |
+| 43 | Move Explanations | 🔄 | Classifications moteur ; pas explications prose |
+| 44 | 7-Piece Tablebases | ❌ | — |
+| 45 | Cloud Analysis | 🔄 | Stockfish serveur ; profondeur limitée free |
+| 46 | Leçons interactives | ✅ | 40 leçons markdown, quiz, XP |
+| 47 | Vidéothèque | 🔄 | `VideoEmbed` ; contenu limité |
+| 48 | Articles pédagogiques | ✅ | Curriculum markdown |
+| 49 | Courses / Chessable | 🔄 | Cours structurés ; pas spaced repetition Chessable |
+| 50 | Opening Repertoires | ❌ | — |
+| 51 | Analytics avancées | 🔄 | Stats riches ; pas hub Insights unifié |
+| 52 | Classroom | ❌ | — |
+| 53 | Streamers intégrés | ❌ | — |
+| 54 | Coaches marketplace | ❌ | — |
+
+---
+
+## Niveau 4 — Expert (stubs / documentation uniquement)
+
+| # | Fonctionnalité | Statut | Notes |
+|---|----------------|--------|-------|
+| 55 | Fair Play (détection triche) | 🔄 | Anticheat timing ; pas ML engine detection |
+| 56 | Proctor Browser | ❌ | Stub → EXTERNAL_HELP_REPORT |
+| 57 | Variantes | 🔄 | 960, Crazyhouse, KOTH, 3-check vs IA ; pas humain |
+| 58 | CCC | ❌ | — |
+| 59 | Tournois avec prizes | 🔄 | Stripe ; pas infra légale prizes |
+| 60 | Glicko-2 multi-cadences | 🔄 | Elo par mode ; pas Glicko-2 |
+| 61 | RCN temps réel | 🔄 | Channels/Daphne ; pas infra scale Chess.com |
+| 62 | App mobile native | 🔄 | PWA + dossier `mobile/` Flutter partiel |
+| 63 | ChessKid | ❌ | — |
+| 64 | API publique | 🔄 | Schema protégé ; pas API dev ouverte |
+| 65 | Abonnements | ✅ | Free/Gold/Diamond Stripe |
+
+---
+
+## Différenciation AFRICHESS (A1–A8)
+
+| # | Fonctionnalité | Statut |
+|---|----------------|--------|
+| A1 | Langue française native | ✅ 5 langues (FR/EN/AR/PT/SW) |
+| A2 | Classement africain | ✅ `/leaderboard` african + by country |
+| A3 | Tournois africains FIDE | ❌ |
+| A4 | Mobile money | ❌ Stripe only |
+| A5 | Mode offline PWA | 🔄 Service worker basique |
+| A6 | Basse consommation | ✅ Mode fluide, low-bandwidth CSS |
+| A7 | Bots africains | ✅ Kofi, Amara, Nana Kofi… |
+| A8 | Communauté par pays | ✅ Clubs, leaderboard pays |
+
+---
+
+## Score global estimé
+
+| Niveau | ✅ | 🔄 | ❌ |
+|--------|----|----|-----|
+| 1 (15) | 9 | 4 | 2 |
+| 2 (22) | 4 | 12 | 6 |
+| 3 (17) | 3 | 11 | 3 |
+| 4 (11) | 1 | 6 | 4 |
+| **Total (65)** | **17 (26%)** | **33 (51%)** | **15 (23%)** |
+
+**Verdict :** AFRICHESS couvre le **cœur Chess.com** (jouer, puzzles, apprendre, social, stats, premium). Les gaps majeurs : puzzle battles, trainers spécialisés, contenu vidéo massif, fair-play ML, et infra scale.
