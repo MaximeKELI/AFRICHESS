@@ -15,9 +15,11 @@ interface GamePlayerBarProps {
   };
   aiElo?: number | null;
   playerIsWhite: boolean;
+  /** sandwich-top = adversaire seul, sandwich-bottom = joueur seul */
+  side?: "both" | "opponent" | "player";
 }
 
-export function GamePlayerBar({ user, aiElo, playerIsWhite }: GamePlayerBarProps) {
+export function GamePlayerBar({ user, aiElo, playerIsWhite, side = "both" }: GamePlayerBarProps) {
   const { t } = useTranslation();
   const ai = pickAiAvatar(aiElo);
   const userLabel = user.display_name || user.username;
@@ -28,6 +30,37 @@ export function GamePlayerBar({ user, aiElo, playerIsWhite }: GamePlayerBarProps
   const black = playerIsWhite
     ? { label: ai.name, kind: "ai" as const, src: ai.src }
     : { label: userLabel, kind: "user" as const };
+
+  const opponent = playerIsWhite ? black : white;
+  const player = playerIsWhite ? white : black;
+
+  if (side === "opponent") {
+    return (
+      <PlayerChip
+        label={opponent.label}
+        kind={opponent.kind}
+        user={opponent.kind === "user" ? user : undefined}
+        aiSrc={opponent.kind === "ai" ? opponent.src : undefined}
+        align="left"
+        roleLabel={opponent.kind === "ai" ? t("play.playerBar.computer") : t("play.playerBar.opponent")}
+        compact
+      />
+    );
+  }
+
+  if (side === "player") {
+    return (
+      <PlayerChip
+        label={player.label}
+        kind={player.kind}
+        user={player.kind === "user" ? user : undefined}
+        aiSrc={player.kind === "ai" ? player.src : undefined}
+        align="left"
+        roleLabel={player.kind === "user" ? t("play.playerBar.you") : t("play.playerBar.computer")}
+        compact
+      />
+    );
+  }
 
   return (
     <div className="flex items-center justify-between gap-3 px-1">
@@ -59,6 +92,7 @@ function PlayerChip({
   aiSrc,
   align,
   roleLabel,
+  compact = false,
 }: {
   label: string;
   kind: "user" | "ai";
@@ -66,21 +100,23 @@ function PlayerChip({
   aiSrc?: string;
   align: "left" | "right";
   roleLabel: string;
+  compact?: boolean;
 }) {
+  const size = compact ? 32 : 36;
   return (
     <div
-      className={`flex items-center gap-2 min-w-0 ${align === "right" ? "flex-row-reverse text-right" : ""}`}
+      className={`flex items-center gap-2 min-w-0 w-full glass-card px-3 py-2 ${align === "right" ? "flex-row-reverse text-right" : ""}`}
     >
       {kind === "user" && user ? (
         <UserAvatar
           avatar={user.avatar}
           displayName={user.display_name}
           username={user.username}
-          size={36}
+          size={size}
         />
       ) : (
-        <span className="relative w-9 h-9 rounded-lg overflow-hidden ring-1 ring-africhess-terracotta/40 shrink-0">
-          <Image src={aiSrc!} alt={label} fill className="object-cover" sizes="36px" />
+        <span className={`relative rounded-lg overflow-hidden ring-1 ring-africhess-terracotta/40 shrink-0 w-${size/4} h-${size/4}`} style={{ width: size, height: size }}>
+          <Image src={aiSrc!} alt={label} fill className="object-cover" sizes={`${size}px`} />
         </span>
       )}
       <div className="min-w-0">

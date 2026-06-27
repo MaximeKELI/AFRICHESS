@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, type ReactNode } from "react";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { GameClock } from "@/components/chess/GameClock";
 import type { ApiMove } from "@/lib/chessDisplay";
@@ -22,6 +22,8 @@ interface PlayBoardSectionProps {
   serverValidated?: boolean;
   pendingDrop?: string | null;
   onDropAtSquare?: (uci: string) => void;
+  topBar?: ReactNode;
+  bottomBar?: ReactNode;
 }
 
 function PlayBoardSectionInner({
@@ -40,23 +42,29 @@ function PlayBoardSectionInner({
   serverValidated = false,
   pendingDrop = null,
   onDropAtSquare,
+  topBar,
+  bottomBar,
 }: PlayBoardSectionProps) {
   const turn = turnFromFen(fen);
   const lastMove = lastMoveFromMoves(moves);
 
   return (
-    <div className="space-y-3 w-full min-w-0 max-w-full">
-      {showClock && (
-        <GameClock
-          whiteMs={whiteMs}
-          blackMs={blackMs}
-          turn={turn}
-          running={clockRunning}
-          orientation={orientation}
-          incrementMs={incrementMs}
-          label={clockLabel}
-        />
-      )}
+    <div className="game-board-stack w-full min-w-0 max-w-full">
+      <div className="space-y-2 mb-2">
+        {topBar}
+        {showClock && (
+          <GameClock
+            whiteMs={whiteMs}
+            blackMs={blackMs}
+            turn={turn}
+            running={clockRunning}
+            orientation={orientation}
+            incrementMs={incrementMs}
+            label={clockLabel}
+            position="top"
+          />
+        )}
+      </div>
       <ChessBoard
         fen={fen}
         orientation={orientation}
@@ -69,6 +77,20 @@ function PlayBoardSectionInner({
         pendingDrop={pendingDrop}
         onDropAtSquare={onDropAtSquare}
       />
+      <div className="space-y-2 mt-2">
+        {showClock && (
+          <GameClock
+            whiteMs={whiteMs}
+            blackMs={blackMs}
+            turn={turn}
+            running={clockRunning}
+            orientation={orientation}
+            incrementMs={incrementMs}
+            position="bottom"
+          />
+        )}
+        {bottomBar}
+      </div>
     </div>
   );
 }

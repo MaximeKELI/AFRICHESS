@@ -100,8 +100,13 @@ function PlayContent() {
   const [movePending, setMovePending] = useState(false);
   const [dropPiece, setDropPiece] = useState<string | null>(null);
   const [activeVariant, setActiveVariant] = useState<GameVariant>("standard");
+  const [mobileTab, setMobileTab] = useState<"board" | "moves" | "setup">("setup");
   const { aiCommentsEnabled } = usePreferencesStore();
   const turnStartRef = useRef(Date.now());
+
+  useEffect(() => {
+    if (gameId) setMobileTab("board");
+  }, [gameId]);
 
   const playerColor = orientation === "white" ? "w" : "b";
   const playerIsWhite = orientation === "white";
@@ -469,12 +474,12 @@ function PlayContent() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <h1 className="font-display text-3xl font-bold capitalize">
+    <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 md:py-8">
+      <div className="flex items-center gap-3 mb-4 md:mb-6 flex-wrap">
+        <h1 className="font-display text-2xl md:text-3xl font-bold capitalize">
           {t("play.title", { mode: modeLabelText })}
         </h1>
-        <span className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5">
+        <span className="hidden sm:flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5">
           <span className="relative w-9 h-9 rounded-lg overflow-hidden ring-2 ring-africhess-gold shrink-0">
             <Image
               src={headerAi.src}

@@ -62,13 +62,58 @@ body {
 .chess-board-shell {
   width: 100%;
   min-width: 0;
-  max-width: min(100%, calc(100dvh - 10rem));
+  max-width: min(100%, calc(100dvh - 12rem));
 }
 
 @media (max-width: 640px) {
   .chess-board-shell {
-    max-width: min(100%, calc(100dvh - 8rem));
+    max-width: min(100vw - 1rem, calc(100dvh - 11rem));
   }
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.has-mobile-nav main {
+  padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  .has-mobile-nav main {
+    padding-bottom: 0;
+  }
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text) 25%, transparent) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text) 25%, transparent);
+  border-radius: 999px;
+}
+
+.game-board-stack {
+  margin-inline: auto;
+}
+
+.play-mobile-tabs {
+  @apply flex gap-1 p-1 rounded-xl bg-black/10 border border-white/10 mb-4 lg:hidden;
+}
+
+.play-mobile-tab {
+  @apply flex-1 py-2 px-2 text-xs sm:text-sm font-medium rounded-lg transition-colors text-center;
+}
+
+.play-mobile-tab-active {
+  @apply bg-[var(--card)] text-africhess-gold shadow-sm;
 }
 
 /* Case du roi en échec / mat */

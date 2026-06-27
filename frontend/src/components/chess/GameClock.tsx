@@ -13,6 +13,8 @@ interface GameClockProps {
   orientation: "white" | "black";
   incrementMs?: number;
   label?: string;
+  /** top = adversaire, bottom = joueur, both = empilés (legacy) */
+  position?: "top" | "bottom" | "both";
 }
 
 function GameClockInner({
@@ -23,6 +25,7 @@ function GameClockInner({
   orientation,
   incrementMs = 0,
   label,
+  position = "both",
 }: GameClockProps) {
   const { t } = useTranslation();
   const [white, setWhite] = useState(whiteMs);
@@ -82,16 +85,20 @@ function GameClockInner({
   const whiteLabel = t("chess.clock.white");
   const blackLabel = t("chess.clock.black");
 
+  const showTop = position === "top" || position === "both";
+  const showBottom = position === "bottom" || position === "both";
+  const showLabel = label && position === "top";
+
   return (
     <div className="space-y-2 w-full">
-      {label && (
+      {showLabel && (
         <p className="text-center text-xs opacity-60">
           {label}
           {incrementMs > 0 && ` · +${incrementMs / 1000}s`}
         </p>
       )}
-      <ClockRow ms={topMs} active={topTurn} side={topIsWhite ? whiteLabel : blackLabel} />
-      <ClockRow ms={bottomMs} active={bottomTurn} side={topIsWhite ? blackLabel : whiteLabel} />
+      {showTop && <ClockRow ms={topMs} active={topTurn} side={topIsWhite ? whiteLabel : blackLabel} />}
+      {showBottom && <ClockRow ms={bottomMs} active={bottomTurn} side={topIsWhite ? blackLabel : whiteLabel} />}
     </div>
   );
 }
