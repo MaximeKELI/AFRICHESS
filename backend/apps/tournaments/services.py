@@ -32,12 +32,25 @@ class TournamentEngine:
         if self.participant_count(tournament) < 2:
             raise ValueError("Au moins 2 participants requis")
         tournament.status = Tournament.Status.ACTIVE
-        tournament.save(update_fields=["status"])
+        tournament.current_round = 1
+        if not tournament.total_rounds:
+            n = self.participant_count(tournament)
+            tournament.total_rounds = max(3, min(7, (n - 1).bit_length() + 2))
+        tournament.save(update_fields=["status", "current_round", "total_rounds"])
         if tournament.format == Tournament.Format.ARENA:
             self._start_arena_round(tournament, 1)
         else:
             self._start_swiss_round(tournament, 1)
         return tournament
+
+    def _played_pairs(self, tournament: Tournament) -> set[tuple[int, int]]:
+        pairs = set()
+        for rnd in TournamentRound.objects.filter(tournament=tournament):
+            for game in rnd.games.all():
+                if game.white_player_id and game.black_player_id:
+                    a, b = sorted([game.white_player_id, game.black_player_id])
+                    pairs.add((a, b))
+        return pairs
 
     def _start_arena_round(self, tournament: Tournament, round_no: int):
         players = self.participant_users(tournament)
@@ -48,10 +61,15 @@ class TournamentEngine:
         svc = GameService()
         for i in range(0, len(players) - 1, 2):
             white, black = players[i], players[i + 1]
-            game = svc.create_friend_game(white=white, black=black, mode=tournament.mode)
+            game = svc.create_friend_game(
+                white=white, black=black, mode=tournament.mode, is_rated=False
+            )
             game.tournament = tournament
             game.save(update_fields=["tournament"])
             rnd.games.add(game)
+            TournamentParticipant.objects.filter(
+                tournament=tournament, user__in=[white, black]
+            ).update(is_available=False)
 
     def _start_swiss_round(self, tournament: Tournament, round_no: int):
         standings = list(
@@ -65,7 +83,7 @@ class TournamentEngine:
                     tournament=tournament
                 ).select_related("user")
             )
-        random.shuffle(standings)
+        played = self._played_pairs(tournament)
         rnd = TournamentRound.objects.create(
             tournament=tournament, round_number=round_no
         )
@@ -77,9 +95,13 @@ class TournamentEngine:
             opponent = None
             for j in range(i + 1, len(standings)):
                 sb = standings[j]
-                if sb.user_id not in paired:
-                    opponent = sb
-                    break
+                if sb.user_id in paired:
+                    continue
+                key = tuple(sorted([sa.user_id, sb.user_id]))
+                if key in played:
+                    continue
+                opponent = sb
+                break
             if not opponent:
                 continue
             paired.add(sa.user_id)
@@ -88,7 +110,10 @@ class TournamentEngine:
             if random.random() > 0.5:
                 white_user, black_user = black_user, white_user
             game = svc.create_friend_game(
-                white=white_user, black=black_user, mode=tournament.mode
+                white=white_user,
+                black=black_user,
+                mode=tournament.mode,
+                is_rated=False,
             )
             game.tournament = tournament
             game.save(update_fields=["tournament"])
@@ -119,6 +144,84 @@ class TournamentEngine:
             else:
                 tp.losses += 1
             tp.save()
+
+        if tournament.format == Tournament.Format.SWISS:
+            self._maybe_advance_swiss(tournament)
+        elif tournament.format == Tournament.Format.ARENA:
+            self._arena_repair(tournament, game)
+
+    def _round_complete(self, tournament: Tournament, round_no: int) -> bool:
+        rnd = TournamentRound.objects.filter(
+            tournament=tournament, round_number=round_no
+        ).first()
+        if not rnd:
+            return False
+        games = list(rnd.games.all())
+        return bool(games) and all(g.status == Game.Status.COMPLETED for g in games)
+
+    def _maybe_advance_swiss(self, tournament: Tournament):
+        current = tournament.current_round or 1
+        if not self._round_complete(tournament, current):
+            return
+        total = tournament.total_rounds or 5
+        if current < total:
+            tournament.current_round = current + 1
+            tournament.save(update_fields=["current_round"])
+            self._start_swiss_round(tournament, current + 1)
+        else:
+            tournament.status = Tournament.Status.COMPLETED
+            tournament.save(update_fields=["status"])
+
+    def _arena_repair(self, tournament: Tournament, finished_game: Game):
+        users = [finished_game.white_player, finished_game.black_player]
+        TournamentParticipant.objects.filter(
+            tournament=tournament, user__in=[u for u in users if u]
+        ).update(is_available=True)
+
+        available = list(
+            TournamentParticipant.objects.filter(
+                tournament=tournament, is_available=True
+            ).order_by("-score", "-wins")
+        )
+        played = self._played_pairs(tournament)
+        used = set()
+        svc = GameService()
+        current_round = (
+            TournamentRound.objects.filter(tournament=tournament)
+            .order_by("-round_number")
+            .first()
+        )
+        if not current_round:
+            return
+
+        for i, a in enumerate(available):
+            if a.user_id in used:
+                continue
+            partner = None
+            for b in available[i + 1 :]:
+                if b.user_id in used:
+                    continue
+                key = tuple(sorted([a.user_id, b.user_id]))
+                if key in played:
+                    continue
+                partner = b
+                break
+            if not partner:
+                continue
+            used.add(a.user_id)
+            used.add(partner.user_id)
+            white, black = a.user, partner.user
+            if random.random() > 0.5:
+                white, black = black, white
+            game = svc.create_friend_game(
+                white=white, black=black, mode=tournament.mode, is_rated=False
+            )
+            game.tournament = tournament
+            game.save(update_fields=["tournament"])
+            current_round.games.add(game)
+            TournamentParticipant.objects.filter(
+                tournament=tournament, user__in=[white, black]
+            ).update(is_available=False)
 
     def get_standings(self, tournament: Tournament):
         return TournamentParticipant.objects.filter(

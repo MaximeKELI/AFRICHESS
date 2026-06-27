@@ -13,6 +13,7 @@ urlpatterns = [
     path("live/", views.LiveGamesView.as_view(), name="live-games"),
     path("correspondence/", views.CorrespondenceListView.as_view(), name="correspondence-list"),
     path("correspondence/challenge/", views.CorrespondenceChallengeView.as_view(), name="correspondence-challenge"),
+    path("correspondence/seek/", views.CorrespondenceSeekView.as_view(), name="correspondence-seek"),
     path("openings/lookup/", views.opening_lookup, name="opening-lookup"),
     path("engine/eval/", views.engine_eval, name="engine-eval"),
     path("<uuid:id>/", views.GameDetailView.as_view(), name="game-detail"),

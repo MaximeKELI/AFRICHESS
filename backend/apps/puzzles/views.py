@@ -94,17 +94,30 @@ class SubmitPuzzleView(APIView):
         )
         puzzle.plays_count += 1
         streak = 0
+        puzzle_elo = None
+        puzzle_elo_change = 0
         if solved:
             if request.user.stats:
                 request.user.stats.puzzles_solved += 1
                 request.user.stats.save(update_fields=["puzzles_solved"])
             streak = _update_daily_streak(request.user, puzzle, solved)
+
+        from apps.ratings.services import RatingService
+
+        svc = RatingService()
+        before = svc.get_or_create_rating(request.user, "puzzle").elo
+        after_rating = svc.update_puzzle_rating(request.user, puzzle.rating, solved)
+        puzzle_elo = after_rating.elo
+        puzzle_elo_change = puzzle_elo - before
+
         puzzle.save()
 
         return Response({
             "solved": solved,
             "correct_moves": puzzle.solution_moves if solved else None,
             "daily_streak": streak,
+            "puzzle_elo": puzzle_elo,
+            "puzzle_elo_change": puzzle_elo_change,
         })
 
 

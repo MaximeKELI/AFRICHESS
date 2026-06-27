@@ -313,17 +313,28 @@ class MatchmakingView(APIView):
         vd = ser.validated_data
         mode = vd["mode"]
         is_timed = vd.get("is_timed", True)
+        is_rated = vd.get("is_rated", True)
         time_minutes = vd.get("time_minutes")
         rating = PlayerRating.objects.filter(user=request.user, mode=mode).first()
         elo = rating.elo if rating else request.user.initial_elo
         svc = MatchmakingService()
         game = svc.find_match(
-            request.user, mode, elo, is_timed=is_timed, time_minutes=time_minutes
+            request.user,
+            mode,
+            elo,
+            is_timed=is_timed,
+            time_minutes=time_minutes,
+            is_rated=is_rated,
         )
         if game:
             return Response(GameSerializer(game).data, status=201)
         svc.join_queue(
-            request.user, mode, elo, is_timed=is_timed, time_minutes=time_minutes
+            request.user,
+            mode,
+            elo,
+            is_timed=is_timed,
+            time_minutes=time_minutes,
+            is_rated=is_rated,
         )
         svc.pair_all_waiting()
         return Response({
@@ -494,6 +505,28 @@ class CorrespondenceChallengeView(APIView):
             white, black = request.user, opponent
         game = create_correspondence_game(white, black, days_per_move=days)
         return Response(GameSerializer(game).data, status=201)
+
+
+class CorrespondenceSeekView(APIView):
+    """Rejoindre le pool ouvert daily chess."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        from .correspondence import CorrespondenceMatchmakingService
+
+        days = int(request.data.get("days_per_move", 3))
+        svc = CorrespondenceMatchmakingService()
+        game = svc.join_queue(request.user, days_per_move=days)
+        if game:
+            return Response(GameSerializer(game).data, status=201)
+        return Response({"status": "searching", "days_per_move": days})
+
+    def delete(self, request):
+        from .correspondence import CorrespondenceMatchmakingService
+
+        CorrespondenceMatchmakingService().leave_queue(request.user)
+        return Response({"status": "left_queue"})
 
 
 @extend_schema(summary="Recherche d'ouverture par ligne de coups")

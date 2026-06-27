@@ -321,6 +321,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
                 data.get("mode", "blitz"),
                 data.get("is_timed", True),
                 data.get("time_minutes"),
+                data.get("is_rated", True),
             )
 
     async def match_found(self, event):

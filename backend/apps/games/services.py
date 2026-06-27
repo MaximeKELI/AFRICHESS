@@ -576,12 +576,13 @@ class MatchmakingService:
                     used.add(best.user_id)
                     self.leave_queue(a.user)
                     self.leave_queue(best.user)
-                    game = GameService().create_friend_game(
+                    game = create_matchmaking_game(
                         white=a.user,
                         black=best.user,
                         mode=mode,
                         is_timed=a.is_timed,
                         time_minutes=a.time_control_minutes,
+                        is_rated=a.is_rated,
                     )
                     self._notify_match(a.user_id, best.user_id, game)
 

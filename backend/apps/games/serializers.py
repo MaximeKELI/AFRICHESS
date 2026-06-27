@@ -60,7 +60,7 @@ class GameSerializer(serializers.ModelSerializer):
             "chess960_position_id", "bot", "result",
             "fen", "pgn", "move_count", "white_time_ms", "black_time_ms",
             "increment_ms",
-            "is_timed", "time_control_minutes",
+            "is_timed", "time_control_minutes", "is_rated",
             "is_vs_ai", "ai_difficulty", "ai_target_elo", "moves", "analysis",
             "termination_reason",
             "created_at", "started_at", "ended_at",
@@ -118,8 +118,12 @@ class CreateAIGameSerializer(serializers.Serializer):
 
 
 class MatchmakingJoinSerializer(serializers.Serializer):
-    mode = serializers.ChoiceField(choices=["bullet", "blitz", "rapid"], default="blitz")
+    mode = serializers.ChoiceField(
+        choices=["bullet", "blitz", "rapid", "classical"],
+        default="blitz",
+    )
     is_timed = serializers.BooleanField(default=True, required=False)
+    is_rated = serializers.BooleanField(default=True, required=False)
     time_minutes = serializers.IntegerField(required=False, allow_null=True)
 
     def validate_time_minutes(self, value):

@@ -11,6 +11,7 @@ class RatingService:
         "blitz": settings.K_FACTOR_BLITZ,
         "rapid": settings.K_FACTOR_RAPID,
         "classical": 16,
+        "puzzle": 32,
     }
 
     def get_or_create_rating(self, user, mode: str) -> PlayerRating:
@@ -24,6 +25,8 @@ class RatingService:
 
     def update_ratings(self, game: Game):
         if game.is_vs_ai or not game.white_player or not game.black_player:
+            return
+        if not getattr(game, "is_rated", True):
             return
 
         mode = game.mode if game.mode != Game.Mode.AI else "blitz"
@@ -61,3 +64,25 @@ class RatingService:
             change=delta,
             game=game,
         )
+
+    def update_puzzle_rating(self, user, puzzle_rating: int, solved: bool) -> PlayerRating:
+        """Met à jour l'Elo puzzle du joueur après une tentative."""
+        rating = self.get_or_create_rating(user, "puzzle")
+        k = self.K_FACTORS["puzzle"]
+        expected = self.expected_score(rating.elo, puzzle_rating)
+        score = 1.0 if solved else 0.0
+        delta = round(k * (score - expected))
+        elo_before = rating.elo
+        rating.elo = max(100, rating.elo + delta)
+        rating.peak_elo = max(rating.peak_elo, rating.elo)
+        rating.games_count += 1
+        rating.save()
+        RatingHistory.objects.create(
+            user=user,
+            mode="puzzle",
+            elo_before=elo_before,
+            elo_after=rating.elo,
+            change=delta,
+            game=None,
+        )
+        return rating
