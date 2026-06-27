@@ -140,6 +140,56 @@ export default function ClubDetailPage() {
               <div className="space-y-6">
                 <p className="text-sm text-africhess-green">{t("clubs.alreadyMember")}</p>
                 <ClubChat slug={slug} />
+
+                <div className="glass-card p-4 space-y-3">
+                  <h2 className="font-semibold">{t("clubs.events.title")}</h2>
+                  {events.length === 0 ? (
+                    <p className="text-sm opacity-60">{t("clubs.events.empty")}</p>
+                  ) : (
+                    <ul className="space-y-2 text-sm">
+                      {events.map((ev) => (
+                        <li key={ev.id} className="border-b border-white/5 pb-2">
+                          <span className="font-medium">{ev.title}</span>
+                          <span className="text-xs opacity-50 ml-2">
+                            {new Date(ev.starts_at).toLocaleDateString(locale)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    <input
+                      value={eventTitle}
+                      onChange={(e) => setEventTitle(e.target.value)}
+                      placeholder={t("clubs.events.titleLabel")}
+                      className="flex-1 min-w-[140px] px-3 py-2 rounded-lg border bg-transparent text-sm"
+                    />
+                    <input
+                      type="datetime-local"
+                      value={eventDate}
+                      onChange={(e) => setEventDate(e.target.value)}
+                      className="px-3 py-2 rounded-lg border bg-transparent text-sm"
+                    />
+                    <button type="button" onClick={createEvent} className="px-4 py-2 text-sm african-gradient text-white rounded-lg">
+                      {t("clubs.events.create")}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="glass-card p-4 space-y-3">
+                  <h2 className="font-semibold">{t("clubs.arena.title")}</h2>
+                  <div className="flex gap-2">
+                    <input
+                      value={arenaOpponent}
+                      onChange={(e) => setArenaOpponent(e.target.value)}
+                      placeholder={t("clubs.arena.opponent")}
+                      className="flex-1 px-3 py-2 rounded-lg border bg-transparent text-sm"
+                    />
+                    <button type="button" onClick={startArena} className="px-4 py-2 text-sm african-gradient text-white rounded-lg">
+                      {t("clubs.arena.submit")}
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : (
               <button
