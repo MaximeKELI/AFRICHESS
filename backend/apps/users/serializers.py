@@ -127,7 +127,6 @@ class UserPublicSerializer(serializers.ModelSerializer):
             "city",
             "title",
             "chess_level",
-            "flair",
             "is_african_highlight",
             "date_joined",
             "stats",
@@ -135,8 +134,15 @@ class UserPublicSerializer(serializers.ModelSerializer):
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
+    ALLOWED_FLAIRS = {"", "🦁", "🐘", "🌳", "🥁", "⭐", "👑", "🔥", "🚀", "🧩"}
+
     def validate_avatar(self, value):
         return validate_uploaded_image(value)
+
+    def validate_flair(self, value):
+        if value not in self.ALLOWED_FLAIRS:
+            raise serializers.ValidationError("Flair non autorisé.")
+        return value
 
     class Meta:
         model = User
@@ -150,6 +156,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "city",
             "preferred_language",
             "low_bandwidth_mode",
+            "flair",
         ]
 
 

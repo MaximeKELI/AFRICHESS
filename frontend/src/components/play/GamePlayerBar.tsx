@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { pickAiAvatar } from "@/lib/avatars";
 import { UserAvatar } from "@/components/profile/UserAvatar";
+import { UserFlair } from "@/components/profile/UserFlair";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface GamePlayerBarProps {
@@ -10,6 +11,7 @@ interface GamePlayerBarProps {
     avatar?: string | null;
     display_name?: string | null;
     username: string;
+    flair?: string | null;
   };
   aiElo?: number | null;
   playerIsWhite: boolean;
@@ -82,7 +84,10 @@ function PlayerChip({
         </span>
       )}
       <div className="min-w-0">
-        <p className="text-sm font-medium truncate">{label}</p>
+        <p className="text-sm font-medium truncate inline-flex items-center gap-1">
+          <UserFlair flair={kind === "user" ? user?.flair : undefined} />
+          {label}
+        </p>
         <p className="text-[10px] opacity-50">{roleLabel}</p>
       </div>
     </div>

@@ -10,8 +10,8 @@
 | # | Fonctionnalité | Statut | Notes |
 |---|----------------|--------|-------|
 | 1 | Thèmes de plateau | ✅ | 20 thèmes, pièces classic/african, sons, dark mode — `boardThemes.ts`, `BoardThemePicker` |
-| 2 | Flair / Avatar | 🔄 | Avatar upload + presets IA ; pas de flair/badge à côté du pseudo |
-| 3 | Emotes | ❌ | Chat texte uniquement |
+| 2 | Flair / Avatar | ✅ | Avatar upload + presets ; flair emoji à côté du pseudo — `FlairPicker`, `UserFlair` |
+| 3 | Emotes | ✅ | `EmotePicker` dans `GameChat` — 12 emotes échecs |
 | 4 | Termes / Glossaire | ✅ | `/learning/glossary` (20 termes FR) |
 | 5 | Profil utilisateur | ✅ | `/profile`, `/profile/[username]`, stats, Elo par cadence via API ratings |
 | 6 | Achievements / Awards | 🔄 | Badges learning (XP) ; page `/achievements` ; pas de trophées jeu |

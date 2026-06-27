@@ -6,10 +6,13 @@ import { formatApiError } from "@/lib/errors";
 import { useAuthStore } from "@/store/auth";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { useTranslation } from "@/hooks/useTranslation";
+import { EmotePicker } from "@/components/social/EmotePicker";
+import { UserFlair } from "@/components/profile/UserFlair";
+import { isEmoteOnlyMessage } from "@/lib/chessEmotes";
 
 interface ChatMsg {
   id: number;
-  sender: { username: string; display_name: string };
+  sender: { username: string; display_name: string; flair?: string };
   content: string;
   created_at: string;
 }
@@ -48,8 +51,8 @@ export function GameChat({ gameId }: { gameId: string }) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const send = async () => {
-    const msg = text.trim();
+  const send = async (content?: string) => {
+    const msg = (content ?? text).trim();
     if (!msg || sending) return;
     setSending(true);
     setSendError(null);
@@ -84,10 +87,11 @@ export function GameChat({ gameId }: { gameId: string }) {
         )}
         {messages.map((m) => (
           <div key={m.id}>
-            <span className="font-medium text-africhess-gold">
+            <span className="font-medium text-africhess-gold inline-flex items-center gap-0.5">
+              <UserFlair flair={m.sender.flair} />
               {m.sender.display_name || m.sender.username}:
             </span>{" "}
-            <span>{m.content}</span>
+            <span className={isEmoteOnlyMessage(m.content) ? "text-2xl" : ""}>{m.content}</span>
           </div>
         ))}
         <div ref={bottomRef} />
@@ -109,7 +113,7 @@ export function GameChat({ gameId }: { gameId: string }) {
         />
         <button
           type="button"
-          onClick={send}
+          onClick={() => send()}
           disabled={sending || !text.trim()}
           className="px-3 py-1 text-sm rounded-lg african-gradient text-white disabled:opacity-50"
           aria-label={t("chat.send")}
@@ -117,6 +121,7 @@ export function GameChat({ gameId }: { gameId: string }) {
           →
         </button>
       </div>
+      <EmotePicker onSelect={(emoji) => send(emoji)} disabled={sending} />
     </div>
   );
 }

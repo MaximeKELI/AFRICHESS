@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { UserAvatar } from "@/components/profile/UserAvatar";
+import { UserFlair } from "@/components/profile/UserFlair";
 import { usePreferencesStore } from "@/store/preferences";
 import { Menu, Moon, Shield, Sun, Wifi, WifiOff, X, Leaf } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
@@ -26,6 +27,9 @@ const NAV_LINKS = [
   { href: "/leaderboard", key: "leaderboard.african" },
   { href: "/stats", key: "nav.stats" },
   { href: "/community", key: "nav.community" },
+  { href: "/blog", key: "nav.blog" },
+  { href: "/learning/glossary", key: "nav.glossary" },
+  { href: "/achievements", key: "nav.achievements" },
 ] as const;
 
 export function Navbar() {
@@ -123,7 +127,8 @@ export function Navbar() {
                   username={user.username}
                   size={32}
                 />
-                <span className="text-sm font-medium hidden sm:inline hover:text-africhess-gold">
+                <span className="text-sm font-medium hidden sm:inline hover:text-africhess-gold inline-flex items-center gap-1">
+                  <UserFlair flair={user.flair} />
                   {user.display_name || user.username}
                 </span>
               </Link>

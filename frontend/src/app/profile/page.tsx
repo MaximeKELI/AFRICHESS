@@ -8,7 +8,9 @@ import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { UserAvatar } from "@/components/profile/UserAvatar";
 import { UserAvatarUpload } from "@/components/profile/UserAvatarUpload";
+import { FlairPicker } from "@/components/profile/FlairPicker";
 import { LevelPicker } from "@/components/profile/LevelPicker";
+import { UserFlair } from "@/components/profile/UserFlair";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
@@ -87,7 +89,10 @@ export default function ProfilePage() {
           className="rounded-2xl ring-2"
         />
         <div>
-          <h1 className="font-display text-3xl font-bold">{user.display_name || user.username}</h1>
+          <h1 className="font-display text-3xl font-bold inline-flex items-center gap-2">
+            <UserFlair flair={user.flair} className="text-2xl" />
+            {user.display_name || user.username}
+          </h1>
           <p className="opacity-60 flex items-center gap-1.5 flex-wrap">
             <span>{countryFlag(user.country)}</span>
             <span>{displayCountry(user.country, locale)}</span>
@@ -118,6 +123,8 @@ export default function ProfilePage() {
           username={user.username}
           onUpdated={fetchProfile}
         />
+        <hr className="border-white/10" />
+        <FlairPicker />
         <hr className="border-white/10" />
         <p className="text-xs opacity-55 -mt-2">{t("profile.level.hint")}</p>
         <LevelPicker value={chessLevel} onChange={setChessLevel} />
