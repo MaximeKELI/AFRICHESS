@@ -24,6 +24,10 @@
 | **Glossaire** | `app/learning/glossary/page.tsx` | 20 termes FR avec recherche |
 | **Création forum** | `ForumCreateForm.tsx`, `api.ts`, `community/page.tsx` | POST `/api/social/forum/` |
 | **Page achievements** | `app/achievements/page.tsx` | Badges learning via `/learning/badges/mine/` |
+| **Emotes en partie** | `chessEmotes.ts`, `EmotePicker.tsx`, `GameChat.tsx`, test | 12 emotes thématiques échecs |
+| **Flair utilisateur** | `User.flair`, migration `0008`, `FlairPicker`, `UserFlair`, test | Badge emoji à côté du pseudo |
+| **Blog échecs** | `/blog`, `/blog/new`, `BlogEditor`, `BlogBody`, test | Articles avec diagrammes FEN |
+| **Liens Navbar** | `Navbar.tsx` | Blog, glossaire, récompenses |
 
 ### Corrections inscription (session précédente, documentées)
 
@@ -38,13 +42,15 @@
 
 ## Tests ajoutés
 
-- `frontend/src/lib/pgnExport.test.ts` — buildPgn (2 cas)
+- `frontend/src/lib/chessEmotes.test.ts` — emotes (2 cas)
+- `frontend/src/lib/flair.test.ts` — validation flair (2 cas)
+- `frontend/src/lib/blogBody.test.ts` — parse diagrammes (2 cas)
 
 ---
 
 ## Non implémenté (hors scope session — voir ROADMAP)
 
-- Emotes, blogs, widgets natifs, puzzle battles, vision trainer
+- Widgets natifs iOS/Android, puzzle battles, vision trainer
 - Niveau 3 complet (LLM coach, vidéothèque massive)
 - Niveau 4 (fair-play ML, proctor, Glicko-2, mobile money)
 

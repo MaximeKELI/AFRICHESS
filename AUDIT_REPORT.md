@@ -18,7 +18,7 @@
 | 7 | Messages privés | ✅ | REST + WS direct chat |
 | 8 | Chat en partie | ✅ | `GameChat`, WS `ChessConsumer` |
 | 9 | Forums | 🔄 | Lecture, commentaires, likes ; création de sujet ajoutée (`ForumCreateForm`) |
-| 10 | Blogs | ❌ | Pas d'éditeur blog |
+| 10 | Blogs | ✅ | `/blog`, `/blog/new`, diagrammes FEN `[diagram:...]` |
 | 11 | Zen Mode | ✅ | Toggle Navbar, masque Elo/export en partie |
 | 12 | Widgets app | 🔄 | PWA install prompt ; pas de widgets natifs iOS/Android |
 | 13 | Notation PGN | ✅ | Stockage backend ; export client `PgnExportButton` |
