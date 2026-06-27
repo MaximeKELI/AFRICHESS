@@ -49,6 +49,13 @@ export default function LiveGamesPage() {
         .finally(() => setLoading(false));
     };
     load();
+    marketplaceApi.streamers().then(({ data }) => {
+      setStreamers(
+        Array.isArray(data)
+          ? data.filter((s: { twitch?: string; youtube?: string }) => s.twitch || s.youtube)
+          : []
+      );
+    }).catch(() => setStreamers([]));
     const id = setInterval(load, 15000);
     return () => clearInterval(id);
   }, [t]);
