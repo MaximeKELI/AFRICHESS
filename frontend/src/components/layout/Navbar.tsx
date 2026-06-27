@@ -195,7 +195,7 @@ export function Navbar() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 md:h-16 flex items-center justify-between gap-2">
           <Link href="/" className="flex items-center gap-2 group shrink-0" onClick={closeDrawer}>
             <Image src="/images/logo.png" alt="AFRICHESS" width={36} height={36} className="rounded-lg md:w-10 md:h-10" />
-            <span className="font-display text-lg md:text-xl font-bold bg-gradient-to-r from-africhess-gold to-africhess-green bg-clip-text text-transparent hidden xs:inline">
+            <span className="font-display text-lg md:text-xl font-bold bg-gradient-to-r from-africhess-gold to-africhess-green bg-clip-text text-transparent hidden sm:inline">
               AFRICHESS
             </span>
           </Link>

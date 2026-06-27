@@ -540,7 +540,7 @@ function PlayContent() {
         </div>
       )}
 
-      <div className="play-mobile-tabs" role="tablist" aria-label={t("play.mobileTabs")}>
+      <div className="play-mobile-tabs lg:hidden" role="tablist" aria-label={t("play.mobileTabs")}>
         {(["board", "moves", "setup"] as const).map((tab) => (
           <button
             key={tab}

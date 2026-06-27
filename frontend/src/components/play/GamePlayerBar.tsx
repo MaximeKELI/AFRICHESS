@@ -115,7 +115,7 @@ function PlayerChip({
           size={size}
         />
       ) : (
-        <span className={`relative rounded-lg overflow-hidden ring-1 ring-africhess-terracotta/40 shrink-0 w-${size/4} h-${size/4}`} style={{ width: size, height: size }}>
+        <span className="relative rounded-lg overflow-hidden ring-1 ring-africhess-terracotta/40 shrink-0" style={{ width: size, height: size }}>
           <Image src={aiSrc!} alt={label} fill className="object-cover" sizes={`${size}px`} />
         </span>
       )}
