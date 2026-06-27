@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { gamesApi } from "@/lib/api";
+import { marketplaceApi } from "@/lib/learningApi";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -20,6 +21,7 @@ export default function LiveGamesPage() {
   const [channel, setChannel] = useState("");
   const [games, setGames] = useState<LiveGame[]>([]);
   const [featured, setFeatured] = useState<LiveGame[]>([]);
+  const [streamers, setStreamers] = useState<{ display_name: string; twitch?: string; youtube?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,6 +89,22 @@ export default function LiveGamesPage() {
         </InlineAlert>
       )}
       {loading && <p className="text-sm opacity-60 mb-4">{t("common.loading")}</p>}
+
+      {streamers.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-3">{t("live.streamers")}</h2>
+          <ul className="space-y-2">
+            {streamers.map((s) => (
+              <li key={s.display_name} className="glass-card p-3 text-sm">
+                {s.display_name}
+                {s.twitch && (
+                  <a href={`https://twitch.tv/${s.twitch}`} target="_blank" rel="noopener noreferrer" className="ml-2 text-africhess-gold hover:underline">Twitch</a>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {featured.length > 0 && (
         <section className="mb-8">
