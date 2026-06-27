@@ -152,6 +152,24 @@ export default function LearningDashboardPage() {
         <div>
           <div className="flex flex-wrap gap-3 mb-4">
             <Link
+              href="/learning/analyze/board"
+              className="px-4 py-2 rounded-lg border border-white/20 hover:bg-white/5 text-sm"
+            >
+              {t("learning.analyzeBoard")}
+            </Link>
+            <Link
+              href="/training/vision"
+              className="px-4 py-2 rounded-lg border border-white/20 hover:bg-white/5 text-sm"
+            >
+              {t("learning.vision")}
+            </Link>
+            <Link
+              href="/training/solo"
+              className="px-4 py-2 rounded-lg border border-white/20 hover:bg-white/5 text-sm"
+            >
+              {t("learning.solo")}
+            </Link>
+            <Link
               href="/learning/analyze"
               className="px-4 py-2 rounded-lg border border-africhess-gold text-africhess-gold hover:bg-africhess-gold/10 text-sm"
             >

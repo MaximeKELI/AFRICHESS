@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
-import { puzzlesApi } from "@/lib/api";
+import { puzzlesApi, ratingsApi } from "@/lib/api";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { formatApiError } from "@/lib/errors";
 import { useAuthStore } from "@/store/auth";
@@ -55,6 +55,13 @@ export default function PuzzlesPage() {
   useEffect(() => {
     if (user) {
       puzzlesApi.streak().then(({ data }) => setStreak(data.daily_streak ?? 0)).catch(() => setStreak(getPuzzleStreak()));
+      import("@/lib/api").then(({ ratingsApi }) =>
+        ratingsApi.me().then(({ data }) => {
+          const list = Array.isArray(data) ? data : data.results ?? [];
+          const pr = list.find((r: { mode: string }) => r.mode === "puzzle");
+          if (pr) setPuzzleElo(pr.elo);
+        }).catch(() => {})
+      );
     } else {
       setStreak(getPuzzleStreak());
     }
