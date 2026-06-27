@@ -6,6 +6,7 @@ urlpatterns = [
     path("auth/oauth/exchange/", views.oauth_exchange, name="oauth-exchange"),
     path("register/", views.RegisterView.as_view(), name="register"),
     path("profile/", views.ProfileView.as_view(), name="profile"),
+    path("vacation/", views.vacation_mode, name="vacation-mode"),
     path("featured/african/", views.AfricanPlayersView.as_view(), name="african-players"),
     path("meta/countries/", views.countries_list, name="countries"),
     path("subscription/plans/", views.subscription_plans, name="subscription-plans"),

@@ -7,7 +7,7 @@ from django.utils import timezone
 from .models import Game
 from .room_utils import current_turn, ensure_game_room
 from .serializers import GameSerializer
-from .services import MatchmakingService, MODE_TIME_CONFIG
+from .services import MatchmakingService, MODE_TIME_CONFIG, create_matchmaking_game
 
 
 def serialize_game(game: Game) -> dict:
@@ -36,19 +36,8 @@ def restore_game_state(game_id) -> dict | None:
 
 
 def create_matchmaking_game(white, black, mode: str) -> Game:
-    config = MODE_TIME_CONFIG.get(mode, MODE_TIME_CONFIG["blitz"])
-    game = Game.objects.create(
-        white_player=white,
-        black_player=black,
-        mode=mode,
-        status=Game.Status.ACTIVE,
-        white_time_ms=config["initial_ms"],
-        black_time_ms=config["initial_ms"],
-        increment_ms=config["increment_ms"],
-        started_at=timezone.now(),
-    )
-    ensure_game_room(game)
-    return game
+    """Alias rétrocompatibilité — délègue au service principal."""
+    return create_matchmaking_game(white, black, mode)
 
 
 class RealtimeMatchmakingService(MatchmakingService):

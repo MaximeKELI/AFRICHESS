@@ -83,6 +83,7 @@ class UserSerializer(serializers.ModelSerializer):
             "title",
             "fide_id",
             "flair",
+            "vacation_until",
             "stats",
             "date_joined",
         ]
