@@ -115,6 +115,8 @@ export const usersApi = {
   subscriptionStatus: () => api.get("/users/subscription/status/"),
   subscribe: (plan: "gold" | "diamond") =>
     api.post("/users/subscription/subscribe/", { plan }),
+  setVacation: (days: number) => api.post("/users/vacation/", { days }),
+  clearVacation: () => api.delete("/users/vacation/"),
 };
 
 export const gamesApi = {

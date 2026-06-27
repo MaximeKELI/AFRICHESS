@@ -448,7 +448,8 @@ function PlayContent() {
     try {
       await gamesApi.matchmaking(mode, {
         is_timed: useClock,
-        time_minutes: useClock ? timeMinutes : null,
+        is_rated: isRated,
+        time_minutes: isRated && useClock ? null : useClock ? timeMinutes : null,
       });
     } catch {
       /* file HTTP optionnelle ; WS principal */
@@ -677,13 +678,31 @@ function PlayContent() {
           {gameId && !isVsAi && <GameChat gameId={gameId} />}
 
           <hr className="border-white/10 hidden lg:block" />
-          <div className="glass-card p-4">
-            <TimeControlPicker
-              isTimed={useClock}
-              minutes={timeMinutes}
-              onTimedChange={setUseClock}
-              onMinutesChange={setTimeMinutes}
-            />
+          <div className="glass-card p-4 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-medium">{t("play.rated.label")}</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isRated}
+                onClick={() => setIsRated((r) => !r)}
+                className={`px-3 py-1 rounded-lg text-xs font-medium ${isRated ? "african-gradient text-white" : "border border-white/20"}`}
+              >
+                {isRated ? t("play.rated.on") : t("play.rated.off")}
+              </button>
+            </div>
+            {isRated && useClock ? (
+              <p className="text-xs opacity-60">
+                {t("play.rated.clock", { clock: ratedClockLabel, mode: modeLabelText })}
+              </p>
+            ) : (
+              <TimeControlPicker
+                isTimed={useClock}
+                minutes={timeMinutes}
+                onTimedChange={setUseClock}
+                onMinutesChange={setTimeMinutes}
+              />
+            )}
           </div>
 
           <div className="glass-card p-4">
