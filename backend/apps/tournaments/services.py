@@ -37,11 +37,28 @@ class TournamentEngine:
             n = self.participant_count(tournament)
             tournament.total_rounds = max(3, min(7, (n - 1).bit_length() + 2))
         tournament.save(update_fields=["status", "current_round", "total_rounds"])
-        if tournament.format == Tournament.Format.ARENA:
+        if tournament.format in (Tournament.Format.ARENA, Tournament.Format.CLUB_ARENA):
             self._start_arena_round(tournament, 1)
         else:
             self._start_swiss_round(tournament, 1)
         return tournament
+
+    def _create_tournament_game(self, tournament: Tournament, white, black) -> Game:
+        if tournament.format == Tournament.Format.DAILY:
+            from apps.games.correspondence import create_correspondence_game
+
+            return create_correspondence_game(
+                white, black, days_per_move=tournament.days_per_move or 3
+            )
+        return GameService().create_friend_game(
+            white=white, black=black, mode=tournament.mode, is_rated=False
+        )
+
+    def _participant_club_id(self, tournament: Tournament, user_id: int) -> int | None:
+        tp = TournamentParticipant.objects.filter(
+            tournament=tournament, user_id=user_id
+        ).first()
+        return tp.club_id if tp else None
 
     def _played_pairs(self, tournament: Tournament) -> set[tuple[int, int]]:
         pairs = set()
@@ -61,9 +78,7 @@ class TournamentEngine:
         svc = GameService()
         for i in range(0, len(players) - 1, 2):
             white, black = players[i], players[i + 1]
-            game = svc.create_friend_game(
-                white=white, black=black, mode=tournament.mode, is_rated=False
-            )
+            game = self._create_tournament_game(tournament, white, black)
             game.tournament = tournament
             game.save(update_fields=["tournament"])
             rnd.games.add(game)
@@ -89,7 +104,6 @@ class TournamentEngine:
         )
         svc = GameService()
         paired = set()
-        for i, sa in enumerate(standings):
             if sa.user_id in paired:
                 continue
             opponent = None
@@ -109,12 +123,7 @@ class TournamentEngine:
             white_user, black_user = sa.user, opponent.user
             if random.random() > 0.5:
                 white_user, black_user = black_user, white_user
-            game = svc.create_friend_game(
-                white=white_user,
-                black=black_user,
-                mode=tournament.mode,
-                is_rated=False,
-            )
+            game = self._create_tournament_game(tournament, white_user, black_user)
             game.tournament = tournament
             game.save(update_fields=["tournament"])
             rnd.games.add(game)
