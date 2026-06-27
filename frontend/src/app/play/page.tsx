@@ -48,6 +48,7 @@ import { PgnExportButton } from "@/components/chess/PgnExportButton";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { GamePlayerBar } from "@/components/play/GamePlayerBar";
+import { GameChat } from "@/components/social/GameChat";
 import {
   useGameWebSocket,
   useMatchmakingWebSocket,
@@ -521,8 +522,41 @@ function PlayContent() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(260px,340px)] gap-5 lg:gap-6 items-start">
-        <div className="w-full min-w-0 max-w-full space-y-3">
+      {!gameId && (
+        <div className="lg:hidden flex gap-2 mb-4">
+          <button
+            onClick={startAI}
+            className="flex-1 py-3 rounded-xl african-gradient text-white text-sm font-semibold"
+          >
+            {t("play.vsAi.start")}
+          </button>
+          <button
+            onClick={findMatch}
+            disabled={searching || wsSearching}
+            className="flex-1 py-3 rounded-xl border-2 border-africhess-green text-africhess-green text-sm font-semibold disabled:opacity-50"
+          >
+            {searching || wsSearching ? t("play.online.searching") : t("play.online.find")}
+          </button>
+        </div>
+      )}
+
+      <div className="play-mobile-tabs" role="tablist" aria-label={t("play.mobileTabs")}>
+        {(["board", "moves", "setup"] as const).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            role="tab"
+            aria-selected={mobileTab === tab}
+            onClick={() => setMobileTab(tab)}
+            className={`play-mobile-tab ${mobileTab === tab ? "play-mobile-tab-active" : "opacity-70"}`}
+          >
+            {t(`play.mobileTab.${tab}`)}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(260px,340px)] gap-4 lg:gap-6 items-start">
+        <div className={`w-full min-w-0 max-w-full space-y-3 ${mobileTab !== "board" ? "hidden lg:block" : ""}`}>
           {isLiveHuman && (
             <div className="space-y-1">
               <p className="text-xs text-center opacity-60">
@@ -540,6 +574,7 @@ function PlayContent() {
               user={user}
               aiElo={gameData.ai_target_elo ?? aiElo}
               playerIsWhite={playerIsWhite}
+              side="opponent"
             />
           )}
           {movePending && isVsAi && (
@@ -567,6 +602,16 @@ function PlayContent() {
             serverValidated={activeVariant !== "standard"}
             pendingDrop={activeVariant === "crazyhouse" ? dropPiece : null}
             onDropAtSquare={(uci) => handleMove(uci)}
+            bottomBar={
+              isVsAi && gameId && user ? (
+                <GamePlayerBar
+                  user={user}
+                  aiElo={gameData.ai_target_elo ?? aiElo}
+                  playerIsWhite={playerIsWhite}
+                  side="player"
+                />
+              ) : undefined
+            }
           />
           {activeVariant === "crazyhouse" && gameId && isMyTurn && (
             <PocketBar
@@ -647,41 +692,43 @@ function PlayContent() {
           )}
         </div>
 
-        <div className="w-full space-y-4 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:pr-1">
-          <GameSidePanel
-            moves={panelDisplay.moveRows}
-            captured={panelDisplay.captured}
-            orientation={orientation}
-            isCheck={panelDisplay.isCheck}
-            turn={panelDisplay.turn}
-            openingName={openingName}
-          />
-          {isVsAi && (
-            <div className="glass-card p-4">
-              <h3 className="font-semibold text-sm mb-3">{t("play.comments")}</h3>
-              <AiCommentaryPanel
-                comments={moveComments}
-                enabled={aiCommentsEnabled}
-              />
-            </div>
-          )}
-          {gameCompleted && gameId && (
-            <div className="flex justify-center hide-in-zen">
-              <PgnExportButton
-                pgn={gameData.pgn}
-                moves={gameData.moves}
-                white={gameData.white_player?.username}
-                black={gameData.black_player?.username}
-                result={gameData.result}
-                gameId={gameId}
-              />
-            </div>
-          )}
-          {gameId && (
-            <GameAnalysisPanel gameId={gameId} completed={gameCompleted} />
-          )}
-          {gameId && !isVsAi && <GameChat gameId={gameId} />}
+        <div
+          className={`w-full space-y-4 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:pr-1 scrollbar-thin ${
+            mobileTab === "board" ? "hidden lg:block" : ""
+          }`}
+        >
+          <div className={mobileTab === "moves" ? "block space-y-4" : "hidden lg:block lg:space-y-4"}>
+            <GameSidePanel
+              moves={panelDisplay.moveRows}
+              captured={panelDisplay.captured}
+              orientation={orientation}
+              isCheck={panelDisplay.isCheck}
+              turn={panelDisplay.turn}
+              openingName={openingName}
+            />
+            {isVsAi && (
+              <div className="glass-card p-4">
+                <h3 className="font-semibold text-sm mb-3">{t("play.comments")}</h3>
+                <AiCommentaryPanel comments={moveComments} enabled={aiCommentsEnabled} />
+              </div>
+            )}
+            {gameCompleted && gameId && (
+              <div className="flex justify-center hide-in-zen">
+                <PgnExportButton
+                  pgn={gameData.pgn}
+                  moves={gameData.moves}
+                  white={gameData.white_player?.username}
+                  black={gameData.black_player?.username}
+                  result={gameData.result}
+                  gameId={gameId}
+                />
+              </div>
+            )}
+            {gameId && <GameAnalysisPanel gameId={gameId} completed={gameCompleted} />}
+            {gameId && !isVsAi && <GameChat gameId={gameId} />}
+          </div>
 
+          <div className={mobileTab === "setup" ? "block space-y-4" : "hidden lg:block lg:space-y-4"}>
           <hr className="border-white/10 hidden lg:block" />
           <div className="glass-card p-4 space-y-3">
             <div className="flex items-center justify-between gap-2">
@@ -806,6 +853,7 @@ function PlayContent() {
           {status && (
             <p className="text-sm text-africhess-gold">{status}</p>
           )}
+          </div>
         </div>
       </div>
     </div>
