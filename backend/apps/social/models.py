@@ -76,6 +76,40 @@ class ForumPost(models.Model):
         return self.title
 
 
+class ClubEvent(models.Model):
+    """Événement de club (tournoi, annonce, défi)."""
+
+    class EventType(models.TextChoices):
+        ANNOUNCEMENT = "announcement", "Announcement"
+        TOURNAMENT = "tournament", "Tournament"
+        CHALLENGE = "challenge", "Challenge"
+
+    club = models.ForeignKey(Club, on_delete=models.CASCADE, related_name="events")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="club_events_created",
+    )
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    event_type = models.CharField(max_length=20, choices=EventType.choices, default=EventType.ANNOUNCEMENT)
+    starts_at = models.DateTimeField()
+    tournament = models.ForeignKey(
+        "tournaments.Tournament",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="club_events",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["starts_at"]
+
+    def __str__(self):
+        return self.title
+
+
 class ForumComment(models.Model):
     post = models.ForeignKey(ForumPost, on_delete=models.CASCADE, related_name="comments")
     author = models.ForeignKey(

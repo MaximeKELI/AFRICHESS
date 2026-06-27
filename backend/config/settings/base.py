@@ -243,6 +243,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.games.tasks.forfeit_disconnected_games",
         "schedule": 30.0,
     },
+    "forfeit-correspondence": {
+        "task": "apps.games.tasks.forfeit_overdue_correspondence_games",
+        "schedule": 900.0,
+    },
 }
 
 DISCONNECT_FORFEIT_SECONDS = 90

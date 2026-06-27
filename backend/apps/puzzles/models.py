@@ -18,6 +18,15 @@ class Puzzle(models.Model):
     success_rate = models.FloatField(default=0.0)
     is_daily = models.BooleanField(default=False)
     daily_date = models.DateField(null=True, blank=True)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="custom_puzzles",
+    )
+    is_public = models.BooleanField(default=False)
+    source = models.CharField(max_length=20, default="seed")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -25,7 +34,66 @@ class Puzzle(models.Model):
         indexes = [
             models.Index(fields=["is_daily", "daily_date"]),
             models.Index(fields=["difficulty"]),
+            models.Index(fields=["author", "source"]),
         ]
+
+
+class PuzzleRushSession(models.Model):
+    """Session Puzzle Rush côté serveur."""
+
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        COMPLETED = "completed", "Completed"
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    puzzle_ids = models.JSONField(default=list)
+    current_index = models.PositiveSmallIntegerField(default=0)
+    score = models.PositiveSmallIntegerField(default=0)
+    misses = models.PositiveSmallIntegerField(default=0)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
+    started_at = models.DateTimeField(auto_now_add=True)
+    ends_at = models.DateTimeField()
+
+    class Meta:
+        indexes = [models.Index(fields=["user", "-started_at"])]
+
+
+class PuzzleBattle(models.Model):
+    """Duel 1v1 sur puzzles."""
+
+    class Status(models.TextChoices):
+        WAITING = "waiting", "Waiting"
+        ACTIVE = "active", "Active"
+        COMPLETED = "completed", "Completed"
+
+    player1 = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="battles_as_p1",
+    )
+    player2 = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="battles_as_p2",
+    )
+    puzzle_ids = models.JSONField(default=list)
+    current_index = models.PositiveSmallIntegerField(default=0)
+    score1 = models.PositiveSmallIntegerField(default=0)
+    score2 = models.PositiveSmallIntegerField(default=0)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.WAITING)
+    winner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="battles_won",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Puzzle #{self.pk} ({self.difficulty})"

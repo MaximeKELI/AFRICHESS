@@ -7,6 +7,8 @@ class Tournament(models.Model):
         SWISS = "swiss", "Swiss"
         KNOCKOUT = "knockout", "Knockout"
         ARENA = "arena", "Arena"
+        DAILY = "daily", "Daily"
+        CLUB_ARENA = "club_arena", "Club Arena"
 
     class Status(models.TextChoices):
         UPCOMING = "upcoming", "Upcoming"
@@ -28,6 +30,21 @@ class Tournament(models.Model):
     ends_at = models.DateTimeField(null=True, blank=True)
     total_rounds = models.PositiveSmallIntegerField(default=5)
     current_round = models.PositiveSmallIntegerField(default=0)
+    days_per_move = models.PositiveSmallIntegerField(default=3, help_text="Daily chess")
+    club_a = models.ForeignKey(
+        "social.Club",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tournaments_as_a",
+    )
+    club_b = models.ForeignKey(
+        "social.Club",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tournaments_as_b",
+    )
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="tournaments", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -53,6 +70,13 @@ class TournamentParticipant(models.Model):
     is_available = models.BooleanField(
         default=True,
         help_text="Arène : disponible pour un nouveau pairing",
+    )
+    club = models.ForeignKey(
+        "social.Club",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tournament_entries",
     )
 
     class Meta:

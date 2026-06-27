@@ -13,9 +13,27 @@
 
 ---
 
-## Fonctionnalités implémentées cette session
+## Fonctionnalités implémentées — Niveau 2 (session courante)
 
-### Niveau 1
+| Feature | Fichiers | Description |
+|---------|----------|-------------|
+| **Classical + horloges** | `services.py`, `serializers.py` | `MODE_TIME_CONFIG` dans matchmaking, classical autorisé |
+| **Parties amicales** | `Game.is_rated`, migration `0013`, `play/page.tsx` | Toggle classée/amicale |
+| **Elo puzzle joueur** | `ratings/services.py`, `puzzles/views.py` | Rating mode `puzzle` |
+| **Daily pool + vacances** | `correspondence.py`, `users/vacation`, `daily/page.tsx` | Seek + vacation_until |
+| **Swiss multi-rondes** | `tournaments/services.py`, migration `0005` | Avancement auto |
+| **Arena re-pairing** | `tournaments/services.py` | Pairing joueurs disponibles |
+| **Vision Training** | `/training/vision`, `visionTraining.ts` | Drills coordonnées |
+| **Solo Chess** | `/training/solo`, `soloChess.ts` | 4 niveaux |
+| **Self-analysis board** | `/learning/analyze/board` | Éditeur + eval Stockfish |
+
+### Tests ajoutés
+
+- `visionTraining.test.ts`, `soloChess.test.ts`
+
+---
+
+## Fonctionnalités implémentées cette session (Niveau 1)
 
 | Feature | Fichiers | Description |
 |---------|----------|-------------|
@@ -48,9 +66,11 @@
 
 ---
 
-## Non implémenté (hors scope session — voir ROADMAP)
+## Non implémenté (Niveau 2 restant — voir ROADMAP)
 
-- Widgets natifs iOS/Android, puzzle battles, vision trainer
+- Puzzle Battles (#22), Custom puzzle builder (#23), Daily tournois (#29)
+- Vote chess, odds, simuls, club vs club (#31-34)
+- Forfeit Celery daily chess, Glicko-2 (#60)
 - Niveau 3 complet (LLM coach, vidéothèque massive)
 - Niveau 4 (fair-play ML, proctor, Glicko-2, mobile money)
 

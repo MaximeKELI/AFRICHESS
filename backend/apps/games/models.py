@@ -163,6 +163,8 @@ class Game(models.Model):
         default=True,
         help_text="False = partie amicale sans impact Elo",
     )
+    is_vote_chess = models.BooleanField(default=False)
+    odds_preset = models.CharField(max_length=20, blank=True, default="")
 
     class Meta:
         ordering = ["-created_at"]
@@ -253,3 +255,76 @@ class CorrespondenceQueue(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=["days_per_move", "elo"])]
+
+
+class SimulSession(models.Model):
+    """Simultanée : un hôte contre plusieurs adversaires."""
+
+    class Status(models.TextChoices):
+        OPEN = "open", "Open"
+        ACTIVE = "active", "Active"
+        COMPLETED = "completed", "Completed"
+
+    host = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="simuls_hosted",
+    )
+    title = models.CharField(max_length=120, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN)
+    max_boards = models.PositiveSmallIntegerField(default=10)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Simul {self.id} — {self.host_id}"
+
+
+class SimulBoard(models.Model):
+    session = models.ForeignKey(SimulSession, on_delete=models.CASCADE, related_name="boards")
+    game = models.OneToOneField(Game, on_delete=models.CASCADE, related_name="simul_board")
+    opponent = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="simul_games",
+    )
+    board_number = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        unique_together = ["session", "opponent"]
+
+
+class VoteGame(models.Model):
+    """Métadonnées vote chess — clubs votent collectivement."""
+
+    game = models.OneToOneField(Game, on_delete=models.CASCADE, related_name="vote_meta")
+    club_white = models.ForeignKey(
+        "social.Club",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="vote_games_white",
+    )
+    club_black = models.ForeignKey(
+        "social.Club",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="vote_games_black",
+    )
+    voting_ply = models.PositiveSmallIntegerField(default=0)
+
+    def __str__(self):
+        return f"VoteGame {self.game_id}"
+
+
+class GameVote(models.Model):
+    """Vote d'un membre pour le prochain coup."""
+
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="votes")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    move_uci = models.CharField(max_length=10)
+    ply = models.PositiveSmallIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ["game", "user", "ply"]
