@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
+from django.db import close_old_connections
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
@@ -84,6 +85,7 @@ class ThroughputCapacityTests(TestCase):
 
         def worker():
             nonlocal success, errors, attempts
+            close_old_connections()
             client = APIClient()
             while time.perf_counter() < stop_at:
                 with lock:
