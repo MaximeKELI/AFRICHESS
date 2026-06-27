@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { gamesApi } from "@/lib/api";
 import { coachPhrase } from "@/lib/coachReview";
+import { speakComment, initAiSpeech, isAiSpeechSupported } from "@/lib/aiSpeech";
 import { formatApiError } from "@/lib/errors";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuthStore } from "@/store/auth";
@@ -30,6 +31,8 @@ interface AnalysisData {
   blunders_white: number;
   blunders_black: number;
   best_moves_json: MoveAnalysis[];
+  summary_fr?: string;
+  key_moments_json?: { ply: number; san: string; text: string }[];
 }
 
 const CLASS_COLORS: Record<string, string> = {
@@ -58,6 +61,12 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
   const [filter, setFilter] = useState<string>("all");
   const [retryIdx, setRetryIdx] = useState<number | null>(null);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [voiceOn, setVoiceOn] = useState(false);
+  const [asyncRunning, setAsyncRunning] = useState(false);
+
+  useEffect(() => {
+    initAiSpeech();
+  }, []);
 
   const runAnalysis = async () => {
     setLoading(true);
@@ -77,6 +86,34 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
       setError(formatApiError(err, t("chess.analysis.unavailable")));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const runCloudAnalysis = async () => {
+    setAsyncRunning(true);
+    setError(null);
+    try {
+      await gamesApi.analyzeAsync(gameId);
+      const poll = setInterval(async () => {
+        const { data } = await gamesApi.analyzeStatus(gameId);
+        if (data.status === "completed" && data.analysis) {
+          clearInterval(poll);
+          setAnalysis(data.analysis);
+          setSelectedIdx(0);
+          setAsyncRunning(false);
+        } else if (data.status === "failed") {
+          clearInterval(poll);
+          setError(data.error || t("chess.analysis.unavailable"));
+          setAsyncRunning(false);
+        }
+      }, 2500);
+      setTimeout(() => {
+        clearInterval(poll);
+        setAsyncRunning(false);
+      }, 120000);
+    } catch (err: unknown) {
+      setError(formatApiError(err, t("chess.analysis.unavailable")));
+      setAsyncRunning(false);
     }
   };
 
@@ -107,6 +144,12 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
     );
   }, [selectedMove, t]);
 
+  useEffect(() => {
+    if (voiceOn && coachText) {
+      speakComment(coachText, { byAi: false, enabled: true });
+    }
+  }, [coachText, voiceOn, selectedIdx]);
+
   const reviewDisplay = useMemo(() => {
     if (!analysis || selectedIdx == null) return null;
     const uciList = analysis.best_moves_json
@@ -132,13 +175,35 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
       )}
 
       {!analysis && (
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={runAnalysis}
+            disabled={loading || asyncRunning}
+            className="w-full py-2 rounded-lg border border-africhess-green text-africhess-green text-sm font-medium hover:bg-africhess-green/10 disabled:opacity-50"
+          >
+            {loading ? t("chess.analysis.running") : t("chess.analysis.run")}
+          </button>
+          {user?.is_premium && (
+            <button
+              type="button"
+              onClick={runCloudAnalysis}
+              disabled={loading || asyncRunning}
+              className="w-full py-2 rounded-lg african-gradient text-white text-sm font-medium disabled:opacity-50"
+            >
+              {asyncRunning ? t("chess.analysis.cloudRunning") : t("chess.analysis.cloudRun")}
+            </button>
+          )}
+        </div>
+      )}
+
+      {analysis && isAiSpeechSupported() && (
         <button
           type="button"
-          onClick={runAnalysis}
-          disabled={loading}
-          className="w-full py-2 rounded-lg border border-africhess-green text-africhess-green text-sm font-medium hover:bg-africhess-green/10 disabled:opacity-50"
+          onClick={() => setVoiceOn((v) => !v)}
+          className={`text-xs px-2 py-1 rounded border ${voiceOn ? "border-africhess-gold text-africhess-gold" : "opacity-60"}`}
         >
-          {loading ? t("chess.analysis.running") : t("chess.analysis.run")}
+          {voiceOn ? t("chess.analysis.voiceOff") : t("chess.analysis.voiceOn")}
         </button>
       )}
 
@@ -146,6 +211,20 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
 
       {analysis && (
         <>
+          {analysis.summary_fr && (
+            <div className="rounded-lg bg-africhess-gold/10 p-3 text-xs space-y-2">
+              <p className="font-semibold text-africhess-gold">{t("chess.analysis.reviewTitle")}</p>
+              <p className="opacity-90">{analysis.summary_fr}</p>
+              {analysis.key_moments_json && analysis.key_moments_json.length > 0 && (
+                <ul className="space-y-1 opacity-80">
+                  {analysis.key_moments_json.map((m) => (
+                    <li key={m.ply}>• {m.text}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
           <EvalGraph
             points={analysis.best_moves_json}
             selectedIndex={selectedIdx}
