@@ -43,6 +43,11 @@ class RegisterTournamentView(APIView):
         if enrolled >= tournament.max_players:
             return Response({"error": "Tournament full"}, status=400)
         TournamentEngine().ensure_participant(tournament, request.user)
+        club_id = request.data.get("club_id")
+        if club_id and tournament.format == Tournament.Format.CLUB_ARENA:
+            TournamentParticipant.objects.filter(
+                tournament=tournament, user=request.user
+            ).update(club_id=club_id)
         tournament = tournament_detail_queryset().get(pk=tournament.pk)
         return Response(TournamentSerializer(tournament).data)
 

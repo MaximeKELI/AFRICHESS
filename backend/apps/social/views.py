@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,9 +11,10 @@ from apps.games.services import GameService
 from apps.notifications.models import Notification
 
 from .chat_access import user_can_access_chat_room
-from .models import ChatMessage, Club, ForumComment, ForumPost, ForumPostLike, Friendship
+from .models import ChatMessage, Club, ClubEvent, ForumComment, ForumPost, ForumPostLike, Friendship
 from .serializers import (
     ChatMessageSerializer,
+    ClubEventSerializer,
     ClubSerializer,
     ForumCommentSerializer,
     ForumPostDetailSerializer,
@@ -332,3 +334,91 @@ class ChatHistoryView(generics.ListAPIView):
         return ChatMessage.objects.filter(
             room_type=room_type, room_id=room_id
         ).select_related("sender").order_by("-created_at")[:100][::-1]
+
+
+class ClubEventListCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, slug):
+        if not Club.objects.filter(slug=slug, members=request.user).exists():
+            club = Club.objects.filter(slug=slug, is_public=True).first()
+            if not club:
+                return Response({"error": "Accès refusé"}, status=403)
+        events = ClubEvent.objects.filter(club__slug=slug).select_related("created_by")[:30]
+        return Response(ClubEventSerializer(events, many=True).data)
+
+    def post(self, request, slug):
+        try:
+            club = Club.objects.get(slug=slug)
+        except Club.DoesNotExist:
+            return Response({"error": "Club introuvable"}, status=404)
+        if club.owner_id != request.user.id and not request.user.is_staff:
+            return Response({"error": "Réservé au propriétaire"}, status=403)
+        title = (request.data.get("title") or "").strip()[:200]
+        if not title:
+            return Response({"error": "Titre requis"}, status=400)
+        from django.utils.dateparse import parse_datetime
+
+        starts = parse_datetime(request.data.get("starts_at") or "") or timezone.now()
+        event = ClubEvent.objects.create(
+            club=club,
+            created_by=request.user,
+            title=title,
+            description=(request.data.get("description") or "")[:2000],
+            event_type=request.data.get("event_type", ClubEvent.EventType.ANNOUNCEMENT),
+            starts_at=starts,
+        )
+        return Response(ClubEventSerializer(event).data, status=201)
+
+
+class ClubArenaChallengeView(APIView):
+    """Crée un tournoi arène inter-clubs."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, slug):
+        from apps.tournaments.models import Tournament
+
+        try:
+            club_a = Club.objects.get(slug=slug)
+        except Club.DoesNotExist:
+            return Response({"error": "Club introuvable"}, status=404)
+        if not club_a.members.filter(pk=request.user.pk).exists():
+            return Response({"error": "Non membre"}, status=403)
+
+        other_slug = request.data.get("opponent_club")
+        try:
+            club_b = Club.objects.get(slug=other_slug)
+        except Club.DoesNotExist:
+            return Response({"error": "Club adversaire introuvable"}, status=404)
+
+        from django.utils.text import slugify
+
+        name = f"{club_a.name} vs {club_b.name}"
+        base_slug = slugify(name)[:40]
+        slug_t = base_slug
+        n = 1
+        while Tournament.objects.filter(slug=slug_t).exists():
+            slug_t = f"{base_slug}-{n}"
+            n += 1
+
+        tournament = Tournament.objects.create(
+            name=name,
+            slug=slug_t,
+            format=Tournament.Format.CLUB_ARENA,
+            status=Tournament.Status.REGISTRATION,
+            mode=request.data.get("mode", "blitz"),
+            starts_at=timezone.now(),
+            created_by=request.user,
+            club_a=club_a,
+            club_b=club_b,
+        )
+        ClubEvent.objects.create(
+            club=club_a,
+            created_by=request.user,
+            title=name,
+            event_type=ClubEvent.EventType.TOURNAMENT,
+            starts_at=tournament.starts_at,
+            tournament=tournament,
+        )
+        return Response({"slug": tournament.slug, "name": tournament.name}, status=201)

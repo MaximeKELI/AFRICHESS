@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.users.serializers import UserPublicSerializer
 
-from .models import ChatMessage, Club, ForumComment, ForumPost, Friendship
+from .models import ChatMessage, Club, ClubEvent, ForumComment, ForumPost, Friendship
 
 
 class FriendshipSerializer(serializers.ModelSerializer):
@@ -84,3 +84,21 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatMessage
         fields = ["id", "sender", "content", "created_at"]
+
+
+class ClubEventSerializer(serializers.ModelSerializer):
+    created_by = UserPublicSerializer(read_only=True)
+
+    class Meta:
+        model = ClubEvent
+        fields = [
+            "id",
+            "title",
+            "description",
+            "event_type",
+            "starts_at",
+            "created_by",
+            "tournament",
+            "created_at",
+        ]
+        read_only_fields = ["created_by", "tournament"]
