@@ -24,7 +24,10 @@ class MoveSerializer(serializers.ModelSerializer):
 class GameAnalysisSerializer(serializers.ModelSerializer):
     class Meta:
         model = GameAnalysis
-        fields = ["accuracy_white", "accuracy_black", "blunders_white", "blunders_black", "best_moves_json"]
+        fields = [
+            "accuracy_white", "accuracy_black", "blunders_white", "blunders_black",
+            "best_moves_json", "summary_fr", "key_moments_json",
+        ]
 
 
 class ChessBotSerializer(serializers.ModelSerializer):
