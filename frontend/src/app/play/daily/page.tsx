@@ -76,6 +76,76 @@ export default function DailyChessPage() {
       )}
 
       {user && (
+        <>
+          <div className="glass-card p-5 space-y-3">
+            <h2 className="font-semibold text-sm">{t("daily.pool")}</h2>
+            <p className="text-xs opacity-60">{t("daily.poolHint")}</p>
+            <div className="flex flex-wrap gap-2">
+              <select
+                value={days}
+                onChange={(e) => setDays(Number(e.target.value))}
+                className="px-3 py-2 rounded-lg border bg-transparent"
+                aria-label={t("daily.daysPerMove", { n: days })}
+              >
+                {[1, 2, 3, 5, 7, 14].map((d) => (
+                  <option key={d} value={d}>{t("daily.daysPerMove", { n: d })}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const { data } = await gamesApi.correspondenceSeek(days);
+                    if (data.id) {
+                      window.location.href = `/play?game=${data.id}`;
+                    } else {
+                      setError(t("daily.poolSearching"));
+                    }
+                  } catch (err) {
+                    setError(formatApiError(err, t("daily.error.seek")));
+                  }
+                }}
+                className="px-4 py-2 rounded-lg african-gradient text-white text-sm"
+              >
+                {t("daily.poolBtn")}
+              </button>
+            </div>
+          </div>
+
+          <div className="glass-card p-5 space-y-3">
+            <h2 className="font-semibold text-sm">{t("daily.vacation")}</h2>
+            <p className="text-xs opacity-60">{t("daily.vacationHint")}</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await usersApi.setVacation(7);
+                    setError(null);
+                  } catch (err) {
+                    setError(formatApiError(err, t("daily.error.vacation")));
+                  }
+                }}
+                className="px-4 py-2 rounded-lg border text-sm hover:bg-white/10"
+              >
+                {t("daily.vacationOn")}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await usersApi.clearVacation();
+                  } catch (err) {
+                    setError(formatApiError(err, t("daily.error.vacation")));
+                  }
+                }}
+                className="px-4 py-2 rounded-lg border text-sm opacity-70 hover:bg-white/10"
+              >
+                {t("daily.vacationOff")}
+              </button>
+            </div>
+          </div>
+
         <form onSubmit={challenge} className="glass-card p-5 space-y-3">
           <h2 className="font-semibold text-sm">{t("daily.challenge")}</h2>
           <div className="flex flex-wrap gap-2">
@@ -99,6 +169,7 @@ export default function DailyChessPage() {
             </button>
           </div>
         </form>
+        </>
       )}
 
       {loading && <p className="opacity-60">{t("common.loading")}</p>}
