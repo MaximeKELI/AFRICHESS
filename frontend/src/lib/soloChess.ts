@@ -12,25 +12,25 @@ export interface SoloLevel {
 export const SOLO_LEVELS: SoloLevel[] = [
   {
     id: 1,
-    fen: "8/8/8/8/4q3/8/8/4Q3 w - - 0 1",
+    fen: "k6K/8/8/8/4q3/8/8/4Q2K w - - 0 1",
     labelFr: "Dame vs dame",
     labelEn: "Queen vs queen",
   },
   {
     id: 2,
-    fen: "8/8/8/8/4r3/8/8/4R3 w - - 0 1",
+    fen: "k6K/8/8/8/4r3/8/8/4R2K w - - 0 1",
     labelFr: "Tour vs tour",
     labelEn: "Rook vs rook",
   },
   {
     id: 3,
-    fen: "8/8/8/8/4n3/8/8/4N3 w - - 0 1",
+    fen: "k6K/8/8/8/4n3/8/8/4N2K w - - 0 1",
     labelFr: "Cavalier vs cavalier",
     labelEn: "Knight vs knight",
   },
   {
     id: 4,
-    fen: "8/8/8/3p4/8/4P3/8/8 w - - 0 1",
+    fen: "k6K/8/8/3p4/8/4P3/8/4K3 w - - 0 1",
     labelFr: "Pions face à face",
     labelEn: "Pawn face-off",
   },
@@ -51,8 +51,8 @@ export function soloMoveAllowed(chess: Chess, from: Square, to: Square): boolean
   return pool.some((m) => m.from === from && m.to === to);
 }
 
-/** Victoire : une seule pièce restante sur l'échiquier */
+/** Victoire : une seule pièce (hors rois) restante */
 export function soloVictory(chess: Chess): boolean {
-  const board = chess.board().flat().filter(Boolean);
+  const board = chess.board().flat().filter((p) => p && p.type !== "k");
   return board.length <= 1;
 }
