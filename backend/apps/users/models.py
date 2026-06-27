@@ -93,6 +93,12 @@ class User(AbstractUser):
 
     title = models.CharField(max_length=20, blank=True)  # GM, IM, FM, etc.
     fide_id = models.CharField(max_length=20, blank=True)
+    flair = models.CharField(
+        max_length=8,
+        blank=True,
+        default="",
+        help_text="Emoji flair affiché à côté du pseudo",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

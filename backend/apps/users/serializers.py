@@ -82,6 +82,7 @@ class UserSerializer(serializers.ModelSerializer):
             "is_diamond",
             "title",
             "fide_id",
+            "flair",
             "stats",
             "date_joined",
         ]
@@ -126,6 +127,7 @@ class UserPublicSerializer(serializers.ModelSerializer):
             "city",
             "title",
             "chess_level",
+            "flair",
             "is_african_highlight",
             "date_joined",
             "stats",

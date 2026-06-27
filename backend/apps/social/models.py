@@ -43,6 +43,7 @@ class ForumPost(models.Model):
         AFRICA = "africa", "Africa"
         NEWS = "news", "News"
         STRATEGY = "strategy", "Strategy"
+        BLOG = "blog", "Blog"
 
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
