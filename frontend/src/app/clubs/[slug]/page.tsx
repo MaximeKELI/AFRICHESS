@@ -97,7 +97,7 @@ export default function ClubDetailPage() {
     if (!arenaOpponent.trim()) return;
     try {
       const { data } = await socialApi.clubArena(slug, arenaOpponent.trim());
-      window.location.href = `/tournaments/${data.id}`;
+      window.location.href = `/tournaments?open=${data.slug}`;
     } catch (err) {
       setError(formatApiError(err, t("clubs.error.load")));
     }

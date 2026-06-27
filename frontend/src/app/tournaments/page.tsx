@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { tournamentsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import Link from "next/link";
