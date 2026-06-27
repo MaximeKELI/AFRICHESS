@@ -12,25 +12,25 @@ export interface SoloLevel {
 export const SOLO_LEVELS: SoloLevel[] = [
   {
     id: 1,
-    fen: "k6K/8/8/8/4q3/8/8/4Q2K w - - 0 1",
+    fen: "k7/8/8/8/4q3/8/8/4Q2K w - - 0 1",
     labelFr: "Dame vs dame",
     labelEn: "Queen vs queen",
   },
   {
     id: 2,
-    fen: "k6K/8/8/8/4r3/8/8/4R2K w - - 0 1",
+    fen: "k7/8/8/8/4r3/8/8/4R2K w - - 0 1",
     labelFr: "Tour vs tour",
     labelEn: "Rook vs rook",
   },
   {
     id: 3,
-    fen: "k6K/8/8/8/4n3/8/8/4N2K w - - 0 1",
+    fen: "k7/8/8/8/4n3/8/8/4N2K w - - 0 1",
     labelFr: "Cavalier vs cavalier",
     labelEn: "Knight vs knight",
   },
   {
     id: 4,
-    fen: "k6K/8/8/3p4/8/4P3/8/4K3 w - - 0 1",
+    fen: "k7/8/8/3p4/8/4P3/8/4K3 w - - 0 1",
     labelFr: "Pions face à face",
     labelEn: "Pawn face-off",
   },

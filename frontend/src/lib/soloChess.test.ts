@@ -8,7 +8,7 @@ describe("soloChess", () => {
   });
 
   it("soloVictory quand une pièce reste", () => {
-    const c = new Chess("k6K/8/8/8/8/8/8/4Q2K w - - 0 1");
+    const c = new Chess("k7/8/8/8/8/8/8/4Q2K w - - 0 1");
     expect(soloVictory(c)).toBe(true);
   });
 
