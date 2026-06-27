@@ -2,9 +2,10 @@
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework.test import APIClient
 
-from apps.social.models import Club, ClubEvent, ClubMembership
+from apps.social.models import Club, ClubEvent
 
 User = get_user_model()
 
@@ -13,17 +14,22 @@ class ClubEventTests(TestCase):
     def setUp(self):
         self.owner = User.objects.create_user(username="club_owner", password="x")
         self.member = User.objects.create_user(username="club_mem", password="x")
-        self.club = Club.objects.create(name="Test Club", slug="test-club", owner=self.owner)
-        ClubMembership.objects.create(club=self.club, user=self.owner, role=ClubMembership.Role.OWNER)
-        ClubMembership.objects.create(club=self.club, user=self.member, role=ClubMembership.Role.MEMBER)
+        self.club = Club.objects.create(
+            name="Test Club",
+            slug="test-club",
+            owner=self.owner,
+            is_public=True,
+        )
+        self.club.members.add(self.owner, self.member)
         self.client = APIClient()
 
-    def test_list_club_events(self):
+    def test_list_club_events_public(self):
         ClubEvent.objects.create(
             club=self.club,
             title="Tournoi interne",
             event_type=ClubEvent.EventType.TOURNAMENT,
             created_by=self.owner,
+            starts_at=timezone.now(),
         )
         res = self.client.get(f"/api/social/clubs/{self.club.slug}/events/")
         self.assertEqual(res.status_code, 200)

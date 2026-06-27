@@ -27,7 +27,7 @@ class MarketplaceTests(TestCase):
         self.assertEqual(res.data[0]["username"], "coach1")
 
     def test_streamers_public_list(self):
-        StreamerProfile.objects.create(user=self.coach_user, display_name="ChessLive", is_live=True)
+        StreamerProfile.objects.create(user=self.coach_user, display_name="ChessLive")
         res = self.client.get("/api/social/streamers/")
         self.assertEqual(res.status_code, 200)
         self.assertTrue(any(s["display_name"] == "ChessLive" for s in res.data))
