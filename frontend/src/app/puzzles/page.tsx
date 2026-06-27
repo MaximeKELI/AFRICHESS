@@ -29,7 +29,7 @@ interface LeaderboardRow {
   solved_count: number;
 }
 
-type Tab = "daily" | "training" | "rush" | "leaderboard";
+type Tab = "daily" | "training" | "rush" | "battle" | "leaderboard";
 
 export default function PuzzlesPage() {
   const { user } = useAuthStore();
@@ -46,9 +46,16 @@ export default function PuzzlesPage() {
   const [startTime, setStartTime] = useState(Date.now());
   const [rushQueue, setRushQueue] = useState<Puzzle[]>([]);
   const [rushIndex, setRushIndex] = useState(0);
+  const [rushSessionId, setRushSessionId] = useState<number | null>(null);
+  const [rushEndsAt, setRushEndsAt] = useState<number | null>(null);
   const [rushScore, setRushScore] = useState(0);
   const [rushMisses, setRushMisses] = useState(0);
   const [rushTimeLeft, setRushTimeLeft] = useState(180);
+  const [battleId, setBattleId] = useState<number | null>(null);
+  const [battleStatus, setBattleStatus] = useState<string>("idle");
+  const [battleOpponent, setBattleOpponent] = useState<string | null>(null);
+  const [battleScoreYou, setBattleScoreYou] = useState(0);
+  const [battleScoreOpp, setBattleScoreOpp] = useState(0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -66,19 +73,39 @@ export default function PuzzlesPage() {
   }, [user]);
 
   useEffect(() => {
-    if (tab !== "rush" || rushTimeLeft <= 0 || !puzzle) return;
-    const timer = setInterval(() => {
-      setRushTimeLeft((s) => {
-        if (s <= 1) {
-          setResult(t("puzzles.rush.timeUp", { score: rushScore }));
-          setPuzzle(null);
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
+    if (tab !== "rush" || !rushEndsAt || !puzzle) return;
+    const tick = () => {
+      const left = Math.max(0, Math.floor((rushEndsAt - Date.now()) / 1000));
+      setRushTimeLeft(left);
+      if (left <= 0) {
+        setResult(t("puzzles.rush.timeUp", { score: rushScore }));
+        setPuzzle(null);
+        setRushSessionId(null);
+      }
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [tab, rushTimeLeft, puzzle, rushScore, t]);
+  }, [tab, rushEndsAt, puzzle, rushScore, t]);
+
+  useEffect(() => {
+    if (tab !== "battle" || !battleId || battleStatus !== "waiting") return;
+    const poll = setInterval(() => {
+      puzzlesApi.battleGet(battleId).then(({ data }) => {
+        setBattleStatus(data.status);
+        if (data.puzzle) {
+          setPuzzle(data.puzzle);
+          setUciMoves([]);
+          setResult(null);
+        }
+        if (data.score1 != null) {
+          setBattleScoreYou(data.score1);
+          setBattleScoreOpp(data.score2);
+        }
+      }).catch(() => {});
+    }, 2000);
+    return () => clearInterval(poll);
+  }, [tab, battleId, battleStatus]);
 
   const loadDaily = () => {
     setResult(null);
@@ -105,14 +132,18 @@ export default function PuzzlesPage() {
     setRushScore(0);
     setRushMisses(0);
     setRushTimeLeft(180);
+    setRushSessionId(null);
+    setRushEndsAt(null);
     setLoadError(null);
     puzzlesApi
-      .rush(15)
+      .rushStart()
       .then(({ data }) => {
-        const list: Puzzle[] = Array.isArray(data) ? data : data.results ?? [];
-        setRushQueue(list);
+        setRushSessionId(data.session_id);
+        setRushEndsAt(new Date(data.ends_at).getTime());
+        setRushTimeLeft(data.duration ?? 180);
+        setRushQueue([data.puzzle]);
         setRushIndex(0);
-        setPuzzle(list[0] ?? null);
+        setPuzzle(data.puzzle);
       })
       .catch((err) => {
         setPuzzle(null);
@@ -123,6 +154,43 @@ export default function PuzzlesPage() {
           setLoadError(formatApiError(err, t("puzzles.error.rush")));
         }
       });
+  };
+
+  const loadBattle = () => {
+    setBattleId(null);
+    setBattleStatus("idle");
+    setBattleOpponent(null);
+    setBattleScoreYou(0);
+    setBattleScoreOpp(0);
+    setPuzzle(null);
+    setResult(null);
+    setUciMoves([]);
+    setLoadError(null);
+  };
+
+  const findBattle = async () => {
+    if (!user) {
+      setLoadError(t("puzzles.battle.loginRequired"));
+      return;
+    }
+    setLoadError(null);
+    try {
+      const { data } = await puzzlesApi.battleQueue();
+      setBattleId(data.battle_id);
+      setBattleStatus(data.status);
+      if (data.opponent) setBattleOpponent(data.opponent);
+      if (data.puzzle) {
+        setPuzzle(data.puzzle);
+        setStartTime(Date.now());
+      }
+    } catch (err) {
+      setLoadError(formatApiError(err, t("puzzles.battle.error")));
+    }
+  };
+
+  const leaveBattleQueue = async () => {
+    await puzzlesApi.battleLeave().catch(() => {});
+    loadBattle();
   };
 
   const loadLeaderboard = () => {
@@ -159,6 +227,7 @@ export default function PuzzlesPage() {
     if (tab === "daily") loadDaily();
     else if (tab === "training") loadTraining();
     else if (tab === "rush") loadRush();
+    else if (tab === "battle") loadBattle();
     else if (tab === "leaderboard") loadLeaderboard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, difficulty]);
@@ -176,6 +245,70 @@ export default function PuzzlesPage() {
     if (!puzzle || !user) return;
     const time = Math.floor((Date.now() - startTime) / 1000);
     try {
+      if (tab === "rush" && rushSessionId) {
+        const { data } = await puzzlesApi.rushSubmit(rushSessionId, uciMoves, time);
+        setRushScore(data.score ?? rushScore);
+        setRushMisses(data.misses ?? rushMisses);
+        if (data.time_left != null) {
+          setRushEndsAt(Date.now() + data.time_left * 1000);
+          setRushTimeLeft(data.time_left);
+        }
+        const solved = Boolean(data.solved);
+        if (data.completed) {
+          const reason = data.reason === "timeout"
+            ? t("puzzles.rush.timeUp", { score: data.score })
+            : data.misses >= 3
+              ? t("puzzles.rush.threeMisses", { score: data.score })
+              : t("puzzles.rush.done", { score: data.score });
+          setResult(reason);
+          setPuzzle(null);
+          setRushSessionId(null);
+          return;
+        }
+        setResult(solved ? t("puzzles.solved.bravo", { streak: streak, rush: "" }) : t("puzzles.solved.wrong"));
+        if (data.next_puzzle) {
+          setRushIndex((i) => i + 1);
+          setRushQueue((q) => [...q, data.next_puzzle]);
+          setPuzzle(data.next_puzzle);
+          setUciMoves([]);
+          setStartTime(Date.now());
+        }
+        return;
+      }
+
+      if (tab === "battle" && battleId) {
+        const { data } = await puzzlesApi.battleSubmit(battleId, uciMoves, time);
+        if (!data.solved) {
+          setResult(t("puzzles.solved.wrong"));
+          return;
+        }
+        const you = data.score1 ?? battleScoreYou;
+        const opp = data.score2 ?? battleScoreOpp;
+        setBattleScoreYou(you);
+        setBattleScoreOpp(opp);
+        if (data.completed) {
+          setResult(
+            data.winner_id === user.id
+              ? t("puzzles.battle.win")
+              : data.winner_id
+                ? t("puzzles.battle.loss")
+                : t("puzzles.battle.draw")
+          );
+          setPuzzle(null);
+          return;
+        }
+        setResult(t("puzzles.solved.bravo", { streak: streak, rush: "" }));
+        if (battleId) {
+          const { data: detail } = await puzzlesApi.battleGet(battleId);
+          if (detail.puzzle) {
+            setPuzzle(detail.puzzle);
+            setUciMoves([]);
+            setStartTime(Date.now());
+          }
+        }
+        return;
+      }
+
       const { data } = await puzzlesApi.submit(puzzle.id, uciMoves, time);
       if (data.puzzle_elo != null) setPuzzleElo(data.puzzle_elo);
       const solved = Boolean(data.solved);
@@ -186,19 +319,6 @@ export default function PuzzlesPage() {
         setStreak(data.daily_streak);
       } else {
         setStreak(nextStreak);
-      }
-      if (tab === "rush") {
-        if (solved) {
-          setRushScore((s) => s + 1);
-        } else {
-          const misses = rushMisses + 1;
-          setRushMisses(misses);
-          if (misses >= 3) {
-            setResult(t("puzzles.rush.threeMisses", { score: rushScore }));
-            setPuzzle(null);
-            return;
-          }
-        }
       }
       setResult(
         solved
@@ -294,6 +414,19 @@ export default function PuzzlesPage() {
         >
           {t("puzzles.tab.rush")}
         </button>
+        <button
+          type="button"
+          onClick={() => setTab("battle")}
+          className={`px-4 py-2 rounded-lg ${tab === "battle" ? "african-gradient text-white" : "border"}`}
+        >
+          {t("puzzles.tab.battle")}
+        </button>
+        <Link
+          href="/puzzles/build"
+          className="px-4 py-2 rounded-lg border text-sm hover:border-africhess-gold"
+        >
+          {t("nav.puzzleBuild")}
+        </Link>
         <button
           type="button"
           onClick={() => setTab("leaderboard")}
