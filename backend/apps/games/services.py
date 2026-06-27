@@ -190,6 +190,7 @@ class GameService:
         mode="blitz",
         is_timed=True,
         time_minutes=None,
+        is_rated=True,
     ):
         timed, white_ms, black_ms, inc_ms, tcm = resolve_time_fields(
             is_timed, time_minutes
@@ -204,6 +205,7 @@ class GameService:
             white_time_ms=white_ms,
             black_time_ms=black_ms,
             increment_ms=inc_ms,
+            is_rated=is_rated,
             started_at=timezone.now(),
             turn_started_at=timezone.now() if timed else None,
         )
@@ -486,6 +488,7 @@ class MatchmakingService:
         elo: int,
         is_timed: bool = True,
         time_minutes: int | None = None,
+        is_rated: bool = True,
     ):
         _, _, _, _, tcm = resolve_time_fields(is_timed, time_minutes)
         MatchmakingQueue.objects.update_or_create(
@@ -494,6 +497,7 @@ class MatchmakingService:
                 "mode": mode,
                 "elo": elo,
                 "is_timed": is_timed,
+                "is_rated": is_rated,
                 "time_control_minutes": tcm,
             },
         )
@@ -508,11 +512,13 @@ class MatchmakingService:
         elo: int,
         is_timed: bool = True,
         time_minutes: int | None = None,
+        is_rated: bool = True,
     ):
         _, _, _, _, tcm = resolve_time_fields(is_timed, time_minutes)
         candidates = MatchmakingQueue.objects.filter(
             mode=mode,
             is_timed=is_timed,
+            is_rated=is_rated,
             time_control_minutes=tcm,
             elo__gte=elo - self.ELO_RANGE,
             elo__lte=elo + self.ELO_RANGE,
@@ -522,12 +528,13 @@ class MatchmakingService:
             opponent = candidate.user
             self.leave_queue(user)
             self.leave_queue(opponent)
-            return GameService().create_friend_game(
+            return create_matchmaking_game(
                 white=user,
                 black=opponent,
                 mode=mode,
                 is_timed=is_timed,
                 time_minutes=time_minutes,
+                is_rated=is_rated,
             )
         return None
 
@@ -555,6 +562,8 @@ class MatchmakingService:
                     if j <= i or b.user_id in used or b.user_id == a.user_id:
                         continue
                     if a.is_timed != b.is_timed:
+                        continue
+                    if a.is_rated != b.is_rated:
                         continue
                     if a.time_control_minutes != b.time_control_minutes:
                         continue
