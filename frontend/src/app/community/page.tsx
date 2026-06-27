@@ -63,6 +63,7 @@ export default function CommunityPage() {
       {loading && <p className="text-sm opacity-60 mb-6">{t("common.loading")}</p>}
 
       <section className="mb-12">
+        <ForumCreateForm onCreated={loadForum} />
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-africhess-terracotta">
             {t("community.feed.title")}

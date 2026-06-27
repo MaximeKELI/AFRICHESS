@@ -43,7 +43,7 @@ import Image from "next/image";
 import { pickAiAvatar } from "@/lib/avatars";
 import { useTranslation } from "@/hooks/useTranslation";
 import { chessLevelLabel, modeLabel } from "@/lib/i18n/labels";
-import { GameChat } from "@/components/social/GameChat";
+import { PgnExportButton } from "@/components/chess/PgnExportButton";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { GamePlayerBar } from "@/components/play/GamePlayerBar";
@@ -656,6 +656,18 @@ function PlayContent() {
               />
             </div>
           )}
+          {gameCompleted && gameId && (
+            <div className="flex justify-center hide-in-zen">
+              <PgnExportButton
+                pgn={gameData.pgn}
+                moves={gameData.moves}
+                white={gameData.white_player?.username}
+                black={gameData.black_player?.username}
+                result={gameData.result}
+                gameId={gameId}
+              />
+            </div>
+          )}
           {gameId && (
             <GameAnalysisPanel gameId={gameId} completed={gameCompleted} />
           )}
@@ -679,7 +691,7 @@ function PlayContent() {
             <p className="text-[10px] opacity-45 mb-2 leading-snug">
               {t("play.vsAi.hint", { mode: modeLabelText })}
             </p>
-            <div className="flex justify-between text-xs mb-2 gap-2">
+            <div className="flex justify-between text-xs mb-2 gap-2 hide-in-zen">
               <span className="opacity-70">
                 {t("play.vsAi.yourElo", { mode: modeLabelText })} :{" "}
                 <strong className="text-africhess-green">{userElo ?? "—"}</strong>
