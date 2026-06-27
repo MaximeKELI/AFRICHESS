@@ -233,6 +233,21 @@ def oauth_exchange(request):
     return Response({"access": str(refresh.access_token), "refresh": str(refresh)})
 
 
+@api_view(["POST", "DELETE"])
+@permission_classes([permissions.IsAuthenticated])
+def vacation_mode(request):
+    """Active ou désactive le mode vacances (daily chess)."""
+    user = request.user
+    if request.method == "DELETE":
+        user.vacation_until = None
+        user.save(update_fields=["vacation_until"])
+        return Response({"vacation_until": None})
+    days = min(int(request.data.get("days", 7)), 30)
+    user.vacation_until = timezone.now() + timedelta(days=days)
+    user.save(update_fields=["vacation_until"])
+    return Response({"vacation_until": user.vacation_until.isoformat()})
+
+
 @api_view(["POST", "GET"])
 @permission_classes([permissions.AllowAny])
 def registration_deprecated(request):
