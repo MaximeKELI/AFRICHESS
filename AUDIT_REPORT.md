@@ -61,22 +61,22 @@
 | # | Fonctionnalité | Statut | Notes |
 |---|----------------|--------|-------|
 | 38 | Bots (IA) | ✅ | Catalogue + personnalités africaines, Elo adaptatif |
-| 39 | Coach IA | 🔄 | `CoachPanel`, tips ; pas LLM complet |
-| 40 | Play Coach | 🔄 | Commentaires IA en partie vs bot |
-| 41 | Voice Coach | 🔄 | `aiSpeech.ts` TTS basique |
-| 42 | Game Review IA | 🔄 | `GameAnalysisPanel` ; pas NLG complet |
-| 43 | Move Explanations | 🔄 | Classifications moteur ; pas explications prose |
-| 44 | 7-Piece Tablebases | ❌ | — |
-| 45 | Cloud Analysis | 🔄 | Stockfish serveur ; profondeur limitée free |
+| 39 | Coach IA | ✅ | `CoachPanel`, plan hebdo, hub `/insights` |
+| 40 | Play Coach | 🔄 | Commentaires enrichis eval + best move hint |
+| 41 | Voice Coach | ✅ | TTS dans `GameAnalysisPanel` + `aiSpeech.ts` |
+| 42 | Game Review IA | ✅ | Synthèse NLG `review_nlg.py`, moments clés |
+| 43 | Move Explanations | ✅ | `move_explain.py` — PV + best move en prose |
+| 44 | 7-Piece Tablebases | 🔄 | Probe API Lichess `GET /games/engine/tablebase/` |
+| 45 | Cloud Analysis | ✅ | Celery async `analyze/async/` + status poll |
 | 46 | Leçons interactives | ✅ | 40 leçons markdown, quiz, XP |
-| 47 | Vidéothèque | 🔄 | `VideoEmbed` ; contenu limité |
+| 47 | Vidéothèque | ✅ | Modèle `Video`, `/learning/videos`, seed 5 vidéos |
 | 48 | Articles pédagogiques | ✅ | Curriculum markdown |
-| 49 | Courses / Chessable | 🔄 | Cours structurés ; pas spaced repetition Chessable |
-| 50 | Opening Repertoires | ❌ | — |
-| 51 | Analytics avancées | 🔄 | Stats riches ; pas hub Insights unifié |
-| 52 | Classroom | ❌ | — |
-| 53 | Streamers intégrés | ❌ | — |
-| 54 | Coaches marketplace | ❌ | — |
+| 49 | Courses / Chessable | ✅ | `StudyLine` + SM-2, `/learning/study` |
+| 50 | Opening Repertoires | ✅ | `OpeningRepertoire`, `/learning/repertoires` |
+| 51 | Analytics avancées | ✅ | Hub `/insights` stats + coach |
+| 52 | Classroom | 🔄 | `ClassroomSession` REST, pas WebRTC |
+| 53 | Streamers intégrés | 🔄 | `StreamerProfile`, API `/social/streamers/` |
+| 54 | Coaches marketplace | 🔄 | `CoachProfile`, `/coaches` listing, pas Stripe Connect |
 
 ---
 

@@ -52,9 +52,24 @@
 - `social/0005_clubevent.py`
 - `tournaments/0006_level2_daily_club.py`
 
-### Tests ajoutés
+---
 
-- `backend/apps/games/tests/test_odds.py`
+## Fonctionnalités implémentées — Niveau 3
+
+| Feature | Fichiers | Description |
+|---------|----------|-------------|
+| **Coach + plan** | `learning/coach.py`, `/insights` | Conseils + plan hebdo |
+| **Game Review NLG** | `learning/review_nlg.py`, `GameAnalysis.summary_fr` | Synthèse + moments clés |
+| **Move explanations** | `learning/move_explain.py` | PV + best move en prose |
+| **Voice coach** | `GameAnalysisPanel`, `aiSpeech.ts` | TTS revue de partie |
+| **Cloud analysis** | `AnalysisJob`, `tasks.analyze_game_async` | Analyse async profonde |
+| **Tablebases** | `games/tablebase.py` | Probe Lichess ≤7 pièces |
+| **Vidéothèque** | `Video` model, `/learning/videos` | 5 vidéos seed |
+| **Répertoires** | `OpeningRepertoire`, `/learning/repertoires` | CRUD lignes SAN |
+| **Chessable study** | `StudyLine`, `LineReview`, SM-2 | `/learning/study` |
+| **Classroom** | `ClassroomSession`, `/classroom` | Plateau partagé REST |
+| **Streamers** | `StreamerProfile`, API | Listing embed |
+| **Coaches** | `CoachProfile`, `/coaches` | Marketplace listing |
 
 ---
 
