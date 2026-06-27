@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useTranslation } from "@/hooks/useTranslation";
 import { formatLocaleDate } from "@/lib/i18n/labels";
 import { ForumCreateForm } from "@/components/community/ForumCreateForm";
+import { Heart, MessageCircle } from "lucide-react";
 
 interface ForumPost {
   id: number;
