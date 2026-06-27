@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import extra_views, views
 
 urlpatterns = [
     path("", views.GameListView.as_view(), name="game-list"),
@@ -14,6 +14,11 @@ urlpatterns = [
     path("correspondence/", views.CorrespondenceListView.as_view(), name="correspondence-list"),
     path("correspondence/challenge/", views.CorrespondenceChallengeView.as_view(), name="correspondence-challenge"),
     path("correspondence/seek/", views.CorrespondenceSeekView.as_view(), name="correspondence-seek"),
+    path("simul/", extra_views.SimulListCreateView.as_view(), name="simul-list"),
+    path("simul/<int:session_id>/join/", extra_views.SimulJoinView.as_view(), name="simul-join"),
+    path("vote/create/", extra_views.VoteGameCreateView.as_view(), name="vote-create"),
+    path("<uuid:game_id>/vote/", extra_views.CastVoteView.as_view(), name="vote-cast"),
+    path("<uuid:game_id>/vote/apply/", extra_views.ApplyVoteMoveView.as_view(), name="vote-apply"),
     path("openings/lookup/", views.opening_lookup, name="opening-lookup"),
     path("engine/eval/", views.engine_eval, name="engine-eval"),
     path("<uuid:id>/", views.GameDetailView.as_view(), name="game-detail"),
