@@ -24,7 +24,7 @@ from .elo_adapt import resolve_final_ai_elo
 from .elo_config import elo_to_difficulty_label
 from .stats_service import on_game_completed
 from .engine import ChessEngineService
-from .models import ChessBot, Game, MatchmakingQueue, Move
+from .models import ChessBot, CorrespondenceQueue, Game, MatchmakingQueue, Move
 from .variant_utils import generate_chess960_start
 from .room_utils import ensure_game_room, uci_to_squares
 
@@ -34,6 +34,44 @@ MODE_TIME_CONFIG = {
     "rapid": {"initial_ms": 600000, "increment_ms": 0},
     "classical": {"initial_ms": 1800000, "increment_ms": 0},
 }
+
+
+def create_matchmaking_game(
+    white,
+    black,
+    mode: str,
+    *,
+    is_timed: bool = True,
+    time_minutes: int | None = None,
+    is_rated: bool = True,
+) -> Game:
+    """Crée une partie classée avec horloges prédéfinies par cadence."""
+    if is_timed and time_minutes is None and mode in MODE_TIME_CONFIG:
+        config = MODE_TIME_CONFIG[mode]
+        game = Game.objects.create(
+            white_player=white,
+            black_player=black,
+            mode=mode,
+            status=Game.Status.ACTIVE,
+            is_timed=True,
+            white_time_ms=config["initial_ms"],
+            black_time_ms=config["initial_ms"],
+            increment_ms=config["increment_ms"],
+            is_rated=is_rated,
+            started_at=timezone.now(),
+            turn_started_at=timezone.now(),
+        )
+    else:
+        game = GameService().create_friend_game(
+            white=white,
+            black=black,
+            mode=mode,
+            is_timed=is_timed,
+            time_minutes=time_minutes,
+            is_rated=is_rated,
+        )
+    ensure_game_room(game)
+    return game
 
 
 class GameService:
