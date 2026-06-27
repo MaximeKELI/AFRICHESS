@@ -4,6 +4,27 @@ export const learningApi = {
   dashboard: () => api.get("/learning/dashboard/"),
   profile: () => api.get("/learning/profile/"),
   coach: () => api.get("/learning/coach/"),
+  insights: () => api.get("/learning/insights/"),
+  videos: (category?: string, lang?: string) =>
+    api.get("/learning/videos/", { params: { category, lang } }),
+  repertoires: () => api.get("/learning/repertoires/"),
+  createRepertoire: (name: string, color: string) =>
+    api.post("/learning/repertoires/", { name, color }),
+  addRepertoireLine: (repId: number, name: string, moves_san: string[]) =>
+    api.post(`/learning/repertoires/${repId}/lines/`, { name, moves_san }),
+  deleteRepertoireLine: (repId: number, lineId: number) =>
+    api.delete(`/learning/repertoires/${repId}/lines/${lineId}/`),
+  studyLines: () => api.get("/learning/study/"),
+  createStudyLine: (data: { name: string; color?: string; moves_uci?: string[]; pgn?: string }) =>
+    api.post("/learning/study/", data),
+  studyReviewDue: () => api.get("/learning/study/review/"),
+  submitStudyReview: (lineId: number, moves: string[]) =>
+    api.post(`/learning/study/${lineId}/review/`, { moves }),
+  classrooms: () => api.get("/learning/classroom/"),
+  createClassroom: (title?: string) => api.post("/learning/classroom/", { title }),
+  getClassroom: (code: string) => api.get("/learning/classroom/", { params: { code } }),
+  updateClassroom: (code: string, data: { fen?: string; is_active?: boolean }) =>
+    api.patch(`/learning/classroom/${code}/`, data),
   courses: (level?: string) =>
     api.get("/learning/courses/", { params: level ? { level } : {} }),
   course: (slug: string, lang?: string) =>
@@ -26,4 +47,9 @@ export const learningApi = {
   badges: () => api.get("/learning/badges/"),
   myBadges: () => api.get("/learning/badges/mine/"),
   progress: () => api.get("/learning/progress/"),
+};
+
+export const marketplaceApi = {
+  streamers: () => api.get("/social/streamers/"),
+  coaches: () => api.get("/social/coaches/"),
 };

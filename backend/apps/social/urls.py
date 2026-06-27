@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import marketplace_views, views
 
 urlpatterns = [
     path("friends/", views.FriendsListView.as_view(), name="friends-list"),
@@ -32,4 +32,6 @@ urlpatterns = [
         views.PostChatMessageView.as_view(),
         name="chat-send",
     ),
+    path("streamers/", marketplace_views.StreamerListView.as_view(), name="streamer-list"),
+    path("coaches/", marketplace_views.CoachListView.as_view(), name="coach-list"),
 ]

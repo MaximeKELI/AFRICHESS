@@ -8,10 +8,11 @@ from rest_framework.views import APIView
 from apps.ratings.models import PlayerRating
 
 from .engine import ChessEngineService
-from .models import ChessBot, Game, GameAnalysis
+from .models import ChessBot, Game, GameAnalysis, AnalysisJob
 from .serializers import (
     ChessBotSerializer,
     CreateAIGameSerializer,
+    GameAnalysisSerializer,
     GameListSerializer,
     GameSerializer,
     MakeMoveSerializer,
@@ -272,6 +273,30 @@ class AnalyzeGameView(APIView):
             if e.classification == "blunder" and not move_rows[i][1]
         )
         acc_w, acc_b = compute_accuracies(evaluations, move_rows)
+        best_moves_json = [
+            {
+                "uci": e.uci,
+                "san": e.san,
+                "eval": e.eval_after,
+                "eval_before": e.eval_before,
+                "class": e.classification,
+                "cp_loss": e.centipawn_loss,
+                "played_by_white": move_rows[i][1],
+                "best_uci": e.best_uci,
+                "best_san": e.best_san,
+                "pv_san": e.pv_san,
+            }
+            for i, e in enumerate(evaluations)
+        ]
+        from apps.learning.review_nlg import generate_game_review
+
+        summary_fr, key_moments = generate_game_review(
+            best_moves_json,
+            accuracy_white=acc_w,
+            accuracy_black=acc_b,
+            blunders_white=blunders_w,
+            blunders_black=blunders_b,
+        )
         analysis, _ = GameAnalysis.objects.update_or_create(
             game=game,
             defaults={
@@ -279,21 +304,9 @@ class AnalyzeGameView(APIView):
                 "accuracy_black": acc_b,
                 "blunders_white": blunders_w,
                 "blunders_black": blunders_b,
-                "best_moves_json": [
-                    {
-                        "uci": e.uci,
-                        "san": e.san,
-                        "eval": e.eval_after,
-                        "eval_before": e.eval_before,
-                        "class": e.classification,
-                        "cp_loss": e.centipawn_loss,
-                        "played_by_white": move_rows[i][1],
-                        "best_uci": e.best_uci,
-                        "best_san": e.best_san,
-                        "pv_san": e.pv_san,
-                    }
-                    for i, e in enumerate(evaluations)
-                ],
+                "best_moves_json": best_moves_json,
+                "summary_fr": summary_fr,
+                "key_moments_json": key_moments,
             },
         )
         return Response(GameSerializer(game).data)
@@ -539,3 +552,68 @@ def opening_lookup(request):
     locale = (request.query_params.get("lang") or "fr")[:2]
     moves = [m.strip() for m in raw.split(",") if m.strip()] if raw else []
     return Response(lookup_opening(moves, locale=locale))
+
+
+@extend_schema(summary="Probe tablebase Syzygy (≤7 pièces, API Lichess)")
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def tablebase_probe(request):
+    from .tablebase import probe_tablebase
+
+    fen = request.query_params.get("fen")
+    if not fen:
+        return Response({"error": "fen required"}, status=400)
+    result = probe_tablebase(fen)
+    if result is None:
+        return Response({"available": False})
+    return Response({"available": True, **result})
+
+
+class AnalyzeGameAsyncView(APIView):
+    """Lance une analyse cloud asynchrone (Celery)."""
+
+    permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [AnalyzeThrottle]
+
+    def post(self, request, game_id):
+        try:
+            game = Game.objects.get(id=game_id)
+        except Game.DoesNotExist:
+            return Response({"error": "Game not found"}, status=404)
+        if not can_analyze_game(request.user, game):
+            return Response({"error": "Forbidden"}, status=403)
+        if game.status != Game.Status.COMPLETED:
+            return Response({"error": "Game not completed"}, status=400)
+
+        from apps.users.premium_utils import analysis_engine_depth
+
+        depth = min(analysis_engine_depth(request.user) + 4, 22)
+        job = AnalysisJob.objects.create(game=game, user=request.user, depth=depth)
+        from .tasks import analyze_game_async
+
+        analyze_game_async.delay(str(game.id), job.id)
+        return Response({"job_id": job.id, "status": job.status, "depth": depth}, status=202)
+
+
+class AnalyzeGameStatusView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, game_id):
+        job = (
+            AnalysisJob.objects.filter(game_id=game_id, user=request.user)
+            .order_by("-created_at")
+            .first()
+        )
+        if not job:
+            return Response({"status": "none"})
+        payload = {"job_id": job.id, "status": job.status, "depth": job.depth}
+        if job.status == AnalysisJob.Status.COMPLETED:
+            try:
+                analysis = GameAnalysis.objects.get(game_id=game_id)
+                payload["analysis"] = GameAnalysisSerializer(analysis).data
+            except GameAnalysis.DoesNotExist:
+                pass
+        if job.status == AnalysisJob.Status.FAILED:
+            payload["error"] = job.error
+        return Response(payload)
+

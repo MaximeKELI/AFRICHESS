@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from apps.puzzles.models import Puzzle, PuzzleAttempt
 from apps.puzzles.serializers import PuzzleSerializer, SubmitPuzzleSerializer
 
-from .coach import generate_coach_tips
+from .coach import generate_coach_payload, generate_coach_tips
 from apps.common.throttles import AnalyzeThrottle
 
 from .models import Badge, Course, LearningProfile, Lesson, Quiz, QuizAttempt, UserBadge, UserProgress
@@ -285,7 +285,7 @@ class CoachTipsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        return Response({"tips": generate_coach_tips(request.user)})
+        return Response(generate_coach_payload(request.user))
 
 
 class LearningProfileView(APIView):

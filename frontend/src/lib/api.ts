@@ -162,6 +162,9 @@ export const gamesApi = {
   ) => api.post("/games/matchmaking/", { mode, ...opts }),
   leaveQueue: () => api.delete("/games/matchmaking/"),
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),
+  analyzeAsync: (id: string) => api.post(`/games/${id}/analyze/async/`),
+  analyzeStatus: (id: string) => api.get(`/games/${id}/analyze/status/`),
+  tablebase: (fen: string) => api.get("/games/engine/tablebase/", { params: { fen } }),
   engineEval: (fen: string) =>
     api.get<{ evaluation: number | null }>("/games/engine/eval/", { params: { fen } }),
   live: () => api.get("/games/live/"),
