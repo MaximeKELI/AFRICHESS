@@ -26,6 +26,8 @@ class Tournament(models.Model):
     prize_pool = models.CharField(max_length=200, blank=True)
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField(null=True, blank=True)
+    total_rounds = models.PositiveSmallIntegerField(default=5)
+    current_round = models.PositiveSmallIntegerField(default=0)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="tournaments", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -48,6 +50,10 @@ class TournamentParticipant(models.Model):
     draws = models.PositiveIntegerField(default=0)
     losses = models.PositiveIntegerField(default=0)
     games_played = models.PositiveIntegerField(default=0)
+    is_available = models.BooleanField(
+        default=True,
+        help_text="Arène : disponible pour un nouveau pairing",
+    )
 
     class Meta:
         unique_together = ["tournament", "user"]

@@ -99,6 +99,11 @@ class User(AbstractUser):
         default="",
         help_text="Emoji flair affiché à côté du pseudo",
     )
+    vacation_until = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="En vacances : les échéances daily chess sont suspendues",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

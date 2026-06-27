@@ -159,6 +159,10 @@ class Game(models.Model):
         blank=True,
         help_text="Date limite pour jouer le coup en cours",
     )
+    is_rated = models.BooleanField(
+        default=True,
+        help_text="False = partie amicale sans impact Elo",
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -231,8 +235,21 @@ class MatchmakingQueue(models.Model):
     mode = models.CharField(max_length=20, choices=Game.Mode.choices)
     elo = models.PositiveIntegerField()
     is_timed = models.BooleanField(default=True)
+    is_rated = models.BooleanField(default=True)
     time_control_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        indexes = [models.Index(fields=["mode", "elo"])]
+        indexes = [models.Index(fields=["mode", "elo", "is_rated"])]
+
+
+class CorrespondenceQueue(models.Model):
+    """File d'attente pour parties daily chess (pool ouvert)."""
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    days_per_move = models.PositiveSmallIntegerField(default=3)
+    elo = models.PositiveIntegerField(default=1200)
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["days_per_move", "elo"])]
