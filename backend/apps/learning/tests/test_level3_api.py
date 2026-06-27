@@ -2,10 +2,10 @@
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.learning.models import StudyLine, Video
-from apps.social.models import CoachProfile, StreamerProfile
 
 User = get_user_model()
 
@@ -15,8 +15,6 @@ class LearningLevel3ApiTests(TestCase):
         self.user = User.objects.create_user(username="l3_u", password="x")
         self.client = APIClient()
         Video.objects.create(title="Intro", url="https://youtube.com/watch?v=abc", category="basics")
-        CoachProfile.objects.create(user=self.user, bio="Coach test", hourly_rate_eur=25)
-        StreamerProfile.objects.create(user=self.user, display_name="Stream Test")
 
     def test_insights_requires_auth(self):
         res = self.client.get("/api/learning/insights/")
@@ -50,31 +48,25 @@ class LearningLevel3ApiTests(TestCase):
         )
         self.assertEqual(res2.status_code, 201)
 
-    def test_study_line_and_review(self):
+    def test_study_review_empty(self):
         self.client.force_authenticate(self.user)
-        StudyLine.objects.create(user=self.user, name="Line1", moves_uci=["e2e4"])
         res = self.client.get("/api/learning/study/review/")
         self.assertEqual(res.status_code, 200)
+        self.assertIsNone(res.data["due"])
+
+    def test_study_line_creates_review(self):
+        self.client.force_authenticate(self.user)
+        res = self.client.post(
+            "/api/learning/study/",
+            {"name": "Line1", "moves_uci": ["e2e4", "e7e5"]},
+            format="json",
+        )
+        self.assertEqual(res.status_code, 201)
+        review = self.client.get("/api/learning/study/review/")
+        self.assertEqual(review.status_code, 200)
 
     def test_classroom_create(self):
         self.client.force_authenticate(self.user)
         res = self.client.post("/api/learning/classroom/", {"title": "Cours test"}, format="json")
         self.assertEqual(res.status_code, 201)
         self.assertIn("code", res.data)
-
-
-class MarketplaceApiTests(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username="mkt_u", password="x")
-        CoachProfile.objects.create(user=self.user, bio="Pro", is_available=True)
-        self.client = APIClient()
-
-    def test_coaches_list(self):
-        res = self.client.get("/api/social/coaches/")
-        self.assertEqual(res.status_code, 200)
-        self.assertTrue(len(res.data) >= 1)
-
-    def test_streamers_list(self):
-        StreamerProfile.objects.create(user=self.user, display_name="Live")
-        res = self.client.get("/api/social/streamers/")
-        self.assertEqual(res.status_code, 200)

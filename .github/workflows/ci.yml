@@ -42,6 +42,7 @@ jobs:
           cd backend
           python manage.py migrate --noinput
           python manage.py test \
+            apps.analytics.tests \
             apps.games.tests \
             apps.notifications.tests \
             apps.social.tests \

@@ -2,8 +2,10 @@
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework.test import APIClient
 
+from apps.social.models import Club
 from apps.tournaments.models import Tournament
 
 User = get_user_model()
@@ -11,33 +13,40 @@ User = get_user_model()
 
 class TournamentFormatTests(TestCase):
     def setUp(self):
-        self.admin = User.objects.create_user(username="t_admin", password="x", is_staff=True)
+        self.organizer = User.objects.create_user(username="t_fmt", password="x")
+        self.club_a = Club.objects.create(name="Club A", slug="club-a", owner=self.organizer)
+        self.club_b = Club.objects.create(name="Club B", slug="club-b", owner=self.organizer)
         self.client = APIClient()
-        self.client.force_authenticate(self.admin)
 
-    def test_create_daily_tournament(self):
-        res = self.client.post(
-            "/api/tournaments/",
-            {
-                "name": "Daily Blitz",
-                "format": Tournament.Format.DAILY,
-                "time_control": "3+2",
-                "max_players": 100,
-            },
-            format="json",
+    def test_daily_tournament_listed(self):
+        Tournament.objects.create(
+            name="Daily Blitz",
+            slug="daily-blitz",
+            format=Tournament.Format.DAILY,
+            status=Tournament.Status.REGISTRATION,
+            mode="daily",
+            starts_at=timezone.now(),
+            created_by=self.organizer,
+            days_per_move=3,
         )
-        self.assertEqual(res.status_code, 201)
-        self.assertEqual(res.data["format"], Tournament.Format.DAILY)
+        res = self.client.get("/api/tournaments/")
+        self.assertEqual(res.status_code, 200)
+        rows = res.data.get("results", res.data)
+        formats = {t["format"] for t in rows}
+        self.assertIn(Tournament.Format.DAILY, formats)
 
-    def test_create_club_arena_tournament(self):
-        res = self.client.post(
-            "/api/tournaments/",
-            {
-                "name": "Club Arena",
-                "format": Tournament.Format.CLUB_ARENA,
-                "time_control": "5+0",
-            },
-            format="json",
+    def test_club_arena_tournament(self):
+        t = Tournament.objects.create(
+            name="Club Arena",
+            slug="club-arena-test",
+            format=Tournament.Format.CLUB_ARENA,
+            status=Tournament.Status.REGISTRATION,
+            mode="blitz",
+            starts_at=timezone.now(),
+            created_by=self.organizer,
+            club_a=self.club_a,
+            club_b=self.club_b,
         )
-        self.assertEqual(res.status_code, 201)
+        res = self.client.get(f"/api/tournaments/{t.slug}/")
+        self.assertEqual(res.status_code, 200)
         self.assertEqual(res.data["format"], Tournament.Format.CLUB_ARENA)

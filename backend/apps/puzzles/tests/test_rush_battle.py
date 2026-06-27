@@ -53,8 +53,8 @@ class PuzzleRushApiTests(TestCase):
         for i in range(20):
             _make_puzzle(i)
 
-    @patch("apps.puzzles.views.record_puzzle_rush_start")
-    @patch("apps.puzzles.views.can_start_puzzle_rush", return_value=(True, None))
+    @patch("apps.users.premium_utils.record_puzzle_rush_start")
+    @patch("apps.users.premium_utils.can_start_puzzle_rush", return_value=(True, None))
     def test_rush_session_start(self, _can, _record):
         res = self.client.post("/api/puzzles/rush/start/", {}, format="json")
         self.assertEqual(res.status_code, 201)

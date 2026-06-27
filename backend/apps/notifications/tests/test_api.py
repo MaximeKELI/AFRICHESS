@@ -33,4 +33,4 @@ class NotificationApiTests(TestCase):
         res = self.client.post(f"/api/notifications/{n.id}/read/")
         self.assertEqual(res.status_code, 200)
         n.refresh_from_db()
-        self.assertTrue(n.read)
+        self.assertTrue(n.is_read)
