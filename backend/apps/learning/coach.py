@@ -74,5 +74,15 @@ def generate_coach_tips(user) -> list[dict]:
             "priority": 3,
         })
 
+    # Plan d'entraînement hebdomadaire
+    plan = []
+    if stats and stats.games_played >= 3:
+        plan.append({"day": "Lun–Mer", "focus": "2 parties rapides + 5 puzzles"})
+    if profile and profile.puzzles_solved_learning < 10:
+        plan.append({"day": "Jeu", "focus": "10 puzzles tactiques"})
+    if stalled.count() if 'stalled' in dir() else UserProgress.objects.filter(user=user, progress_percent__lt=100, progress_percent__gt=0).count() >= 1:
+        plan.append({"day": "Ven", "focus": "1 leçon cours AFRICHESS"})
+    plan.append({"day": "Sam", "focus": "Revue d'une partie analysée"})
+
     tips.sort(key=lambda t: t["priority"])
-    return tips[:5]
+    return {"tips": tips[:5], "training_plan": plan[:4]}

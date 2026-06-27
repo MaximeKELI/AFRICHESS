@@ -2,6 +2,8 @@
 
 from apps.games.engine import ChessEngineService
 
+from .move_explain import explain_move_detail
+
 CLASS_FR = {
     "best": "excellent",
     "good": "bon",
@@ -19,11 +21,8 @@ ADVICE_FR = {
 }
 
 
-def explain_move(classification: str, san: str, cp_loss: int) -> str:
-    label = CLASS_FR.get(classification, classification)
-    base = ADVICE_FR.get(classification, "")
-    return f"{san} — {label} (perte ~{cp_loss} centipawns). {base}".strip()
-
+def explain_move(classification: str, san: str, cp_loss: int, **kwargs) -> str:
+    return explain_move_detail(classification, san, cp_loss, **kwargs)
 
 def analyze_pgn(pgn: str, depth: int = 12) -> dict:
     engine = ChessEngineService()
@@ -46,7 +45,13 @@ def analyze_pgn(pgn: str, depth: int = 12) -> dict:
             "centipawn_loss": ev.centipawn_loss,
             "classification": ev.classification,
             "classification_fr": CLASS_FR.get(ev.classification, ev.classification),
-            "explanation_fr": explain_move(ev.classification, ev.san, ev.centipawn_loss),
+            "explanation_fr": explain_move(
+                ev.classification,
+                ev.san,
+                ev.centipawn_loss,
+                best_san=ev.best_san,
+                pv_san=ev.pv_san,
+            ),
         })
 
     summary_fr = _build_summary(blunders, mistakes, inaccuracies, len(moves))
