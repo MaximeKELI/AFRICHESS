@@ -23,7 +23,7 @@ class ClubEventTests(TestCase):
         self.club.members.add(self.owner, self.member)
         self.client = APIClient()
 
-    def test_list_club_events_public(self):
+    def test_list_club_events_as_member(self):
         ClubEvent.objects.create(
             club=self.club,
             title="Tournoi interne",
@@ -31,6 +31,7 @@ class ClubEventTests(TestCase):
             created_by=self.owner,
             starts_at=timezone.now(),
         )
+        self.client.force_authenticate(self.member)
         res = self.client.get(f"/api/social/clubs/{self.club.slug}/events/")
         self.assertEqual(res.status_code, 200)
         self.assertEqual(len(res.data), 1)

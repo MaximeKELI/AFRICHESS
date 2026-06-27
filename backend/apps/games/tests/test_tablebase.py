@@ -6,7 +6,7 @@ from django.test import SimpleTestCase
 
 from apps.games.tablebase import probe_tablebase
 
-VALID_FEN = "4k3/8/8/8/8/8/4PPP/4K3 w - - 0 1"
+VALID_FEN = "8/8/8/8/8/4P3/8/4k2K w - - 0 1"
 
 
 class TablebaseTests(SimpleTestCase):
