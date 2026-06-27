@@ -41,6 +41,7 @@ export default function PuzzlesPage() {
   const [difficulty, setDifficulty] = useState("intermediate");
   const [uciMoves, setUciMoves] = useState<string[]>([]);
   const [result, setResult] = useState<string | null>(null);
+  const [puzzleElo, setPuzzleElo] = useState<number | null>(null);
   const [streak, setStreak] = useState(0);
   const [startTime, setStartTime] = useState(Date.now());
   const [rushQueue, setRushQueue] = useState<Puzzle[]>([]);
@@ -171,6 +172,7 @@ export default function PuzzlesPage() {
     const time = Math.floor((Date.now() - startTime) / 1000);
     try {
       const { data } = await puzzlesApi.submit(puzzle.id, uciMoves, time);
+      if (data.puzzle_elo != null) setPuzzleElo(data.puzzle_elo);
       const solved = Boolean(data.solved);
       let nextStreak = tab === "daily" && data.daily_streak != null
         ? data.daily_streak
