@@ -162,6 +162,7 @@ function PlayContent() {
   }, [gameCompleted, gameId]);
 
   const isLiveHuman = Boolean(gameId && !isVsAi);
+  const { consumePatch: consumeFairPlayPatch } = useFairPlayTelemetry(isLiveHuman);
   const gameIsTimed = gameData.is_timed !== false;
   useEffect(() => {
     setTimePreset(defaultPresetForMode(mode));
@@ -629,9 +630,10 @@ function PlayContent() {
         : undefined;
       applyOptimisticUci(uci);
       turnStartRef.current = Date.now();
+      const telemetry = consumeFairPlayPatch();
 
       if (isLiveHuman && wsConnected) {
-        const sent = wsSendMove(uci, spentMs);
+        const sent = wsSendMove(uci, spentMs, telemetry);
         if (sent) return;
       }
 
@@ -640,6 +642,7 @@ function PlayContent() {
         const { data } = await gamesApi.move(gameId, uci, {
           includeComments: isVsAi && aiCommentsEnabled,
           spentMs,
+          telemetry,
         });
         applyGameResponse(data);
         refreshPendingComments(data, gameId);
