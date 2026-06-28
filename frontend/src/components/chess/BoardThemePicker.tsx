@@ -13,6 +13,8 @@ import { boardThemeLabel } from "@/lib/i18n/labels";
 interface BoardThemePickerProps {
   compact?: boolean;
   className?: string;
+  /** Masquer le titre quand le picker est dans une OptionSection */
+  showHeader?: boolean;
 }
 
 function ThemeSwatch({ theme, size }: { theme: BoardTheme; size: "sm" | "md" }) {
@@ -63,7 +65,7 @@ function ThemeButton({
   );
 }
 
-export function BoardThemePicker({ compact = false, className }: BoardThemePickerProps) {
+export function BoardThemePicker({ compact = false, className, showHeader = true }: BoardThemePickerProps) {
   const { boardTheme, setBoardTheme, pieceSet, setPieceSet } = usePreferencesStore();
   const { t } = useTranslation();
   const classic = BOARD_THEMES.filter((t) => !t.floral);
@@ -76,12 +78,16 @@ export function BoardThemePicker({ compact = false, className }: BoardThemePicke
 
   return (
     <div className={className}>
-      <h3 className={clsx("font-semibold", compact ? "text-sm mb-2" : "mb-3")}>
-        {t("board.picker.title")}
-      </h3>
-      <p className={clsx("opacity-60 mb-3", compact ? "text-xs" : "text-sm")}>
-        {t("board.picker.hint")}
-      </p>
+      {showHeader && (
+        <>
+          <h3 className={clsx("font-semibold", compact ? "text-sm mb-2" : "mb-3")}>
+            {t("board.picker.title")}
+          </h3>
+          <p className={clsx("opacity-60 mb-3", compact ? "text-xs" : "text-sm")}>
+            {t("board.picker.hint")}
+          </p>
+        </>
+      )}
 
       <p className={clsx("opacity-50 mb-2 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs")}>
         {t("board.picker.classics")}

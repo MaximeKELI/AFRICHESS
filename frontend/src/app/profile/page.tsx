@@ -13,6 +13,7 @@ import { LevelPicker } from "@/components/profile/LevelPicker";
 import { UserFlair } from "@/components/profile/UserFlair";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { BackgroundPicker } from "@/components/chess/BackgroundPicker";
+import { OptionSection } from "@/components/ui/OptionSection";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { type ChessLevelId } from "@/lib/avatars";
@@ -145,11 +146,23 @@ export default function ProfilePage() {
         {saveError && <InlineAlert>{saveError}</InlineAlert>}
       </div>
 
-      <div className="glass-card p-6 space-y-6">
-        <BoardThemePicker />
-        <hr className="border-white/10" />
-        <BackgroundPicker />
-        <hr className="border-white/10" />
+      <div className="space-y-4">
+        <h2 className="font-semibold text-lg">{t("profile.appearance.title")}</h2>
+        <OptionSection
+          title={t("board.picker.title")}
+          description={t("board.picker.hint")}
+        >
+          <BoardThemePicker showHeader={false} />
+        </OptionSection>
+        <OptionSection
+          title={t("background.picker.title")}
+          description={t("background.picker.hint")}
+        >
+          <BackgroundPicker showHeader={false} />
+        </OptionSection>
+      </div>
+
+      <div className="glass-card p-6">
         <CommentsToggle />
       </div>
 

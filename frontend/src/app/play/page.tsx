@@ -6,6 +6,7 @@ import { Chess } from "chess.js";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { BackgroundPicker } from "@/components/chess/BackgroundPicker";
+import { OptionSection } from "@/components/ui/OptionSection";
 import { AiCommentaryPanel } from "@/components/chess/AiCommentaryPanel";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { GameAnalysisPanel } from "@/components/chess/GameAnalysisPanel";
@@ -931,9 +932,23 @@ function PlayContent() {
           </div>
 
           <div className="glass-card p-4 space-y-4">
-            <BoardThemePicker compact />
-            <hr className="border-white/10" />
-            <BackgroundPicker compact />
+            <h2 className="font-semibold text-sm uppercase tracking-wide opacity-70">
+              {t("play.options.appearance")}
+            </h2>
+            <OptionSection
+              compact
+              title={t("board.picker.title")}
+              description={t("board.picker.hint")}
+            >
+              <BoardThemePicker compact showHeader={false} />
+            </OptionSection>
+            <OptionSection
+              compact
+              title={t("background.picker.title")}
+              description={t("background.picker.hint")}
+            >
+              <BackgroundPicker compact showHeader={false} />
+            </OptionSection>
           </div>
 
           {!gameId && <RecentGamesList limit={8} showTitle />}

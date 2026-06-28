@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
+import { OptionSection } from "@/components/ui/OptionSection";
 import { puzzlesApi, ratingsApi } from "@/lib/api";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { formatApiError } from "@/lib/errors";
@@ -543,9 +544,14 @@ export default function PuzzlesPage() {
               isCheck={display.isCheck}
               turn={display.turn}
             />
-            <div className="glass-card p-4 h-fit">
-              <BoardThemePicker compact />
-            </div>
+            <OptionSection
+              compact
+              title={t("board.picker.title")}
+              description={t("board.picker.hint")}
+              className="h-fit"
+            >
+              <BoardThemePicker compact showHeader={false} />
+            </OptionSection>
           </div>
 
           <div className="mt-6 flex flex-wrap gap-4">

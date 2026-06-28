@@ -14,6 +14,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 interface BackgroundPickerProps {
   compact?: boolean;
   className?: string;
+  showHeader?: boolean;
 }
 
 function BackgroundSwatch({ bg, size }: { bg: BoardBackground; size: "sm" | "md" }) {
@@ -73,7 +74,7 @@ function BackgroundButton({
 
 const CATEGORY_ORDER: BoardBackgroundCategory[] = ["africa", "nature", "classic", "abstract"];
 
-export function BackgroundPicker({ compact = false, className }: BackgroundPickerProps) {
+export function BackgroundPicker({ compact = false, className, showHeader = true }: BackgroundPickerProps) {
   const { boardBackground, setBoardBackground } = usePreferencesStore();
   const { t, locale } = useTranslation();
 
@@ -86,12 +87,16 @@ export function BackgroundPicker({ compact = false, className }: BackgroundPicke
 
   return (
     <div className={className}>
-      <h3 className={clsx("font-semibold", compact ? "text-sm mb-2" : "mb-3")}>
-        {t("background.picker.title")}
-      </h3>
-      <p className={clsx("opacity-60 mb-3", compact ? "text-xs" : "text-sm")}>
-        {t("background.picker.hint")}
-      </p>
+      {showHeader && (
+        <>
+          <h3 className={clsx("font-semibold", compact ? "text-sm mb-2" : "mb-3")}>
+            {t("background.picker.title")}
+          </h3>
+          <p className={clsx("opacity-60 mb-3", compact ? "text-xs" : "text-sm")}>
+            {t("background.picker.hint")}
+          </p>
+        </>
+      )}
 
       {CATEGORY_ORDER.map((cat) => {
         const items = BOARD_BACKGROUNDS.filter((b) => b.category === cat);
