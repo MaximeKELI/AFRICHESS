@@ -47,6 +47,8 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           DJANGO_SETTINGS_MODULE: config.settings.development
           SECRET_KEY: ci-secret-key-32-bytes-minimum!!
+          STOCKFISH_PATH: /usr/games/stockfish
+          FAIRPLAY_BIN: ${{ github.workspace }}/backend/bin/africhess-fairplay
         run: |
           cd backend
           python manage.py migrate --noinput
@@ -61,6 +63,7 @@ jobs:
             apps.ratings.tests \
             apps.puzzles.tests \
             --verbosity=1
+          python manage.py test apps.games.tests.test_fairplay_compliance apps.games.tests.test_fairplay --verbosity=2
 
   frontend:
     runs-on: ubuntu-latest
