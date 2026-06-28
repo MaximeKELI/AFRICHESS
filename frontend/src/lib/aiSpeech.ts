@@ -6,6 +6,7 @@
  */
 
 import Cookies from "js-cookie";
+import { apiBase } from "@/lib/apiConfig";
 import { normalizeSpeechText, splitSpeechChunks } from "@/lib/speechText";
 
 let preferredVoice: SpeechSynthesisVoice | null = null;
@@ -24,10 +25,6 @@ let currentAudio: HTMLAudioElement | null = null;
 let lastSpeakingText = "";
 
 const MAX_TTS_CHARS = 1200;
-
-function apiBase(): string {
-  return process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8003/api";
-}
 
 function authHeaders(): HeadersInit {
   const token = Cookies.get("access_token");
