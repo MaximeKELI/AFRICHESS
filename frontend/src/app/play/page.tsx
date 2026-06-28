@@ -660,7 +660,9 @@ function PlayContent() {
     [
       gameId,
       gameCompleted,
+      isMyTurn,
       isVsAi,
+      movePending,
       aiCommentsEnabled,
       isLiveHuman,
       wsConnected,
@@ -818,7 +820,7 @@ function PlayContent() {
             </div>
           )}
           {movePending && isVsAi && (
-            <p className="text-xs text-center text-africhess-gold animate-pulse">
+            <p className="pointer-events-none absolute bottom-3 right-3 z-30 rounded-lg bg-black/75 px-2.5 py-1 text-[11px] text-africhess-gold shadow-lg">
               {t("play.ai.thinking")}
             </p>
           )}
@@ -832,37 +834,19 @@ function PlayContent() {
             moves={gameData.moves}
             orientation={orientation}
             onMove={handleMove}
-            disabled={!gameId || gameCompleted || movePending || (isLiveHuman && !isMyTurn)}
+            disabled={boardDisabled}
             playerColor={playerColor as "w" | "b"}
             showClock={Boolean(gameId && gameIsTimed)}
             whiteMs={gameData.white_time_ms ?? fallbackBaseMs}
             blackMs={gameData.black_time_ms ?? fallbackBaseMs}
-            clockRunning={Boolean(
-              gameActive &&
-                gameIsTimed &&
-                (isVsAi ? isMyTurn && !movePending : true)
-            )}
+            clockRunning={Boolean(gameActive && gameIsTimed && isMyTurn)}
             incrementMs={gameData.increment_ms ?? 0}
             clockLabel={clockLabel}
             serverValidated={activeVariant !== "standard"}
             pendingDrop={activeVariant === "crazyhouse" ? dropPiece : null}
             onDropAtSquare={(uci) => handleMove(uci)}
-            topPlayer={
-              boardPlayers
-                ? {
-                    player: boardPlayers.top,
-                    side: orientation === "white" ? "black" : "white",
-                  }
-                : undefined
-            }
-            bottomPlayer={
-              boardPlayers
-                ? {
-                    player: boardPlayers.bottom,
-                    side: orientation === "white" ? "white" : "black",
-                  }
-                : undefined
-            }
+            topPlayer={topPlayerConfig}
+            bottomPlayer={bottomPlayerConfig}
             captured={panelDisplay.captured}
           />
           </div>
@@ -904,7 +888,7 @@ function PlayContent() {
               pieces={crazyhousePockets}
               selected={dropPiece}
               onSelect={setDropPiece}
-              disabled={!gameActive || movePending}
+              disabled={!gameActive || !isMyTurn}
             />
           )}
           {isLiveHuman && gameActive && (
