@@ -227,20 +227,41 @@ export function GameReview({
               <p className="text-xs opacity-60 capitalize">{result.replace("_", " ")}</p>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             {isAiSpeechSupported() && analysis && (
-              <button
-                type="button"
-                onClick={() => setVoiceOn((v) => !v)}
-                className={clsx(
-                  "text-xs px-2.5 py-1 rounded-lg border",
-                  voiceOn
-                    ? "border-africhess-gold text-africhess-gold"
-                    : "border-white/20 opacity-60"
-                )}
-              >
-                {voiceOn ? t("chess.analysis.voiceOff") : t("chess.analysis.voiceOn")}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={handleTestVoice}
+                  className="text-xs px-2.5 py-1 rounded-lg border border-africhess-gold/50 text-africhess-gold"
+                >
+                  🔊 {t("comments.voice.test")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserMovesOnly((v) => !v)}
+                  className={clsx(
+                    "text-xs px-2.5 py-1 rounded-lg border",
+                    userMovesOnly
+                      ? "border-africhess-green/50 text-africhess-green"
+                      : "border-white/20 opacity-60"
+                  )}
+                >
+                  {userMovesOnly ? t("chess.review.userOnly") : t("chess.review.allMoves")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVoiceOn((v) => !v)}
+                  className={clsx(
+                    "text-xs px-2.5 py-1 rounded-lg border",
+                    voiceOn
+                      ? "border-africhess-gold text-africhess-gold"
+                      : "border-white/20 opacity-60"
+                  )}
+                >
+                  {voiceOn ? t("chess.analysis.voiceOff") : t("chess.analysis.voiceOn")}
+                </button>
+              </>
             )}
             <button
               type="button"
