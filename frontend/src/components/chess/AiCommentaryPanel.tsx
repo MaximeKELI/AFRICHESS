@@ -44,6 +44,9 @@ export function AiCommentaryPanel({
   return (
     <div className="space-y-3">
       {voiceSupported && (
+        <p className="text-[10px] opacity-50">{t("comments.voice.hint")}</p>
+      )}
+      {voiceSupported && latest && (
         <button
           type="button"
           onClick={() => {

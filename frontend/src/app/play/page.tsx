@@ -556,10 +556,14 @@ function PlayContent() {
         });
         applyGameResponse(data);
         if (isVsAi && aiCommentsEnabled && data.moves?.length) {
-          const aiComments = commentsFromMoves(data.moves, playerIsWhite);
-          const lastAi = [...aiComments].reverse().find((c) => c.byAi);
-          if (lastAi) {
-            speakComment(lastAi.text, { byAi: true, enabled: true, forceUnlock: true });
+          const allComments = commentsFromMoves(data.moves, playerIsWhite);
+          const lastComment = allComments.at(-1);
+          if (lastComment) {
+            speakComment(lastComment.text, {
+              byAi: lastComment.byAi,
+              enabled: true,
+              forceUnlock: true,
+            });
           }
         }
         if (data.status === "completed" && data.termination_reason !== "repetition") {

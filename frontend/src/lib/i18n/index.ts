@@ -466,6 +466,7 @@ const fr: Record<string, string> = {
   "comments.toggle.hint": "IA + coach : commentaires oral et écrit",
   "comments.voice.listen": "Écouter le commentaire",
   "comments.voice.gameStart": "C'est parti, bonne partie !",
+  "comments.voice.hint": "Cliquez sur l'échiquier ou 🔊 si vous n'entendez rien.",
   "auth.oauth.config": "Configurez GOOGLE_OAUTH_* / GITHUB_OAUTH_* sur le serveur",
   "auth.register.error.usernameMin": "Le nom d'utilisateur doit contenir au moins 3 caractères.",
   "auth.register.error.passwordMin": "Le mot de passe doit contenir au moins 8 caractères.",

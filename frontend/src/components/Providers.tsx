@@ -36,6 +36,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
   }, [locale]);
 
+  useEffect(() => {
+    initAiSpeech();
+    const warm = () => initAiSpeech();
+    window.addEventListener("pointerdown", warm, { once: true, passive: true });
+    return () => window.removeEventListener("pointerdown", warm);
+  }, []);
+
   return (
     <>
       <SiteBackground />
