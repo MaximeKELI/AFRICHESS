@@ -45,6 +45,8 @@ function PlayBoardSectionInner({
   disabled,
   playerColor,
   onMove,
+  onPremove,
+  enablePremoves = false,
   showClock,
   whiteMs,
   blackMs,

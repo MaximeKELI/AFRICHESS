@@ -209,10 +209,13 @@ function ChessBoardInner({
       setSelectedSquare(null);
       setLegalTargets([]);
       setPromotionPending(null);
+      if (enablePremoves && playerColor && playerColor !== turnColor) {
+        onPremove?.();
+      }
       onMove?.(uci);
       return true;
     },
-    [onMove]
+    [onMove, onPremove, enablePremoves, playerColor, turnColor]
   );
 
   const applyMove = useCallback(

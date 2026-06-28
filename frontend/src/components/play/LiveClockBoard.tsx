@@ -89,6 +89,8 @@ export interface PlayBoardCoreProps {
   disabled: boolean;
   playerColor: "w" | "b";
   onMove: (uci: string) => void;
+  onPremove?: () => void;
+  enablePremoves?: boolean;
   serverValidated?: boolean;
   pendingDrop?: string | null;
   onDropAtSquare?: (uci: string) => void;
