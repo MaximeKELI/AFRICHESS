@@ -396,16 +396,31 @@ export function GameReview({
                     <span className="font-mono text-lg text-africhess-gold">{selectedMove.san}</span>
                     <span
                       className={clsx(
-                        "text-xs px-2 py-0.5 rounded-full border capitalize",
+                        "text-xs px-2 py-0.5 rounded-full border font-bold",
                         CLASS_BADGE[selectedMove.class] ?? "border-white/20"
                       )}
+                      title={selectedMove.class}
                     >
-                      {selectedMove.class}
+                      {moveClassSymbol(selectedMove.class)}
                     </span>
+                    {cpLossLabel(selectedMove.cp_loss) && (
+                      <span className="text-xs font-mono text-africhess-terracotta">
+                        {cpLossLabel(selectedMove.cp_loss)} {t("chess.review.pawns")}
+                      </span>
+                    )}
                     {selectedMove.eval != null && (
                       <span className="text-xs font-mono opacity-60 ml-auto">
                         {formatEvalDisplay(selectedMove.eval)}
                       </span>
+                    )}
+                    {isAiSpeechSupported() && voiceOn && (
+                      <button
+                        type="button"
+                        onClick={handleListen}
+                        className="text-xs px-2 py-1 rounded border border-white/25 hover:border-africhess-gold"
+                      >
+                        🔊 {t("comments.voice.listen")}
+                      </button>
                     )}
                   </div>
                   {coachText && (
@@ -488,12 +503,32 @@ export function GameReview({
                 </button>
               )}
 
+              <button
+                type="button"
+                onClick={() => {
+                  unlockAiSpeech();
+                  setAutoTour((v) => !v);
+                  if (!autoTour) speakCurrent(true);
+                }}
+                className={clsx(
+                  "w-full py-2 text-sm rounded-xl border",
+                  autoTour
+                    ? "border-africhess-green bg-africhess-green/15 text-africhess-green"
+                    : "border-white/20 hover:bg-white/5"
+                )}
+              >
+                {autoTour ? t("chess.review.stopTour") : t("chess.review.startTour")}
+              </button>
+
               <ul className="max-h-36 overflow-y-auto text-xs space-y-0.5 scrollbar-thin border-t border-white/10 pt-2">
                 {moves.map((m, i) => (
                   <li key={i}>
                     <button
                       type="button"
-                      onClick={() => setSelectedIdx(i)}
+                      onClick={() => {
+                        setAutoTour(false);
+                        setSelectedIdx(i);
+                      }}
                       className={clsx(
                         "w-full flex items-center gap-2 text-left rounded px-2 py-1",
                         selectedIdx === i && "bg-africhess-gold/10",
@@ -502,7 +537,10 @@ export function GameReview({
                     >
                       <span className="w-5 opacity-40">{i + 1}.</span>
                       <span className="font-mono text-africhess-gold">{m.san}</span>
-                      <span className={clsx("capitalize", CLASS_COLORS[m.class] ?? "")}>
+                      <span className={clsx("font-bold w-5 text-center", CLASS_COLORS[m.class] ?? "")}>
+                        {moveClassSymbol(m.class)}
+                      </span>
+                      <span className={clsx("capitalize opacity-70", CLASS_COLORS[m.class] ?? "")}>
                         {m.class}
                       </span>
                       {m.played_by_white === playerIsWhite && (
