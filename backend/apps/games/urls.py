@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import extra_views, views
+from . import extra_views, fairplay_admin_views, views
 
 urlpatterns = [
     path("", views.GameListView.as_view(), name="game-list"),
