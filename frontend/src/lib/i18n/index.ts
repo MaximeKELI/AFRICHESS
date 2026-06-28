@@ -1483,6 +1483,7 @@ const en: Record<string, string> = {
   "comments.toggle.hint": "AI + coach: spoken and written commentary",
   "comments.voice.listen": "Listen to comment",
   "comments.voice.gameStart": "Let's go, good game!",
+  "comments.voice.hint": "Click the board or 🔊 if you hear nothing.",
   "auth.oauth.config": "Configure GOOGLE_OAUTH_* / GITHUB_OAUTH_* on the server",
   "auth.register.error.usernameMin": "Username must be at least 3 characters.",
   "auth.register.error.passwordMin": "Password must be at least 8 characters.",

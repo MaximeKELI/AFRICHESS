@@ -11,6 +11,7 @@ type QueuedUtterance = { text: string; byAi: boolean };
 
 const queue: QueuedUtterance[] = [];
 let draining = false;
+let lastQueuedText = "";
 
 function pickFrenchVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
   if (!voices.length) return null;
@@ -152,6 +153,10 @@ export function speakComment(
   const { byAi = true, enabled = true } = options;
   if (!enabled || !text.trim()) return;
   if (!isAiSpeechSupported()) return;
+
+  const normalized = text.trim();
+  if (normalized === lastQueuedText && (draining || queue.length > 0)) return;
+  lastQueuedText = normalized;
 
   initAiSpeech();
   queue.push({ text, byAi });
