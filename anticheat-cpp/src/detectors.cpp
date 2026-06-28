@@ -314,7 +314,7 @@ void detect_opening(DetectorContext ctx, AnalysisResult& out) {
     return;
   }
   int opening_engine = 0;
-  size_t limit = std::min<size_t>(10, ctx.player_moves->size());
+  size_t limit = std::min<size_t>(15, ctx.player_moves->size());
   for (size_t i = 0; i < limit && i < ctx.engine_evals->size(); ++i) {
     if ((*ctx.engine_evals)[i].is_top1) {
       ++opening_engine;
@@ -324,6 +324,9 @@ void detect_opening(DetectorContext ctx, AnalysisResult& out) {
   int opening_threshold = 11;
   if (elo >= 2000) {
     opening_threshold = 13;
+  }
+  if (limit < static_cast<size_t>(opening_threshold)) {
+    opening_threshold = static_cast<int>(limit);
   }
   if (elo >= 2400) {
     return;

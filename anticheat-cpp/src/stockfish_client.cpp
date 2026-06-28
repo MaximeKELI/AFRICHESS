@@ -253,9 +253,7 @@ EngineMoveAnalysis StockfishClient::analyze_move(
   }
   result.centipawn_loss = loss;
 
-  if (!result.is_top3 && result.centipawn_loss <= 20) {
-    result.is_top3 = true;
-  }
+  // Strict MultiPV top-3 only — no CPL inflation (aligné Chess.com / Lichess).
   return result;
 }
 
