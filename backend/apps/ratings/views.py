@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 
 from apps.users.countries_data import AFRICAN_COUNTRY_CODES
 
+from .constants import PROVISIONAL_GAMES_REQUIRED
 from .league_service import get_or_create_active_season, get_or_create_standing, league_standings_for_season
 from .models import LeagueSeason, LeagueStanding, PlayerRating, RatingHistory
 from .serializers import (
@@ -18,6 +19,18 @@ from .serializers import (
 from .services import RatingService
 
 User = get_user_model()
+
+
+def _established_leaderboard_qs(mode: str):
+    """Classement public : joueurs ayant au moins 5 parties en ligne classées."""
+    return (
+        PlayerRating.objects.filter(
+            mode=mode,
+            games_count__gte=PROVISIONAL_GAMES_REQUIRED,
+        )
+        .select_related("user")
+        .order_by("-elo")
+    )
 
 
 class MyRatingsView(generics.ListAPIView):
@@ -42,7 +55,7 @@ class GlobalLeaderboardView(generics.ListAPIView):
 
     def get_queryset(self):
         mode = self.request.query_params.get("mode", "blitz")
-        return PlayerRating.objects.filter(mode=mode).select_related("user").order_by("-elo")[:100]
+        return _established_leaderboard_qs(mode)[:100]
 
 
 class AfricanLeaderboardView(generics.ListAPIView):
@@ -53,13 +66,12 @@ class AfricanLeaderboardView(generics.ListAPIView):
     def get_queryset(self):
         mode = self.request.query_params.get("mode", "blitz")
         country = self.request.query_params.get("country")
-        qs = PlayerRating.objects.filter(
-            mode=mode,
+        qs = _established_leaderboard_qs(mode).filter(
             user__country__in=AFRICAN_COUNTRY_CODES,
-        ).select_related("user")
+        )
         if country:
             qs = qs.filter(user__country=country)
-        return qs.order_by("-elo")[:100]
+        return qs[:100]
 
 
 class CountryLeaderboardView(generics.ListAPIView):
@@ -69,11 +81,7 @@ class CountryLeaderboardView(generics.ListAPIView):
     def get_queryset(self):
         mode = self.request.query_params.get("mode", "blitz")
         country = self.kwargs["country_code"]
-        return (
-            PlayerRating.objects.filter(mode=mode, user__country=country)
-            .select_related("user")
-            .order_by("-elo")[:50]
-        )
+        return _established_leaderboard_qs(mode).filter(user__country=country)[:50]
 
 
 class RatingHistoryView(generics.ListAPIView):

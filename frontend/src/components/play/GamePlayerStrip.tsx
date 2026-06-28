@@ -5,6 +5,7 @@ import clsx from "clsx";
 import { UserAvatar } from "@/components/profile/UserAvatar";
 import { UserFlair } from "@/components/profile/UserFlair";
 import { formatClock } from "@/lib/clock";
+import { formatEloParen } from "@/lib/ratings";
 import { countryFlag } from "@/lib/worldCountries";
 import type { PlayerDisplayInfo } from "@/lib/gamePlayers";
 
@@ -72,7 +73,9 @@ export function GamePlayerStrip({
             <span className="truncate">{player.name}</span>
           </p>
           {player.elo != null && (
-            <p className="text-xs opacity-60 font-mono tabular-nums">({player.elo})</p>
+            <p className="text-xs opacity-60 font-mono tabular-nums">
+              {formatEloParen(player.elo, player.eloProvisional)}
+            </p>
           )}
         </div>
 

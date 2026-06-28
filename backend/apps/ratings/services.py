@@ -2,10 +2,8 @@ from django.conf import settings
 
 from apps.games.models import Game
 
+from .constants import PROVISIONAL_GAMES_REQUIRED, RATED_MODES
 from .models import PlayerRating, RatingHistory
-
-
-class RatingService:
     K_FACTORS = {
         "bullet": settings.K_FACTOR_BULLET,
         "blitz": settings.K_FACTOR_BLITZ,
@@ -16,7 +14,9 @@ class RatingService:
 
     def get_or_create_rating(self, user, mode: str) -> PlayerRating:
         rating, _ = PlayerRating.objects.get_or_create(
-            user=user, mode=mode, defaults={"elo": settings.DEFAULT_ELO}
+            user=user,
+            mode=mode,
+            defaults={"elo": user.initial_elo, "peak_elo": user.initial_elo},
         )
         return rating
 

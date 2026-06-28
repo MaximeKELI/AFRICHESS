@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
 
+from apps.ratings.constants import PROVISIONAL_GAMES_REQUIRED
 from apps.ratings.models import PlayerRating
 
 User = get_user_model()
@@ -11,7 +12,9 @@ class RatingsApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(username="rated1", password="x")
-        PlayerRating.objects.create(user=self.user, mode="blitz", elo=1350)
+        PlayerRating.objects.create(
+            user=self.user, mode="blitz", elo=1350, games_count=PROVISIONAL_GAMES_REQUIRED
+        )
 
     def test_my_ratings_requires_auth(self):
         res = self.client.get("/api/ratings/me/")

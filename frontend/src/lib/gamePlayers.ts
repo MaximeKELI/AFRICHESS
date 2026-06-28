@@ -25,6 +25,8 @@ export interface GamePlayersSource {
   black_player?: GamePlayerPublic | null;
   white_elo?: number | null;
   black_elo?: number | null;
+  white_elo_provisional?: boolean;
+  black_elo_provisional?: boolean;
   bot?: GameBotPublic | null;
 }
 
@@ -33,6 +35,7 @@ export interface PlayerDisplayInfo {
   name: string;
   username?: string;
   elo?: number | null;
+  eloProvisional?: boolean;
   country?: string | null;
   title?: string | null;
   avatar?: string | null;
@@ -44,13 +47,15 @@ export interface PlayerDisplayInfo {
 function sideFromUser(
   player: GamePlayerPublic,
   elo: number | null | undefined,
-  currentUserId?: number
+  currentUserId?: number,
+  eloProvisional = false
 ): PlayerDisplayInfo {
   return {
     kind: "user",
     name: player.display_name?.trim() || player.username,
     username: player.username,
     elo: elo ?? null,
+    eloProvisional,
     country: player.country ?? null,
     title: player.title ?? null,
     avatar: player.avatar ?? null,
@@ -81,7 +86,12 @@ export function whitePlayerDisplay(
     const elo =
       game.white_elo ??
       (game.white_player.id === currentUserId ? fallbackUserElo : null);
-    return sideFromUser(game.white_player, elo, currentUserId);
+    return sideFromUser(
+      game.white_player,
+      elo,
+      currentUserId,
+      game.white_elo_provisional ?? false
+    );
   }
   return sideFromAi(game, game.white_elo);
 }
@@ -95,7 +105,12 @@ export function blackPlayerDisplay(
     const elo =
       game.black_elo ??
       (game.black_player.id === currentUserId ? fallbackUserElo : null);
-    return sideFromUser(game.black_player, elo, currentUserId);
+    return sideFromUser(
+      game.black_player,
+      elo,
+      currentUserId,
+      game.black_elo_provisional ?? false
+    );
   }
   return sideFromAi(game, game.black_elo);
 }

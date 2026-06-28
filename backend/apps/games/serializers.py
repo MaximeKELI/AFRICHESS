@@ -2,6 +2,8 @@ from rest_framework import serializers
 
 from apps.users.serializers import UserPublicSerializer
 
+from apps.ratings.provisional import player_rating_info
+
 from .elo_config import get_user_elo
 from .models import ChessBot, Game, GameAnalysis, Move
 
@@ -76,20 +78,32 @@ class GameSerializer(serializers.ModelSerializer):
     bot = ChessBotSerializer(read_only=True)
     white_elo = serializers.SerializerMethodField()
     black_elo = serializers.SerializerMethodField()
+    white_elo_provisional = serializers.SerializerMethodField()
+    black_elo_provisional = serializers.SerializerMethodField()
 
     def get_white_elo(self, obj: Game):
         if obj.white_player_id:
-            return get_user_elo(obj.white_player, _game_rating_mode(obj))
+            return player_rating_info(obj.white_player, _game_rating_mode(obj))["elo"]
         if obj.is_vs_ai:
             return _ai_side_elo(obj)
         return None
 
     def get_black_elo(self, obj: Game):
         if obj.black_player_id:
-            return get_user_elo(obj.black_player, _game_rating_mode(obj))
+            return player_rating_info(obj.black_player, _game_rating_mode(obj))["elo"]
         if obj.is_vs_ai:
             return _ai_side_elo(obj)
         return None
+
+    def get_white_elo_provisional(self, obj: Game) -> bool:
+        if not obj.white_player_id:
+            return False
+        return player_rating_info(obj.white_player, _game_rating_mode(obj))["is_provisional"]
+
+    def get_black_elo_provisional(self, obj: Game) -> bool:
+        if not obj.black_player_id:
+            return False
+        return player_rating_info(obj.black_player, _game_rating_mode(obj))["is_provisional"]
 
     class Meta:
         model = Game
@@ -101,6 +115,7 @@ class GameSerializer(serializers.ModelSerializer):
             "is_timed", "time_control_minutes", "is_rated",
             "is_vs_ai", "ai_difficulty", "ai_target_elo",
             "white_elo", "black_elo",
+            "white_elo_provisional", "black_elo_provisional",
             "moves", "analysis",
             "termination_reason",
             "created_at", "started_at", "ended_at",
