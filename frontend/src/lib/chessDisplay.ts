@@ -116,66 +116,64 @@ export function appendApiMovesToDisplay(
   newMoves: ApiMove[]
 ): GameDisplayState {
   if (!newMoves.length) return prev;
+
   const chess = new Chess(prev.fen === "start" ? undefined : prev.fen);
-  const applied: ApiMove[] = [];
+  const appliedVerbose: Array<{ captured?: string; color: string; from: string; to: string }> = [];
 
   for (const m of newMoves) {
     try {
-      const move = chess.move(m.uci);
-      if (move) applied.push(m);
-    } catch {
-      break;
-    }
-  }
-  if (!applied.length) return prev;
-
-  const prevHistoryLen = prev.lastMove ? 1 : 0;
-  const full = extractDisplayState(chess, applied);
-  if (prevHistoryLen === 0 && applied.length === 1) {
-    return full;
-  }
-
-  const captured = { ...prev.captured };
-  for (const m of applied) {
-    try {
-      const verbose = chess.history({ verbose: true }).at(-1);
-      if (!verbose?.captured) continue;
-      const pieceKey = (verbose.color === "w" ? "b" : "w") + verbose.captured;
-      if (verbose.color === "w") {
-        captured.byWhite = [...captured.byWhite, pieceKey].sort(
-          (a, b) => PIECE_VALUE[b[1]] - PIECE_VALUE[a[1]]
-        );
-        captured.materialWhite += PIECE_VALUE[pieceKey[1]];
-      } else {
-        captured.byBlack = [...captured.byBlack, pieceKey].sort(
-          (a, b) => PIECE_VALUE[b[1]] - PIECE_VALUE[a[1]]
-        );
-        captured.materialBlack += PIECE_VALUE[pieceKey[1]];
+      const verbose = chess.move(m.uci);
+      if (verbose) {
+        appliedVerbose.push({
+          captured: verbose.captured,
+          color: verbose.color,
+          from: verbose.from,
+          to: verbose.to,
+        });
       }
     } catch {
-      /* ignore */
+      return prev;
     }
   }
 
-  const lastVerbose = chess.history({ verbose: true }).at(-1);
-  const sans = chess.history();
+  const captured = {
+    byWhite: [...prev.captured.byWhite],
+    byBlack: [...prev.captured.byBlack],
+    materialWhite: prev.captured.materialWhite,
+    materialBlack: prev.captured.materialBlack,
+  };
+
+  for (const v of appliedVerbose) {
+    if (!v.captured) continue;
+    const pieceKey = (v.color === "w" ? "b" : "w") + v.captured;
+    if (v.color === "w") {
+      captured.byWhite.push(pieceKey);
+      captured.materialWhite += PIECE_VALUE[v.captured];
+    } else {
+      captured.byBlack.push(pieceKey);
+      captured.materialBlack += PIECE_VALUE[v.captured];
+    }
+  }
+  captured.byWhite.sort((a, b) => PIECE_VALUE[b[1]] - PIECE_VALUE[a[1]]);
+  captured.byBlack.sort((a, b) => PIECE_VALUE[b[1]] - PIECE_VALUE[a[1]]);
+
   const moveRows = [...prev.moveRows];
-  for (const m of applied) {
-    const san = m.san;
+  for (const m of newMoves) {
     if (m.played_by_white) {
-      moveRows.push({ number: m.move_number, white: san });
+      moveRows.push({ number: m.move_number, white: m.san });
     } else {
       const row = moveRows.find((r) => r.number === m.move_number);
-      if (row) row.black = san;
-      else moveRows.push({ number: m.move_number, black: san });
+      if (row) row.black = m.san;
+      else moveRows.push({ number: m.move_number, black: m.san });
     }
   }
 
+  const last = appliedVerbose.at(-1);
   return {
     fen: chess.fen(),
     moveRows,
     captured,
-    lastMove: lastVerbose ? { from: lastVerbose.from, to: lastVerbose.to } : null,
+    lastMove: last ? { from: last.from, to: last.to } : null,
     isCheck: chess.inCheck(),
     turn: chess.turn(),
   };
