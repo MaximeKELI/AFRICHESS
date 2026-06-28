@@ -5,7 +5,7 @@ import unittest
 from django.conf import settings
 from django.test import TestCase
 
-from apps.games.engine import ChessEngineService
+from apps.games.engine import ChessEngineService, close_stockfish_pool
 from apps.games.elo_config import STOCKFISH_UCI_MAX_ELO
 
 START = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -18,6 +18,9 @@ def stockfish_available() -> bool:
 @unittest.skipUnless(stockfish_available(), "Stockfish non installé")
 class StockfishStrengthIntegrationTests(TestCase):
     """Vérifie que le moteur répond et respecte la config UCI."""
+
+    def tearDown(self):
+        close_stockfish_pool()
 
     def test_get_best_move_beginner_returns_legal_move(self):
         svc = ChessEngineService()
