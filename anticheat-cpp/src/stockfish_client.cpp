@@ -203,7 +203,7 @@ EngineMoveAnalysis StockfishClient::analyze_move(
   }
   result.eval_after_cp = after_eval;
 
-  bool white_to_move = fen.find(" w ") != std::string::npos;
+  bool white_to_move = position.find(" w ") != std::string::npos || position == "startpos";
   int loss = white_to_move ? best_eval - after_eval : after_eval - best_eval;
   if (loss < 0) {
     loss = 0;
@@ -223,16 +223,11 @@ std::vector<EngineMoveAnalysis> analyze_moves_with_stockfish(
     return out;
   }
 
-  std::string move_list;
-  std::string fen = kStartFen;
+  std::string prefix = "startpos";
   for (const auto& uci : uci_moves) {
-    EngineMoveAnalysis ev = engine.analyze_move(fen, uci, depth);
+    EngineMoveAnalysis ev = engine.analyze_move(prefix, uci, depth);
     out.push_back(ev);
-    if (!move_list.empty()) {
-      move_list += " ";
-    }
-    move_list += uci;
-    fen = std::string(kStartFen) + " moves " + move_list;
+    prefix += " moves " + uci;
   }
   return out;
 }
