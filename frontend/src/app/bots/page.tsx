@@ -104,6 +104,11 @@ export default function BotsPage() {
                 <h3 className="font-semibold truncate">{label(b)}</h3>
                 <p className="text-xs text-africhess-gold font-mono">{b.elo} ELO</p>
               </div>
+              {b.elo >= 2400 && (
+                <span className="text-[10px] uppercase tracking-wide text-emerald-400 border border-emerald-400/40 px-2 py-0.5 rounded">
+                  {t("bots.legend")}
+                </span>
+              )}
               {b.is_premium && (
                 <span className="ml-auto text-[10px] uppercase tracking-wide text-africhess-gold border border-africhess-gold/40 px-2 py-0.5 rounded">
                   {t("bots.premium")}
