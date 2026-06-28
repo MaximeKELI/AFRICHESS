@@ -234,6 +234,20 @@ export const adminApi = {
     api.get("/analytics/admin/users/", { params }),
   userDetail: (id: number, params?: { limit?: number; offset?: number }) =>
     api.get(`/analytics/admin/users/${id}/`, { params }),
+  fairplayOverview: () => api.get("/games/admin/fairplay/overview/"),
+  fairplayQueue: (params?: { status?: string; verdict?: string; limit?: number; offset?: number }) =>
+    api.get("/games/admin/fairplay/queue/", { params }),
+  fairplayGame: (gameId: string) => api.get(`/games/admin/fairplay/games/${gameId}/`),
+  fairplayUser: (userId: number) => api.get(`/games/admin/fairplay/users/${userId}/`),
+  fairplayDecide: (
+    caseId: number,
+    body: {
+      status: string;
+      decision: string;
+      notes?: string;
+      suspend_days?: number;
+    }
+  ) => api.post(`/games/admin/fairplay/cases/${caseId}/decide/`, body),
 };
 
 export const ratingsApi = {

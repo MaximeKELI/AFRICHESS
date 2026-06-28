@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Shield, Users, BarChart3, LayoutDashboard } from "lucide-react";
+import { Shield, Users, BarChart3, LayoutDashboard, Scale } from "lucide-react";
 import clsx from "clsx";
 
 const ADMIN_LINKS = [
   { href: "/admin", key: "admin.nav.overview", icon: LayoutDashboard, exact: true },
   { href: "/admin/users", key: "admin.nav.users", icon: Users },
+  { href: "/admin/fairplay", key: "admin.nav.fairplay", icon: Scale },
 ] as const;
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
