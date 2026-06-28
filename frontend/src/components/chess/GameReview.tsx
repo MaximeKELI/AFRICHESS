@@ -181,12 +181,28 @@ export function GameReview({
     ? analysis?.accuracy_white
     : analysis?.accuracy_black;
 
-  const goPrev = () => setSelectedIdx((i) => Math.max(0, i - 1));
-  const goNext = () => setSelectedIdx((i) => Math.min(moves.length - 1, i + 1));
+  const goPrev = () => {
+    setAutoTour(false);
+    setSelectedIdx((i) => Math.max(0, i - 1));
+  };
+  const goNext = () => {
+    setAutoTour(false);
+    setSelectedIdx((i) => Math.min(moves.length - 1, i + 1));
+  };
   const goMistakes = () => {
+    setAutoTour(false);
     const idx = firstUserMistakeIndex(moves, playerIsWhite);
     if (idx != null) setSelectedIdx(idx);
   };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") goPrev();
+      if (e.key === "ArrowRight") goNext();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   return (
     <div
