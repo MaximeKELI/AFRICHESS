@@ -24,9 +24,13 @@ import { parsePocketsFromFen, pocketForPlayer } from "@/lib/crazyhouse";
 import {
   buildGameDisplayFromFen,
   buildGameDisplayFromMoves,
+  appendApiMovesToDisplay,
   commentsFromMoves,
   type ApiMove,
+  type GameDisplayState,
 } from "@/lib/chessDisplay";
+import { mergeApiMoves } from "@/lib/gameMerge";
+import { gamesApi, ratingsApi } from "@/lib/api";
 import { usePreferencesStore } from "@/store/preferences";
 import { formatTimeControlLabel, defaultPresetForMode, playModeFromPreset, TIME_PRESETS, inferPresetFromMs, type TimePresetId } from "@/lib/timeControl";
 import { MODE_CLOCK_LABEL } from "@/lib/clock";
