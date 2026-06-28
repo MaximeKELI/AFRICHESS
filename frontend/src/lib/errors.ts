@@ -1,5 +1,6 @@
 import { AxiosError } from "axios";
 import { apiPortLabel } from "@/lib/apiConfig";
+import { translate } from "./i18n";
 import { getAppLocale } from "./i18n/labels";
 
 const FIELD_KEYS: Record<string, string> = {
