@@ -33,4 +33,9 @@ urlpatterns = [
     path("<uuid:game_id>/draw/", views.DrawOfferView.as_view(), name="game-draw-offer"),
     path("<uuid:game_id>/draw/respond/", views.DrawRespondView.as_view(), name="game-draw-respond"),
     path("<uuid:game_id>/rematch/", views.RematchView.as_view(), name="game-rematch"),
+    path("admin/fairplay/overview/", fairplay_admin_views.AdminFairPlayOverviewView.as_view(), name="admin-fairplay-overview"),
+    path("admin/fairplay/queue/", fairplay_admin_views.AdminFairPlayQueueView.as_view(), name="admin-fairplay-queue"),
+    path("admin/fairplay/games/<uuid:game_id>/", fairplay_admin_views.AdminFairPlayGameView.as_view(), name="admin-fairplay-game"),
+    path("admin/fairplay/users/<int:user_id>/", fairplay_admin_views.AdminFairPlayUserView.as_view(), name="admin-fairplay-user"),
+    path("admin/fairplay/cases/<int:case_id>/decide/", fairplay_admin_views.AdminFairPlayDecisionView.as_view(), name="admin-fairplay-decide"),
 ]

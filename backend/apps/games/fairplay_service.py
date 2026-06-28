@@ -164,6 +164,9 @@ def persist_fairplay_report(game: Game, user, result: dict[str, Any]) -> FairPla
             "accuracy_estimate": float(result.get("accuracy_estimate", 0)),
         },
     )
+    from .fairplay_review import open_review_case
+
+    open_review_case(report)
     return report
 
 
