@@ -7,10 +7,11 @@ from typing import Optional
 import chess
 
 OPENING_AI = [
-    "J'ouvre le jeu — le centre est important.",
-    "Premier coup : développons nos pièces.",
-    "Commençons calmement… ou pas.",
-    "Tu crois me surprendre ? On verra.",
+    "J'ouvre le jeu — tu crois me tenir ?",
+    "Premier coup. Ne t'endors pas trop vite.",
+    "Commençons… et prépare-toi à souffrir.",
+    "Tu crois me surprendre ? Drôle.",
+    "Ouverture classique — pour toi, pas pour moi.",
 ]
 
 OPENING_PLAYER = [
@@ -241,11 +242,12 @@ def generate_move_comment(
     is_mate = board.is_checkmate()
     is_check = board.is_check() and not is_mate
     opponent_pressured = _opponent_under_serious_attack(board)
+    fen_after = board.fen()
     board.pop()
 
     pick = random.choice
     if eval_after is None:
-        eval_after = _material_eval(board)
+        eval_after = _material_eval(chess.Board(fen_after))
     if eval_before is None:
         eval_before = _material_eval(chess.Board(fen_before))
 
@@ -305,7 +307,7 @@ def generate_move_comment(
                 return pick(TAUNT_AI_UNDER_MATE_THREAT)
             return "Je subis une petite pression, mais je tiens… pour l'instant."
 
-    if played_by_ai and random.random() < 0.4:
+    if played_by_ai and random.random() < 0.55:
         return pick(TAUNT_AI_GENERAL)
 
     return pick(NEUTRAL_AI if played_by_ai else NEUTRAL_PLAYER)

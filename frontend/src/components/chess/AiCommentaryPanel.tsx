@@ -22,6 +22,7 @@ export function AiCommentaryPanel({
 }: AiCommentaryPanelProps) {
   const { t } = useTranslation();
   const latest = comments.at(-1);
+  const latestAi = [...comments].reverse().find((c) => c.byAi);
   const voiceSupported = isAiSpeechSupported();
   const spokenCountRef = useRef(0);
 
@@ -106,27 +107,33 @@ export function AiCommentaryPanel({
       )}
 
       <AnimatePresence mode="wait">
-        {latest && (
+        {(latestAi ?? latest) && (
           <motion.div
-            key={`${latest.moveNumber}-${latest.san}`}
+            key={`${(latestAi ?? latest)!.moveNumber}-${(latestAi ?? latest)!.san}`}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             className={`rounded-lg p-3 border ${
-              latest.byAi
+              (latestAi ?? latest)!.byAi
                 ? "border-africhess-gold/40 bg-africhess-gold/10"
                 : "border-africhess-green/30 bg-africhess-green/10"
             }`}
           >
             <p className="text-[10px] uppercase tracking-wide opacity-60 mb-1">
-              {latest.byAi ? "🤖 IA" : "💡 Coach"} · {latest.san}
+              {(latestAi ?? latest)!.byAi ? "🤖 IA" : "💡 Coach"} · {(latestAi ?? latest)!.san}
             </p>
             <p className={compact ? "text-xs leading-relaxed" : "text-sm leading-relaxed"}>
-              {latest.text}
+              {(latestAi ?? latest)!.text}
             </p>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {latest && latestAi && !latest.byAi && (
+        <p className={`${compact ? "text-[10px]" : "text-xs"} opacity-60 italic`}>
+          💡 Coach · {latest.san} — {latest.text}
+        </p>
+      )}
 
       {comments.length > 1 && (
         <div
