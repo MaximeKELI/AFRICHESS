@@ -266,7 +266,10 @@ void detect_opening(DetectorContext ctx, AnalysisResult& out) {
 }
 
 void detect_performance_vs_elo(DetectorContext ctx, AnalysisResult& out) {
-  if (out.move_evals.empty()) {
+  if (out.move_evals.empty() || !ctx.input) {
+    return;
+  }
+  if (ctx.input->analysis_mode == "realtime") {
     return;
   }
   double perf_index = out.accuracy_estimate + out.engine_top1_rate * 35.0;
