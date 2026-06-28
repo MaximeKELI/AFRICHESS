@@ -678,8 +678,7 @@ function PlayContent() {
       gameData.white_time_ms,
       gameData.black_time_ms,
       playerIsWhite,
-      t,
-    ]
+      consumeFairPlayPatch,
   );
 
   const findMatch = async () => {

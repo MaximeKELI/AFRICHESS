@@ -144,19 +144,23 @@ export function useGameWebSocket(
     };
   }, [gameId, enabled]);
 
-  const sendMove = useCallback((uci: string, spentMs?: number) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(
-        JSON.stringify({
-          event: "jouer_coup",
-          uci,
-          spent_ms: spentMs,
-        })
-      );
-      return true;
-    }
-    return false;
-  }, []);
+  const sendMove = useCallback(
+    (uci: string, spentMs?: number, telemetry?: Record<string, number | undefined>) => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(
+          JSON.stringify({
+            event: "jouer_coup",
+            uci,
+            spent_ms: spentMs,
+            telemetry,
+          })
+        );
+        return true;
+      }
+      return false;
+    },
+    []
+  );
 
   const resign = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
