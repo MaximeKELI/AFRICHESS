@@ -10,6 +10,7 @@ import { customPiecesForSet } from "@/lib/pieceSets";
 import { usePreferencesStore } from "@/store/preferences";
 import { PromotionDialog } from "./PromotionDialog";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useBoardSize, useCoarsePointer } from "@/hooks/useBoardSize";
 
 export interface MoveInfo {
   uci: string;
@@ -27,13 +28,12 @@ interface ChessBoardProps {
   disabled?: boolean;
   lastMove?: { from: string; to: string } | null;
   playerColor?: "w" | "b";
-  /** Jouer le son pour les coups adverses quand le FEN change (réponse serveur) */
   playSoundOnFenChange?: boolean;
-  /** Variantes (960, Crazyhouse) : validation côté serveur uniquement */
   serverValidated?: boolean;
-  /** Crazyhouse : pièce sélectionnée dans le pocket pour drop */
   pendingDrop?: string | null;
   onDropAtSquare?: (uci: string) => void;
+  /** Espace sous le plateau (horloge joueur) pour le calcul responsive */
+  extraBottom?: number;
 }
 
 function normalizeFenForDisplay(fen: string): string {
@@ -53,6 +53,7 @@ function ChessBoardInner({
   serverValidated = false,
   pendingDrop = null,
   onDropAtSquare,
+  extraBottom = 0,
 }: ChessBoardProps) {
   const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
@@ -61,6 +62,7 @@ function ChessBoardInner({
   const customPieces = useMemo(() => customPiecesForSet(pieceSet), [pieceSet]);
   const theme = getBoardTheme(boardThemeId);
   const soundsOn = !lowBandwidth;
+  const isCoarse = useCoarsePointer();
   const [game, setGame] = useState(() => new Chess(fen === "start" ? undefined : fen));
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [legalTargets, setLegalTargets] = useState<Square[]>([]);
@@ -71,7 +73,7 @@ function ChessBoardInner({
   const prevPliesRef = useRef(0);
   const soundsReadyRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [boardWidth, setBoardWidth] = useState(320);
+  const boardWidth = useBoardSize(containerRef, { extraBottom, min: 260, max: 720 });
   const [focusSquare, setFocusSquare] = useState<Square>("e4");
   const [boardStatus, setBoardStatus] = useState("");
 
@@ -82,47 +84,9 @@ function ChessBoardInner({
     }
   }, [soundsOn]);
 
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const update = () => {
-      const rect = el.getBoundingClientRect();
-      const containerW = rect.width;
-      if (containerW <= 0) return;
-
-      const viewportH = window.visualViewport?.height ?? window.innerHeight;
-      const viewportW = window.visualViewport?.width ?? window.innerWidth;
-      const reservedTop = Math.max(0, rect.top);
-      const reservedBottom = 32;
-      const maxByHeight = viewportH - reservedTop - reservedBottom;
-
-      const horizontalPad = 16;
-      const maxByWidth = viewportW - horizontalPad;
-
-      const desktop = window.matchMedia("(min-width: 1024px)").matches;
-      const desktopCap = desktop ? Math.min(viewportW * 0.58, 720) : maxByWidth;
-
-      const size = Math.min(containerW, maxByHeight, desktopCap);
-      setBoardWidth(Math.max(240, Math.floor(size)));
-    };
-
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    window.addEventListener("resize", update);
-    window.visualViewport?.addEventListener("resize", update);
-    window.visualViewport?.addEventListener("scroll", update);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", update);
-      window.visualViewport?.removeEventListener("resize", update);
-      window.visualViewport?.removeEventListener("scroll", update);
-    };
-  }, []);
-
   const squareBase = useMemo(() => getThemedSquareStyles(theme), [theme]);
-  const pieceAnimMs = lowBandwidth ? 0 : 120;
+  const pieceAnimMs = lowBandwidth ? 0 : isCoarse ? 80 : 120;
+  const dotScale = boardWidth < 360 ? 0.24 : 0.18;
 
   const squareStyles = useMemo(() => {
     const floral = Boolean(theme.floral);
@@ -141,15 +105,15 @@ function ChessBoardInner({
       ? { boxShadow: `inset 0 0 0 3px ${accentRgba(theme.accent, 0.75)}` }
       : { background: accentRgba(theme.accent, 0.4) };
     const legalDot: React.CSSProperties = {
-      background: `radial-gradient(circle, ${theme.legal} 18%, transparent 19%)`,
+      background: `radial-gradient(circle, ${theme.legal} ${dotScale * 100}%, transparent ${dotScale * 100 + 1}%)`,
       backgroundSize: "100% 100%",
     };
     const captureRing: React.CSSProperties = {
-      background: `radial-gradient(circle, transparent 60%, ${theme.capture} 61%, ${theme.capture} 68%, transparent 69%)`,
+      background: `radial-gradient(circle, transparent 58%, ${theme.capture} 59%, ${theme.capture} 70%, transparent 71%)`,
       backgroundSize: "100% 100%",
     };
     return { selected, lastFrom, lastTo, legalDot, captureRing };
-  }, [theme]);
+  }, [theme, dotScale]);
 
   const displayFen = normalizeFenForDisplay(fen);
 
@@ -379,7 +343,7 @@ function ChessBoardInner({
         : { ...squareStyles.legalDot };
     }
 
-    if (!disabled) {
+    if (!disabled && !isCoarse) {
       styles[focusSquare] = {
         ...styles[focusSquare],
         outline: `2px solid ${accentRgba(theme.accent, 0.9)}`,
@@ -399,7 +363,24 @@ function ChessBoardInner({
     }
 
     return styles;
-  }, [lastMove, selectedSquare, legalTargets, game, squareStyles, lowBandwidth, focusSquare, disabled, theme.accent]);
+  }, [lastMove, selectedSquare, legalTargets, game, squareStyles, lowBandwidth, focusSquare, disabled, theme.accent, isCoarse]);
+
+  const notationStyle = useMemo(
+    () => ({
+      fontSize: Math.max(11, Math.round(boardWidth / 34)),
+      fontWeight: 600 as const,
+      opacity: 0.88,
+    }),
+    [boardWidth]
+  );
+
+  const boardStyle = useMemo(
+    () => ({
+      borderRadius: isCoarse ? 6 : 8,
+      boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.12)",
+    }),
+    [isCoarse]
+  );
 
   return (
     <div
@@ -409,18 +390,21 @@ function ChessBoardInner({
       aria-label={t("chess.board.aria")}
       tabIndex={disabled ? -1 : 0}
       onKeyDown={onBoardKeyDown}
-      className="chess-board-shell w-full min-w-0 aspect-square mx-auto rounded-xl overflow-hidden shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold"
-      style={
-        lowBandwidth
-          ? undefined
-          : {
-              boxShadow: `0 12px 28px -8px rgb(0 0 0 / 0.2), 0 0 0 1px ${accentRgba(theme.accent, 0.35)}`,
-            }
-      }
+      className="chess-board-shell w-full min-w-0 mx-auto select-none"
+      style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
     >
       <div
-        className="mx-auto"
-        style={{ width: boardWidth, height: boardWidth, maxWidth: "100%" }}
+        className="chess-board-frame mx-auto rounded-lg overflow-hidden shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold"
+        style={{
+          width: boardWidth,
+          height: boardWidth,
+          maxWidth: "100%",
+          ...(lowBandwidth
+            ? undefined
+            : {
+                boxShadow: `0 8px 24px -6px rgb(0 0 0 / 0.25), 0 0 0 1px ${accentRgba(theme.accent, 0.25)}`,
+              }),
+        }}
       >
         <Chessboard
           boardWidth={boardWidth}
@@ -437,9 +421,13 @@ function ChessBoardInner({
           customSquareStyles={customSquareStyles}
           customDarkSquareStyle={squareBase.dark as Record<string, string>}
           customLightSquareStyle={squareBase.light as Record<string, string>}
+          customBoardStyle={boardStyle}
+          customNotationStyle={notationStyle}
           animationDuration={pieceAnimMs}
           arePiecesDraggable={!disabled}
           autoPromoteToQueen={false}
+          showBoardNotation={true}
+          snapToCursor={!isCoarse}
           {...(customPieces ? { customPieces } : {})}
         />
       </div>
@@ -463,7 +451,6 @@ function ChessBoardInner({
 
 export const ChessBoard = memo(ChessBoardInner);
 
-/** Rouge sang sur la case du roi en échec ou mat. */
 function getKingDangerStyle(chess: Chess): React.CSSProperties | null {
   if (!chess.inCheck()) return null;
 
