@@ -116,12 +116,13 @@ class AnticheatTelemetryTests(TestCase):
 
     def test_fairplay_no_midgame_cpp_block(self):
         """Pas de subprocess C++ bloquant en cours de partie."""
-        with patch("apps.games.anticheat.run_fairplay_analysis") as mock_run:
-            mock_run.side_effect = AssertionError("must not call C++ mid-game")
-            err = validate_move_fairplay(
-                self.game,
-                self.white,
-                think_ms=500,
-                telemetry={"tab_blur": 1},
-            )
+        import apps.games.anticheat as anticheat_mod
+
+        self.assertFalse(hasattr(anticheat_mod, "run_fairplay_analysis"))
+        err = validate_move_fairplay(
+            self.game,
+            self.white,
+            think_ms=500,
+            telemetry={"tab_blur": 1},
+        )
         self.assertIsNone(err)
