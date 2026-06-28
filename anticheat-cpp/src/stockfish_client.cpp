@@ -56,6 +56,9 @@ StockfishClient::StockfishClient(std::string path) : path_(std::move(path)) {
     available_ = false;
     return;
   }
+  send("setoption name MultiPV value 3");
+  send("isready");
+  wait_for("readyok", 200);
   available_ = true;
 }
 
