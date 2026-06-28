@@ -33,6 +33,7 @@ from apps.common.throttles import AnalyzeThrottle
 
 from .throttling import EngineEvalThrottle
 from .services import GameService, MatchmakingService
+from .tts import synthesize_wav
 
 
 @extend_schema(summary="Historique des parties du joueur connecté")
