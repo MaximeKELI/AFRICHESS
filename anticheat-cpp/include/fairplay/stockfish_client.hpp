@@ -7,11 +7,14 @@ namespace fairplay {
 
 struct EngineMoveAnalysis {
   std::string best_uci;
+  std::vector<std::string> top3_uci;
   std::vector<std::string> pv_uci;
   int eval_before_cp = 0;
   int eval_after_cp = 0;
   int centipawn_loss = 0;
   int complexity_cp = 0;
+  bool is_top1 = false;
+  bool is_top3 = false;
 };
 
 class StockfishClient {

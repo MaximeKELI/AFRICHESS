@@ -35,6 +35,7 @@ struct GameInput {
   TelemetryInput telemetry;
   std::string stockfish_path = "/usr/games/stockfish";
   int engine_depth = 16;
+  std::string analysis_mode = "full";
 };
 
 struct MoveEngineEval {
