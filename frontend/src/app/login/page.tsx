@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { consumeReturnAfterLogin } from "@/lib/session";
+import { OAuthButtons } from "@/components/auth/OAuthButtons";
 
 function LoginContent() {
   const [username, setUsername] = useState("");
