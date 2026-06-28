@@ -1,100 +1,240 @@
 #include "fairplay/stockfish_client.hpp"
 
-#include <array>
-#include <cstdio>
-#include <memory>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#include <algorithm>
+#include <cstdlib>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace fairplay {
 namespace {
 
-std::string read_line(FILE* pipe) {
-  char buffer[4096];
-  if (!fgets(buffer, sizeof(buffer), pipe)) {
-    return "";
-  }
-  std::string line(buffer);
-  while (!line.empty() && (line.back() == '\n' || line.back() == '\r')) {
-    line.pop_back();
-  }
-  return line;
-}
-
-void write_cmd(FILE* pipe, const std::string& cmd) {
-  fprintf(pipe, "%s\n", cmd.c_str());
-  fflush(pipe);
-}
-
-int score_to_cp(const std::string& score_token, const std::string& next_token) {
-  if (score_token.find("mate") != std::string::npos) {
-    try {
-      int mate = std::stoi(next_token);
-      return mate > 0 ? 10000 : -10000;
-    } catch (...) {
-      return 0;
-    }
-  }
-  try {
-    return std::stoi(next_token);
-  } catch (...) {
-    return 0;
-  }
-}
+constexpr const char* kStartFen =
+    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 }  // namespace
 
-StockfishClient::StockfishClient(std::string path) : path_(std::move(path)) {}
-
-StockfishClient::~StockfishClient() {
-  close();
-}
-
-void StockfishClient::close() {
-  if (pipe_) {
-    write_cmd(pipe_, "quit");
-    pclose(pipe_);
-    pipe_ = nullptr;
-  }
-}
-
-void StockfishClient::ensure_open() {
-  if (pipe_) {
+StockfishClient::StockfishClient(std::string path) : path_(std::move(path)) {
+  int in_pipe[2];
+  int out_pipe[2];
+  if (pipe(in_pipe) != 0 || pipe(out_pipe) != 0) {
     return;
   }
-  std::string cmd = path_ + " 2>/dev/null";
-  pipe_ = popen(cmd.c_str(), "w");
-  if (!pipe_) {
-    throw std::runtime_error("Impossible de lancer Stockfish: " + path_);
+
+  pid_ = fork();
+  if (pid_ == 0) {
+    dup2(in_pipe[0], STDIN_FILENO);
+    dup2(out_pipe[1], STDOUT_FILENO);
+    close(in_pipe[0]);
+    close(in_pipe[1]);
+    close(out_pipe[0]);
+    close(out_pipe[1]);
+    execlp(path_.c_str(), path_.c_str(), nullptr);
+    _exit(127);
   }
-  write_cmd(pipe_, "uci");
-  write_cmd(pipe_, "isready");
-  FILE* out = fdopen(fileno(pipe_), "r");
-  (void)out;
-  // Stockfish writes to stderr/stdout - popen only captures stdout one-way for write mode
-  // Use bidirectional popen with "r+" or separate approach
-  pclose(pipe_);
-  pipe_ = popen(cmd.c_str(), "r");
-  if (!pipe_) {
-    throw std::runtime_error("Stockfish popen read failed");
+
+  close(in_pipe[0]);
+  close(out_pipe[1]);
+  in_fd_ = in_pipe[1];
+  out_fd_ = out_pipe[0];
+
+  if (pid_ < 0) {
+    return;
+  }
+
+  send("uci");
+  if (!wait_for("uciok", 500)) {
+    available_ = false;
+    return;
+  }
+  send("isready");
+  if (!wait_for("readyok", 200)) {
+    available_ = false;
+    return;
+  }
+  available_ = true;
+}
+
+StockfishClient::~StockfishClient() {
+  if (available_ && in_fd_ >= 0) {
+    send("quit");
+    wait_for("bestmove", 50);
+  }
+  if (in_fd_ >= 0) {
+    close(in_fd_);
+    in_fd_ = -1;
+  }
+  if (out_fd_ >= 0) {
+    close(out_fd_);
+    out_fd_ = -1;
+  }
+  if (pid_ > 0) {
+    waitpid(pid_, nullptr, 0);
+    pid_ = -1;
   }
 }
 
-std::vector<std::string> StockfishClient::read_until(const std::string& token, int max_lines) {
-  std::vector<std::string> lines;
+void StockfishClient::send(const std::string& cmd) {
+  if (in_fd_ < 0) {
+    return;
+  }
+  std::string line = cmd + "\n";
+  if (write(in_fd_, line.c_str(), line.size()) < 0) {
+    available_ = false;
+  }
+}
+
+std::string StockfishClient::read_line() {
+  if (out_fd_ < 0) {
+    return "";
+  }
+  std::string out;
+  char ch = 0;
+  while (read(out_fd_, &ch, 1) == 1) {
+    if (ch == '\n') {
+      break;
+    }
+    out.push_back(ch);
+  }
+  return out;
+}
+
+bool StockfishClient::wait_for(const std::string& token, int max_lines) {
   for (int i = 0; i < max_lines; ++i) {
-    std::string line = read_line(pipe_);
+    std::string line = read_line();
+    if (line.empty()) {
+      return false;
+    }
+    if (line.find(token) != std::string::npos) {
+      return true;
+    }
+  }
+  return false;
+}
+
+int StockfishClient::parse_eval_cp(const std::string& line, bool white_pov) const {
+  (void)white_pov;
+  auto idx = line.find(" score ");
+  if (idx == std::string::npos) {
+    return 0;
+  }
+  std::istringstream iss(line.substr(idx + 7));
+  std::string kind;
+  int value = 0;
+  iss >> kind >> value;
+  if (kind == "cp") {
+    return value;
+  }
+  if (kind == "mate") {
+    return value > 0 ? 10000 : -10000;
+  }
+  return 0;
+}
+
+std::vector<std::string> StockfishClient::parse_pv(const std::string& line) const {
+  std::vector<std::string> pv;
+  auto idx = line.find(" pv ");
+  if (idx == std::string::npos) {
+    return pv;
+  }
+  std::istringstream iss(line.substr(idx + 4));
+  std::string uci;
+  while (iss >> uci) {
+    pv.push_back(uci);
+  }
+  return pv;
+}
+
+EngineMoveAnalysis StockfishClient::analyze_move(
+    const std::string& fen,
+    const std::string& played_uci,
+    int depth) {
+  EngineMoveAnalysis result;
+  if (!available_) {
+    return result;
+  }
+
+  send("ucinewgame");
+  send("position fen " + fen);
+  send("go depth " + std::to_string(depth));
+
+  int best_eval = 0;
+  std::vector<std::string> best_pv;
+  std::string line;
+  for (int i = 0; i < 400; ++i) {
+    line = read_line();
     if (line.empty()) {
       break;
     }
-    lines.push_back(line);
-    if (line.find(token) != std::string::npos) {
+    if (line.rfind("info", 0) == 0 && line.find(" pv ") != std::string::npos) {
+      best_eval = parse_eval_cp(line, true);
+      best_pv = parse_pv(line);
+    }
+    if (line.rfind("bestmove", 0) == 0) {
       break;
     }
   }
-  return lines;
+
+  if (!best_pv.empty()) {
+    result.best_uci = best_pv[0];
+    result.pv_uci = best_pv;
+  }
+  result.eval_before_cp = best_eval;
+
+  send("position fen " + fen + " moves " + played_uci);
+  send("go depth " + std::to_string(std::max(8, depth - 4)));
+
+  int after_eval = best_eval;
+  for (int i = 0; i < 300; ++i) {
+    line = read_line();
+    if (line.empty()) {
+      break;
+    }
+    if (line.rfind("info", 0) == 0 && line.find(" pv ") != std::string::npos) {
+      after_eval = parse_eval_cp(line, true);
+    }
+    if (line.rfind("bestmove", 0) == 0) {
+      break;
+    }
+  }
+  result.eval_after_cp = after_eval;
+
+  bool white_to_move = fen.find(" w ") != std::string::npos;
+  int loss = white_to_move ? best_eval - after_eval : after_eval - best_eval;
+  if (loss < 0) {
+    loss = 0;
+  }
+  result.centipawn_loss = loss;
+  result.complexity_cp = std::min(800, std::max(0, std::abs(best_eval)));
+  return result;
+}
+
+std::vector<EngineMoveAnalysis> analyze_moves_with_stockfish(
+    const std::string& stockfish_path,
+    const std::vector<std::string>& uci_moves,
+    int depth) {
+  std::vector<EngineMoveAnalysis> out;
+  StockfishClient engine(stockfish_path);
+  if (!engine.available()) {
+    return out;
+  }
+
+  std::string move_list;
+  std::string fen = kStartFen;
+  for (const auto& uci : uci_moves) {
+    EngineMoveAnalysis ev = engine.analyze_move(fen, uci, depth);
+    out.push_back(ev);
+    if (!move_list.empty()) {
+      move_list += " ";
+    }
+    move_list += uci;
+    fen = std::string(kStartFen) + " moves " + move_list;
+  }
+  return out;
 }
 
 }  // namespace fairplay
