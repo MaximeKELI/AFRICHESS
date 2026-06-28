@@ -266,3 +266,4 @@ class MakeMoveSerializer(serializers.Serializer):
     uci = serializers.CharField(max_length=10)
     include_comments = serializers.BooleanField(default=False, required=False)
     spent_ms = serializers.IntegerField(min_value=0, required=False)
+    telemetry = serializers.DictField(required=False)

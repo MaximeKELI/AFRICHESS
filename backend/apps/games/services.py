@@ -285,11 +285,12 @@ class GameService:
         uci: str,
         include_comments: bool = False,
         spent_ms: int | None = None,
+        telemetry: dict | None = None,
     ) -> dict:
         if game.status != Game.Status.ACTIVE:
             return {"error": "Game is not active"}
 
-        cheat = validate_move_timing(game, user)
+        cheat = validate_move_fairplay(game, user, think_ms=spent_ms, telemetry=telemetry)
         if cheat:
             return cheat
 
