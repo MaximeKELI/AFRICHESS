@@ -2131,6 +2131,7 @@ const en: Record<string, string> = {
   "bots.filter.free": "Free",
   "bots.filter.premium": "Premium",
   "bots.premium": "Gold+",
+  "bots.legend": "Legend",
   "bots.challenge": "Challenge",
   "bots.loginToPlay": "Sign in to play",
   "bots.empty": "No bots found.",
