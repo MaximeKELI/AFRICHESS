@@ -73,14 +73,18 @@ def alternating_moves(
 ) -> list[dict[str, Any]]:
     moves: list[dict[str, Any]] = []
     num = 1
-    for _ in range(n_pairs):
+    for pair_idx in range(n_pairs):
+        w_think = white_think_ms + (pair_idx % 7) * 317 - 950
+        b_think = black_think_ms + (pair_idx % 5) * 241 - 480
+        w_think = max(400, w_think)
+        b_think = max(400, b_think)
         moves.append(
             {
                 "uci": white_uci,
                 "san": "e4",
                 "played_by_white": True,
                 "move_number": num,
-                "think_ms": white_think_ms,
+                "think_ms": w_think,
                 "complexity_cp": white_complexity,
             }
         )
@@ -91,7 +95,7 @@ def alternating_moves(
                 "san": "e5",
                 "played_by_white": False,
                 "move_number": num,
-                "think_ms": black_think_ms,
+                "think_ms": b_think,
                 "complexity_cp": black_complexity,
             }
         )
