@@ -10,12 +10,16 @@ from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
+BACKEND_ROOT = Path(__file__).resolve().parents[3]
 
 
 def fairplay_binary_path() -> str | None:
     candidates = [
         os.environ.get("FAIRPLAY_BIN"),
+        str(BACKEND_ROOT / "bin/africhess-fairplay"),
+        str(BACKEND_ROOT.parent / "anticheat-cpp/build/africhess-fairplay"),
         str(REPO_ROOT / "anticheat-cpp/build/africhess-fairplay"),
+        "/anticheat-cpp/build/africhess-fairplay",
         "/usr/local/bin/africhess-fairplay",
     ]
     for path in candidates:
@@ -70,14 +74,18 @@ def alternating_moves(
     black_complexity: int = 80,
     white_uci: str = "e2e4",
     black_uci: str = "e7e5",
+    uniform_think: bool = False,
 ) -> list[dict[str, Any]]:
     moves: list[dict[str, Any]] = []
     num = 1
     for pair_idx in range(n_pairs):
-        w_think = white_think_ms + (pair_idx % 7) * 317 - 950
-        b_think = black_think_ms + (pair_idx % 5) * 241 - 480
-        w_think = max(400, w_think)
-        b_think = max(400, b_think)
+        if uniform_think:
+            w_think, b_think = white_think_ms, black_think_ms
+        else:
+            w_think = white_think_ms + (pair_idx % 7) * 317 - 950
+            b_think = black_think_ms + (pair_idx % 5) * 241 - 480
+            w_think = max(400, w_think)
+            b_think = max(400, b_think)
         moves.append(
             {
                 "uci": white_uci,
@@ -97,6 +105,36 @@ def alternating_moves(
                 "move_number": num,
                 "think_ms": b_think,
                 "complexity_cp": black_complexity,
+            }
+        )
+        num += 1
+    return moves
+
+
+def instant_complex_moves(n_white: int = 6) -> list[dict[str, Any]]:
+    """Coups blancs très rapides sur positions complexes (joueur analysé = blanc)."""
+    moves: list[dict[str, Any]] = []
+    num = 1
+    for i in range(n_white):
+        moves.append(
+            {
+                "uci": "e2e4",
+                "san": "e4",
+                "played_by_white": True,
+                "move_number": num,
+                "think_ms": 90,
+                "complexity_cp": 360,
+            }
+        )
+        num += 1
+        moves.append(
+            {
+                "uci": "e7e5",
+                "san": "e5",
+                "played_by_white": False,
+                "move_number": num,
+                "think_ms": 2400,
+                "complexity_cp": 50,
             }
         )
         num += 1

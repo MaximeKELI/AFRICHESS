@@ -23,8 +23,8 @@ from apps.games.models import (
     FairPlayReviewCase,
     FairPlaySanction,
     Game,
-    Notification,
 )
+from apps.notifications.models import Notification
 
 User = get_user_model()
 

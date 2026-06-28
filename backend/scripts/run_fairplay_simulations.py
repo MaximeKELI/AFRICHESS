@@ -15,6 +15,7 @@ from apps.games.tests.fairplay_helpers import (  # noqa: E402
     base_payload,
     baseline_payload,
     cpp_available,
+    instant_complex_moves,
     run_fairplay_cpp,
     signal_codes,
 )
@@ -32,9 +33,7 @@ SCENARIOS = [
     ),
     (
         "instant_complex",
-        base_payload(
-            moves=alternating_moves(8, white_think_ms=100, white_complexity=350),
-        ),
+        base_payload(player_elo=1100, moves=instant_complex_moves(5)),
         {"signals_contain": "INSTANT_COMPLEX"},
     ),
     (
@@ -46,7 +45,7 @@ SCENARIOS = [
         "combined_bot",
         base_payload(
             player_elo=900,
-            moves=alternating_moves(10, white_think_ms=100, white_complexity=320),
+            moves=instant_complex_moves(5),
             telemetry={"copy_paste_events": 5, "devtools_open_count": 2},
         ),
         {"verdict_in": ("review", "suspicious", "likely_cheat"), "min_signals": 2},

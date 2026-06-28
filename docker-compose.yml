@@ -34,6 +34,7 @@ services:
     entrypoint: ["/app/docker-entrypoint.sh"]
     volumes:
       - ./backend:/app
+      - ./anticheat-cpp:/anticheat-cpp
       - media_data:/app/media
     ports:
       - "8000:8000"
@@ -51,6 +52,7 @@ services:
       - WS_ALLOW_QUERY_TOKEN=false
       - PREMIUM_DEMO_ALLOWED=true
       - ALLOW_PUBLIC_API_DOCS=false
+      - FAIRPLAY_BIN=/anticheat-cpp/build/africhess-fairplay
     depends_on:
       db:
         condition: service_healthy

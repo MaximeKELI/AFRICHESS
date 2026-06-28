@@ -1,13 +1,11 @@
-import json
-import shutil
 import subprocess
-from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
 from apps.games.fairplay_service import build_game_input, merge_telemetry, persist_fairplay_report
 from apps.games.models import FairPlayReport, Game, Move
+from apps.games.tests.fairplay_helpers import cpp_available, run_fairplay_cpp
 
 User = get_user_model()
 
@@ -62,8 +60,7 @@ class FairPlayServiceTests(TestCase):
 
 class FairPlayBinaryTests(TestCase):
     def test_cpp_binary_smoke(self):
-        binary = "/home/maxime/AFRICHESS/anticheat-cpp/build/africhess-fairplay"
-        if not shutil.which(binary) and not __import__("os").path.isfile(binary):
+        if not cpp_available():
             self.skipTest("fairplay binary not built")
         payload = {
             "game_id": "test",
@@ -83,15 +80,6 @@ class FairPlayBinaryTests(TestCase):
                 }
             ],
         }
-        proc = subprocess.run(
-            [binary],
-            input=json.dumps(payload),
-            capture_output=True,
-            text=True,
-            timeout=10,
-            check=False,
-        )
-        self.assertEqual(proc.returncode, 0, proc.stderr)
-        data = json.loads(proc.stdout)
+        data = run_fairplay_cpp(payload)
         self.assertIn("verdict", data)
         self.assertIn("signals", data)

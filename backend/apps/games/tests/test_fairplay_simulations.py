@@ -12,6 +12,7 @@ from apps.games.tests.fairplay_helpers import (
     base_payload,
     baseline_payload,
     cpp_available,
+    instant_complex_moves,
     run_fairplay_cpp,
     signal_codes,
 )
@@ -48,16 +49,10 @@ class FairPlaySimulationTests(TestCase):
         self.assertNotEqual(result["verdict"], "likely_cheat")
 
     def test_sim_instant_complex_positions(self):
-        moves = alternating_moves(
-            8,
-            white_think_ms=120,
-            black_think_ms=2500,
-            white_complexity=350,
-            black_complexity=60,
+        result = self._run(
+            base_payload(player_elo=1100, moves=instant_complex_moves(5))
         )
-        result = self._run(base_payload(player_elo=1100, moves=moves))
-        codes = signal_codes(result)
-        self.assertIn("INSTANT_COMPLEX", codes)
+        self.assertIn("INSTANT_COMPLEX", signal_codes(result))
 
     def test_sim_critical_instant_moves(self):
         moves = []
@@ -76,7 +71,7 @@ class FairPlaySimulationTests(TestCase):
         self.assertIn("CRITICAL_INSTANT", signal_codes(result))
 
     def test_sim_robotic_uniform_timing(self):
-        moves = alternating_moves(12, white_think_ms=2100, black_think_ms=2100)
+        moves = alternating_moves(12, white_think_ms=2100, black_think_ms=2100, uniform_think=True)
         result = self._run(
             base_payload(
                 player_elo=1300,
@@ -142,13 +137,7 @@ class FairPlaySimulationTests(TestCase):
         self.assertNotEqual(result["verdict"], "likely_cheat")
 
     def test_sim_combined_bot_pattern_elevated_verdict(self):
-        """Combinaison timing + télémétrie → verdict au moins review."""
-        moves = alternating_moves(
-            10,
-            white_think_ms=100,
-            white_complexity=320,
-            black_think_ms=2500,
-        )
+        moves = instant_complex_moves(5) + alternating_moves(2, white_think_ms=2500)[-4:]
         result = self._run(
             base_payload(
                 player_elo=900,

@@ -73,11 +73,12 @@ def peer_comparison(game: Game) -> dict[str, Any]:
     }
     players = []
     for report in reports:
+        case = FairPlayReviewCase.objects.filter(report_id=report.id).first()
         players.append(
             {
                 **_report_dict(report),
                 "telemetry": _telemetry_dict(telemetry.get(report.user_id)),
-                "review_status": getattr(report.review_case, "status", None),
+                "review_status": case.status if case else None,
                 "is_white": game.white_player_id == report.user_id,
             }
         )
