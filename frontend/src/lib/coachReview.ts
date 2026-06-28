@@ -78,3 +78,23 @@ export function evalForBar(evalScore: number | null | undefined): number {
   if (Math.abs(evalScore) >= 100) return evalScore > 0 ? 10 : -10;
   return Math.max(-10, Math.min(10, evalScore));
 }
+
+const CLASS_SYMBOLS: Record<string, string> = {
+  brilliant: "!!",
+  great: "!",
+  best: "✓",
+  good: "✓",
+  inaccuracy: "?!",
+  mistake: "?",
+  blunder: "??",
+};
+
+export function moveClassSymbol(moveClass: string): string {
+  return CLASS_SYMBOLS[moveClass] ?? "·";
+}
+
+export function cpLossLabel(cpLoss?: number): string | null {
+  if (cpLoss == null || cpLoss < 30) return null;
+  const pawns = (cpLoss / 100).toFixed(1);
+  return `−${pawns}`;
+}
