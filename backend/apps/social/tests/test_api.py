@@ -53,6 +53,10 @@ class SocialApiTests(TestCase):
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0]["user"]["username"], "socb")
 
+        res_users = self.client.get("/api/users/search/", {"q": "socb"})
+        self.assertEqual(res_users.status_code, 200)
+        self.assertEqual(len(res_users.data), 1)
+
     def test_follow_user(self):
         self.client.force_authenticate(self.a)
         res = self.client.post("/api/social/users/socb/follow/")

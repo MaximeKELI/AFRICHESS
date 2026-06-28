@@ -39,7 +39,7 @@ export default function UserSearchContent() {
       })
       .catch((err) => {
         setResults([]);
-        setError(err instanceof Error ? err.message : t("social.search.error"));
+        setError(formatApiError(err, t("social.search.error")));
       })
       .finally(() => setLoading(false));
   }, [user, query, t]);
