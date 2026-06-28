@@ -34,6 +34,11 @@ interface ChessBoardProps {
   onDropAtSquare?: (uci: string) => void;
   /** Espace sous le plateau (horloge joueur) pour le calcul responsive */
   extraBottom?: number;
+  /** Surbrillance revue : coup joué (rouge) vs meilleur coup Stockfish (vert). */
+  reviewHighlight?: {
+    played?: { from: string; to: string };
+    best?: { from: string; to: string };
+  } | null;
 }
 
 function normalizeFenForDisplay(fen: string): string {

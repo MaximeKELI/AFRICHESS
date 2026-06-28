@@ -30,6 +30,39 @@ export function coachPhrase(
   return side ? `${side} — ${base}` : base;
 }
 
+export interface CoachMoveInput {
+  san: string;
+  class: string;
+  cp_loss?: number;
+  played_by_white?: boolean;
+  best_san?: string | null;
+}
+
+export function isPlayerMove(move: CoachMoveInput, playerIsWhite: boolean): boolean {
+  return move.played_by_white === playerIsWhite;
+}
+
+/** Commentaire coach centré sur le joueur humain (style revue Chess.com). */
+export function coachUserMoveComment(
+  t: TranslateFn,
+  move: CoachMoveInput,
+  playerIsWhite: boolean
+): string {
+  const isUser = isPlayerMove(move, playerIsWhite);
+  if (!isUser) {
+    return t("chess.review.opponentBrief", { san: move.san, moveClass: move.class });
+  }
+
+  let text = coachPhrase(t, move.class, move.cp_loss, move.played_by_white);
+  const suboptimal = ["inaccuracy", "mistake", "blunder"].includes(move.class);
+  if (suboptimal && move.best_san && move.best_san !== move.san) {
+    text += ` ${t("chess.review.bestWas", { move: move.best_san })}`;
+  } else if (["best", "great", "brilliant"].includes(move.class)) {
+    text = `${t("chess.review.userPraise", { san: move.san })} ${text}`;
+  }
+  return text;
+}
+
 export function formatEvalDisplay(evalScore: number | null | undefined): string {
   if (evalScore == null || Number.isNaN(evalScore)) return "—";
   if (Math.abs(evalScore) >= 100) {
