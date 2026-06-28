@@ -20,3 +20,8 @@ export function apiPortLabel(): string {
     return "8003";
   }
 }
+
+/** Alias utilisé par aiSpeech et autres modules legacy. */
+export function apiBase(): string {
+  return API_URL;
+}

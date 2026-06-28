@@ -2004,7 +2004,7 @@ const en: Record<string, string> = {
   "ws.error.reconnect": "Reconnecting… ({n}/{max})",
   "ws.error.matchmakingGeneric": "Matchmaking error.",
   "ws.error.matchmakingInvalid": "Invalid matchmaking response.",
-  "errors.network": "Cannot reach server. Check that the backend is running (port 8003).",
+  "errors.network": "Cannot reach server (API port {port}). Check backend: docker start africhess-backend-8003",
   "errors.stats404": "Stats endpoint unavailable. Restart backend: docker start africhess-backend-1",
   "errors.serverTechnical": "Server technical error. Restart backend and try again.",
   "errors.emailUsed": "Account or email already used — use the Log In page.",
