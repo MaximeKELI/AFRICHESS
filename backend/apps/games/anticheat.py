@@ -5,6 +5,7 @@ from datetime import timedelta
 from django.utils import timezone
 
 from .fairplay_service import merge_telemetry
+from .fairplay_telemetry import sanitize_telemetry_patch, user_has_fairplay_consent
 from .models import Game, Move
 
 MAX_MOVES_PER_MINUTE = 50

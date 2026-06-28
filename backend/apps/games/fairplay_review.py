@@ -11,8 +11,11 @@ from django.utils import timezone
 
 from apps.notifications.models import Notification
 
+from .fairplay_audit import log_fairplay_audit
 from .fairplay_service import player_baseline
 from .models import (
+    FairPlayAppeal,
+    FairPlayAuditLog,
     FairPlayReport,
     FairPlayReviewCase,
     FairPlaySanction,
@@ -26,6 +29,7 @@ FLAGGED_VERDICTS = {
     FairPlayReport.Verdict.REVIEW,
     FairPlayReport.Verdict.SUSPICIOUS,
     FairPlayReport.Verdict.LIKELY_CHEAT,
+    FairPlayReport.Verdict.ENGINE_UNAVAILABLE,
 }
 
 
@@ -163,6 +167,13 @@ def fairplay_queue_overview() -> dict[str, Any]:
         "likely_cheat_7d": FairPlayReport.objects.filter(
             verdict=FairPlayReport.Verdict.LIKELY_CHEAT,
             analyzed_at__gte=timezone.now() - timedelta(days=7),
+        ).count(),
+        "engine_unavailable_7d": FairPlayReport.objects.filter(
+            verdict=FairPlayReport.Verdict.ENGINE_UNAVAILABLE,
+            analyzed_at__gte=timezone.now() - timedelta(days=7),
+        ).count(),
+        "pending_appeals": FairPlayAppeal.objects.filter(
+            status=FairPlayAppeal.Status.PENDING
         ).count(),
     }
 
@@ -308,6 +319,7 @@ def apply_review_decision(
     decision: str,
     notes: str = "",
     suspend_days: int | None = None,
+    request=None,
 ) -> dict[str, Any]:
     try:
         case = FairPlayReviewCase.objects.select_related("report", "report__user").get(pk=case_id)
@@ -329,6 +341,21 @@ def apply_review_decision(
     sanction = None
     if status == FairPlayReviewCase.Status.CONFIRMED and decision != FairPlayReviewCase.Decision.NONE:
         sanction = _apply_sanction(case, staff_user, decision, suspend_days=suspend_days)
+
+    log_fairplay_audit(
+        action=FairPlayAuditLog.Action.DECIDE_CASE,
+        staff=staff_user,
+        target_type="case",
+        target_id=case.id,
+        request=request,
+        metadata={
+            "status": case.status,
+            "decision": case.decision,
+            "report_id": case.report_id,
+            "user_id": case.report.user_id,
+            "sanction_id": sanction.id if sanction else None,
+        },
+    )
 
     return {
         "ok": True,
@@ -418,3 +445,119 @@ def user_fairplay_restrictions(user) -> dict[str, Any]:
             )
         ).exists(),
     }
+
+
+def expire_fairplay_sanctions() -> dict[str, int]:
+    """Désactive les sanctions expirées et réactive les comptes suspendus temporairement."""
+    now = timezone.now()
+    expired_qs = FairPlaySanction.objects.filter(is_active=True, until__isnull=False, until__lte=now)
+    expired_user_ids = set(expired_qs.values_list("user_id", flat=True))
+    expired_count = expired_qs.update(is_active=False)
+
+    reactivated = 0
+    for user_id in expired_user_ids:
+        user = User.objects.filter(pk=user_id).first()
+        if not user or user.is_active:
+            continue
+        still_suspended = FairPlaySanction.objects.filter(
+            user_id=user_id,
+            is_active=True,
+            sanction_type__in=(
+                FairPlaySanction.SanctionType.SUSPEND_TEMP,
+                FairPlaySanction.SanctionType.SUSPEND_PERM,
+            ),
+        ).filter(Q(until__isnull=True) | Q(until__gt=now)).exists()
+        if not still_suspended:
+            user.is_active = True
+            user.save(update_fields=["is_active"])
+            reactivated += 1
+            log_fairplay_audit(
+                action=FairPlayAuditLog.Action.SANCTION_EXPIRED,
+                target_type="user",
+                target_id=user_id,
+                metadata={"reactivated": True},
+            )
+
+    return {"expired_sanctions": expired_count, "reactivated_users": reactivated}
+
+
+def submit_fairplay_appeal(user, review_case_id: int, reason: str) -> dict[str, Any]:
+    try:
+        case = FairPlayReviewCase.objects.select_related("report").get(pk=review_case_id)
+    except FairPlayReviewCase.DoesNotExist:
+        return {"error": "Case not found"}
+    if case.report.user_id != user.id:
+        return {"error": "Forbidden"}
+    if case.status not in (
+        FairPlayReviewCase.Status.CONFIRMED,
+        FairPlayReviewCase.Status.ESCALATED,
+    ):
+        return {"error": "Appeal only allowed on confirmed/escalated cases"}
+    if FairPlayAppeal.objects.filter(
+        user=user,
+        review_case=case,
+        status__in=(FairPlayAppeal.Status.PENDING, FairPlayAppeal.Status.UNDER_REVIEW),
+    ).exists():
+        return {"error": "Appeal already pending"}
+    appeal = FairPlayAppeal.objects.create(
+        user=user,
+        review_case=case,
+        reason=reason[:4000],
+    )
+    for staff in User.objects.filter(is_staff=True, is_active=True).only("id")[:20]:
+        Notification.objects.create(
+            user_id=staff.id,
+            type=Notification.Type.SYSTEM,
+            title=f"Recours Fair Play — {user.username}",
+            body=reason[:200],
+            data={"kind": "fairplay_appeal", "appeal_id": appeal.id, "case_id": case.id},
+        )
+    return {"ok": True, "appeal_id": appeal.id}
+
+
+def resolve_fairplay_appeal(
+    appeal_id: int,
+    staff_user,
+    *,
+    status: str,
+    staff_response: str = "",
+    request=None,
+) -> dict[str, Any]:
+    try:
+        appeal = FairPlayAppeal.objects.select_related("review_case", "user").get(pk=appeal_id)
+    except FairPlayAppeal.DoesNotExist:
+        return {"error": "Appeal not found"}
+    if status not in (FairPlayAppeal.Status.ACCEPTED, FairPlayAppeal.Status.REJECTED):
+        return {"error": "Invalid status"}
+    appeal.status = status
+    appeal.staff_response = staff_response[:4000]
+    appeal.resolved_at = timezone.now()
+    appeal.save(update_fields=["status", "staff_response", "resolved_at"])
+    if status == FairPlayAppeal.Status.ACCEPTED:
+        case = appeal.review_case
+        case.status = FairPlayReviewCase.Status.DISMISSED
+        case.decision = FairPlayReviewCase.Decision.NONE
+        case.reviewer = staff_user
+        case.decided_at = timezone.now()
+        case.notes = (case.notes + "\n[Appeal accepted] " + staff_response).strip()[:2000]
+        case.save()
+        FairPlaySanction.objects.filter(user=appeal.user, is_active=True).update(is_active=False)
+        if not appeal.user.is_active:
+            appeal.user.is_active = True
+            appeal.user.save(update_fields=["is_active"])
+    Notification.objects.create(
+        user=appeal.user,
+        type=Notification.Type.SYSTEM,
+        title="Décision sur votre recours Fair Play",
+        body=staff_response[:500] or ("Recours accepté." if status == FairPlayAppeal.Status.ACCEPTED else "Recours rejeté."),
+        data={"kind": "fairplay_appeal_resolved", "appeal_id": appeal.id, "status": status},
+    )
+    log_fairplay_audit(
+        action=FairPlayAuditLog.Action.APPEAL_RESOLVED,
+        staff=staff_user,
+        target_type="appeal",
+        target_id=appeal.id,
+        request=request,
+        metadata={"status": status, "user_id": appeal.user_id},
+    )
+    return {"ok": True, "appeal_id": appeal.id, "status": status}
