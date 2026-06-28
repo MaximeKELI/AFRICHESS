@@ -4,6 +4,27 @@ from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
+
+def _comment_spec(
+    move,
+    fen_before: str,
+    fen_after: str,
+    *,
+    played_by_ai: bool,
+    mover_is_white: bool,
+) -> dict:
+    return {
+        "move_id": move.pk,
+        "fen_before": fen_before,
+        "fen_after": fen_after,
+        "uci": move.uci,
+        "san": move.san,
+        "played_by_ai": played_by_ai,
+        "mover_is_white": mover_is_white,
+        "move_number": move.move_number,
+    }
+
+
 from django.conf import settings
 from django.db import models, transaction
 from django.utils import timezone
@@ -19,7 +40,7 @@ from .clock_service import (
     check_timeout,
     tick_turn_started,
 )
-from .commentary import generate_move_comment
+from .commentary_async import schedule_move_comments
 from .elo_adapt import resolve_final_ai_elo
 from .elo_config import elo_to_difficulty_label
 from .stats_service import on_game_completed
