@@ -150,7 +150,7 @@ std::vector<std::string> StockfishClient::parse_pv(const std::string& line) cons
 }
 
 EngineMoveAnalysis StockfishClient::analyze_move(
-    const std::string& fen,
+    const std::string& position,
     const std::string& played_uci,
     int depth) {
   EngineMoveAnalysis result;
@@ -159,7 +159,7 @@ EngineMoveAnalysis StockfishClient::analyze_move(
   }
 
   send("ucinewgame");
-  send("position fen " + fen);
+  send("position " + position);
   send("go depth " + std::to_string(depth));
 
   int best_eval = 0;

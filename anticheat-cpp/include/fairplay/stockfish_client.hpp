@@ -23,7 +23,7 @@ class StockfishClient {
   StockfishClient& operator=(const StockfishClient&) = delete;
 
   bool available() const { return available_; }
-  EngineMoveAnalysis analyze_move(const std::string& fen, const std::string& played_uci, int depth);
+  EngineMoveAnalysis analyze_move(const std::string& position, const std::string& played_uci, int depth);
 
  private:
   void send(const std::string& cmd);
