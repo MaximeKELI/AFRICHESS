@@ -46,6 +46,37 @@ def _player_elo(user, game: Game) -> int:
         return getattr(settings, "DEFAULT_ELO", 1200)
 
 
+def player_baseline(user, game: Game) -> dict[str, float | int]:
+    """Profil Fair Play sur les N dernières parties — évite les faux positifs sur joueurs forts."""
+    mode = _mode_for_rating(game)
+    reports = (
+        FairPlayReport.objects.filter(
+            user=user,
+            game__mode=mode,
+            game__is_rated=True,
+            game__is_vs_ai=False,
+        )
+        .exclude(game=game)
+        .order_by("-analyzed_at")[:20]
+    )
+    if len(reports) < 5:
+        return {
+            "games_analyzed": len(reports),
+            "avg_accuracy": 0.0,
+            "avg_top1_rate": 0.0,
+            "avg_cpl": 0.0,
+            "avg_overall_score": 0.0,
+        }
+    n = len(reports)
+    return {
+        "games_analyzed": n,
+        "avg_accuracy": sum(r.accuracy_estimate for r in reports) / n,
+        "avg_top1_rate": sum(r.engine_top1_rate for r in reports) / n,
+        "avg_cpl": sum(r.avg_centipawn_loss for r in reports) / n,
+        "avg_overall_score": sum(r.overall_score for r in reports) / n,
+    }
+
+
 def build_game_input(game: Game, user, *, analysis_mode: str = "full") -> dict[str, Any]:
     is_white = game.white_player_id == user.id
     telemetry_row, _ = GameFairPlayTelemetry.objects.get_or_create(game=game, user=user)
