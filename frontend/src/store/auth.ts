@@ -6,6 +6,7 @@ import { setAccessToken, setRefreshToken } from "@/lib/cookies";
 import { formatApiError } from "@/lib/errors";
 import { translate } from "@/lib/i18n";
 import { clearAuthCookies } from "@/lib/session";
+import { syncPreferencesForUser } from "@/store/preferences";
 
 interface User {
   id: number;
@@ -148,21 +149,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       authApi.logout(refresh).catch(() => undefined);
     }
     clearAuthCookies();
+    syncPreferencesForUser(null);
     set({ user: null });
   },
 
   fetchProfile: async () => {
     if (!Cookies.get("access_token") && !Cookies.get("refresh_token")) {
+      syncPreferencesForUser(null);
       set({ user: null });
       return;
     }
     try {
       const { data } = await authApi.profile();
       set({ user: data });
+      syncPreferencesForUser(data.id);
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 401) {
         get().logout();
       } else {
+        syncPreferencesForUser(null);
         set({ user: null });
       }
     }
