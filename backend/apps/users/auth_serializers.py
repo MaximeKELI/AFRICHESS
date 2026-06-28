@@ -6,6 +6,10 @@ from rest_framework.exceptions import ValidationError
 
 User = get_user_model()
 _GENERIC_LOGIN_ERROR = "Identifiants invalides."
+_DUPLICATE_EMAIL_ERROR = (
+    "Plusieurs comptes utilisent cet e-mail. Connectez-vous avec votre nom d'utilisateur "
+    "(ex. DKELI), pas avec l'e-mail."
+)
 
 
 class AfrichessLoginSerializer(LoginSerializer):
@@ -15,14 +19,21 @@ class AfrichessLoginSerializer(LoginSerializer):
             matches = User.objects.filter(email__iexact=login)
             count = matches.count()
             if count > 1:
-                raise ValidationError({"non_field_errors": [_GENERIC_LOGIN_ERROR]})
+                names = ", ".join(sorted(matches.values_list("username", flat=True)[:5]))
+                raise ValidationError(
+                    {"non_field_errors": [f"{_DUPLICATE_EMAIL_ERROR} Comptes : {names}."]}
+                )
             if count == 1:
                 attrs["username"] = matches.first().username
                 attrs["email"] = ""
             elif count == 0:
                 raise ValidationError({"non_field_errors": [_GENERIC_LOGIN_ERROR]})
         elif login:
-            attrs["username"] = login
+            matches = User.objects.filter(username__iexact=login)
+            if matches.count() == 1:
+                attrs["username"] = matches.first().username
+            else:
+                attrs["username"] = login
         try:
             return super().validate(attrs)
         except ValidationError:

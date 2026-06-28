@@ -81,9 +81,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (username, password) => {
     const loginId = username.trim();
-    if (loginId.includes("@")) {
-      throw new Error(translate(get().locale, "auth.login.useUsername"));
-    }
     Cookies.remove("access_token");
     Cookies.remove("refresh_token");
     set({ isLoading: true });
@@ -99,6 +96,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw new Error(translate(get().locale, "errors.profileLoadFailed"));
       }
     } catch (error) {
+      if (error instanceof Error && !(error instanceof AxiosError)) {
+        throw error;
+      }
       throw new Error(formatApiError(error));
     } finally {
       set({ isLoading: false });

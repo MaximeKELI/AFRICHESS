@@ -221,7 +221,7 @@ const fr: Record<string, string> = {
   "auth.login.submitting": "Connexion…",
   "auth.login.noAccount": "Pas encore de compte ?",
   "auth.login.signup": "S'inscrire",
-  "auth.login.hint": "Utilisez votre nom d'utilisateur, pas l'e-mail seul.",
+  "auth.login.hint": "Nom d'utilisateur ou e-mail. Si votre e-mail est partagé entre plusieurs comptes, utilisez le nom d'utilisateur (ex. DKELI).",
   "auth.login.expired": "Session expirée. Reconnectez-vous.",
   "auth.register.title": "Rejoindre AFRICHESS",
   "auth.register.subtitle": "Créez votre profil de joueur africain",

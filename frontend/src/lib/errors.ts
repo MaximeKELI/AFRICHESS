@@ -98,8 +98,14 @@ export function formatApiError(
       continue;
     }
     if (field === "non_field_errors") {
+      if (text.includes("Plusieurs comptes")) {
+        messages.push(text);
+        continue;
+      }
       messages.push(
-        text.includes("log in") || text.includes("credentials")
+        text.includes("log in") ||
+          text.includes("credentials") ||
+          text.includes("Identifiants invalides")
           ? translate(locale, "errors.badCredentials")
           : text
       );
