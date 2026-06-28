@@ -143,7 +143,7 @@ void detect_engine_correlation(DetectorContext ctx, AnalysisResult& out) {
         1.3,
         "Perte centipawn moyenne inférieure au niveau attendu");
   }
-  if (out.accuracy_estimate > 92.0 && ctx.input.player_elo < 1700) {
+  if (out.accuracy_estimate > 92.0 && ctx.input->player_elo < 1700) {
     add_signal(
         out,
         "ACCURACY_SPIKE",
@@ -198,7 +198,7 @@ void detect_timing(DetectorContext ctx, AnalysisResult& out) {
         1.25,
         "Réponses instantanées sur coups critiques");
   }
-  if (robotic >= 8 && ctx.input.mode != "bullet") {
+  if (robotic >= 8 && ctx.input->mode != "bullet") {
     add_signal(out, "MOVE_TOO_FAST", robotic * 4.5, 0.85, "Série de coups sous le seuil humain");
   }
   int moves_per_min = static_cast<int>(ctx.player_moves->size());
