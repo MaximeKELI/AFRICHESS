@@ -202,13 +202,13 @@ void detect_timing(DetectorContext ctx, AnalysisResult& out) {
     add_signal(out, "MOVE_TOO_FAST", robotic * 4.5, 0.85, "Série de coups sous le seuil humain");
   }
   int moves_per_min = static_cast<int>(ctx.player_moves->size());
-  if (moves_per_min > 40 && ctx.input.mode != "bullet") {
+  if (moves_per_min > 40 && ctx.input->mode != "bullet") {
     add_signal(out, "MOVE_BURST", moves_per_min * 1.2, 0.95, "Rafale de coups anormale");
   }
 }
 
 void detect_telemetry(DetectorContext ctx, AnalysisResult& out) {
-  const auto& t = ctx.input.telemetry;
+  const auto& t = ctx.input->telemetry;
   if (t.tab_blur_count >= 8) {
     add_signal(out, "TAB_BLUR_SUSPECT", t.tab_blur_count * 4.0, 0.75, "Changements d'onglet fréquents");
   }
@@ -232,7 +232,7 @@ void detect_telemetry(DetectorContext ctx, AnalysisResult& out) {
   if (t.mouse_entropy > 0.0 && t.mouse_entropy < 0.35) {
     add_signal(out, "LOW_MOUSE_ENTROPY", (0.35 - t.mouse_entropy) * 180.0, 0.6, "Mouvements souris atypiques");
   }
-  if (t.premove_count >= 25 && ctx.input.mode != "bullet") {
+  if (t.premove_count >= 25 && ctx.input->mode != "bullet") {
     add_signal(out, "PREMOVE_ABUSE", t.premove_count * 1.5, 0.55, "Usage excessif de premoves");
   }
 }
@@ -248,7 +248,7 @@ void detect_opening(DetectorContext ctx, AnalysisResult& out) {
       ++opening_engine;
     }
   }
-  if (opening_engine >= 10 && ctx.input.player_elo < 1900) {
+  if (opening_engine >= 10 && ctx.input->player_elo < 1900) {
     add_signal(
         out,
         "OPENING_ENGINE",
@@ -263,7 +263,7 @@ void detect_performance_vs_elo(DetectorContext ctx, AnalysisResult& out) {
     return;
   }
   double perf_index = out.accuracy_estimate + out.engine_top1_rate * 35.0;
-  double expected = 55.0 + std::min(25.0, (ctx.input.player_elo - 1000) * 0.025);
+  double expected = 55.0 + std::min(25.0, (ctx.input->player_elo - 1000) * 0.025);
   double gap = perf_index - expected;
   if (gap > 22.0) {
     add_signal(
