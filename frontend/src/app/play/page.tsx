@@ -251,6 +251,31 @@ function PlayContent() {
     );
   }, [gameId, gamePlayersSource, orientation, user?.id, userElo]);
 
+  const topPlayerConfig = useMemo(
+    () =>
+      boardPlayers
+        ? {
+            player: boardPlayers.top,
+            side: (orientation === "white" ? "black" : "white") as "white" | "black",
+          }
+        : undefined,
+    [boardPlayers, orientation]
+  );
+
+  const bottomPlayerConfig = useMemo(
+    () =>
+      boardPlayers
+        ? {
+            player: boardPlayers.bottom,
+            side: (orientation === "white" ? "white" : "black") as "white" | "black",
+          }
+        : undefined,
+    [boardPlayers, orientation]
+  );
+
+  const boardDisabled =
+    !gameId || gameCompleted || !isMyTurn || (isLiveHuman && movePending);
+
   const moveComments = useMemo(() => {
     if (!gameData.moves?.length) return [];
     return commentsFromMoves(gameData.moves, playerIsWhite);
@@ -594,7 +619,8 @@ function PlayContent() {
 
   const handleMove = useCallback(
     async (uci: string) => {
-      if (!gameId || gameCompleted) return;
+      if (!gameId || gameCompleted || !isMyTurn) return;
+      if (isVsAi && movePending) return;
       if (isVsAi) unlockAiSpeech();
       setDropPiece(null);
       const poolMs = playerIsWhite ? gameData.white_time_ms : gameData.black_time_ms;
