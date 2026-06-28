@@ -217,6 +217,10 @@ def user_activity_summary(user_id: int) -> dict[str, Any] | None:
         .count()
     )
 
+    from apps.games.fairplay_review import user_fairplay_summary
+
+    fairplay = user_fairplay_summary(user_id)
+
     return {
         "user": _user_admin_dict(user),
         "stats": stats,
@@ -231,6 +235,7 @@ def user_activity_summary(user_id: int) -> dict[str, Any] | None:
         },
         "games_total": games_total,
         "puzzle_attempts_total": puzzles,
+        "fairplay": fairplay,
     }
 
 
