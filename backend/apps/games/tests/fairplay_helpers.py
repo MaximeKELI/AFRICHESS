@@ -49,6 +49,20 @@ def cpp_available() -> bool:
     return fairplay_binary_path() is not None
 
 
+def grant_fairplay_consent(user):
+    from django.utils import timezone
+
+    from apps.games.models import FairPlayUserConsent
+
+    return FairPlayUserConsent.objects.update_or_create(
+        user=user,
+        defaults={
+            "consent_version": FairPlayUserConsent.CONSENT_VERSION,
+            "consented_at": timezone.now(),
+        },
+    )[0]
+
+
 def baseline_payload(
     games: int = 10,
     top1: float = 0.48,

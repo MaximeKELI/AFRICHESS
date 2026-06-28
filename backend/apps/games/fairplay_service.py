@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import shutil
 import subprocess
 from typing import Any
+
+from pathlib import Path
 
 from django.conf import settings
 
@@ -24,10 +27,12 @@ ENGINE_UNAVAILABLE_VERDICT = FairPlayReport.Verdict.ENGINE_UNAVAILABLE
 def _fairplay_bin() -> str | None:
     candidates = [
         getattr(settings, "FAIRPLAY_BIN", ""),
+        str(Path(__file__).resolve().parents[2] / "bin/africhess-fairplay"),
+        "/anticheat-cpp/build/africhess-fairplay",
         "/usr/local/bin/africhess-fairplay",
     ]
     for path in candidates:
-        if path and shutil.which(path):
+        if path and (shutil.which(path) or os.path.isfile(path)):
             return path
     return None
 

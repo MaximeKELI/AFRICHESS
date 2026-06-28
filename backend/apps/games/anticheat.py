@@ -36,6 +36,12 @@ def validate_move_telemetry(game: Game, user, telemetry: dict | None) -> dict | 
         return None
     if not user_has_fairplay_consent(user):
         return None
+    try:
+        raw_tab_blur = int(telemetry.get("tab_blur", 0) or 0)
+    except (TypeError, ValueError):
+        raw_tab_blur = 0
+    if raw_tab_blur > MAX_TAB_BLUR_PER_MOVE:
+        return {"error": "Activité d'onglet suspecte pendant le coup", "code": "anticheat"}
     telemetry = sanitize_telemetry_patch(telemetry)
     if not telemetry:
         return None

@@ -52,7 +52,8 @@ services:
       - WS_ALLOW_QUERY_TOKEN=false
       - PREMIUM_DEMO_ALLOWED=true
       - ALLOW_PUBLIC_API_DOCS=false
-      - FAIRPLAY_BIN=/anticheat-cpp/build/africhess-fairplay
+      - FAIRPLAY_BIN=/app/bin/africhess-fairplay
+      - STOCKFISH_PATH=/usr/games/stockfish
     depends_on:
       db:
         condition: service_healthy
@@ -66,11 +67,14 @@ services:
     command: sh -c "mkdir -p staticfiles && celery -A config worker -l info"
     volumes:
       - ./backend:/app
+      - ./anticheat-cpp:/anticheat-cpp
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.development
       - POSTGRES_HOST=db
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-africhess_dev_pg}
       - REDIS_URL=redis://:${REDIS_PASSWORD:-africhess_redis_dev}@redis:6379/0
+      - FAIRPLAY_BIN=/app/bin/africhess-fairplay
+      - STOCKFISH_PATH=/usr/games/stockfish
     depends_on:
       - backend
       - redis
@@ -82,10 +86,13 @@ services:
     command: sh -c "mkdir -p staticfiles && celery -A config beat -l info"
     volumes:
       - ./backend:/app
+      - ./anticheat-cpp:/anticheat-cpp
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.development
       - POSTGRES_HOST=db
       - REDIS_URL=redis://:${REDIS_PASSWORD:-africhess_redis_dev}@redis:6379/0
+      - FAIRPLAY_BIN=/app/bin/africhess-fairplay
+      - STOCKFISH_PATH=/usr/games/stockfish
     depends_on:
       - backend
       - redis

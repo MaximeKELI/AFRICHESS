@@ -12,6 +12,7 @@ from apps.games.anticheat import (
     validate_move_timing,
 )
 from apps.games.models import Game, Move
+from apps.games.tests.fairplay_helpers import grant_fairplay_consent
 
 User = get_user_model()
 
@@ -100,6 +101,7 @@ class AnticheatTelemetryTests(TestCase):
             mode=Game.Mode.BLITZ,
             is_rated=True,
         )
+        grant_fairplay_consent(self.white)
 
     def test_tab_blur_per_move_limit(self):
         err = validate_move_telemetry(self.game, self.white, {"tab_blur": 5})

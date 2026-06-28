@@ -3,7 +3,7 @@ from django.test import TestCase
 
 from apps.games.fairplay_service import build_game_input, merge_telemetry, persist_fairplay_report
 from apps.games.models import FairPlayReport, Game, Move
-from apps.games.tests.fairplay_helpers import cpp_available, run_fairplay_cpp
+from apps.games.tests.fairplay_helpers import cpp_available, grant_fairplay_consent, run_fairplay_cpp
 
 User = get_user_model()
 
@@ -28,6 +28,7 @@ class FairPlayServiceTests(TestCase):
             played_by_white=True,
             think_ms=1200,
         )
+        grant_fairplay_consent(self.white)
 
     def test_build_game_input_payload(self):
         payload = build_game_input(self.game, self.white)
