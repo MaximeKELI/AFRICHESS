@@ -448,7 +448,7 @@ const fr: Record<string, string> = {
   "board.picker.classic": "Classique",
   "board.picker.african": "Africain ♛",
   "background.picker.title": "Arrière-plan",
-  "background.picker.hint": "Paysage derrière l'échiquier pendant la partie",
+  "background.picker.hint": "Paysage d'arrière-plan pour tout le site",
   "background.picker.category.africa": "Afrique",
   "background.picker.category.nature": "Nature",
   "background.picker.category.classic": "Classique",

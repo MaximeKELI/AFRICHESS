@@ -6,7 +6,6 @@ import { Chessboard } from "react-chessboard";
 import { Chess, Square } from "chess.js";
 import { playChessSound, preloadChessSounds, soundForMove } from "@/lib/chessSounds";
 import { accentRgba, getBoardTheme, getThemedSquareStyles } from "@/lib/boardThemes";
-import { getBoardBackground } from "@/lib/boardBackgrounds";
 import { useAuthStore } from "@/store/auth";
 import { customPiecesForSet } from "@/lib/pieceSets";
 import { usePreferencesStore } from "@/store/preferences";
@@ -60,11 +59,9 @@ function ChessBoardInner({
   const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
   const boardThemeId = usePreferencesStore((s) => s.boardTheme);
-  const boardBackgroundId = usePreferencesStore((s) => s.boardBackground);
   const pieceSet = usePreferencesStore((s) => s.pieceSet);
   const customPieces = useMemo(() => customPiecesForSet(pieceSet), [pieceSet]);
   const theme = getBoardTheme(boardThemeId);
-  const boardBackground = getBoardBackground(boardBackgroundId);
   const soundsOn = !lowBandwidth;
   const isCoarse = useCoarsePointer();
   const [game, setGame] = useState(() => new Chess(fen === "start" ? undefined : fen));
@@ -394,24 +391,11 @@ function ChessBoardInner({
       aria-label={t("chess.board.aria")}
       tabIndex={disabled ? -1 : 0}
       onKeyDown={onBoardKeyDown}
-      className={clsx(
-        "chess-board-shell w-full min-w-0 mx-auto select-none",
-        boardBackground.src && "chess-board-shell-scene"
-      )}
+      className="chess-board-shell w-full min-w-0 mx-auto select-none"
       style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
     >
-      {boardBackground.src && (
-        <div
-          className="chess-board-scene-bg"
-          style={{ backgroundImage: `url('${boardBackground.src}')` }}
-          aria-hidden
-        />
-      )}
       <div
-        className={clsx(
-          "chess-board-frame mx-auto rounded-lg overflow-hidden shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold",
-          boardBackground.src && "relative z-[1]"
-        )}
+        className="chess-board-frame mx-auto rounded-lg overflow-hidden shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold"
         style={{
           width: boardWidth,
           height: boardWidth,

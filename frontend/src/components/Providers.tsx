@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/auth";
 import { ActivityTracker } from "@/components/analytics/ActivityTracker";
+import { SiteBackground } from "@/components/layout/SiteBackground";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import Cookies from "js-cookie";
 
@@ -36,6 +37,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <SiteBackground />
       <ActivityTracker />
       <PwaInstallPrompt />
       {children}
