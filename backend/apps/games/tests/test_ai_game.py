@@ -141,6 +141,19 @@ class AIGameAPITests(TestCase):
         game = svc.create_ai_game(self.user, mode="blitz", color="white", ai_elo=1250)
         self.assertEqual(game.ai_target_elo, 1330)
 
+    def test_serializer_exposes_side_elos(self):
+        from apps.games.serializers import GameSerializer
+        from apps.games.services import GameService
+
+        svc = GameService()
+        svc.engine = MagicMock()
+        svc.engine.get_best_move.return_value = None
+        svc.rating_service = MagicMock()
+        game = svc.create_ai_game(self.user, mode="blitz", color="white", ai_elo=1250)
+        data = GameSerializer(game).data
+        self.assertIsNotNone(data["white_elo"])
+        self.assertEqual(data["black_elo"], game.ai_target_elo)
+
 
 class EngineLimitTests(TestCase):
     """Vérifie que le moteur choisit UCI ou profondeur selon l'ELO."""

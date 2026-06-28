@@ -47,8 +47,12 @@ import { chessLevelLabel, modeLabel } from "@/lib/i18n/labels";
 import { PgnExportButton } from "@/components/chess/PgnExportButton";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { InlineAlert } from "@/components/ui/InlineAlert";
-import { GamePlayerBar } from "@/components/play/GamePlayerBar";
 import { GameChat } from "@/components/social/GameChat";
+import {
+  opponentAndSelfPlayers,
+  type GameBotPublic,
+  type GamePlayerPublic,
+} from "@/lib/gamePlayers";
 import {
   useGameWebSocket,
   useMatchmakingWebSocket,
@@ -60,13 +64,15 @@ interface GameState {
   moves?: ApiMove[];
   pgn?: string;
   result?: string;
-  white_player?: { username: string };
-  black_player?: { username: string };
+  white_player?: GamePlayerPublic | null;
+  black_player?: GamePlayerPublic | null;
+  white_elo?: number | null;
+  black_elo?: number | null;
+  bot?: GameBotPublic | null;
   white_time_ms?: number;
   black_time_ms?: number;
   increment_ms?: number;
   status?: string;
-  result?: string;
   termination_reason?: string;
   is_timed?: boolean;
   time_control_minutes?: number | null;
@@ -143,6 +149,34 @@ function PlayContent() {
     return openingNameFromMoves(sans);
   }, [gameData.moves]);
 
+  const gamePlayersSource = useMemo(() => {
+    const patchSelf = (p: GamePlayerPublic | null | undefined) => {
+      if (!p || !user || p.id !== user.id) return p ?? undefined;
+      return {
+        ...p,
+        country: p.country || user.country,
+        flair: p.flair ?? user.flair,
+        avatar: p.avatar ?? user.avatar,
+        display_name: p.display_name ?? user.display_name,
+      };
+    };
+    return {
+      ...gameData,
+      white_player: patchSelf(gameData.white_player),
+      black_player: patchSelf(gameData.black_player),
+    };
+  }, [gameData, user]);
+
+  const boardPlayers = useMemo(() => {
+    if (!gameId) return null;
+    return opponentAndSelfPlayers(
+      gamePlayersSource,
+      orientation,
+      user?.id,
+      userElo
+    );
+  }, [gameId, gamePlayersSource, orientation, user?.id, userElo]);
+
   const moveComments = useMemo(() => {
     if (!gameData.moves?.length) return [];
     return commentsFromMoves(gameData.moves, playerIsWhite);
@@ -188,25 +222,31 @@ function PlayContent() {
     turnStartRef.current = Date.now();
   }, [turn, gameData.white_time_ms, gameData.black_time_ms]);
 
-  const applyGameResponse = useCallback((data: GameState & { id?: string }) => {
+  const applyGameResponse = useCallback((data: Partial<GameState> & { id?: string; fen?: string }) => {
     if (data.termination_reason === "repetition") {
       playDrawWhistle();
     }
-    setGameData({
-      fen: data.fen,
-      moves: data.moves ?? [],
-      white_time_ms: data.white_time_ms,
-      black_time_ms: data.black_time_ms,
-      increment_ms: data.increment_ms,
-      status: data.status,
-      result: data.result,
-      termination_reason: data.termination_reason,
-      is_timed: data.is_timed,
-      time_control_minutes: data.time_control_minutes,
-      is_vs_ai: data.is_vs_ai,
-      ai_target_elo: data.ai_target_elo,
-      variant: (data.variant as GameVariant) ?? "standard",
-    });
+    setGameData((prev) => ({
+      ...prev,
+      fen: data.fen ?? prev.fen,
+      moves: data.moves ?? prev.moves ?? [],
+      white_time_ms: data.white_time_ms ?? prev.white_time_ms,
+      black_time_ms: data.black_time_ms ?? prev.black_time_ms,
+      increment_ms: data.increment_ms ?? prev.increment_ms,
+      status: data.status ?? prev.status,
+      result: data.result ?? prev.result,
+      termination_reason: data.termination_reason ?? prev.termination_reason,
+      is_timed: data.is_timed ?? prev.is_timed,
+      time_control_minutes: data.time_control_minutes ?? prev.time_control_minutes,
+      is_vs_ai: data.is_vs_ai ?? prev.is_vs_ai,
+      ai_target_elo: data.ai_target_elo ?? prev.ai_target_elo,
+      white_player: data.white_player !== undefined ? data.white_player : prev.white_player,
+      black_player: data.black_player !== undefined ? data.black_player : prev.black_player,
+      white_elo: data.white_elo !== undefined ? data.white_elo : prev.white_elo,
+      black_elo: data.black_elo !== undefined ? data.black_elo : prev.black_elo,
+      bot: data.bot !== undefined ? data.bot : prev.bot,
+      variant: (data.variant as GameVariant) ?? prev.variant ?? "standard",
+    }));
     if (data.variant) setActiveVariant(data.variant as GameVariant);
     if (data.ai_target_elo) setAiElo(data.ai_target_elo);
     if (data.is_vs_ai !== undefined) setIsVsAi(data.is_vs_ai);
@@ -569,14 +609,6 @@ function PlayContent() {
               )}
             </div>
           )}
-          {isVsAi && gameId && user && (
-            <GamePlayerBar
-              user={user}
-              aiElo={gameData.ai_target_elo ?? aiElo}
-              playerIsWhite={playerIsWhite}
-              side="opponent"
-            />
-          )}
           {movePending && isVsAi && (
             <p className="text-xs text-center text-africhess-gold animate-pulse">
               {t("play.ai.thinking")}
@@ -602,16 +634,21 @@ function PlayContent() {
             serverValidated={activeVariant !== "standard"}
             pendingDrop={activeVariant === "crazyhouse" ? dropPiece : null}
             onDropAtSquare={(uci) => handleMove(uci)}
-            extraBottom={isVsAi && gameId ? 52 : 0}
-            bottomBar={
-              isVsAi && gameId && user ? (
-                <GamePlayerBar
-                  user={user}
-                  aiElo={gameData.ai_target_elo ?? aiElo}
-                  playerIsWhite={playerIsWhite}
-                  side="player"
-                />
-              ) : undefined
+            topPlayer={
+              boardPlayers
+                ? {
+                    player: boardPlayers.top,
+                    side: orientation === "white" ? "black" : "white",
+                  }
+                : undefined
+            }
+            bottomPlayer={
+              boardPlayers
+                ? {
+                    player: boardPlayers.bottom,
+                    side: orientation === "white" ? "white" : "black",
+                  }
+                : undefined
             }
           />
           {activeVariant === "crazyhouse" && gameId && isMyTurn && (

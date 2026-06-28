@@ -1,10 +1,17 @@
 "use client";
 
-import { memo, type ReactNode } from "react";
+import { memo } from "react";
 import { ChessBoard } from "@/components/chess/ChessBoard";
-import { GameClock } from "@/components/chess/GameClock";
+import { GamePlayerStrip, type GamePlayerStripProps } from "@/components/play/GamePlayerStrip";
+import type { PlayerDisplayInfo } from "@/lib/gamePlayers";
+import { useLiveClock } from "@/hooks/useLiveClock";
 import type { ApiMove } from "@/lib/chessDisplay";
 import { lastMoveFromMoves, turnFromFen } from "@/lib/gameDisplayFast";
+
+export interface PlayerStripConfig {
+  player: PlayerDisplayInfo;
+  side: "white" | "black";
+}
 
 interface PlayBoardSectionProps {
   fen: string;
@@ -22,8 +29,9 @@ interface PlayBoardSectionProps {
   serverValidated?: boolean;
   pendingDrop?: string | null;
   onDropAtSquare?: (uci: string) => void;
-  topBar?: ReactNode;
-  bottomBar?: ReactNode;
+  /** Barres joueur style Chess.com (nom, drapeau, ELO + horloge). */
+  topPlayer?: PlayerStripConfig;
+  bottomPlayer?: PlayerStripConfig;
   extraBottom?: number;
 }
 
@@ -43,30 +51,48 @@ function PlayBoardSectionInner({
   serverValidated = false,
   pendingDrop = null,
   onDropAtSquare,
-  topBar,
-  bottomBar,
+  topPlayer,
+  bottomPlayer,
   extraBottom = 0,
 }: PlayBoardSectionProps) {
   const turn = turnFromFen(fen);
   const lastMove = lastMoveFromMoves(moves);
+  const { white, black } = useLiveClock(whiteMs, blackMs, turn, clockRunning && showClock);
+
+  const msForSide = (side: "white" | "black") => (side === "white" ? white : black);
+  const activeForSide = (side: "white" | "black") =>
+    (side === "white" ? turn === "w" : turn === "b") && clockRunning;
+
+  const stripProps = (
+    config: PlayerStripConfig | undefined,
+    position: "top" | "bottom"
+  ): GamePlayerStripProps | null => {
+    if (!config) return null;
+    const ms = msForSide(config.side);
+    return {
+      player: config.player,
+      clockMs: showClock ? ms : undefined,
+      clockActive: showClock ? activeForSide(config.side) : false,
+      clockRunning: showClock && clockRunning,
+      clockLabel:
+        position === "top" && showClock && incrementMs > 0
+          ? `${clockLabel} · +${incrementMs / 1000}s`
+          : position === "top" && showClock
+            ? clockLabel
+            : undefined,
+    };
+  };
+
+  const topStrip = stripProps(topPlayer, "top");
+  const bottomStrip = stripProps(bottomPlayer, "bottom");
 
   return (
     <div className="game-board-stack w-full min-w-0 max-w-full">
-      <div className="space-y-2 mb-2">
-        {topBar}
-        {showClock && (
-          <GameClock
-            whiteMs={whiteMs}
-            blackMs={blackMs}
-            turn={turn}
-            running={clockRunning}
-            orientation={orientation}
-            incrementMs={incrementMs}
-            label={clockLabel}
-            position="top"
-          />
-        )}
-      </div>
+      {topStrip && (
+        <div className="mb-2">
+          <GamePlayerStrip {...topStrip} />
+        </div>
+      )}
       <ChessBoard
         fen={fen}
         orientation={orientation}
@@ -80,20 +106,11 @@ function PlayBoardSectionInner({
         onDropAtSquare={onDropAtSquare}
         extraBottom={extraBottom}
       />
-      <div className="space-y-2 mt-2">
-        {showClock && (
-          <GameClock
-            whiteMs={whiteMs}
-            blackMs={blackMs}
-            turn={turn}
-            running={clockRunning}
-            orientation={orientation}
-            incrementMs={incrementMs}
-            position="bottom"
-          />
-        )}
-        {bottomBar}
-      </div>
+      {bottomStrip && (
+        <div className="mt-2">
+          <GamePlayerStrip {...bottomStrip} />
+        </div>
+      )}
     </div>
   );
 }
