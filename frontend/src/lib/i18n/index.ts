@@ -1030,6 +1030,7 @@ const fr: Record<string, string> = {
   "bots.filter.free": "Gratuits",
   "bots.filter.premium": "Premium",
   "bots.premium": "Gold+",
+  "bots.legend": "Légende",
   "bots.challenge": "Défier",
   "bots.loginToPlay": "Connectez-vous pour jouer",
   "bots.empty": "Aucun bot trouvé.",
