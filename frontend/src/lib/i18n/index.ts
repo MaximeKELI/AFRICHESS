@@ -1176,6 +1176,7 @@ const en: Record<string, string> = {
   "leaderboard.col.elo": "ELO",
   "leaderboard.col.games": "Games",
   "leaderboard.empty": "No ratings yet. Be the first to play!",
+  "leaderboard.establishedNote": "Only players with at least 5 rated online games are listed here.",
   "leaderboard.error.load": "Could not load leaderboard.",
   "footer.tagline": "Elevating African chess on the global stage.",
   "common.loading": "Loading…",
