@@ -338,30 +338,30 @@ function PlayContent() {
         ...prev,
         fen: data.fen ?? prev.fen,
         moves: mergedMoves,
-      white_time_ms: data.white_time_ms ?? prev.white_time_ms,
-      black_time_ms: data.black_time_ms ?? prev.black_time_ms,
-      increment_ms: data.increment_ms ?? prev.increment_ms,
-      status: data.status ?? prev.status,
-      result: data.result ?? prev.result,
-      termination_reason: data.termination_reason ?? prev.termination_reason,
-      is_timed: data.is_timed ?? prev.is_timed,
-      time_control_minutes: data.time_control_minutes ?? prev.time_control_minutes,
-      is_vs_ai: data.is_vs_ai ?? prev.is_vs_ai,
-      ai_target_elo: data.ai_target_elo ?? prev.ai_target_elo,
-      white_player: data.white_player !== undefined ? data.white_player : prev.white_player,
-      black_player: data.black_player !== undefined ? data.black_player : prev.black_player,
-      white_elo: data.white_elo !== undefined ? data.white_elo : prev.white_elo,
-      black_elo: data.black_elo !== undefined ? data.black_elo : prev.black_elo,
-      white_elo_provisional:
-        data.white_elo_provisional !== undefined
-          ? data.white_elo_provisional
-          : prev.white_elo_provisional,
-      black_elo_provisional:
-        data.black_elo_provisional !== undefined
-          ? data.black_elo_provisional
-          : prev.black_elo_provisional,
-      bot: data.bot !== undefined ? data.bot : prev.bot,
-      variant: (data.variant as GameVariant) ?? prev.variant ?? "standard",
+        white_time_ms: data.white_time_ms ?? prev.white_time_ms,
+        black_time_ms: data.black_time_ms ?? prev.black_time_ms,
+        increment_ms: data.increment_ms ?? prev.increment_ms,
+        status: data.status ?? prev.status,
+        result: data.result ?? prev.result,
+        termination_reason: data.termination_reason ?? prev.termination_reason,
+        is_timed: data.is_timed ?? prev.is_timed,
+        time_control_minutes: data.time_control_minutes ?? prev.time_control_minutes,
+        is_vs_ai: data.is_vs_ai ?? prev.is_vs_ai,
+        ai_target_elo: data.ai_target_elo ?? prev.ai_target_elo,
+        white_player: data.white_player !== undefined ? data.white_player : prev.white_player,
+        black_player: data.black_player !== undefined ? data.black_player : prev.black_player,
+        white_elo: data.white_elo !== undefined ? data.white_elo : prev.white_elo,
+        black_elo: data.black_elo !== undefined ? data.black_elo : prev.black_elo,
+        white_elo_provisional:
+          data.white_elo_provisional !== undefined
+            ? data.white_elo_provisional
+            : prev.white_elo_provisional,
+        black_elo_provisional:
+          data.black_elo_provisional !== undefined
+            ? data.black_elo_provisional
+            : prev.black_elo_provisional,
+        bot: data.bot !== undefined ? data.bot : prev.bot,
+        variant: (data.variant as GameVariant) ?? prev.variant ?? "standard",
         analysis:
           data.analysis !== undefined
             ? parseAnalysisPayload(data.analysis) ?? prev.analysis ?? null
