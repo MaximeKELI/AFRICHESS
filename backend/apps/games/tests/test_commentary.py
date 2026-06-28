@@ -71,8 +71,10 @@ class CommentaryTests(SimpleTestCase):
             "Kf8",
             played_by_ai=True,
             mover_is_white=False,
-            move_number=1,
-            eval_before=-2.0,
-            eval_after=-6.0,
+            move_number=5,
+            eval_before=2.0,
+            eval_after=6.0,
         )
         self.assertTrue(len(text) > 5)
+        lowered = text.lower()
+        self.assertTrue("mat" in lowered or "sauvage" in lowered or "pression" in lowered)
