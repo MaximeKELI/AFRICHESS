@@ -14,11 +14,13 @@ import {
   unlockAiSpeech,
 } from "@/lib/aiSpeech";
 import type { CapturedState } from "@/lib/chessDisplay";
+import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
 import type { GameAnalysisData } from "@/lib/gameAnalysis";
 import { coachUserMoveComment, formatEvalDisplay } from "@/lib/coachReview";
 import {
   firstUserMistakeIndex,
   reviewBoardState,
+  REVIEW_START_FEN,
 } from "@/lib/reviewDisplay";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuthStore } from "@/store/auth";

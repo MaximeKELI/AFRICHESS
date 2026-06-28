@@ -93,6 +93,7 @@ interface GameState {
   is_vs_ai?: boolean;
   ai_target_elo?: number;
   variant?: GameVariant;
+  analysis?: GameAnalysisData | null;
 }
 
 function PlayContent() {
@@ -127,6 +128,7 @@ function PlayContent() {
     "game" | "ai" | "online" | "board" | "pieces" | "background"
   >("game");
   const [aiStarting, setAiStarting] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const botAutoStartRef = useRef(false);
   const { aiCommentsEnabled } = usePreferencesStore();
   const turnStartRef = useRef(Date.now());
@@ -139,6 +141,13 @@ function PlayContent() {
     if (!isVsAi || !gameId) return;
     return bindAiSpeechToUserGestures(true);
   }, [isVsAi, gameId]);
+
+  useEffect(() => {
+    if (gameCompleted && gameId) {
+      setReviewOpen(true);
+      setMobileTab("board");
+    }
+  }, [gameCompleted, gameId]);
 
   const playerColor = orientation === "white" ? "w" : "b";
   const playerIsWhite = orientation === "white";
@@ -309,6 +318,10 @@ function PlayContent() {
           : prev.black_elo_provisional,
       bot: data.bot !== undefined ? data.bot : prev.bot,
       variant: (data.variant as GameVariant) ?? prev.variant ?? "standard",
+      analysis:
+        data.analysis !== undefined
+          ? parseAnalysisPayload(data.analysis) ?? prev.analysis ?? null
+          : prev.analysis,
     }));
     if (data.variant) setActiveVariant(data.variant as GameVariant);
     if (data.ai_target_elo) setAiElo(data.ai_target_elo);
@@ -784,6 +797,26 @@ function PlayContent() {
             }
             captured={panelDisplay.captured}
           />
+          {gameCompleted && gameId && !reviewOpen && (
+            <button
+              type="button"
+              onClick={() => setReviewOpen(true)}
+              className="w-full py-3 rounded-xl african-gradient text-white text-sm font-semibold shadow-lg"
+            >
+              {t("chess.review.open")}
+            </button>
+          )}
+          {gameCompleted && gameId && reviewOpen && (
+            <GameReview
+              gameId={gameId}
+              playerIsWhite={playerIsWhite}
+              orientation={orientation}
+              captured={panelDisplay.captured}
+              initialAnalysis={gameData.analysis ?? null}
+              result={gameData.result}
+              onClose={() => setReviewOpen(false)}
+            />
+          )}
           {isVsAi && gameId && (
             <div className="glass-card p-3 sm:p-4">
               <div className="flex items-start justify-between gap-3 mb-2">
@@ -906,7 +939,6 @@ function PlayContent() {
                 />
               </div>
             )}
-            {gameId && <GameAnalysisPanel gameId={gameId} completed={gameCompleted} />}
             {gameId && !isVsAi && <GameChat gameId={gameId} />}
           </div>
 
