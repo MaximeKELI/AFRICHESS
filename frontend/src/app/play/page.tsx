@@ -9,6 +9,7 @@ import { BackgroundPicker } from "@/components/chess/BackgroundPicker";
 import { OptionSection } from "@/components/ui/OptionSection";
 import { OptionCategoryNav } from "@/components/ui/OptionCategoryNav";
 import { AiCommentaryPanel } from "@/components/chess/AiCommentaryPanel";
+import { AiTauntBubble } from "@/components/chess/AiTauntBubble";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { GameReview } from "@/components/chess/GameReview";
 import { PlayBoardSection } from "@/components/play/PlayBoardSection";

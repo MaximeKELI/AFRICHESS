@@ -133,10 +133,20 @@ TAUNT_AI_AFTER_BLUNDER = [
 ]
 
 NEUTRAL_AI = [
-    "Je continue mon plan.",
-    "Coup joué — à toi de répondre.",
-    "Développement en cours… patience.",
-    "On avance. Tu tiens le choc ?",
+    "Je continue mon plan — tu suis ou tu rames ?",
+    "Coup joué. À toi… si tu oses.",
+    "Développement en cours. Ne t'endors pas.",
+    "On avance. Tu tiens le choc, champion ?",
+]
+
+TAUNT_AI_GENERAL = [
+    "Tu crois me tenir ? Drôle.",
+    "Continue comme ça, tu me fais rire.",
+    "Pas mal… pour un débutant.",
+    "Tu joues vite — tu réfléchis parfois ?",
+    "J'adore quand tu te débats inutilement.",
+    "Calme-toi, la partie est loin d'être finie — pour toi.",
+    "Tu voulais du niveau ? Le voilà.",
 ]
 
 NEUTRAL_PLAYER = [
@@ -167,6 +177,28 @@ def _eval_gain_for_mover(
 def _eval_for_mover(eval_cp: float, mover_is_white: bool) -> float:
     """Évaluation (pions) du point de vue du camp qui vient de jouer."""
     return eval_cp if mover_is_white else -eval_cp
+
+
+_PIECE_VALUES = {
+    chess.PAWN: 1.0,
+    chess.KNIGHT: 3.0,
+    chess.BISHOP: 3.2,
+    chess.ROOK: 5.0,
+    chess.QUEEN: 9.0,
+}
+
+
+def _material_eval(board: chess.Board) -> float:
+    """Estimation matérielle (pions) du point de vue des Blancs."""
+    white = 0.0
+    black = 0.0
+    for square, piece in board.piece_map().items():
+        val = _PIECE_VALUES.get(piece.piece_type, 0.0)
+        if piece.color == chess.WHITE:
+            white += val
+        else:
+            black += val
+    return white - black
 
 
 def _opponent_under_serious_attack(board: chess.Board) -> bool:
@@ -212,16 +244,13 @@ def generate_move_comment(
     board.pop()
 
     pick = random.choice
-    eval_mover = (
-        _eval_for_mover(eval_after, mover_is_white)
-        if eval_after is not None
-        else None
-    )
-    eval_gain = (
-        _eval_gain_for_mover(eval_before, eval_after, mover_is_white)
-        if eval_before is not None and eval_after is not None
-        else None
-    )
+    if eval_after is None:
+        eval_after = _material_eval(board)
+    if eval_before is None:
+        eval_before = _material_eval(chess.Board(fen_before))
+
+    eval_mover = _eval_for_mover(eval_after, mover_is_white)
+    eval_gain = _eval_gain_for_mover(eval_before, eval_after, mover_is_white)
 
     if is_mate:
         return pick(MATE_AI if played_by_ai else MATE_PLAYER)
@@ -231,19 +260,14 @@ def generate_move_comment(
 
     # --- Taquineries selon menace de mat / avantage écrasant ---
     if played_by_ai:
-        if eval_mover is not None and eval_mover >= 4.0 and (
-            opponent_pressured or is_check or eval_mover >= 6.0
-        ):
+        if eval_mover >= 2.5 and (opponent_pressured or is_check or eval_mover >= 4.0):
             return pick(TAUNT_AI_NEAR_MATE)
-        if eval_mover is not None and eval_mover <= -3.5 and opponent_pressured:
+        if eval_mover <= -2.5 and opponent_pressured:
             return pick(TAUNT_AI_UNDER_MATE_THREAT)
-        if eval_gain is not None and eval_gain >= 2.5 and eval_mover is not None and eval_mover >= 2.0:
-            if random.random() < 0.45:
-                return pick(TAUNT_AI_AFTER_BLUNDER)
+        if eval_gain >= 1.5 and eval_mover >= 1.0 and random.random() < 0.55:
+            return pick(TAUNT_AI_AFTER_BLUNDER)
     else:
-        if eval_mover is not None and eval_mover >= 3.5 and (
-            is_check or opponent_pressured or eval_mover >= 5.0
-        ):
+        if eval_mover >= 2.5 and (is_check or opponent_pressured or eval_mover >= 4.0):
             return pick(PLAYER_NEAR_MATE)
 
     if is_check:
@@ -261,27 +285,27 @@ def generate_move_comment(
     if move_number <= 2:
         return pick(OPENING_AI if played_by_ai else OPENING_PLAYER)
 
-    if eval_before is not None and eval_after is not None:
-        gain = eval_gain if eval_gain is not None else _eval_gain_for_mover(
-            eval_before, eval_after, mover_is_white
-        )
-        if not played_by_ai:
-            if gain >= 0.8:
-                return pick(STRONG_PLAYER)
-            if gain <= -1.2:
-                hint = f" Mieux valait {best_san}." if best_san else ""
-                return (
-                    f"{pick(WEAK_PLAYER)} La position s'est dégradée d'environ "
-                    f"{abs(gain):.1f} pions.{hint}"
-                )
-        else:
-            if gain >= 0.8:
-                if gain >= 2.0 and random.random() < 0.35:
-                    return pick(TAUNT_AI_AFTER_BLUNDER)
-                return pick(STRONG_AI)
-            if gain <= -1.2:
-                if eval_mover is not None and eval_mover <= -2.5:
-                    return pick(TAUNT_AI_UNDER_MATE_THREAT)
-                return "Je subis une petite pression, mais je tiens… pour l'instant."
+    gain = eval_gain
+    if not played_by_ai:
+        if gain >= 0.8:
+            return pick(STRONG_PLAYER)
+        if gain <= -1.2:
+            hint = f" Mieux valait {best_san}." if best_san else ""
+            return (
+                f"{pick(WEAK_PLAYER)} La position s'est dégradée d'environ "
+                f"{abs(gain):.1f} pions.{hint}"
+            )
+    else:
+        if gain >= 0.8:
+            if gain >= 1.5 and random.random() < 0.5:
+                return pick(TAUNT_AI_AFTER_BLUNDER)
+            return pick(STRONG_AI)
+        if gain <= -1.2:
+            if eval_mover <= -2.0:
+                return pick(TAUNT_AI_UNDER_MATE_THREAT)
+            return "Je subis une petite pression, mais je tiens… pour l'instant."
+
+    if played_by_ai and random.random() < 0.4:
+        return pick(TAUNT_AI_GENERAL)
 
     return pick(NEUTRAL_AI if played_by_ai else NEUTRAL_PLAYER)

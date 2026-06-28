@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MoveComment } from "@/lib/chessDisplay";
 import { initAiSpeech, isAiSpeechSupported, speakComment, stopAiSpeech, unlockAiSpeech, testAiSpeech } from "@/lib/aiSpeech";
@@ -10,16 +10,20 @@ interface AiCommentaryPanelProps {
   comments: MoveComment[];
   enabled: boolean;
   compact?: boolean;
+  /** Lit automatiquement chaque nouveau commentaire (partie vs IA). */
+  autoSpeak?: boolean;
 }
 
 export function AiCommentaryPanel({
   comments,
   enabled,
   compact = false,
+  autoSpeak = false,
 }: AiCommentaryPanelProps) {
   const { t } = useTranslation();
   const latest = comments.at(-1);
   const voiceSupported = isAiSpeechSupported();
+  const spokenCountRef = useRef(0);
 
   const handleTestVoice = () => {
     unlockAiSpeech();
@@ -41,8 +45,25 @@ export function AiCommentaryPanel({
   useEffect(() => {
     if (!enabled) {
       stopAiSpeech();
+      spokenCountRef.current = 0;
     }
   }, [enabled]);
+
+  useEffect(() => {
+    if (!enabled || !autoSpeak || comments.length <= spokenCountRef.current) return;
+
+    const newComments = comments.slice(spokenCountRef.current);
+    spokenCountRef.current = comments.length;
+
+    newComments.forEach((comment, index) => {
+      void speakComment(comment.text, {
+        byAi: comment.byAi,
+        enabled: true,
+        forceUnlock: index === 0,
+        interrupt: index === 0,
+      });
+    });
+  }, [comments, enabled, autoSpeak]);
 
   if (!enabled) {
     return (
