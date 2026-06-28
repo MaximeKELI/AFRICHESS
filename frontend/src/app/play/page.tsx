@@ -27,12 +27,7 @@ import {
   type ApiMove,
 } from "@/lib/chessDisplay";
 import { usePreferencesStore } from "@/store/preferences";
-import { formatTimeControlLabel } from "@/lib/timeControl";
-import { MODE_CLOCK_LABEL } from "@/lib/clock";
-import {
-  DEFAULT_TIME_MINUTES,
-  type TimeMinutes,
-} from "@/lib/timeControl";
+import { formatTimeControlLabel, defaultPresetForMode, playModeFromPreset, TIME_PRESETS, type TimePresetId } from "@/lib/timeControl";
 import { turnFromFen } from "@/lib/gameDisplayFast";
 import { TimeControlPicker } from "@/components/chess/TimeControlPicker";
 import { playDrawWhistle } from "@/lib/chessSounds";
@@ -114,7 +109,7 @@ function PlayContent() {
   const [aiDefaultSet, setAiDefaultSet] = useState(false);
   const [useClock, setUseClock] = useState(true);
   const [isRated, setIsRated] = useState(true);
-  const [timeMinutes, setTimeMinutes] = useState<TimeMinutes>(DEFAULT_TIME_MINUTES);
+  const [timePreset, setTimePreset] = useState<TimePresetId>(() => defaultPresetForMode(mode));
   const [userElo, setUserElo] = useState<number | null>(null);
   const [modeRating, setModeRating] = useState<RatingRow | null>(null);
   const [aiElo, setAiElo] = useState<number | null>(null);
