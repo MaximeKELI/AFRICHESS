@@ -183,9 +183,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ user: data });
       syncPreferencesForUser(data.id);
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.status === 401) {
-        get().logout();
-      } else {
+      if (!Cookies.get("access_token") && !Cookies.get("refresh_token")) {
         syncPreferencesForUser(null);
         set({ user: null });
       }

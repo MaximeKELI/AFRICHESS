@@ -1,6 +1,6 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
-import { setAccessToken } from "@/lib/cookies";
+import { setAccessToken, setRefreshToken } from "@/lib/cookies";
 import { handleSessionExpired } from "@/lib/session";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8003/api";
@@ -36,13 +36,28 @@ function flushRefreshWaiters(err: unknown, token?: string) {
 async function refreshAccessToken(): Promise<string> {
   const refresh = Cookies.get("refresh_token");
   if (!refresh) throw new Error("No refresh token");
-  const { data } = await axios.post<{ access: string }>(
+  const { data } = await axios.post<{ access: string; refresh?: string }>(
     `${API_URL}/auth/token/refresh/`,
     { refresh }
   );
   if (!data.access) throw new Error("Invalid refresh response");
   setAccessToken(data.access);
+  // ROTATE_REFRESH_TOKENS + BLACKLIST_AFTER_ROTATION côté backend
+  if (data.refresh) {
+    setRefreshToken(data.refresh);
+  }
   return data.access;
+}
+
+/** Renouvelle les tokens avant expiration (parties longues). */
+export async function refreshAuthTokens(): Promise<boolean> {
+  if (!Cookies.get("refresh_token")) return false;
+  try {
+    await refreshAccessToken();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 api.interceptors.request.use((config) => {

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
-import { OAuthButtons } from "@/components/auth/OAuthButtons";
+import { consumeReturnAfterLogin } from "@/lib/session";
 
 function LoginContent() {
   const [username, setUsername] = useState("");
@@ -27,7 +27,7 @@ function LoginContent() {
     setError("");
     try {
       await login(username, password);
-      router.push("/play");
+      router.push(consumeReturnAfterLogin() ?? "/play");
     } catch (err) {
       setError(err instanceof Error ? err.message : t("common.error"));
     }

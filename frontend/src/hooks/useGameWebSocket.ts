@@ -67,17 +67,16 @@ export function useGameWebSocket(
       return;
     }
 
-    const token = Cookies.get("access_token");
-    if (!token) {
-      setWsError(tr("ws.error.session"));
-      return;
-    }
-
     let cancelled = false;
 
     const connect = () => {
       if (cancelled) return;
-      const ws = new WebSocket(wsGameUrl(gameId), wsAuthProtocols(token));
+      const liveToken = Cookies.get("access_token");
+      if (!liveToken) {
+        setWsError(tr("ws.error.session"));
+        return;
+      }
+      const ws = new WebSocket(wsGameUrl(gameId), wsAuthProtocols(liveToken));
       wsRef.current = ws;
 
       ws.onopen = () => {

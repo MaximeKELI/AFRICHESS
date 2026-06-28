@@ -6,6 +6,7 @@ import { ActivityTracker } from "@/components/analytics/ActivityTracker";
 import { SiteBackground } from "@/components/layout/SiteBackground";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { initAiSpeech } from "@/lib/aiSpeech";
+import { refreshAuthTokens } from "@/lib/api";
 import Cookies from "js-cookie";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -22,6 +23,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
     window.addEventListener("africhess:session-expired", onExpired);
     return () => window.removeEventListener("africhess:session-expired", onExpired);
   }, [logout]);
+
+  /** Renouvellement proactif — évite la déconnexion en pleine partie (~15 min). */
+  useEffect(() => {
+    const tick = () => {
+      if (Cookies.get("refresh_token")) void refreshAuthTokens();
+    };
+    tick();
+    const interval = window.setInterval(tick, 10 * 60 * 1000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") tick();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
