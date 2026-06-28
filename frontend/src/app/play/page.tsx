@@ -153,15 +153,16 @@ function PlayContent() {
 
   const isLiveHuman = Boolean(gameId && !isVsAi);
   const gameIsTimed = gameData.is_timed !== false;
-  const clockLabel = formatTimeControlLabel(
-    gameIsTimed,
-    gameData.time_control_minutes ?? timeMinutes
-  );
+  useEffect(() => {
+    setTimePreset(defaultPresetForMode(mode));
+  }, [mode]);
+
+  const clockLabel = formatTimeControlLabel(gameIsTimed, gameIsTimed ? timePreset : null);
   const headerAiElo = isVsAi ? (gameData.ai_target_elo ?? aiElo ?? aiEloChoice) : aiEloChoice;
   const headerAi = pickAiAvatar(headerAiElo);
   const timeOpts = useMemo(
-    () => ({ isTimed: useClock, timeMinutes, isRated }),
-    [useClock, timeMinutes, isRated]
+    () => ({ isTimed: useClock, timePreset, isRated }),
+    [useClock, timePreset, isRated]
   );
   const ratedClockLabel = MODE_CLOCK_LABEL[mode] ?? "10+0";
 
@@ -240,7 +241,10 @@ function PlayContent() {
       .catch(() => setModeRating(null));
   }, [user, mode]);
 
-  const aiPlayMode = useMemo(() => resolveAiPlayMode(mode), [mode]);
+  const aiPlayMode = useMemo(
+    () => (useClock ? playModeFromPreset(timePreset) : resolveAiPlayMode(mode)),
+    [useClock, timePreset, mode]
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -464,7 +468,7 @@ function PlayContent() {
         color: orientation,
         include_comments: aiCommentsEnabled,
         is_timed: useClock,
-        time_minutes: useClock ? timeMinutes : null,
+        time_control: useClock ? timePreset : undefined,
       });
       setIsVsAi(true);
       setGameId(data.id);
@@ -512,7 +516,7 @@ function PlayContent() {
     orientation,
     aiCommentsEnabled,
     useClock,
-    timeMinutes,
+    timePreset,
     applyGameResponse,
     t,
   ]);
