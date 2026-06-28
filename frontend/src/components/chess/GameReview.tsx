@@ -118,19 +118,64 @@ export function GameReview({
     return coachUserMoveComment(t, selectedMove, playerIsWhite);
   }, [selectedMove, playerIsWhite, t]);
 
-  const speakCurrent = useCallback(() => {
-    if (!coachText || !voiceOn) return;
-    const isUser =
-      selectedMove?.played_by_white === playerIsWhite;
-    if (!isUser && !["blunder", "mistake", "brilliant", "great"].includes(selectedMove?.class ?? "")) {
-      return;
-    }
-    speakComment(coachText, { byAi: false, enabled: true });
-  }, [coachText, voiceOn, selectedMove, playerIsWhite]);
+  const speakText = useCallback(
+    (text: string, force = false) => {
+      if (!text.trim()) return;
+      unlockAiSpeech();
+      speakComment(text, { byAi: false, enabled: voiceOn, forceUnlock: force });
+    },
+    [voiceOn]
+  );
+
+  const speakCurrent = useCallback(
+    (force = false) => {
+      if (!coachText || !voiceOn) return;
+      const isUser = selectedMove?.played_by_white === playerIsWhite;
+      if (userMovesOnly && !isUser) return;
+      if (
+        !isUser &&
+        !["blunder", "mistake", "brilliant", "great"].includes(selectedMove?.class ?? "")
+      ) {
+        return;
+      }
+      speakText(coachText, force);
+    },
+    [coachText, voiceOn, selectedMove, playerIsWhite, userMovesOnly, speakText]
+  );
+
+  const handleListen = () => speakCurrent(true);
+
+  const handleListenSummary = () => {
+    if (!analysis?.summary_fr) return;
+    unlockAiSpeech();
+    speakComment(analysis.summary_fr, { byAi: false, enabled: voiceOn, forceUnlock: true });
+  };
+
+  const handleTestVoice = () => {
+    unlockAiSpeech();
+    void testAiSpeech(t("chess.review.voiceTest"));
+  };
 
   useEffect(() => {
-    speakCurrent();
-  }, [selectedIdx, speakCurrent]);
+    if (!autoTour || !analysis) return;
+    autoTourRef.current = setInterval(() => {
+      setSelectedIdx((i) => {
+        const next = i + 1;
+        if (next >= moves.length) {
+          setAutoTour(false);
+          return i;
+        }
+        return next;
+      });
+    }, 2800);
+    return () => {
+      if (autoTourRef.current) clearInterval(autoTourRef.current);
+    };
+  }, [autoTour, analysis, moves.length]);
+
+  useEffect(() => {
+    if (autoTour && voiceOn) speakCurrent(true);
+  }, [selectedIdx, autoTour, speakCurrent, voiceOn]);
 
   const userAccuracy = playerIsWhite
     ? analysis?.accuracy_white
