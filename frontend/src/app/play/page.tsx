@@ -839,7 +839,7 @@ function PlayContent() {
             showClock={Boolean(gameId && gameIsTimed)}
             whiteMs={gameData.white_time_ms ?? fallbackBaseMs}
             blackMs={gameData.black_time_ms ?? fallbackBaseMs}
-            clockRunning={Boolean(gameActive && gameIsTimed && isMyTurn)}
+            clockRunning={Boolean(gameActive && gameIsTimed && (isLiveHuman || isMyTurn))}
             incrementMs={gameData.increment_ms ?? 0}
             clockLabel={clockLabel}
             serverValidated={activeVariant !== "standard"}
