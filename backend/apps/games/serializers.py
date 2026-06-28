@@ -183,7 +183,6 @@ class CreateAIGameSerializer(serializers.Serializer):
 class MatchmakingJoinSerializer(serializers.Serializer):
     mode = serializers.ChoiceField(
         choices=["bullet", "blitz", "rapid", "classical"],
-  "classical",
         default="blitz",
     )
     is_timed = serializers.BooleanField(default=True, required=False)
