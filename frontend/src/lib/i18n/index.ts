@@ -2129,6 +2129,7 @@ const en: Record<string, string> = {
   "bots.subtitle": "Face world icons and fictional African club players — each bot has a unique portrait.",
   "bots.search": "Search bots…",
   "bots.filter.all": "All",
+  "bots.filter.legends": "Legends",
   "bots.filter.free": "Free",
   "bots.filter.premium": "Premium",
   "bots.premium": "Gold+",
