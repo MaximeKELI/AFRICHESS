@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import clsx from "clsx";
-import { getUserAvatarUrl, userInitials } from "@/lib/avatars";
+import { getUserAvatarUrl, isLocalDevMediaUrl, userInitials } from "@/lib/avatars";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface UserAvatarProps {
@@ -13,35 +14,15 @@ interface UserAvatarProps {
   className?: string;
 }
 
-export function UserAvatar({
-  avatar,
-  displayName,
-  username,
-  size = 40,
+function InitialsAvatar({
+  initials,
+  size,
   className,
-}: UserAvatarProps) {
-  const { t } = useTranslation();
-  const src = getUserAvatarUrl(avatar);
-  const initials = userInitials(displayName, username);
-
-  if (src) {
-    return (
-      <span
-        className={clsx("relative rounded-lg overflow-hidden shrink-0 ring-1 ring-africhess-gold/50", className)}
-        style={{ width: size, height: size }}
-      >
-        <Image
-          src={src}
-          alt={displayName || username || t("profile.player")}
-          fill
-          className="object-cover"
-          sizes={`${size}px`}
-          unoptimized={src.includes("localhost")}
-        />
-      </span>
-    );
-  }
-
+}: {
+  initials: string;
+  size: number;
+  className?: string;
+}) {
   return (
     <span
       className={clsx(
@@ -54,4 +35,41 @@ export function UserAvatar({
       {initials}
     </span>
   );
+}
+
+export function UserAvatar({
+  avatar,
+  displayName,
+  username,
+  size = 40,
+  className,
+}: UserAvatarProps) {
+  const { t } = useTranslation();
+  const src = getUserAvatarUrl(avatar);
+  const initials = userInitials(displayName, username);
+  const [broken, setBroken] = useState(false);
+
+  if (src && !broken) {
+    return (
+      <span
+        className={clsx(
+          "relative rounded-lg overflow-hidden shrink-0 ring-1 ring-africhess-gold/50",
+          className
+        )}
+        style={{ width: size, height: size }}
+      >
+        <Image
+          src={src}
+          alt={displayName || username || t("profile.player")}
+          fill
+          className="object-cover"
+          sizes={`${size}px`}
+          unoptimized={isLocalDevMediaUrl(src)}
+          onError={() => setBroken(true)}
+        />
+      </span>
+    );
+  }
+
+  return <InitialsAvatar initials={initials} size={size} className={className} />;
 }

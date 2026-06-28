@@ -40,13 +40,19 @@ export const AI_LEVEL_AVATAR_IDS: Record<number, AiAvatarId> = {
 };
 
 const API_ORIGIN =
+  process.env.NEXT_PUBLIC_MEDIA_ORIGIN ||
   process.env.NEXT_PUBLIC_API_ORIGIN ||
   (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api").replace(/\/api\/?$/, "");
+
+function isLocalDevMediaUrl(url: string): boolean {
+  return /localhost|127\.0\.0\.1/.test(url);
+}
 
 export function resolveMediaUrl(path?: string | null): string | null {
   if (!path) return null;
   if (path.startsWith("http")) return path;
-  return `${API_ORIGIN}${path.startsWith("/") ? path : `/${path}`}`;
+  const origin = API_ORIGIN.replace(/\/$/, "");
+  return `${origin}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 export function getAiAvatarSrc(id?: AiAvatarId | string | null): string {
@@ -69,6 +75,8 @@ export function aiAvatarForLevelElo(levelElo: number) {
 export function getUserAvatarUrl(avatar?: string | null): string | null {
   return resolveMediaUrl(avatar);
 }
+
+export { isLocalDevMediaUrl };
 
 export function userInitials(displayName?: string | null, username?: string): string {
   const base = (displayName || username || "?").trim();

@@ -3,7 +3,10 @@ const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || '.next',
   output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
   images: {
-    remotePatterns: [{ protocol: 'http', hostname: 'localhost' }],
+    remotePatterns: [
+      { protocol: "http", hostname: "localhost" },
+      { protocol: "http", hostname: "127.0.0.1" },
+    ],
     unoptimized: true,
   },
   experimental: {
