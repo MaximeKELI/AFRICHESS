@@ -1222,7 +1222,7 @@ const en: Record<string, string> = {
   "home.feature.languages.title": "5 Languages",
   "home.feature.languages.desc": "English, French, Arabic, Portuguese, Swahili",
   "auth.login.title": "Log In",
-  "auth.login.username": "Username (e.g. DKELI)",
+  "auth.login.username": "Username or email",
   "auth.login.password": "Password",
   "auth.login.submit": "Sign In",
   "auth.login.submitting": "Signing in…",
