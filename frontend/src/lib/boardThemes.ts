@@ -2,11 +2,14 @@
 
 import {
   buildThemedSquareStyles,
+  buildWoodSquareStyles,
   type FloralPattern,
+  type WoodPattern,
 } from "./boardPatterns";
 
 export type BoardThemeId =
   | "wood"
+  | "wood-glossy"
   | "blue"
   | "white"
   | "red"
