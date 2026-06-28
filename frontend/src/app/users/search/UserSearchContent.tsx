@@ -1,0 +1,105 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { socialApi, type UserSearchHit } from "@/lib/api";
+import { useAuthStore } from "@/store/auth";
+import { useTranslation } from "@/hooks/useTranslation";
+import { UserAvatar } from "@/components/profile/UserAvatar";
+import { countryFlag } from "@/lib/worldCountries";
+import { InlineAlert } from "@/components/ui/InlineAlert";
+
+export default function UserSearchContent() {
+  const { user } = useAuthStore();
+  const { t } = useTranslation();
+  const params = useSearchParams();
+  const initialQ = params.get("q") || "";
+  const [query, setQuery] = useState(initialQ);
+  const [results, setResults] = useState<UserSearchHit[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialQ) setQuery(initialQ);
+  }, [initialQ]);
+
+  useEffect(() => {
+    if (!user || query.trim().length < 2) {
+      setResults([]);
+      return;
+    }
+    setLoading(true);
+    socialApi
+      .searchUsers(query.trim())
+      .then(({ data }) => {
+        setResults(Array.isArray(data) ? data : []);
+        setError(null);
+      })
+      .catch((err) => {
+        setResults([]);
+        setError(err instanceof Error ? err.message : t("social.search.error"));
+      })
+      .finally(() => setLoading(false));
+  }, [user, query, t]);
+
+  if (!user) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16 text-center">
+        <p className="mb-4">{t("social.search.loginRequired")}</p>
+        <Link href="/login" className="african-gradient text-white px-6 py-2 rounded-lg">
+          {t("nav.login")}
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <h1 className="font-display text-3xl font-bold">{t("social.search.title")}</h1>
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder={t("social.search.placeholder")}
+        className="w-full border rounded-xl px-4 py-3 bg-transparent text-sm"
+        autoFocus
+      />
+      {error && <InlineAlert>{error}</InlineAlert>}
+      {loading && <p className="text-sm opacity-55">{t("common.loading")}</p>}
+      {!loading && query.trim().length >= 2 && results.length === 0 && (
+        <p className="text-sm opacity-55">{t("social.search.empty")}</p>
+      )}
+      <ul className="space-y-2">
+        {results.map((hit) => (
+          <li key={hit.user.id}>
+            <Link
+              href={`/profile/${hit.user.username}`}
+              className="glass-card p-4 flex items-center gap-3 hover:ring-1 hover:ring-africhess-gold/40 transition-all"
+            >
+              <UserAvatar
+                avatar={hit.user.avatar}
+                displayName={hit.user.display_name}
+                username={hit.user.username}
+                size={48}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold truncate">
+                  {hit.user.display_name || hit.user.username}
+                </p>
+                <p className="text-xs opacity-55">
+                  @{hit.user.username}
+                  {hit.user.country && (
+                    <span className="ml-1.5">{countryFlag(hit.user.country)}</span>
+                  )}
+                </p>
+              </div>
+              {hit.blitz_elo != null && (
+                <span className="font-mono text-africhess-gold">{hit.blitz_elo}</span>
+              )}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}

@@ -1,13 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { socialApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
-import Link from "next/link";
 import { useTranslation } from "@/hooks/useTranslation";
+import { UserSearchBar } from "@/components/social/UserSearchBar";
 
 interface UserPublic {
   id: number;
@@ -30,13 +31,18 @@ interface ChatMsg {
   created_at: string;
 }
 
-export default function FriendsPage() {
+function FriendsContent() {
   const { user } = useAuthStore();
   const { t } = useTranslation();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const addFromUrl = searchParams.get("add");
+  const dmFromUrl = searchParams.get("dm");
+
   const [friends, setFriends] = useState<UserPublic[]>([]);
   const [pending, setPending] = useState<Friendship[]>([]);
-  const [username, setUsername] = useState("");
+  const [sent, setSent] = useState<Friendship[]>([]);
+  const [username, setUsername] = useState(addFromUrl || "");
   const [mode, setMode] = useState("blitz");
   const [odds, setOdds] = useState("none");
   const [msg, setMsg] = useState("");
@@ -48,41 +54,49 @@ export default function FriendsPage() {
 
   const load = useCallback(() => {
     setLoadError(null);
-    Promise.all([socialApi.friends(), socialApi.pendingFriends()])
-      .then(([friendsRes, pendingRes]) => {
+    Promise.all([socialApi.friends(), socialApi.pendingFriends(), socialApi.sentFriends()])
+      .then(([friendsRes, pendingRes, sentRes]) => {
         const list: Friendship[] = Array.isArray(friendsRes.data) ? friendsRes.data : [];
         const users = list.map((f) =>
           f.from_user.id === user?.id ? f.to_user : f.from_user
         );
         setFriends(users);
         setPending(Array.isArray(pendingRes.data) ? pendingRes.data : []);
+        setSent(Array.isArray(sentRes.data) ? sentRes.data : []);
+
+        if (dmFromUrl) {
+          const target = users.find((u) => u.username === dmFromUrl);
+          if (target) setDmUser(target);
+        }
       })
       .catch((err) => {
         setFriends([]);
         setPending([]);
+        setSent([]);
         setLoadError(formatApiError(err, t("friends.error.load")));
       });
-  }, [user?.id]);
+  }, [user?.id, dmFromUrl, t]);
 
-  const loadDm = useCallback(
-    (friend: UserPublic) => {
-      setDmLoading(true);
-      socialApi
-        .directMessages(friend.username)
-        .then(({ data }) => setDmMessages(Array.isArray(data) ? data : []))
-        .catch((err) => {
-          setDmMessages([]);
-          setMsg(formatApiError(err, t("friends.error.messages")));
-        })
-        .finally(() => setDmLoading(false));
-    },
-    []
-  );
+  const loadDm = useCallback((friend: UserPublic) => {
+    setDmLoading(true);
+    socialApi
+      .directMessages(friend.username)
+      .then(({ data }) => setDmMessages(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        setDmMessages([]);
+        setMsg(formatApiError(err, t("friends.error.messages")));
+      })
+      .finally(() => setDmLoading(false));
+  }, [t]);
 
   useEffect(() => {
     if (!user) return;
     load();
   }, [user, load]);
+
+  useEffect(() => {
+    if (addFromUrl) setUsername(addFromUrl);
+  }, [addFromUrl]);
 
   useEffect(() => {
     if (dmUser) loadDm(dmUser);
@@ -105,6 +119,7 @@ export default function FriendsPage() {
       await socialApi.requestFriend(username.trim());
       setMsg(t("friends.add.sent"));
       setUsername("");
+      load();
     } catch {
       setMsg(t("friends.add.failed"));
     }
@@ -112,6 +127,23 @@ export default function FriendsPage() {
 
   const accept = async (id: number) => {
     await socialApi.acceptFriend(id);
+    load();
+  };
+
+  const decline = async (id: number) => {
+    await socialApi.declineFriend(id);
+    load();
+  };
+
+  const cancelSent = async (id: number) => {
+    await socialApi.cancelFriendRequest(id);
+    load();
+  };
+
+  const unfriend = async (name: string) => {
+    if (!window.confirm(t("social.friend.unfriendConfirm"))) return;
+    await socialApi.unfriend(name);
+    if (dmUser?.username === name) setDmUser(null);
     load();
   };
 
@@ -139,12 +171,23 @@ export default function FriendsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold mb-6">{t("friends.title")}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <h1 className="font-display text-3xl font-bold">{t("friends.title")}</h1>
+        <Link href="/users/search" className="text-sm text-africhess-gold hover:underline">
+          {t("social.search.title")}
+        </Link>
+      </div>
+
       {loadError && (
         <InlineAlert className="mb-4" onDismiss={() => setLoadError(null)}>
           {loadError}
         </InlineAlert>
       )}
+
+      <div className="glass-card p-4 mb-6">
+        <h2 className="font-semibold mb-3">{t("social.search.title")}</h2>
+        <UserSearchBar compact />
+      </div>
 
       <div className="glass-card p-4 mb-6">
         <h2 className="font-semibold mb-3">{t("friends.add.title")}</h2>
@@ -171,14 +214,53 @@ export default function FriendsPage() {
           <h2 className="font-semibold mb-3">{t("friends.pending.title")}</h2>
           <ul className="space-y-2">
             {pending.map((f) => (
-              <li key={f.id} className="flex justify-between items-center">
-                <span>{f.from_user.display_name || f.from_user.username}</span>
+              <li key={f.id} className="flex justify-between items-center gap-2">
+                <Link
+                  href={`/profile/${f.from_user.username}`}
+                  className="hover:text-africhess-gold truncate"
+                >
+                  {f.from_user.display_name || f.from_user.username}
+                </Link>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => accept(f.id)}
+                    className="text-sm px-3 py-1 rounded-lg border border-africhess-green text-africhess-green"
+                  >
+                    {t("friends.pending.accept")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => decline(f.id)}
+                    className="text-sm px-3 py-1 rounded-lg border opacity-70"
+                  >
+                    {t("social.friend.decline")}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {sent.length > 0 && (
+        <div className="glass-card p-4 mb-6">
+          <h2 className="font-semibold mb-3">{t("social.friend.sentTitle")}</h2>
+          <ul className="space-y-2">
+            {sent.map((f) => (
+              <li key={f.id} className="flex justify-between items-center gap-2">
+                <Link
+                  href={`/profile/${f.to_user.username}`}
+                  className="hover:text-africhess-gold truncate"
+                >
+                  {f.to_user.display_name || f.to_user.username}
+                </Link>
                 <button
                   type="button"
-                  onClick={() => accept(f.id)}
-                  className="text-sm px-3 py-1 rounded-lg border border-africhess-green text-africhess-green"
+                  onClick={() => cancelSent(f.id)}
+                  className="text-sm px-3 py-1 rounded-lg border opacity-70 shrink-0"
                 >
-                  {t("friends.pending.accept")}
+                  {t("social.friend.cancel")}
                 </button>
               </li>
             ))}
@@ -188,7 +270,7 @@ export default function FriendsPage() {
 
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="glass-card p-4">
-          <div className="flex justify-between items-center mb-3">
+          <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
             <h2 className="font-semibold">{t("friends.list.title", { count: friends.length })}</h2>
             <select
               value={mode}
@@ -219,27 +301,37 @@ export default function FriendsPage() {
               {friends.map((f) => (
                 <li
                   key={f.id}
-                  className={`flex justify-between items-center p-2 rounded-lg ${
+                  className={`flex justify-between items-center p-2 rounded-lg gap-2 ${
                     dmUser?.id === f.id ? "bg-africhess-gold/10" : ""
                   }`}
                 >
                   <button
                     type="button"
                     onClick={() => setDmUser(f)}
-                    className="text-left flex-1"
+                    className="text-left flex-1 min-w-0"
                   >
                     <span className="font-medium">{f.display_name || f.username}</span>
                     {f.country && (
                       <span className="text-xs opacity-60 ml-2">{f.country}</span>
                     )}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => challenge(f.username)}
-                    className="text-sm px-3 py-1 rounded-lg african-gradient text-white ml-2"
-                  >
-                    {t("friends.challenge")}
-                  </button>
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => challenge(f.username)}
+                      className="text-sm px-3 py-1 rounded-lg african-gradient text-white"
+                    >
+                      {t("friends.challenge")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => unfriend(f.username)}
+                      className="text-xs px-2 py-1 rounded-lg border opacity-50"
+                      title={t("social.friend.unfriend")}
+                    >
+                      ×
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -265,16 +357,10 @@ export default function FriendsPage() {
                   dmMessages.map((m) => (
                     <div
                       key={m.id}
-                      className={`text-sm ${
-                        m.sender.id === user.id ? "text-right" : ""
-                      }`}
+                      className={`text-sm ${m.sender.id === user.id ? "text-right" : ""}`}
                     >
-                      <span className="text-[10px] opacity-50 block">
-                        {m.sender.username}
-                      </span>
-                      <span className="inline-block px-2 py-1 rounded bg-white/5">
-                        {m.content}
-                      </span>
+                      <span className="text-[10px] opacity-50 block">{m.sender.username}</span>
+                      <span className="inline-block px-2 py-1 rounded bg-white/5">{m.content}</span>
                     </div>
                   ))
                 )}
@@ -300,5 +386,14 @@ export default function FriendsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function FriendsPage() {
+  const { t } = useTranslation();
+  return (
+    <Suspense fallback={<p className="max-w-4xl mx-auto px-4 py-12 opacity-60">{t("common.loading")}</p>}>
+      <FriendsContent />
+    </Suspense>
   );
 }

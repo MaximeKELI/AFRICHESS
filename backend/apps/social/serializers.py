@@ -14,6 +14,24 @@ class FriendshipSerializer(serializers.ModelSerializer):
         fields = ["id", "from_user", "to_user", "status", "created_at"]
 
 
+class UserRelationshipSerializer(serializers.Serializer):
+    user = UserPublicSerializer()
+    friendship_status = serializers.CharField()
+    friendship_id = serializers.IntegerField(allow_null=True)
+    is_following = serializers.BooleanField()
+    is_followed_by = serializers.BooleanField()
+    followers_count = serializers.IntegerField()
+    following_count = serializers.IntegerField()
+    can_message = serializers.BooleanField()
+    can_friend = serializers.BooleanField()
+
+
+class UserSearchResultSerializer(serializers.Serializer):
+    user = UserPublicSerializer()
+    blitz_elo = serializers.IntegerField(allow_null=True)
+    relationship = serializers.DictField()
+
+
 class ClubSerializer(serializers.ModelSerializer):
     owner = UserPublicSerializer(read_only=True)
     is_member = serializers.SerializerMethodField()

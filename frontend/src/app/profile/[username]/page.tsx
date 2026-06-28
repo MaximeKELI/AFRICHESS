@@ -13,6 +13,7 @@ import { displayCountry } from "@/lib/countries";
 import { countryFlag } from "@/lib/worldCountries";
 import { useAuthStore } from "@/store/auth";
 import { formatElo, isProvisionalRating, type RatingRow } from "@/lib/ratings";
+import { ProfileSocialActions } from "@/components/social/ProfileSocialActions";
 
 interface PublicUser {
   id: number;
@@ -133,15 +134,13 @@ export default function PublicProfilePage() {
         {formatLocaleDate(locale, profile.date_joined, { dateStyle: "medium" })}
       </p>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3 items-start">
         {isMe ? (
           <Link href="/profile" className="px-4 py-2 rounded-lg african-gradient text-white text-sm">
             {t("profile.public.edit")}
           </Link>
         ) : (
-          <Link href={`/friends?add=${profile.username}`} className="px-4 py-2 rounded-lg border text-sm hover:border-africhess-gold">
-            {t("profile.public.addFriend")}
-          </Link>
+          <ProfileSocialActions username={profile.username} />
         )}
         <Link href="/leaderboard" className="px-4 py-2 rounded-lg border text-sm opacity-70 hover:opacity-100">
           {t("leaderboard.title")}

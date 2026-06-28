@@ -14,7 +14,7 @@ interface Notification {
   type: string;
   title: string;
   body: string;
-  data: { game_id?: string; mode?: string };
+  data: { game_id?: string; mode?: string; friendship_id?: number; from_username?: string };
   is_read: boolean;
   created_at: string;
 }
@@ -128,6 +128,18 @@ export function NotificationBell() {
                     className="text-xs text-africhess-green mt-2 inline-block hover:underline"
                   >
                     {t("notifications.joinGame")}
+                  </Link>
+                )}
+                {n.type === "friend_request" && (
+                  <Link
+                    href="/friends"
+                    onClick={() => {
+                      markRead(n.id);
+                      setOpen(false);
+                    }}
+                    className="text-xs text-africhess-gold mt-2 inline-block hover:underline"
+                  >
+                    {t("notifications.friendRequest")}
                   </Link>
                 )}
               </div>

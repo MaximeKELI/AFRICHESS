@@ -245,12 +245,56 @@ export const puzzlesApi = {
   streak: () => api.get("/puzzles/streak/"),
 };
 
+export interface UserRelationship {
+  user: {
+    id: number;
+    username: string;
+    display_name: string;
+    country: string;
+    avatar?: string | null;
+  };
+  friendship_status: "none" | "friends" | "pending_sent" | "pending_received" | "blocked" | "self";
+  friendship_id: number | null;
+  is_following: boolean;
+  is_followed_by: boolean;
+  followers_count: number;
+  following_count: number;
+  can_message: boolean;
+  can_friend: boolean;
+}
+
+export interface UserSearchHit {
+  user: {
+    id: number;
+    username: string;
+    display_name: string;
+    country: string;
+    avatar?: string | null;
+    title?: string;
+  };
+  blitz_elo: number | null;
+  relationship: Omit<UserRelationship, "user">;
+}
+
 export const socialApi = {
   friends: () => api.get("/social/friends/"),
   pendingFriends: () => api.get("/social/friends/pending/"),
+  sentFriends: () => api.get("/social/friends/sent/"),
   requestFriend: (username: string) =>
     api.post("/social/friends/request/", { username }),
   acceptFriend: (id: number) => api.post(`/social/friends/${id}/accept/`),
+  declineFriend: (id: number) => api.post(`/social/friends/${id}/decline/`),
+  cancelFriendRequest: (id: number) => api.post(`/social/friends/${id}/cancel/`),
+  unfriend: (username: string) => api.post(`/social/friends/unfriend/${username}/`),
+  blockUser: (username: string) => api.post(`/social/friends/block/${username}/`),
+  searchUsers: (q: string, country?: string) =>
+    api.get<UserSearchHit[]>("/social/users/search/", { params: { q, country } }),
+  userRelationship: (username: string) =>
+    api.get<UserRelationship>(`/social/users/${username}/relationship/`),
+  followUser: (username: string) => api.post(`/social/users/${username}/follow/`),
+  unfollowUser: (username: string) => api.post(`/social/users/${username}/unfollow/`),
+  followers: (username: string) => api.get(`/social/users/${username}/followers/`),
+  following: (username: string) => api.get(`/social/users/${username}/following/`),
   challengeFriend: (username: string, mode = "blitz", opts?: { odds?: string; is_rated?: boolean }) =>
     api.post("/social/friends/challenge/", { username, mode, ...opts }),
   chatHistory: (roomType: string, roomId: string) =>

@@ -9,9 +9,11 @@ from rest_framework.views import APIView
 from apps.games.serializers import GameSerializer
 from apps.games.services import GameService
 from apps.notifications.models import Notification
+from apps.ratings.models import PlayerRating
 
 from .chat_access import user_can_access_chat_room
-from .models import ChatMessage, Club, ClubEvent, ForumComment, ForumPost, ForumPostLike, Friendship
+from .models import ChatMessage, Club, ClubEvent, ForumComment, ForumPost, ForumPostLike, Friendship, UserFollow
+from .relationships import are_friends, friendship_row, is_blocked, relationship_payload
 from .serializers import (
     ChatMessageSerializer,
     ClubEventSerializer,
@@ -20,25 +22,32 @@ from .serializers import (
     ForumPostDetailSerializer,
     ForumPostSerializer,
     FriendshipSerializer,
+    UserRelationshipSerializer,
+    UserSearchResultSerializer,
 )
 
 User = get_user_model()
 
 
-def _are_friends(user_a, user_b) -> bool:
-    return Friendship.objects.filter(
-        status=Friendship.Status.ACCEPTED,
-    ).filter(
-        models.Q(from_user=user_a, to_user=user_b)
-        | models.Q(from_user=user_b, to_user=user_a)
-    ).exists()
+def _notify_friend_request(from_user, to_user, friendship_id: int):
+    Notification.objects.create(
+        user=to_user,
+        type=Notification.Type.FRIEND_REQUEST,
+        title=f"{from_user.display_name or from_user.username} vous a ajouté",
+        body="Acceptez ou refusez la demande d'amitié",
+        data={"friendship_id": friendship_id, "from_username": from_user.username},
+    )
 
 
-def _is_blocked(user_a, user_b) -> bool:
-    return Friendship.objects.filter(status=Friendship.Status.BLOCKED).filter(
-        models.Q(from_user=user_a, to_user=user_b)
-        | models.Q(from_user=user_b, to_user=user_a)
-    ).exists()
+class SentFriendsView(generics.ListAPIView):
+    serializer_class = FriendshipSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Friendship.objects.filter(
+            from_user=self.request.user,
+            status=Friendship.Status.PENDING,
+        ).select_related("to_user")
 
 
 class PendingFriendsView(generics.ListAPIView):
@@ -76,13 +85,37 @@ class SendFriendRequestView(APIView):
             return Response({"error": "User not found"}, status=404)
         if to_user == request.user:
             return Response({"error": "Cannot friend yourself"}, status=400)
-        if _is_blocked(request.user, to_user):
+        if is_blocked(request.user, to_user):
             return Response({"error": "Action non autorisée"}, status=403)
-        friendship, created = Friendship.objects.get_or_create(
-            from_user=request.user, to_user=to_user,
-            defaults={"status": Friendship.Status.PENDING},
+
+        reverse = Friendship.objects.filter(
+            from_user=to_user,
+            to_user=request.user,
+            status=Friendship.Status.PENDING,
+        ).first()
+        if reverse:
+            reverse.status = Friendship.Status.ACCEPTED
+            reverse.save(update_fields=["status"])
+            return Response(FriendshipSerializer(reverse).data)
+
+        existing = friendship_row(request.user, to_user)
+        if existing:
+            if existing.status == Friendship.Status.ACCEPTED:
+                return Response({"error": "Déjà amis"}, status=400)
+            if existing.status == Friendship.Status.BLOCKED:
+                return Response({"error": "Action non autorisée"}, status=403)
+            if existing.status == Friendship.Status.PENDING:
+                if existing.from_user_id == request.user.id:
+                    return Response(FriendshipSerializer(existing).data)
+                return Response({"error": "Demande déjà reçue — acceptez-la"}, status=400)
+
+        friendship = Friendship.objects.create(
+            from_user=request.user,
+            to_user=to_user,
+            status=Friendship.Status.PENDING,
         )
-        return Response(FriendshipSerializer(friendship).data, status=201 if created else 200)
+        _notify_friend_request(request.user, to_user, friendship.id)
+        return Response(FriendshipSerializer(friendship).data, status=201)
 
 
 class AcceptFriendView(APIView):
@@ -96,6 +129,177 @@ class AcceptFriendView(APIView):
         friendship.status = Friendship.Status.ACCEPTED
         friendship.save()
         return Response(FriendshipSerializer(friendship).data)
+
+
+class DeclineFriendView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            friendship = Friendship.objects.get(
+                pk=pk, to_user=request.user, status=Friendship.Status.PENDING
+            )
+        except Friendship.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        friendship.delete()
+        return Response(status=204)
+
+
+class CancelFriendRequestView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            friendship = Friendship.objects.get(
+                pk=pk, from_user=request.user, status=Friendship.Status.PENDING
+            )
+        except Friendship.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        friendship.delete()
+        return Response(status=204)
+
+
+class UnfriendView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, username):
+        try:
+            other = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+        row = friendship_row(request.user, other)
+        if not row or row.status != Friendship.Status.ACCEPTED:
+            return Response({"error": "Not friends"}, status=400)
+        row.delete()
+        return Response(status=204)
+
+
+class BlockUserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, username):
+        try:
+            other = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+        if other == request.user:
+            return Response({"error": "Impossible"}, status=400)
+        Friendship.objects.filter(
+            Q(from_user=request.user, to_user=other) | Q(from_user=other, to_user=request.user)
+        ).delete()
+        UserFollow.objects.filter(
+            Q(follower=request.user, following=other) | Q(follower=other, following=request.user)
+        ).delete()
+        friendship = Friendship.objects.create(
+            from_user=request.user,
+            to_user=other,
+            status=Friendship.Status.BLOCKED,
+        )
+        return Response(FriendshipSerializer(friendship).data, status=201)
+
+
+class UserSearchView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        q = (request.query_params.get("q") or "").strip()
+        if len(q) < 2:
+            return Response([])
+        country = (request.query_params.get("country") or "").strip().upper()
+        qs = User.objects.filter(
+            Q(username__icontains=q)
+            | Q(first_name__icontains=q)
+            | Q(last_name__icontains=q)
+        ).exclude(pk=request.user.pk)
+        if country and len(country) == 2:
+            qs = qs.filter(country=country)
+        users = list(qs.order_by("username")[:20])
+        ratings = {
+            r.user_id: r.elo
+            for r in PlayerRating.objects.filter(user_id__in=[u.id for u in users], mode="blitz")
+        }
+        payload = []
+        for user in users:
+            payload.append(
+                {
+                    "user": user,
+                    "blitz_elo": ratings.get(user.id),
+                    "relationship": relationship_payload(request.user, user),
+                }
+            )
+        return Response(UserSearchResultSerializer(payload, many=True).data)
+
+
+class UserRelationshipView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, username):
+        try:
+            target = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+        data = relationship_payload(request.user, target)
+        data["user"] = target
+        return Response(UserRelationshipSerializer(data).data)
+
+
+class FollowUserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, username):
+        try:
+            target = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+        if target == request.user:
+            return Response({"error": "Impossible"}, status=400)
+        if is_blocked(request.user, target):
+            return Response({"error": "Action non autorisée"}, status=403)
+        UserFollow.objects.get_or_create(follower=request.user, following=target)
+        return Response(relationship_payload(request.user, target))
+
+
+class UnfollowUserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, username):
+        try:
+            target = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+        UserFollow.objects.filter(follower=request.user, following=target).delete()
+        return Response(relationship_payload(request.user, target))
+
+
+class FollowingListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, username=None):
+        if username and username != "me":
+            try:
+                user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                return Response({"error": "User not found"}, status=404)
+        else:
+            user = request.user
+        from apps.users.serializers import UserPublicSerializer
+
+        follows = UserFollow.objects.filter(follower=user).select_related("following")[:100]
+        return Response([UserPublicSerializer(f.following).data for f in follows])
+
+
+class FollowersListView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, username):
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+        from apps.users.serializers import UserPublicSerializer
+
+        follows = UserFollow.objects.filter(following=user).select_related("follower")[:100]
+        return Response([UserPublicSerializer(f.follower).data for f in follows])
 
 
 class ClubListView(generics.ListCreateAPIView):
@@ -170,7 +374,7 @@ class ChallengeFriendView(APIView):
             return Response({"error": "Joueur introuvable"}, status=404)
         if opponent == request.user:
             return Response({"error": "Impossible"}, status=400)
-        if not _are_friends(request.user, opponent):
+        if not are_friends(request.user, opponent):
             return Response({"error": "Vous devez être amis"}, status=400)
 
         odds = request.data.get("odds", "none")
@@ -227,7 +431,7 @@ class DirectMessageListView(APIView):
             other = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
-        if _is_blocked(request.user, other):
+        if is_blocked(request.user, other):
             return Response({"error": "Action non autorisée"}, status=403)
         room_id = _dm_room_id(request.user.id, other.id)
         msgs = ChatMessage.objects.filter(
@@ -240,7 +444,7 @@ class DirectMessageListView(APIView):
             other = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
-        if _is_blocked(request.user, other):
+        if is_blocked(request.user, other):
             return Response({"error": "Action non autorisée"}, status=403)
         content = (request.data.get("message") or "").strip()[:500]
         if not content:

@@ -21,6 +21,25 @@ class Friendship(models.Model):
         unique_together = ["from_user", "to_user"]
 
 
+class UserFollow(models.Model):
+    """Abonnement à un joueur (style « Follow » Chess.com)."""
+
+    follower = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="following"
+    )
+    following = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="followers"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ["follower", "following"]
+        indexes = [
+            models.Index(fields=["follower", "-created_at"]),
+            models.Index(fields=["following", "-created_at"]),
+        ]
+
+
 class Club(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)

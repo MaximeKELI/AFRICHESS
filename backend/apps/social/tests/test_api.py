@@ -37,6 +37,30 @@ class SocialApiTests(TestCase):
         friendship.refresh_from_db()
         self.assertEqual(friendship.status, Friendship.Status.ACCEPTED)
 
+    def test_decline_friend_request(self):
+        friendship = Friendship.objects.create(
+            from_user=self.a, to_user=self.b, status=Friendship.Status.PENDING
+        )
+        self.client.force_authenticate(self.b)
+        res = self.client.post(f"/api/social/friends/{friendship.pk}/decline/")
+        self.assertEqual(res.status_code, 204)
+        self.assertFalse(Friendship.objects.filter(pk=friendship.pk).exists())
+
+    def test_user_search(self):
+        self.client.force_authenticate(self.a)
+        res = self.client.get("/api/social/users/search/", {"q": "socb"})
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(len(res.data), 1)
+        self.assertEqual(res.data[0]["user"]["username"], "socb")
+
+    def test_follow_user(self):
+        self.client.force_authenticate(self.a)
+        res = self.client.post("/api/social/users/socb/follow/")
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(res.data["is_following"])
+        res2 = self.client.post("/api/social/users/socb/unfollow/")
+        self.assertFalse(res2.data["is_following"])
+
     def test_join_public_club(self):
         self.client.force_authenticate(self.a)
         res = self.client.post("/api/social/clubs/test-club/join/")

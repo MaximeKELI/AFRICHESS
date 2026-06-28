@@ -11,6 +11,7 @@ import { UserFlair } from "@/components/profile/UserFlair";
 import { usePreferencesStore } from "@/store/preferences";
 import { ChevronDown, Menu, Moon, Shield, Sun, Wifi, WifiOff, X, Leaf } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
+import { UserSearchBar } from "@/components/social/UserSearchBar";
 import { MobileBottomNav } from "./MobileBottomNav";
 import clsx from "clsx";
 
@@ -217,6 +218,11 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-1 sm:gap-2 ml-auto">
+            {user && (
+              <div className="hidden md:block">
+                <UserSearchBar />
+              </div>
+            )}
             <div className="hidden md:flex items-center gap-1">
               <UtilityButtons />
             </div>
