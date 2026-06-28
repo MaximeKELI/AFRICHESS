@@ -68,10 +68,6 @@ struct AnalysisResult {
 
 enum class AnalysisMode { Full, Realtime };
 
-AnalysisResult analyze_game(const GameInput& input, AnalysisMode mode);
-
-std::string result_to_json(const AnalysisResult& result);
-
-GameInput parse_game_input(const std::string& json);
+AnalysisResult analyze_game(const GameInput& input, AnalysisMode mode = AnalysisMode::Full);
 
 }  // namespace fairplay
