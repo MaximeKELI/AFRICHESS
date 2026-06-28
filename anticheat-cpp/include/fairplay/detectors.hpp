@@ -8,7 +8,7 @@
 namespace fairplay {
 
 struct DetectorContext {
-  const GameInput& input;
+  const GameInput* input = nullptr;
   const std::vector<EngineMoveAnalysis>* engine_evals = nullptr;
   const std::vector<MoveInput>* player_moves = nullptr;
 };

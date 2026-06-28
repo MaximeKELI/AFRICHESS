@@ -50,7 +50,7 @@ AnalysisResult analyze_game(const GameInput& input, AnalysisMode mode) {
   }
 
   DetectorContext ctx;
-  ctx.input = input;
+  ctx.input = &input;
   ctx.engine_evals = &player_engine_evals;
   ctx.player_moves = &player_moves;
   run_all_detectors(ctx, result);

@@ -116,8 +116,8 @@ void detect_engine_correlation(DetectorContext ctx, AnalysisResult& out) {
   out.avg_centipawn_loss = cpl_sum / total;
   out.accuracy_estimate = accuracy_from_cpl(out.avg_centipawn_loss);
 
-  double exp_top1 = expected_top1_rate(ctx.input.player_elo);
-  double exp_cpl = expected_avg_cpl(ctx.input.player_elo);
+  double exp_top1 = expected_top1_rate(ctx.input->player_elo);
+  double exp_cpl = expected_avg_cpl(ctx.input->player_elo);
   double top1_delta = out.engine_top1_rate - exp_top1;
   if (top1_delta > 0.18) {
     add_signal(
@@ -127,7 +127,7 @@ void detect_engine_correlation(DetectorContext ctx, AnalysisResult& out) {
         1.4,
         "Corrélation moteur top1 anormalement élevée pour l'Elo");
   }
-  if (out.engine_top3_rate > 0.72 && ctx.input.player_elo < 2000) {
+  if (out.engine_top3_rate > 0.72 && ctx.input->player_elo < 2000) {
     add_signal(
         out,
         "ENGINE_TOP3_HIGH",
