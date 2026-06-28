@@ -165,8 +165,9 @@ class FairPlayAdminServiceTests(TestCase):
                     "accuracy_estimate": 80.0,
                 },
             )
-        mock_run.return_value = {
-            "overall_score": 70.0,
+        mock_run.return_value = (
+            {
+                "overall_score": 70.0,
             "verdict": "suspicious",
             "signals": [],
             "move_evals": [],

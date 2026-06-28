@@ -47,9 +47,9 @@ class FairPlayFullModeIntegrationTests(TestCase):
             )
 
     def test_full_mode_analysis_returns_engine_metrics(self):
-        result = run_fairplay_analysis(self.game, self.white, analysis_mode="full")
-        if result is None:
-            self.skipTest("fairplay subprocess failed")
+        result, error = run_fairplay_analysis(self.game, self.white, analysis_mode="full")
+        if error:
+            self.skipTest(f"fairplay subprocess failed: {error}")
         self.assertIn("verdict", result)
         self.assertIn("engine_top1_rate", result)
         self.assertIn("move_evals", result)
