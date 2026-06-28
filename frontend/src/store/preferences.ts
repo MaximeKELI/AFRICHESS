@@ -63,12 +63,17 @@ function readZenMode(): boolean {
 
 export const usePreferencesStore = create<PreferencesState>((set) => ({
   boardTheme: readBoardTheme(),
+  boardBackground: readBoardBackground(),
   pieceSet: readPieceSet(),
   aiCommentsEnabled: readAiComments(),
   zenMode: readZenMode(),
   setBoardTheme: (id) => {
     localStorage.setItem(BOARD_THEME_KEY, id);
     set({ boardTheme: id });
+  },
+  setBoardBackground: (id) => {
+    localStorage.setItem(BOARD_BACKGROUND_KEY, id);
+    set({ boardBackground: id });
   },
   setPieceSet: (id) => {
     localStorage.setItem(PIECE_SET_KEY, id);
