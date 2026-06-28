@@ -102,6 +102,7 @@ def build_game_input(game: Game, user, *, analysis_mode: str = "full") -> dict[s
         "stockfish_path": settings.STOCKFISH_PATH,
         "engine_depth": min(getattr(settings, "FAIRPLAY_DEPTH", 14), settings.ENGINE_DEPTH),
         "analysis_mode": analysis_mode,
+        "baseline": player_baseline(user, game),
         "telemetry": {
             "tab_blur_count": int(t.get("tab_blur_count", 0)),
             "focus_loss_ms": int(t.get("focus_loss_ms", 0)),
