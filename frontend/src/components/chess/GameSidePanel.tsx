@@ -1,13 +1,11 @@
 "use client";
 
 import { MoveHistory } from "./MoveHistory";
-import type { CapturedState, MoveRow } from "@/lib/chessDisplay";
+import type { MoveRow } from "@/lib/chessDisplay";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface GameSidePanelProps {
   moves: MoveRow[];
-  captured?: CapturedState;
-  orientation?: "white" | "black";
   isCheck?: boolean;
   turn?: "w" | "b";
   openingName?: string;
@@ -15,7 +13,6 @@ interface GameSidePanelProps {
 
 export function GameSidePanel({
   moves,
-  orientation = "white",
   isCheck = false,
   turn = "w",
   openingName,
