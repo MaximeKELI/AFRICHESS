@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MoveComment } from "@/lib/chessDisplay";
-import { initAiSpeech, isAiSpeechSupported, speakComment, stopAiSpeech } from "@/lib/aiSpeech";
+import { initAiSpeech, isAiSpeechSupported, speakComment, stopAiSpeech, unlockAiSpeech } from "@/lib/aiSpeech";
 import { useAuthStore } from "@/store/auth";
 
 interface AiCommentaryPanelProps {
@@ -29,14 +29,16 @@ export function AiCommentaryPanel({
 
   useEffect(() => {
     if (!enabled || !latest || lowBandwidth) return;
+    if (!isAiSpeechSupported()) return;
 
     const key = `${latest.moveNumber}-${latest.san}-${latest.text}`;
     if (lastSpokenKey.current === key) return;
     lastSpokenKey.current = key;
 
+    const delay = latest.byAi ? 450 : 250;
     const timer = window.setTimeout(() => {
       speakComment(latest.text, { byAi: latest.byAi, enabled: true });
-    }, latest.byAi ? 450 : 250);
+    }, delay);
 
     return () => window.clearTimeout(timer);
   }, [enabled, latest, lowBandwidth]);
@@ -60,9 +62,18 @@ export function AiCommentaryPanel({
   return (
     <div className="space-y-3">
       {voiceSupported && (
-        <p className="text-[10px] opacity-50 flex items-center gap-1">
-          <span aria-hidden>🔊</span> Lecture vocale activée (français)
-        </p>
+        <button
+          type="button"
+          onClick={() => {
+            unlockAiSpeech();
+            if (latest) {
+              speakComment(latest.text, { byAi: latest.byAi, enabled: true, forceUnlock: true });
+            }
+          }}
+          className="text-[10px] opacity-60 hover:opacity-100 flex items-center gap-1 transition-opacity"
+        >
+          <span aria-hidden>🔊</span> {t("comments.voice.listen")}
+        </button>
       )}
       {!voiceSupported && (
         <p className="text-[10px] text-africhess-terracotta opacity-80">
