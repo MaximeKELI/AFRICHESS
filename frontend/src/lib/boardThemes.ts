@@ -72,6 +72,7 @@ export const BOARD_THEMES: BoardTheme[] = [
     wood: { glossy: true },
   },
   {
+    id: "blue",
     labelFr: "Bleu",
     dark: "#4A6FA5",
     light: "#D4E4F7",
