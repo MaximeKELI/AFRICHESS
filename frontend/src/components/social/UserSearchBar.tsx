@@ -26,13 +26,18 @@ export function UserSearchBar({ compact = false }: { compact?: boolean }) {
     (q: string) => {
       if (!user || q.trim().length < 2) {
         setResults([]);
+        setSearchError(null);
         return;
       }
       setLoading(true);
+      setSearchError(null);
       socialApi
         .searchUsers(q.trim())
         .then(({ data }) => setResults(Array.isArray(data) ? data : []))
-        .catch(() => setResults([]))
+        .catch((err) => {
+          setResults([]);
+          setSearchError(formatApiError(err, t("social.search.error")));
+        })
         .finally(() => setLoading(false));
     },
     [user]
@@ -84,6 +89,8 @@ export function UserSearchBar({ compact = false }: { compact?: boolean }) {
         <div className="absolute top-full left-0 right-0 mt-1 rounded-xl border border-white/10 bg-[var(--card)] shadow-2xl z-50 overflow-hidden max-h-80 overflow-y-auto">
           {loading ? (
             <p className="p-3 text-xs opacity-55">{t("common.loading")}</p>
+          ) : searchError ? (
+            <p className="p-3 text-xs text-africhess-terracotta">{searchError}</p>
           ) : results.length === 0 ? (
             <p className="p-3 text-xs opacity-55">{t("social.search.empty")}</p>
           ) : (
