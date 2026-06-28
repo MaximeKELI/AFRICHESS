@@ -1909,6 +1909,7 @@ const en: Record<string, string> = {
   "auth.callback.profileError": "Could not load profile.",
   "auth.callback.loading": "Signing in…",
   "auth.login.useUsername": "Sign in with your username (e.g. DKELI), not email. Multiple accounts can share the same email on this site.",
+  "auth.login.emailWarning": "This email may be linked to several accounts. Use your username instead.",
   "auth.login.invalidResponse": "Invalid login response.",
   "profile.player": "Player",
   "ws.error.session": "WebSocket connection failed (missing session).",
