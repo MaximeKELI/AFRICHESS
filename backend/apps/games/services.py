@@ -334,20 +334,7 @@ class GameService:
 
         new_fen, san, is_over = result
         fen_before_player = game.fen
-        player_comment = ""
-        if include_comments and game.is_vs_ai:
-            eval_before = self.engine.analyze_position(fen_before_player, depth=10)
-            eval_after = self.engine.analyze_position(new_fen, depth=10)
-            player_comment = generate_move_comment(
-                fen_before_player,
-                uci,
-                san,
-                played_by_ai=False,
-                mover_is_white=is_white_turn,
-                move_number=game.move_count + 1,
-                eval_before=eval_before,
-                eval_after=eval_after,
-            )
+        pending_comment_specs: list[dict] = []
         game.fen = new_fen
         move = self._record_move(
             game,
@@ -355,9 +342,19 @@ class GameService:
             san,
             played_by_white=is_white_turn,
             time_ms=game.white_time_ms if is_white_turn else game.black_time_ms,
-            comment=player_comment,
+            comment="",
             fen_after=new_fen,
         )
+        if include_comments and game.is_vs_ai:
+            pending_comment_specs.append(
+                _comment_spec(
+                    move,
+                    fen_before_player,
+                    new_fen,
+                    played_by_ai=False,
+                    mover_is_white=is_white_turn,
+                )
+            )
         game.move_count += 1
         game.pgn = (game.pgn or "") + f" {game.move_count}. {san}" if is_white_turn else f" {san}"
         if not game.is_vs_ai and not is_correspondence:
@@ -397,27 +394,23 @@ class GameService:
                 )
                 if ai_result:
                     nf, ai_san, ai_over = ai_result
-                    ai_comment = ""
-                    if include_comments:
-                        eval_before = self.engine.analyze_position(new_fen, depth=10)
-                        eval_after = self.engine.analyze_position(nf, depth=10)
-                        ai_comment = generate_move_comment(
-                            new_fen,
-                            ai_move.uci,
-                            ai_san,
-                            played_by_ai=True,
-                            mover_is_white=not is_white_turn,
-                            move_number=game.move_count + 1,
-                            eval_before=eval_before,
-                            eval_after=eval_after,
-                        )
-                    self._record_move(
+                    ai_move_record = self._record_move(
                         game,
                         ai_move.uci,
                         ai_san,
                         played_by_white=not is_white_turn,
-                        comment=ai_comment,
+                        comment="",
                     )
+                    if include_comments:
+                        pending_comment_specs.append(
+                            _comment_spec(
+                                ai_move_record,
+                                new_fen,
+                                nf,
+                                played_by_ai=True,
+                                mover_is_white=not is_white_turn,
+                            )
+                        )
                     self._ai_clock_tick(game, ai_is_white=not is_white_turn)
                     game.fen = nf
                     game.move_count += 1
@@ -440,6 +433,10 @@ class GameService:
         if is_over:
             self._finalize_game(game)
             on_game_completed(game)
+
+        if pending_comment_specs:
+            schedule_move_comments(str(game.id), pending_comment_specs)
+            response["comments_pending"] = True
 
         return response
 
