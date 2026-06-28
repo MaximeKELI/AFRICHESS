@@ -7,7 +7,7 @@ import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { setAccessToken, setRefreshToken } from "@/lib/cookies";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+import { API_URL } from "@/lib/apiConfig";
 
 export default function AuthCallbackPage() {
   const router = useRouter();

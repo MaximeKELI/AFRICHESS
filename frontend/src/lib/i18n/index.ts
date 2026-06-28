@@ -954,7 +954,7 @@ const fr: Record<string, string> = {
   "ws.error.reconnect": "Reconnexion… ({n}/{max})",
   "ws.error.matchmakingGeneric": "Erreur matchmaking.",
   "ws.error.matchmakingInvalid": "Réponse matchmaking invalide.",
-  "errors.network": "Impossible de joindre le serveur. Vérifiez que le backend tourne (port 8003).",
+  "errors.network": "Impossible de joindre le serveur (API port {port}). Vérifiez que le backend tourne : docker start africhess-backend-8003",
   "errors.stats404": "Endpoint statistiques indisponible. Redémarrez le backend : docker start africhess-backend-1",
   "errors.serverTechnical": "Erreur technique serveur. Redémarrez le backend puis réessayez.",
   "errors.emailUsed": "Compte ou e-mail déjà utilisé — utilisez la page Connexion.",

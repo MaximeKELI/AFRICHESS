@@ -39,10 +39,9 @@ export const AI_LEVEL_AVATAR_IDS: Record<number, AiAvatarId> = {
   4000: "avatar-3", // Élite — Nana Kofi (sage âgé)
 };
 
-const API_ORIGIN =
-  process.env.NEXT_PUBLIC_MEDIA_ORIGIN ||
-  process.env.NEXT_PUBLIC_API_ORIGIN ||
-  (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api").replace(/\/api\/?$/, "");
+import { MEDIA_ORIGIN } from "@/lib/apiConfig";
+
+const API_ORIGIN = MEDIA_ORIGIN;
 
 function isLocalDevMediaUrl(url: string): boolean {
   return /localhost|127\.0\.0\.1/.test(url);

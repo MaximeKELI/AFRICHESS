@@ -1,5 +1,5 @@
 import { AxiosError } from "axios";
-import { translate } from "./i18n";
+import { apiPortLabel } from "@/lib/apiConfig";
 import { getAppLocale } from "./i18n/labels";
 
 const FIELD_KEYS: Record<string, string> = {
@@ -21,7 +21,7 @@ export function formatApiError(
   }
 
   if (!error.response) {
-    return translate(locale, "errors.network");
+    return translate(locale, "errors.network", { port: apiPortLabel() });
   }
 
   if (error.response.status === 429) {
