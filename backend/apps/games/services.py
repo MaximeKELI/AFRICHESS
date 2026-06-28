@@ -534,6 +534,11 @@ class MatchmakingService:
 
         if user_has_active_matchmaking_block(user):
             raise ValueError("Matchmaking bloqué — sanction Fair Play active")
+        if is_rated:
+            from .fairplay_telemetry import user_has_fairplay_consent
+
+            if not user_has_fairplay_consent(user):
+                raise ValueError("Consentement Fair Play requis pour les parties classées")
         _, _, _, _, tcm = resolve_time_fields(
             is_timed, time_minutes, time_control=time_control
         )
@@ -565,6 +570,11 @@ class MatchmakingService:
 
         if user_has_active_matchmaking_block(user):
             raise ValueError("Matchmaking bloqué — sanction Fair Play active")
+        if is_rated:
+            from .fairplay_telemetry import user_has_fairplay_consent
+
+            if not user_has_fairplay_consent(user):
+                raise ValueError("Consentement Fair Play requis pour les parties classées")
         _, _, _, _, tcm = resolve_time_fields(
             is_timed, time_minutes, time_control=time_control
         )

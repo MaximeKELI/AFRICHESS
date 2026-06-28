@@ -253,6 +253,10 @@ export const adminApi = {
       suspend_days?: number;
     }
   ) => api.post(`/games/admin/fairplay/cases/${caseId}/decide/`, body),
+  fairplayAppealResolve: (
+    appealId: number,
+    body: { status: string; staff_response?: string }
+  ) => api.post(`/games/admin/fairplay/appeals/${appealId}/resolve/`, body),
 };
 
 export const ratingsApi = {
