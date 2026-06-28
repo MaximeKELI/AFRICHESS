@@ -318,7 +318,7 @@ export function Navbar() {
               )}
             </div>
             <div className="p-4 border-t border-white/10 space-y-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-              <div className="flex flex-wrap gap-2">{UtilityButtons compact />}</div>
+              <div className="flex flex-wrap gap-2"><UtilityButtons compact /></div>
               {user && (
                 <button onClick={logout} className="w-full py-2 text-sm text-africhess-terracotta border border-white/10 rounded-lg">
                   {t("nav.logout")}
