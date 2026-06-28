@@ -59,9 +59,9 @@ class FairPlayFullModeIntegrationTests(TestCase):
             game_id="full_open",
             player_elo=1000,
             analysis_mode="full",
-            stockfish_path=settings.STOCKFISH_PATH,
             moves=alternating_moves(6, white_think_ms=3000),
         )
+        payload["stockfish_path"] = settings.STOCKFISH_PATH
         payload["engine_depth"] = 10
         result = run_fairplay_cpp(payload, timeout=120)
         self.assertIn(result["verdict"], ("clean", "review"))
