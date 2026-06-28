@@ -2188,7 +2188,7 @@ const en: Record<string, string> = {
   "chess.analysis.coach.brilliant": "Brilliant move — you found an exceptional resource!",
   "chess.analysis.coach.great": "Great move, hard to find at this level.",
   "premium.stripeNote": "Secure payment via Stripe.",
-  "play.browseBots": "Browse all 100 bots →",
+  "play.browseBots": "Browse all 100 legends →",
   "play.botSelected": "Bot: {slug}",
   "play.botClear": "Change bot",
   "live.featured": "Featured — Live TV",
