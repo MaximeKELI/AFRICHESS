@@ -29,8 +29,8 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     entrypoint: ["/app/docker-entrypoint.sh"]
     volumes:
       - ./backend:/app
@@ -59,8 +59,8 @@ services:
 
   celery:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     command: sh -c "mkdir -p staticfiles && celery -A config worker -l info"
     volumes:
       - ./backend:/app
