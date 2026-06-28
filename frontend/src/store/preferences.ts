@@ -23,6 +23,12 @@ function readBoardTheme(): BoardThemeId {
   return isBoardThemeId(stored) ? stored : DEFAULT_BOARD_THEME;
 }
 
+function readBoardBackground(): BoardBackgroundId {
+  if (typeof window === "undefined") return DEFAULT_BOARD_BACKGROUND;
+  const stored = localStorage.getItem(BOARD_BACKGROUND_KEY);
+  return isBoardBackgroundId(stored) ? stored : DEFAULT_BOARD_BACKGROUND;
+}
+
 function readAiComments(): boolean {
   if (typeof window === "undefined") return false;
   return localStorage.getItem(AI_COMMENTS_KEY) === "1";
@@ -37,10 +43,12 @@ function readPieceSet(): PieceSetId {
 
 interface PreferencesState {
   boardTheme: BoardThemeId;
+  boardBackground: BoardBackgroundId;
   pieceSet: PieceSetId;
   aiCommentsEnabled: boolean;
   zenMode: boolean;
   setBoardTheme: (id: BoardThemeId) => void;
+  setBoardBackground: (id: BoardBackgroundId) => void;
   setPieceSet: (id: PieceSetId) => void;
   setAiCommentsEnabled: (enabled: boolean) => void;
   setZenMode: (enabled: boolean) => void;
