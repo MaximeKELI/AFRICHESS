@@ -273,9 +273,6 @@ function PlayContent() {
     [boardPlayers, orientation]
   );
 
-  const boardDisabled =
-    !gameId || gameCompleted || !isMyTurn || (isLiveHuman && movePending);
-
   const moveComments = useMemo(() => {
     if (!gameData.moves?.length) return [];
     return commentsFromMoves(gameData.moves, playerIsWhite);
@@ -478,6 +475,9 @@ function PlayContent() {
   const isMyTurn =
     gameActive &&
     ((turn === "w" && playerIsWhite) || (turn === "b" && !playerIsWhite));
+
+  const boardDisabled =
+    !gameId || gameCompleted || !isMyTurn || (isLiveHuman && movePending);
 
   const applyOptimisticUci = useCallback((uci: string) => {
     setGameData((prev) => {
