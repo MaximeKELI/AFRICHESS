@@ -362,26 +362,32 @@ class MatchmakingView(APIView):
         rating = PlayerRating.objects.filter(user=request.user, mode=mode).first()
         elo = rating.elo if rating else request.user.initial_elo
         svc = MatchmakingService()
-        game = svc.find_match(
-            request.user,
-            mode,
-            elo,
-            is_timed=is_timed,
-            time_minutes=time_minutes,
-            time_control=time_control,
-            is_rated=is_rated,
-        )
+        try:
+            game = svc.find_match(
+                request.user,
+                mode,
+                elo,
+                is_timed=is_timed,
+                time_minutes=time_minutes,
+                time_control=time_control,
+                is_rated=is_rated,
+            )
+        except ValueError as exc:
+            return Response({"error": str(exc), "code": "fairplay_sanction"}, status=403)
         if game:
             return Response(GameSerializer(game).data, status=201)
-        svc.join_queue(
-            request.user,
-            mode,
-            elo,
-            is_timed=is_timed,
-            time_minutes=time_minutes,
-            time_control=time_control,
-            is_rated=is_rated,
-        )
+        try:
+            svc.join_queue(
+                request.user,
+                mode,
+                elo,
+                is_timed=is_timed,
+                time_minutes=time_minutes,
+                time_control=time_control,
+                is_rated=is_rated,
+            )
+        except ValueError as exc:
+            return Response({"error": str(exc), "code": "fairplay_sanction"}, status=403)
         svc.pair_all_waiting()
         return Response({
             "status": "searching",

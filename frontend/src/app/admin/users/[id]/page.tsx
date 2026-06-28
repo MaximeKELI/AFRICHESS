@@ -61,6 +61,22 @@ interface UserDetail {
       created_at: string;
     }[];
   };
+  fairplay?: {
+    by_verdict: Record<string, number>;
+    baseline: {
+      games_analyzed: number;
+      avg_accuracy: number;
+      avg_top1_rate: number;
+      avg_cpl: number;
+    };
+    active_sanctions: { sanction_type: string; until: string | null; notes: string }[];
+    recent_reports: {
+      game_id: string;
+      verdict: string;
+      overall_score: number;
+      review_status: string | null;
+    }[];
+  } | null;
 }
 
 export default function AdminUserDetailPage() {
@@ -172,6 +188,47 @@ export default function AdminUserDetailPage() {
               </span>
             ))}
           </div>
+        </div>
+      )}
+
+      {data.fairplay && (
+        <div className="glass-card p-6 space-y-4">
+          <h3 className="font-semibold">{t("admin.fairplay.userSection")}</h3>
+          {data.fairplay.baseline.games_analyzed >= 5 && (
+            <p className="text-sm opacity-70">
+              {t("admin.fairplay.baseline")}: top1{" "}
+              {(data.fairplay.baseline.avg_top1_rate * 100).toFixed(1)}% · accuracy{" "}
+              {data.fairplay.baseline.avg_accuracy.toFixed(1)} · CPL{" "}
+              {data.fairplay.baseline.avg_cpl.toFixed(0)} ({data.fairplay.baseline.games_analyzed}{" "}
+              parties)
+            </p>
+          )}
+          {data.fairplay.active_sanctions.length > 0 && (
+            <div>
+              <p className="text-sm font-medium text-red-400 mb-1">{t("admin.fairplay.activeSanctions")}</p>
+              <ul className="text-xs space-y-1">
+                {data.fairplay.active_sanctions.map((s, i) => (
+                  <li key={i}>
+                    {s.sanction_type}
+                    {s.until ? ` → ${s.until}` : ""}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {data.fairplay.recent_reports.length > 0 && (
+            <ul className="text-sm space-y-2">
+              {data.fairplay.recent_reports.map((r) => (
+                <li key={r.game_id}>
+                  <Link href={`/admin/fairplay/games/${r.game_id}`} className="text-africhess-gold hover:underline">
+                    {r.verdict}
+                  </Link>{" "}
+                  — score {r.overall_score.toFixed(1)}
+                  {r.review_status ? ` (${r.review_status})` : ""}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 

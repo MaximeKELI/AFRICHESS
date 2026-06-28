@@ -561,6 +561,10 @@ class MatchmakingService:
         time_control: str | None = None,
         is_rated: bool = True,
     ):
+        from .fairplay_review import user_has_active_matchmaking_block
+
+        if user_has_active_matchmaking_block(user):
+            raise ValueError("Matchmaking bloqué — sanction Fair Play active")
         _, _, _, _, tcm = resolve_time_fields(
             is_timed, time_minutes, time_control=time_control
         )
