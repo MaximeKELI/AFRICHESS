@@ -222,9 +222,7 @@ class MakeMoveView(APIView):
         if "error" in result:
             return Response(result, status=400)
         game.refresh_from_db()
-        data = GameSerializer(game).data
-        if result.get("comments_pending"):
-            data["comments_pending"] = True
+        data = serialize_game_move_delta(game, result)
         return Response(data)
 
 

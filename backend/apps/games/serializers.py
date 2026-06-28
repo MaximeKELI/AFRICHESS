@@ -123,6 +123,41 @@ class GameSerializer(serializers.ModelSerializer):
         ]
 
 
+def serialize_game_move_delta(game: Game, result: dict) -> dict:
+    """Réponse légère après un coup : FEN + nouveaux coups uniquement."""
+    new_moves = []
+    player_move = result.get("move")
+    if player_move is not None:
+        new_moves.append(MoveSerializer(player_move).data)
+    ai_record = result.get("ai_move_record")
+    if ai_record is not None:
+        new_moves.append(MoveSerializer(ai_record).data)
+
+    payload: dict = {
+        "id": str(game.id),
+        "fen": game.fen,
+        "status": game.status,
+        "result": game.result or "",
+        "termination_reason": getattr(game, "termination_reason", "") or "",
+        "move_count": game.move_count,
+        "white_time_ms": game.white_time_ms,
+        "black_time_ms": game.black_time_ms,
+        "increment_ms": game.increment_ms,
+        "new_moves": new_moves,
+        "delta": True,
+        "game_over": bool(result.get("game_over")),
+    }
+    if result.get("comments_pending"):
+        payload["comments_pending"] = True
+    if result.get("draw_claim"):
+        payload["draw_claim"] = result["draw_claim"]
+    if result.get("result"):
+        payload["result"] = result["result"]
+    if result.get("termination_reason"):
+        payload["termination_reason"] = result["termination_reason"]
+    return payload
+
+
 class GameListSerializer(serializers.ModelSerializer):
     white_player = UserPublicSerializer(read_only=True)
     black_player = UserPublicSerializer(read_only=True)

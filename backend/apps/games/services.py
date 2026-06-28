@@ -419,6 +419,7 @@ class GameService:
                     game.move_count += 1
                     game.save()
                     response["ai_move"] = {"uci": ai_move.uci, "san": ai_san}
+                    response["ai_move_record"] = ai_move_record
                     response["fen"] = nf
                     response["game_over"] = ai_over
                     is_over = ai_over
