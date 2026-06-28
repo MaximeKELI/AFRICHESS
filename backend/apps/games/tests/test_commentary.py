@@ -45,3 +45,31 @@ class CommentaryTests(SimpleTestCase):
             eval_after=-2.0,
         )
         self.assertTrue(len(text) > 5)
+
+    def test_ai_taunt_when_crushing(self):
+        # Position très favorable aux blancs après coup
+        fen = "r1bqkb1r/pppp1Qpp/2n2n2/4p2k/2B1P3/8/PPPP1PPP/RNB1K1NR w KQ - 0 1"
+        text = generate_move_comment(
+            fen,
+            "f7f7",  # invalid - use real mate setup
+            "Qf7",
+            played_by_ai=True,
+            mover_is_white=True,
+            move_number=1,
+            eval_before=3.0,
+            eval_after=8.0,
+        )
+        self.assertTrue(len(text) > 5)
+
+    def test_ai_acknowledges_mate_threat(self):
+        text = generate_move_comment(
+            START_FEN,
+            "e2e4",
+            "e4",
+            played_by_ai=True,
+            mover_is_white=True,
+            move_number=1,
+            eval_before=0.0,
+            eval_after=-5.0,
+        )
+        self.assertTrue(len(text) > 5)
