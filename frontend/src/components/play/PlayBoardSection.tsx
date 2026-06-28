@@ -45,6 +45,7 @@ function PlayBoardSectionInner({
   onDropAtSquare,
   topBar,
   bottomBar,
+  extraBottom = 0,
 }: PlayBoardSectionProps) {
   const turn = turnFromFen(fen);
   const lastMove = lastMoveFromMoves(moves);
@@ -77,6 +78,7 @@ function PlayBoardSectionInner({
         serverValidated={serverValidated}
         pendingDrop={pendingDrop}
         onDropAtSquare={onDropAtSquare}
+        extraBottom={extraBottom}
       />
       <div className="space-y-2 mt-2">
         {showClock && (
