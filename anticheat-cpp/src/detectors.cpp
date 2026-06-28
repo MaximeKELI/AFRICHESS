@@ -242,7 +242,10 @@ void detect_telemetry(DetectorContext ctx, AnalysisResult& out) {
 }
 
 void detect_opening(DetectorContext ctx, AnalysisResult& out) {
-  if (!ctx.engine_evals || !ctx.player_moves) {
+  if (!ctx.engine_evals || !ctx.player_moves || !ctx.input) {
+    return;
+  }
+  if (ctx.input->analysis_mode == "realtime") {
     return;
   }
   int opening_engine = 0;
