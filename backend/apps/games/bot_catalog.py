@@ -400,17 +400,6 @@ LEGENDS: list[BotSpec] = [
         "Artiste mexicaine. Coups colorés, douleur transformée en victoire.",
         "Mexican artist. Colorful moves, pain transformed into victory.",
     ),
-    _legend(
-        "walter-sisulu",
-        "Walter Sisulu",
-        "Walter Sisulu",
-        "ZA",
-        2440,
-        "solid",
-        "Caro-Kann",
-        "Compagnon de Mandela. Fondations solides, résistance silencieuse.",
-        "Mandela's companion. Solid foundations, silent resistance.",
-    ),
 ]
 
 # ── 70 PERSONNAGES FICTIFS (400–2200 ELO) ────────────────────────────────────
