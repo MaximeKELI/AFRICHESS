@@ -92,6 +92,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       setAccessToken(data.access);
       setRefreshToken(data.refresh);
+
+      // Réponse dj-rest-auth inclut souvent user — secours si /profile échoue
+      const loginUser = data.user as { pk?: number; username?: string } | undefined;
+      if (loginUser?.pk && loginUser.username) {
+        set({
+          user: {
+            id: loginUser.pk,
+            username: loginUser.username,
+            display_name: loginUser.username,
+            country: "",
+          },
+        });
+        syncPreferencesForUser(loginUser.pk);
+      }
+
       await get().fetchProfile();
       if (!get().user) {
         throw new Error(translate(get().locale, "errors.profileLoadFailed"));
@@ -100,7 +115,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (error instanceof Error && !(error instanceof AxiosError)) {
         throw error;
       }
-      throw new Error(formatApiError(error));
+      const msg = formatApiError(error);
+      if (loginId.includes("@") && msg.includes("Identifiants")) {
+        throw new Error(translate(get().locale, "auth.login.useUsername"));
+      }
+      throw new Error(msg);
     } finally {
       set({ isLoading: false });
     }
