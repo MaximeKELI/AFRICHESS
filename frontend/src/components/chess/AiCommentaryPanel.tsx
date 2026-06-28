@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { MoveComment } from "@/lib/chessDisplay";
 import { initAiSpeech, isAiSpeechSupported, speakComment, stopAiSpeech, unlockAiSpeech } from "@/lib/aiSpeech";
 import { useAuthStore } from "@/store/auth";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface AiCommentaryPanelProps {
   comments: MoveComment[];
@@ -17,6 +18,7 @@ export function AiCommentaryPanel({
   enabled,
   compact = false,
 }: AiCommentaryPanelProps) {
+  const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
   const latest = comments.at(-1);
   const lastSpokenKey = useRef<string | null>(null);

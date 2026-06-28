@@ -14,6 +14,7 @@ import { GameAnalysisPanel } from "@/components/chess/GameAnalysisPanel";
 import { PlayBoardSection } from "@/components/play/PlayBoardSection";
 import { gamesApi, ratingsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
+import { unlockAiSpeech, speakComment } from "@/lib/aiSpeech";
 import { defaultAiEloForUser, normalizeToPreset, resolveAiPlayMode, type AiLevelElo } from "@/lib/aiStrength";
 import { AiStrengthPicker } from "@/components/chess/AiStrengthPicker";
 import { VariantPicker, type GameVariant } from "@/components/chess/VariantPicker";
@@ -432,6 +433,7 @@ function PlayContent() {
 
   const startAI = useCallback(async () => {
     if (aiStarting || gameId) return;
+    unlockAiSpeech();
     setAiStarting(true);
     setSetupCategory("ai");
     setMobileTab("board");
@@ -460,6 +462,9 @@ function PlayContent() {
           ? t("play.status.gameStartedElo", { elo: data.ai_target_elo })
           : t("play.status.gameStarted")
       );
+      if (aiCommentsEnabled) {
+        speakComment(t("comments.voice.gameStart"), { byAi: true, enabled: true, forceUnlock: true });
+      }
     } catch (err) {
       const msg = formatApiError(err);
       setStatus(
@@ -513,6 +518,7 @@ function PlayContent() {
   const handleMove = useCallback(
     async (uci: string) => {
       if (!gameId || gameCompleted) return;
+      if (isVsAi) unlockAiSpeech();
       setDropPiece(null);
       const poolMs = playerIsWhite ? gameData.white_time_ms : gameData.black_time_ms;
       const spentMs = gameIsTimed
