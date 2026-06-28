@@ -162,6 +162,19 @@ class CreateAIGameSerializer(serializers.Serializer):
     include_comments = serializers.BooleanField(default=False, required=False)
     is_timed = serializers.BooleanField(default=True, required=False)
     time_minutes = serializers.IntegerField(required=False, allow_null=True)
+    time_control = serializers.CharField(required=False, allow_blank=True)
+
+    def validate_time_control(self, value):
+        if not value:
+            return value
+        from .time_control import ALLOWED_TIME_CONTROLS
+
+        key = value.strip()
+        if key not in ALLOWED_TIME_CONTROLS:
+            raise serializers.ValidationError(
+                f"Cadence inconnue. Valeurs : {', '.join(ALLOWED_TIME_CONTROLS)}."
+            )
+        return key
 
     def validate_time_minutes(self, value):
         if value is None:
@@ -188,6 +201,19 @@ class MatchmakingJoinSerializer(serializers.Serializer):
     is_timed = serializers.BooleanField(default=True, required=False)
     is_rated = serializers.BooleanField(default=True, required=False)
     time_minutes = serializers.IntegerField(required=False, allow_null=True)
+    time_control = serializers.CharField(required=False, allow_blank=True)
+
+    def validate_time_control(self, value):
+        if not value:
+            return value
+        from .time_control import ALLOWED_TIME_CONTROLS
+
+        key = value.strip()
+        if key not in ALLOWED_TIME_CONTROLS:
+            raise serializers.ValidationError(
+                f"Cadence inconnue. Valeurs : {', '.join(ALLOWED_TIME_CONTROLS)}."
+            )
+        return key
 
     def validate_time_minutes(self, value):
         if value is None:

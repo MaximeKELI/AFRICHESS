@@ -106,6 +106,7 @@ class CreateAIGameView(APIView):
             ai_elo=vd.get("ai_elo"),
             is_timed=vd.get("is_timed", True),
             time_minutes=vd.get("time_minutes"),
+            time_control=vd.get("time_control"),
             bot=bot,
             variant=vd.get("variant", Game.Variant.STANDARD),
         )
