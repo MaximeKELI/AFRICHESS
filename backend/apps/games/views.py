@@ -154,10 +154,13 @@ def ai_strength_preview(request):
     summary="Synthèse vocale (secours Linux — espeak-ng)",
     parameters=[OpenApiParameter(name="text", type=str, required=True)],
 )
-@api_view(["GET"])
+@api_view(["GET", "POST"])
 @permission_classes([permissions.IsAuthenticated])
 def speech_tts(request):
-    text = request.query_params.get("text", "")
+    if request.method == "POST":
+        text = request.data.get("text", "") if isinstance(request.data, dict) else ""
+    else:
+        text = request.query_params.get("text", "")
     wav = synthesize_wav(text)
     if not wav:
         return Response(

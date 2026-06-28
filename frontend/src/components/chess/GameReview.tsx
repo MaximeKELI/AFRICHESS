@@ -14,6 +14,7 @@ import {
   stopAiSpeech,
   testAiSpeech,
   unlockAiSpeech,
+  waitForSpeechIdle,
 } from "@/lib/aiSpeech";
 import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
 import type { GameAnalysisData } from "@/lib/gameAnalysis";
@@ -76,6 +77,7 @@ export function GameReview({
   const [userMovesOnly, setUserMovesOnly] = useState(true);
   const [autoTour, setAutoTour] = useState(false);
   const autoTourRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const voiceTourRef = useRef(false);
 
   useEffect(() => {
     initAiSpeech();

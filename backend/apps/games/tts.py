@@ -60,9 +60,9 @@ def _synthesize_via_libespeak(text: str, *, lang: str = "fr") -> bytes | None:
         if rate <= 0:
             return None
         lib.espeak_SetSynthCallback(_callback)
-        voice = lang if lang.startswith("fr") else "fr"
-        if lib.espeak_SetVoiceByName(voice.encode()) != 0:
-            lib.espeak_SetVoiceByName(b"fr")
+        for voice in (b"fr+f2", b"fr+f1", b"fr"):
+            if lib.espeak_SetVoiceByName(voice) == 0:
+                break
         payload = text.encode("utf-8")
         uid = ctypes.c_uint(0)
         if lib.espeak_Synth(payload, len(payload), 0, 1, 0, 1, ctypes.byref(uid), None) != 0:
@@ -85,20 +85,33 @@ def synthesize_wav(text: str, *, lang: str = "fr") -> bytes | None:
 
     espeak = shutil.which("espeak-ng") or shutil.which("espeak")
     if espeak:
-        voice = lang if lang.startswith("fr") else "fr"
-        try:
-            result = subprocess.run(
-                [espeak, "-v", voice, "-s", "155", "-a", "200", "--stdout", cleaned],
-                capture_output=True,
-                timeout=12,
-                check=False,
-            )
-        except (subprocess.TimeoutExpired, OSError) as exc:
-            logger.warning("TTS espeak échec: %s", exc)
-            return _synthesize_via_libespeak(cleaned, lang=lang)
+        voices = [ESPEAK_VOICE, "fr+f1", "fr"]
+        for voice in voices:
+            try:
+                result = subprocess.run(
+                    [
+                        espeak,
+                        "-v",
+                        voice,
+                        "-s",
+                        str(ESPEAK_RATE),
+                        "-p",
+                        str(ESPEAK_PITCH),
+                        "-a",
+                        "180",
+                        "--stdout",
+                        cleaned,
+                    ],
+                    capture_output=True,
+                    timeout=45,
+                    check=False,
+                )
+            except (subprocess.TimeoutExpired, OSError) as exc:
+                logger.warning("TTS espeak échec: %s", exc)
+                return _synthesize_via_libespeak(cleaned, lang=lang)
 
-        if result.returncode == 0 and result.stdout:
-            return result.stdout
+            if result.returncode == 0 and result.stdout:
+                return result.stdout
         logger.warning(
             "espeak stderr: %s",
             result.stderr.decode(errors="replace")[:200],

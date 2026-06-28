@@ -1,14 +1,14 @@
 /**
  * Synthèse vocale — commentaires IA et coach.
- * 1) TTS local Next.js /api/tts (libespeak-ng sur la machine)
- * 2) TTS backend Django /games/tts/
- * 3) Web Speech API (navigateur)
+ * 1) Web Speech API si voix FR naturelle disponible
+ * 2) TTS local Next.js /api/tts (espeak-ng)
+ * 3) TTS backend Django /games/tts/
  */
 
 import Cookies from "js-cookie";
+import { normalizeSpeechText, splitSpeechChunks } from "@/lib/speechText";
 
 let preferredVoice: SpeechSynthesisVoice | null = null;
-let voicesReady = false;
 let voicesListenerAttached = false;
 let keepAliveId: ReturnType<typeof setInterval> | null = null;
 let backendTtsOk: boolean | null = null;
@@ -16,12 +16,14 @@ let localTtsOk: boolean | null = null;
 let audioUnlocked = false;
 let pendingPlay: (() => Promise<boolean>) | null = null;
 
-type QueuedUtterance = { text: string; byAi: boolean };
-
-const queue: QueuedUtterance[] = [];
-let draining = false;
-let lastQueuedText = "";
+type SpeechJob = { text: string; byAi: boolean };
+const pendingJobs: SpeechJob[] = [];
+let pipelineRunning = false;
+let cancelRequested = false;
 let currentAudio: HTMLAudioElement | null = null;
+let lastSpeakingText = "";
+
+const MAX_TTS_CHARS = 1200;
 
 function apiBase(): string {
   return process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8003/api";
@@ -32,28 +34,29 @@ function authHeaders(): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+function voiceScore(v: SpeechSynthesisVoice): number {
+  const n = v.name.toLowerCase();
+  if (/neural|natural|premium|wavenet/.test(n)) return 100;
+  if (/google/.test(n)) return 90;
+  if (/microsoft|azure/.test(n)) return 85;
+  if (/apple|siri/.test(n)) return 80;
+  if (/mbrola/.test(n)) return 55;
+  if (v.localService && !/espeak|festival/.test(n)) return 65;
+  if (/espeak|festival/.test(n)) return 5;
+  return 40;
+}
+
 function pickFrenchVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
   if (!voices.length) return null;
-  const fr = voices.filter(
-    (v) => v.lang.startsWith("fr") || v.lang.includes("FR")
-  );
-  return (
-    fr.find((v) => /google|espeak|french|france|mbrola/i.test(v.name)) ??
-    fr.find((v) => v.localService) ??
-    fr[0] ??
-    voices.find((v) => v.lang.startsWith("fr")) ??
-    voices[0] ??
-    null
-  );
+  const fr = voices.filter((v) => v.lang.startsWith("fr") || v.lang.includes("FR"));
+  if (!fr.length) return voices[0] ?? null;
+  return [...fr].sort((a, b) => voiceScore(b) - voiceScore(a))[0];
 }
 
 function refreshVoices() {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   const voices = window.speechSynthesis.getVoices();
-  if (voices.length > 0) {
-    preferredVoice = pickFrenchVoice(voices);
-    voicesReady = true;
-  }
+  if (voices.length > 0) preferredVoice = pickFrenchVoice(voices);
 }
 
 function attachVoicesListener() {
@@ -62,19 +65,22 @@ function attachVoicesListener() {
   window.speechSynthesis.addEventListener("voiceschanged", refreshVoices);
 }
 
-function isLinuxDesktop(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /Linux/i.test(navigator.userAgent) && !/Android/i.test(navigator.userAgent);
+function hasNaturalBrowserVoice(): boolean {
+  if (typeof window === "undefined" || !window.speechSynthesis) return false;
+  refreshVoices();
+  return window.speechSynthesis.getVoices().some((v) => {
+    if (!v.lang.startsWith("fr") && !v.lang.includes("FR")) return false;
+    return voiceScore(v) >= 55;
+  });
 }
 
 function shouldPreferBackendTts(): boolean {
+  if (hasNaturalBrowserVoice()) return false;
   if (localTtsOk === true || backendTtsOk === true) return true;
   if (localTtsOk === false && backendTtsOk === false) return false;
   if (typeof window === "undefined" || !window.speechSynthesis) return true;
-  if (isLinuxDesktop()) return true;
   refreshVoices();
-  const voices = window.speechSynthesis.getVoices();
-  return voices.length === 0;
+  return window.speechSynthesis.getVoices().length === 0;
 }
 
 function startKeepAlive() {
@@ -92,59 +98,72 @@ function stopKeepAlive() {
   }
 }
 
-async function playWavBuffer(buf: ArrayBuffer): Promise<boolean> {
-  if (typeof window === "undefined") return false;
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
-  const blob = new Blob([buf], { type: "audio/wav" });
-  const objectUrl = URL.createObjectURL(blob);
-  const audio = new Audio(objectUrl);
-  currentAudio = audio;
-  audio.volume = 1;
+function stopCurrentAudio() {
+  if (!currentAudio) return;
+  currentAudio.pause();
+  currentAudio.onended = null;
+  currentAudio.onerror = null;
+  currentAudio = null;
+}
 
-  const tryPlay = async (): Promise<boolean> => {
-    try {
-      await audio.play();
-      audio.onended = () => {
-        URL.revokeObjectURL(objectUrl);
-        if (currentAudio === audio) currentAudio = null;
-      };
-      return true;
-    } catch (err) {
-      if (err instanceof DOMException && err.name === "NotAllowedError") {
-        pendingPlay = tryPlay;
-        return false;
-      }
+function playWavBufferAndWait(buf: ArrayBuffer): Promise<boolean> {
+  if (typeof window === "undefined") return Promise.resolve(false);
+
+  return new Promise((resolve) => {
+    stopCurrentAudio();
+    const blob = new Blob([buf], { type: "audio/wav" });
+    const objectUrl = URL.createObjectURL(blob);
+    const audio = new Audio(objectUrl);
+    currentAudio = audio;
+    audio.volume = 1;
+
+    const finish = (ok: boolean) => {
       URL.revokeObjectURL(objectUrl);
-      return false;
-    }
-  };
+      if (currentAudio === audio) currentAudio = null;
+      resolve(ok);
+    };
 
-  return tryPlay();
+    audio.onended = () => finish(true);
+    audio.onerror = () => finish(false);
+
+    const tryPlay = async () => {
+      try {
+        await audio.play();
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "NotAllowedError") {
+          pendingPlay = tryPlay;
+          finish(false);
+          return;
+        }
+        finish(false);
+      }
+    };
+
+    void tryPlay();
+  });
 }
 
 async function fetchTtsWav(text: string): Promise<ArrayBuffer | null> {
-  const encoded = encodeURIComponent(text.slice(0, 500));
+  const payload = text.slice(0, MAX_TTS_CHARS);
   const sources: { url: string; auth: boolean; mark: "local" | "backend" }[] = [];
 
   if (localTtsOk !== false) {
-    sources.push({ url: `/api/tts?text=${encoded}`, auth: false, mark: "local" });
+    sources.push({ url: "/api/tts", auth: false, mark: "local" });
   }
   if (backendTtsOk !== false) {
-    sources.push({
-      url: `${apiBase()}/games/tts/?text=${encoded}`,
-      auth: true,
-      mark: "backend",
-    });
+    sources.push({ url: `${apiBase()}/games/tts/`, auth: true, mark: "backend" });
   }
 
   for (const { url, auth, mark } of sources) {
     try {
       const res = await fetch(url, {
+        method: "POST",
         credentials: auth ? "include" : "same-origin",
-        headers: auth ? authHeaders() : {},
+        headers: {
+          "Content-Type": "application/json",
+          ...(auth ? authHeaders() : {}),
+        },
+        body: JSON.stringify({ text: payload }),
       });
       if (!res.ok) {
         if (mark === "local") localTtsOk = false;
@@ -164,50 +183,94 @@ async function fetchTtsWav(text: string): Promise<ArrayBuffer | null> {
   return null;
 }
 
-async function speakViaBackend(text: string): Promise<boolean> {
-  const buf = await fetchTtsWav(text);
-  if (!buf) return false;
-  return playWavBuffer(buf);
+function speakBrowserChunk(text: string, byAi: boolean): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      resolve(false);
+      return;
+    }
+
+    const synth = window.speechSynthesis;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "fr-FR";
+    utterance.rate = byAi ? 0.95 : 1.0;
+    utterance.pitch = byAi ? 0.92 : 1.02;
+    utterance.volume = 1;
+    refreshVoices();
+    if (preferredVoice) utterance.voice = preferredVoice;
+
+    utterance.onstart = () => startKeepAlive();
+    utterance.onend = () => {
+      stopKeepAlive();
+      resolve(true);
+    };
+    utterance.onerror = () => {
+      stopKeepAlive();
+      resolve(false);
+    };
+
+    synth.speak(utterance);
+    window.setTimeout(() => {
+      if (synth.paused) synth.resume();
+    }, 80);
+  });
 }
 
-function drainQueue() {
-  if (draining || queue.length === 0 || typeof window === "undefined") return;
+async function speakChunk(text: string, byAi: boolean): Promise<boolean> {
+  if (cancelRequested) return false;
 
-  const synth = window.speechSynthesis;
-  if (synth.speaking) {
-    window.setTimeout(drainQueue, 80);
-    return;
+  if (shouldPreferBackendTts()) {
+    const buf = await fetchTtsWav(text);
+    if (buf) {
+      const ok = await playWavBufferAndWait(buf);
+      if (ok) return true;
+    }
   }
 
-  draining = true;
-  const item = queue.shift()!;
-  const prefix = item.byAi ? "" : "";
-  const utterance = new SpeechSynthesisUtterance(`${prefix}${item.text.trim()}`);
-  utterance.lang = "fr-FR";
-  utterance.rate = item.byAi ? 0.93 : 1.0;
-  utterance.pitch = item.byAi ? 0.88 : 1.05;
-  utterance.volume = 1;
+  if (typeof window !== "undefined" && window.speechSynthesis) {
+    return speakBrowserChunk(text, byAi);
+  }
+  return false;
+}
 
-  refreshVoices();
-  if (preferredVoice) utterance.voice = preferredVoice;
+async function runSpeechPipeline(): Promise<void> {
+  if (pipelineRunning) return;
+  pipelineRunning = true;
 
-  utterance.onstart = () => startKeepAlive();
-  utterance.onend = () => {
-    draining = false;
-    if (queue.length === 0) stopKeepAlive();
-    window.setTimeout(drainQueue, 60);
-  };
-  utterance.onerror = () => {
-    draining = false;
-    void speakViaBackend(item.text).then((ok) => {
-      if (!ok) window.setTimeout(drainQueue, 60);
-    });
-  };
+  while (pendingJobs.length > 0 && !cancelRequested) {
+    const job = pendingJobs.shift()!;
+    const fullText = normalizeSpeechText(job.text, MAX_TTS_CHARS);
+    if (!fullText) continue;
 
-  synth.speak(utterance);
-  window.setTimeout(() => {
-    if (synth.paused) synth.resume();
-  }, 100);
+    lastSpeakingText = fullText;
+    const chunks = splitSpeechChunks(fullText);
+
+    for (const chunk of chunks) {
+      if (cancelRequested) break;
+      const ok = await speakChunk(chunk, job.byAi);
+      if (!ok && cancelRequested) break;
+      if (!ok && chunks.length === 1) break;
+    }
+  }
+
+  lastSpeakingText = "";
+  pipelineRunning = false;
+  cancelRequested = false;
+}
+
+function enqueueSpeech(text: string, byAi: boolean, interrupt: boolean): void {
+  if (interrupt) {
+    cancelRequested = true;
+    pendingJobs.length = 0;
+    stopCurrentAudio();
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  }
+
+  pendingJobs.push({ text, byAi });
+  cancelRequested = false;
+  void runSpeechPipeline();
 }
 
 export function initAiSpeech() {
@@ -236,10 +299,6 @@ export function unlockAiSpeech(): boolean {
   if (preferredVoice) warmup.voice = preferredVoice;
   synth.speak(warmup);
 
-  void fetchTtsWav(".").then((buf) => {
-    if (buf) void playWavBuffer(buf);
-  });
-
   return true;
 }
 
@@ -248,16 +307,37 @@ export function isAiSpeechUnlocked(): boolean {
 }
 
 export function stopAiSpeech() {
+  cancelRequested = true;
+  pendingJobs.length = 0;
+  stopKeepAlive();
+  stopCurrentAudio();
   if (typeof window !== "undefined" && window.speechSynthesis) {
-    queue.length = 0;
-    draining = false;
-    stopKeepAlive();
     window.speechSynthesis.cancel();
   }
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
+  lastSpeakingText = "";
+  pipelineRunning = false;
+}
+
+export function isSpeechActive(): boolean {
+  if (pipelineRunning || pendingJobs.length > 0) return true;
+  if (typeof window !== "undefined" && window.speechSynthesis?.speaking) return true;
+  if (currentAudio && !currentAudio.paused && !currentAudio.ended) return true;
+  return false;
+}
+
+/** Attend la fin de la lecture en cours (ou timeout). */
+export function waitForSpeechIdle(timeoutMs = 120_000): Promise<void> {
+  return new Promise((resolve) => {
+    const started = Date.now();
+    const tick = () => {
+      if (!isSpeechActive() || Date.now() - started > timeoutMs) {
+        resolve();
+        return;
+      }
+      window.setTimeout(tick, 120);
+    };
+    tick();
+  });
 }
 
 export function isAiSpeechSupported(): boolean {
@@ -267,50 +347,40 @@ export function isAiSpeechSupported(): boolean {
 
 export function speakComment(
   text: string,
-  options: { byAi?: boolean; enabled?: boolean; forceUnlock?: boolean } = {}
-) {
-  const { byAi = true, enabled = true, forceUnlock = false } = options;
-  if (!enabled || !text.trim()) return;
-  if (typeof window === "undefined") return;
+  options: {
+    byAi?: boolean;
+    enabled?: boolean;
+    forceUnlock?: boolean;
+    /** false = met en file sans couper la lecture en cours */
+    interrupt?: boolean;
+  } = {}
+): Promise<void> {
+  const { byAi = true, enabled = true, forceUnlock = false, interrupt = true } = options;
+  if (!enabled || !text.trim() || typeof window === "undefined") {
+    return Promise.resolve();
+  }
 
   if (forceUnlock) unlockAiSpeech();
 
   const normalized = text.trim();
-  if (normalized === lastQueuedText && (draining || queue.length > 0)) return;
-  lastQueuedText = normalized;
+  if (
+    !interrupt &&
+    normalized === lastSpeakingText &&
+    (pipelineRunning || pendingJobs.some((j) => j.text.trim() === normalized))
+  ) {
+    return waitForSpeechIdle();
+  }
 
-  const speak = async () => {
-    if (shouldPreferBackendTts()) {
-      const ok = await speakViaBackend(normalized);
-      if (ok) return;
-    }
-    if (!isAiSpeechSupported()) return;
-    initAiSpeech();
-    queue.push({ text: normalized, byAi });
-    drainQueue();
-  };
-
-  void speak();
+  enqueueSpeech(normalized, byAi, interrupt);
+  return waitForSpeechIdle();
 }
 
 export async function testAiSpeech(phrase: string): Promise<boolean> {
   unlockAiSpeech();
-  if (await speakViaBackend(phrase)) return true;
-
-  return new Promise((resolve) => {
-    if (!window.speechSynthesis) {
-      resolve(false);
-      return;
-    }
-    refreshVoices();
-    const u = new SpeechSynthesisUtterance(phrase);
-    u.lang = "fr-FR";
-    if (preferredVoice) u.voice = preferredVoice;
-    u.onstart = () => resolve(true);
-    u.onerror = () => resolve(false);
-    window.speechSynthesis.speak(u);
-    window.setTimeout(() => resolve(false), 4000);
-  });
+  stopAiSpeech();
+  enqueueSpeech(phrase, false, true);
+  await waitForSpeechIdle(30_000);
+  return true;
 }
 
 export function bindAiSpeechToUserGestures(active: boolean) {
