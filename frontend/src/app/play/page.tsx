@@ -65,6 +65,12 @@ import {
 } from "@/lib/gamePlayers";
 import { parseAnalysisPayload, type GameAnalysisData } from "@/lib/gameAnalysis";
 
+import {
+  useGameWebSocket,
+  useMatchmakingWebSocket,
+  type WsGamePayload,
+} from "@/hooks/useGameWebSocket";
+
 interface GameState {
   fen: string;
   moves?: ApiMove[];
