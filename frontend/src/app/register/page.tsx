@@ -8,8 +8,10 @@ import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { LevelPicker } from "@/components/profile/LevelPicker";
 import { CountryPicker } from "@/components/auth/CountryPicker";
 import type { ChessLevelId } from "@/lib/avatars";
+import { CHESS_LEVELS } from "@/lib/avatars";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LOCALES, type Locale } from "@/lib/i18n";
+import { PROVISIONAL_GAMES_REQUIRED } from "@/lib/ratings";
 
 const DISCOVERY_KEYS = [
   "friend",
@@ -48,6 +50,8 @@ export default function RegisterPage() {
   const { register, isLoading, locale, setLocale } = useAuthStore();
   const { t } = useTranslation();
   const router = useRouter();
+  const selectedLevel =
+    CHESS_LEVELS.find((level) => level.id === form.chess_level) ?? CHESS_LEVELS[1];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,6 +116,12 @@ export default function RegisterPage() {
             onChange={(chess_level) => setForm({ ...form, chess_level })}
           />
           <p className="text-xs opacity-50 -mt-2">{t("auth.register.levelHint")}</p>
+          <p className="text-xs text-africhess-green/90">
+            {t("auth.register.ratingStart", { elo: selectedLevel.elo })}
+          </p>
+          <p className="text-xs opacity-50">
+            {t("auth.register.ratingProvisional", { count: PROVISIONAL_GAMES_REQUIRED })}
+          </p>
         </section>
 
         <hr className="border-white/10" />

@@ -8,10 +8,11 @@ import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { UserAvatar } from "@/components/profile/UserAvatar";
 import { useTranslation } from "@/hooks/useTranslation";
-import { chessLevelLabel, formatLocaleDate } from "@/lib/i18n/labels";
+import { chessLevelLabel, formatLocaleDate, modeLabel } from "@/lib/i18n/labels";
 import { displayCountry } from "@/lib/countries";
 import { countryFlag } from "@/lib/worldCountries";
 import { useAuthStore } from "@/store/auth";
+import { formatElo, isProvisionalRating, type RatingRow } from "@/lib/ratings";
 
 interface PublicUser {
   id: number;
@@ -34,10 +35,8 @@ interface PublicUser {
   };
 }
 
-interface RatingRow {
-  mode: string;
-  elo: number;
-  games_count: number;
+interface RatingRowPublic extends RatingRow {
+  peak_elo?: number;
 }
 
 export default function PublicProfilePage() {
@@ -46,7 +45,7 @@ export default function PublicProfilePage() {
   const { user: me } = useAuthStore();
   const { t, locale } = useTranslation();
   const [profile, setProfile] = useState<PublicUser | null>(null);
-  const [ratings, setRatings] = useState<RatingRow[]>([]);
+  const [ratings, setRatings] = useState<RatingRowPublic[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -119,8 +118,10 @@ export default function PublicProfilePage() {
           <div className="grid sm:grid-cols-2 gap-3">
             {ratings.map((r) => (
               <div key={r.mode} className="flex justify-between text-sm border-b border-white/5 pb-2">
-                <span className="capitalize opacity-70">{r.mode}</span>
-                <span className="font-mono font-bold text-africhess-gold">{r.elo}</span>
+                <span className="capitalize opacity-70">{modeLabel(t, r.mode)}</span>
+                <span className="font-mono font-bold text-africhess-gold">
+                  {formatElo(r.elo, isProvisionalRating(r))}
+                </span>
               </div>
             ))}
           </div>

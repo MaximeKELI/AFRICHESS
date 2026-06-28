@@ -17,14 +17,19 @@ import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { type ChessLevelId } from "@/lib/avatars";
 import { useTranslation } from "@/hooks/useTranslation";
-import { chessLevelLabel } from "@/lib/i18n/labels";
+import { chessLevelLabel, modeLabel } from "@/lib/i18n/labels";
 import { countryFlag } from "@/lib/worldCountries";
 import { displayCountry } from "@/lib/countries";
+import {
+  formatElo,
+  isProvisionalRating,
+  type RatingRow,
+} from "@/lib/ratings";
 
 export default function ProfilePage() {
   const { user, fetchProfile } = useAuthStore();
   const { t, locale } = useTranslation();
-  const [ratings, setRatings] = useState<Array<{ mode: string; elo: number; peak_elo: number }>>([]);
+  const [ratings, setRatings] = useState<RatingRow[]>([]);
   const [chessLevel, setChessLevel] = useState<ChessLevelId>("intermediate");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -161,18 +166,40 @@ export default function ProfilePage() {
       <RecentGamesList />
 
       <div>
-        <h2 className="font-semibold mb-4">{t("profile.ratings.elo")}</h2>
+        <h2 className="font-semibold mb-2">{t("profile.ratings.elo")}</h2>
+        <p className="text-xs opacity-55 mb-4">{t("profile.ratings.provisionalNote")}</p>
         {ratingsError && <InlineAlert className="mb-3">{ratingsError}</InlineAlert>}
         <div className="space-y-2">
-          {ratings.map((r) => (
-            <div key={r.mode} className="glass-card p-4 flex justify-between">
-              <span className="capitalize">{r.mode}</span>
-              <span className="font-mono font-bold">
-                {r.elo}{" "}
-                <span className="text-sm opacity-50">{t("profile.ratings.peak", { elo: r.peak_elo })}</span>
-              </span>
-            </div>
-          ))}
+          {ratings.map((r) => {
+            const provisional = isProvisionalRating(r);
+            const remaining =
+              r.games_until_established ??
+              Math.max(0, 5 - (r.games_count ?? 0));
+            return (
+              <div key={r.mode} className="glass-card p-4">
+                <div className="flex justify-between items-start gap-3">
+                  <span className="capitalize">{modeLabel(t, r.mode)}</span>
+                  <div className="text-right">
+                    <span className="font-mono font-bold">{formatElo(r.elo, provisional)}</span>
+                    {r.peak_elo != null && (
+                      <span className="text-sm opacity-50 block">
+                        {t("profile.ratings.peak", { elo: r.peak_elo })}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {provisional && (
+                  <p className="text-xs text-africhess-gold/90 mt-2">
+                    {t("profile.ratings.provisional")} —{" "}
+                    {t("profile.ratings.gamesUntil", {
+                      count: remaining,
+                      mode: modeLabel(t, r.mode),
+                    })}
+                  </p>
+                )}
+              </div>
+            );
+          })}
           {ratings.length === 0 && (
             <p className="opacity-60">{t("profile.ratings.empty")}</p>
           )}

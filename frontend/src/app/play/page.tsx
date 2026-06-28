@@ -10,7 +10,7 @@ import { AiCommentaryPanel } from "@/components/chess/AiCommentaryPanel";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { GameAnalysisPanel } from "@/components/chess/GameAnalysisPanel";
 import { PlayBoardSection } from "@/components/play/PlayBoardSection";
-import { gamesApi } from "@/lib/api";
+import { gamesApi, ratingsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { defaultAiEloForUser, normalizeToPreset, type AiLevelElo } from "@/lib/aiStrength";
 import { AiStrengthPicker } from "@/components/chess/AiStrengthPicker";
@@ -45,6 +45,12 @@ import Image from "next/image";
 import { pickAiAvatar } from "@/lib/avatars";
 import { useTranslation } from "@/hooks/useTranslation";
 import { chessLevelLabel, modeLabel } from "@/lib/i18n/labels";
+import {
+  formatElo,
+  isProvisionalRating,
+  ratingForMode,
+  type RatingRow,
+} from "@/lib/ratings";
 import { PgnExportButton } from "@/components/chess/PgnExportButton";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { InlineAlert } from "@/components/ui/InlineAlert";
@@ -69,6 +75,8 @@ interface GameState {
   black_player?: GamePlayerPublic | null;
   white_elo?: number | null;
   black_elo?: number | null;
+  white_elo_provisional?: boolean;
+  black_elo_provisional?: boolean;
   bot?: GameBotPublic | null;
   white_time_ms?: number;
   black_time_ms?: number;
@@ -102,6 +110,7 @@ function PlayContent() {
   const [isRated, setIsRated] = useState(true);
   const [timeMinutes, setTimeMinutes] = useState<TimeMinutes>(DEFAULT_TIME_MINUTES);
   const [userElo, setUserElo] = useState<number | null>(null);
+  const [modeRating, setModeRating] = useState<RatingRow | null>(null);
   const [aiElo, setAiElo] = useState<number | null>(null);
   const [isVsAi, setIsVsAi] = useState(false);
   const [resumeOffer, setResumeOffer] = useState<ReturnType<typeof loadActiveGame>>(null);
@@ -183,6 +192,22 @@ function PlayContent() {
     return commentsFromMoves(gameData.moves, playerIsWhite);
   }, [gameData.moves, playerIsWhite]);
 
+  const userEloProvisional = isProvisionalRating(modeRating);
+
+  useEffect(() => {
+    if (!user) {
+      setModeRating(null);
+      return;
+    }
+    ratingsApi
+      .me()
+      .then(({ data }) => {
+        const list = Array.isArray(data) ? data : data.results ?? [];
+        setModeRating(ratingForMode(list, mode) ?? null);
+      })
+      .catch(() => setModeRating(null));
+  }, [user, mode]);
+
   useEffect(() => {
     if (!user) return;
     setAiDefaultSet(false);
@@ -245,6 +270,14 @@ function PlayContent() {
       black_player: data.black_player !== undefined ? data.black_player : prev.black_player,
       white_elo: data.white_elo !== undefined ? data.white_elo : prev.white_elo,
       black_elo: data.black_elo !== undefined ? data.black_elo : prev.black_elo,
+      white_elo_provisional:
+        data.white_elo_provisional !== undefined
+          ? data.white_elo_provisional
+          : prev.white_elo_provisional,
+      black_elo_provisional:
+        data.black_elo_provisional !== undefined
+          ? data.black_elo_provisional
+          : prev.black_elo_provisional,
       bot: data.bot !== undefined ? data.bot : prev.bot,
       variant: (data.variant as GameVariant) ?? prev.variant ?? "standard",
     }));
@@ -538,6 +571,18 @@ function PlayContent() {
         </span>
       </div>
 
+      {user && userEloProvisional && !gameId && modeRating && (
+        <div className="glass-card p-3 mb-4 text-sm text-africhess-gold/95 border border-africhess-gold/25">
+          {t("play.provisional.banner", {
+            elo: formatElo(modeRating.elo, true),
+            mode: modeLabelText,
+            remaining:
+              modeRating.games_until_established ??
+              Math.max(0, 5 - (modeRating.games_count ?? 0)),
+          })}
+        </div>
+      )}
+
       {resumeOffer && !gameId && (
         <div className="glass-card p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm">
@@ -807,7 +852,9 @@ function PlayContent() {
             <div className="flex justify-between text-xs mb-2 gap-2 hide-in-zen">
               <span className="opacity-70">
                 {t("play.vsAi.yourElo", { mode: modeLabelText })} :{" "}
-                <strong className="text-africhess-green">{userElo ?? "—"}</strong>
+                <strong className="text-africhess-green">
+                  {formatElo(userElo, userEloProvisional)}
+                </strong>
               </span>
               <span className="opacity-70">
                 {t("play.vsAi.aiStrength")} :{" "}

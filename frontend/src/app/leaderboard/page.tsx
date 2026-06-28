@@ -43,6 +43,7 @@ export default function LeaderboardPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold mb-6">{t("leaderboard.title")}</h1>
+      <p className="text-sm opacity-60 mb-4">{t("leaderboard.establishedNote")}</p>
       {error && <InlineAlert className="mb-4">{error}</InlineAlert>}
       {loading && <p className="text-sm opacity-60 mb-4">{t("common.loading")}</p>}
 
