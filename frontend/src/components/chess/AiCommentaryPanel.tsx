@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MoveComment } from "@/lib/chessDisplay";
 import { initAiSpeech, isAiSpeechSupported, speakComment, stopAiSpeech, unlockAiSpeech } from "@/lib/aiSpeech";
@@ -19,7 +19,6 @@ export function AiCommentaryPanel({
 }: AiCommentaryPanelProps) {
   const { t } = useTranslation();
   const latest = comments.at(-1);
-  const lastSpokenKey = useRef<string | null>(null);
   const voiceSupported = isAiSpeechSupported();
 
   useEffect(() => {
@@ -28,29 +27,8 @@ export function AiCommentaryPanel({
   }, []);
 
   useEffect(() => {
-    if (!enabled || !latest) return;
-    if (!isAiSpeechSupported()) return;
-
-    const key = `${latest.moveNumber}-${latest.san}-${latest.text}`;
-    if (lastSpokenKey.current === key) return;
-    lastSpokenKey.current = key;
-
-    const delay = latest.byAi ? 500 : 300;
-    const timer = window.setTimeout(() => {
-      speakComment(latest.text, {
-        byAi: latest.byAi,
-        enabled: true,
-        forceUnlock: true,
-      });
-    }, delay);
-
-    return () => window.clearTimeout(timer);
-  }, [enabled, latest]);
-
-  useEffect(() => {
     if (!enabled) {
       stopAiSpeech();
-      lastSpokenKey.current = null;
     }
   }, [enabled]);
 
