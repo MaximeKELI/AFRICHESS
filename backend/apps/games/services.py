@@ -196,7 +196,7 @@ class GameService:
         odds_preset="",
     ):
         timed, white_ms, black_ms, inc_ms, tcm = resolve_time_fields(
-            is_timed, time_minutes, time_control=time_control
+            is_timed, time_minutes
         )
         fen = starting_fen or "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         game = Game.objects.create(
