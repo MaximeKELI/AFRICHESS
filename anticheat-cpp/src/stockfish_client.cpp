@@ -158,30 +158,48 @@ EngineMoveAnalysis StockfishClient::analyze_move(
     return result;
   }
 
+  send("setoption name MultiPV value 3");
   send("ucinewgame");
   send("position " + position);
   send("go depth " + std::to_string(depth));
 
   int best_eval = 0;
-  std::vector<std::string> best_pv;
+  std::map<int, std::vector<std::string>> multipv_lines;
   std::string line;
-  for (int i = 0; i < 400; ++i) {
+  for (int i = 0; i < 500; ++i) {
     line = read_line();
     if (line.empty()) {
       break;
     }
     if (line.rfind("info", 0) == 0 && line.find(" pv ") != std::string::npos) {
       best_eval = parse_eval_cp(line, true);
-      best_pv = parse_pv(line);
+      auto pv = parse_pv(line);
+      int mpv = 1;
+      auto mpv_idx = line.find(" multipv ");
+      if (mpv_idx != std::string::npos) {
+        std::istringstream mpv_stream(line.substr(mpv_idx + 9));
+        mpv_stream >> mpv;
+      }
+      if (!pv.empty()) {
+        multipv_lines[mpv] = pv;
+      }
     }
     if (line.rfind("bestmove", 0) == 0) {
       break;
     }
   }
 
-  if (!best_pv.empty()) {
-    result.best_uci = best_pv[0];
-    result.pv_uci = best_pv;
+  if (!multipv_lines.empty()) {
+    const auto& primary = multipv_lines.begin()->second;
+    if (!primary.empty()) {
+      result.best_uci = primary[0];
+      result.pv_uci = primary;
+    }
+  }
+  for (const auto& entry : multipv_lines) {
+    if (!entry.second.empty()) {
+      result.top3_uci.push_back(entry.second[0]);
+    }
   }
   result.eval_before_cp = best_eval;
 
@@ -203,13 +221,34 @@ EngineMoveAnalysis StockfishClient::analyze_move(
   }
   result.eval_after_cp = after_eval;
 
-  bool white_to_move = position.find(" w ") != std::string::npos || position == "startpos";
+  int move_count = 0;
+  auto moves_idx = position.find(" moves ");
+  if (moves_idx != std::string::npos) {
+    std::istringstream iss(position.substr(moves_idx + 7));
+    std::string token;
+    while (iss >> token) {
+      ++move_count;
+    }
+  }
+  bool white_to_move = (move_count % 2 == 0);
   int loss = white_to_move ? best_eval - after_eval : after_eval - best_eval;
   if (loss < 0) {
     loss = 0;
   }
   result.centipawn_loss = loss;
   result.complexity_cp = std::min(800, std::max(0, std::abs(best_eval)));
+
+  result.is_top1 = !result.best_uci.empty() && played_uci == result.best_uci;
+  result.is_top3 = result.is_top1;
+  for (const auto& candidate : result.top3_uci) {
+    if (candidate == played_uci) {
+      result.is_top3 = true;
+      break;
+    }
+  }
+  if (!result.is_top3 && result.centipawn_loss <= 20) {
+    result.is_top3 = true;
+  }
   return result;
 }
 
