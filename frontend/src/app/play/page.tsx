@@ -7,6 +7,7 @@ import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { BackgroundPicker } from "@/components/chess/BackgroundPicker";
 import { OptionSection } from "@/components/ui/OptionSection";
+import { OptionCategoryNav } from "@/components/ui/OptionCategoryNav";
 import { AiCommentaryPanel } from "@/components/chess/AiCommentaryPanel";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { GameAnalysisPanel } from "@/components/chess/GameAnalysisPanel";
@@ -119,6 +120,9 @@ function PlayContent() {
   const [dropPiece, setDropPiece] = useState<string | null>(null);
   const [activeVariant, setActiveVariant] = useState<GameVariant>("standard");
   const [mobileTab, setMobileTab] = useState<"board" | "moves" | "setup">("setup");
+  const [setupCategory, setSetupCategory] = useState<
+    "game" | "ai" | "online" | "board" | "pieces" | "background"
+  >("game");
   const { aiCommentsEnabled } = usePreferencesStore();
   const turnStartRef = useRef(Date.now());
 
@@ -145,6 +149,18 @@ function PlayContent() {
     [useClock, timeMinutes, isRated]
   );
   const ratedClockLabel = MODE_CLOCK_LABEL[mode] ?? "10+0";
+
+  const setupCategories = useMemo(
+    () => [
+      { id: "game", label: t("play.options.game") },
+      { id: "ai", label: t("play.vsAi.title") },
+      { id: "online", label: t("play.online.title") },
+      { id: "board", label: t("board.picker.title") },
+      { id: "pieces", label: t("board.picker.pieces") },
+      { id: "background", label: t("background.picker.title") },
+    ],
+    [t]
+  );
 
   const panelDisplay = useMemo(() => {
     if (gameData.moves && gameData.moves.length > 0) {
@@ -815,133 +831,161 @@ function PlayContent() {
 
           <div className={mobileTab === "setup" ? "block space-y-4" : "hidden lg:block lg:space-y-4"}>
           <hr className="border-white/10 hidden lg:block" />
-          <div className="glass-card p-4 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium">{t("play.rated.label")}</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={isRated}
-                onClick={() => setIsRated((r) => !r)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium ${isRated ? "african-gradient text-white" : "border border-white/20"}`}
-              >
-                {isRated ? t("play.rated.on") : t("play.rated.off")}
-              </button>
-            </div>
-            {isRated && useClock ? (
-              <p className="text-xs opacity-60">
-                {t("play.rated.clock", { clock: ratedClockLabel, mode: modeLabelText })}
-              </p>
-            ) : (
-              <TimeControlPicker
-                isTimed={useClock}
-                minutes={timeMinutes}
-                onTimedChange={setUseClock}
-                onMinutesChange={setTimeMinutes}
-              />
-            )}
-          </div>
 
-          <div className="glass-card p-4">
-            <h2 className="font-semibold mb-3">{t("play.vsAi.title")}</h2>
-            {levelLabel && (
-              <p className="text-xs opacity-60 mb-1">{t("play.vsAi.profile", { level: levelLabel })}</p>
-            )}
-            <p className="text-[10px] opacity-45 mb-2 leading-snug">
-              {t("play.vsAi.hint", { mode: modeLabelText })}
-            </p>
-            <div className="flex justify-between text-xs mb-2 gap-2 hide-in-zen">
-              <span className="opacity-70">
-                {t("play.vsAi.yourElo", { mode: modeLabelText })} :{" "}
-                <strong className="text-africhess-green">
-                  {formatElo(userElo, userEloProvisional)}
-                </strong>
-              </span>
-              <span className="opacity-70">
-                {t("play.vsAi.aiStrength")} :{" "}
-                <strong className="text-africhess-gold">{aiElo ?? "—"}</strong>
-              </span>
-            </div>
-            <div className="mb-3 border-t border-white/10 pt-3">
-              <VariantPicker value={variant} onChange={setVariant} />
-            </div>
-            {selectedBot ? (
-              <div className="mb-3 p-2 rounded-lg border border-africhess-gold/30 text-sm">
-                <p>{t("play.botSelected", { slug: selectedBot })}</p>
+          <OptionCategoryNav
+            categories={setupCategories}
+            active={setupCategory}
+            onChange={(id) =>
+              setSetupCategory(
+                id as "game" | "ai" | "online" | "board" | "pieces" | "background"
+              )
+            }
+            ariaLabel={t("play.options.sectionNav")}
+          />
+
+          {setupCategory === "game" && (
+            <>
+              <OptionSection compact title={t("play.options.game")} description={t("play.rated.label")}>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium">{t("play.rated.label")}</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={isRated}
+                      onClick={() => setIsRated((r) => !r)}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium ${isRated ? "african-gradient text-white" : "border border-white/20"}`}
+                    >
+                      {isRated ? t("play.rated.on") : t("play.rated.off")}
+                    </button>
+                  </div>
+                  {isRated && useClock ? (
+                    <p className="text-xs opacity-60">
+                      {t("play.rated.clock", { clock: ratedClockLabel, mode: modeLabelText })}
+                    </p>
+                  ) : (
+                    <TimeControlPicker
+                      isTimed={useClock}
+                      minutes={timeMinutes}
+                      onTimedChange={setUseClock}
+                      onMinutesChange={setTimeMinutes}
+                    />
+                  )}
+                </div>
+              </OptionSection>
+              {!gameId && <RecentGamesList limit={8} showTitle />}
+            </>
+          )}
+
+          {setupCategory === "ai" && (
+            <OptionSection compact title={t("play.vsAi.title")} description={t("play.vsAi.hint", { mode: modeLabelText })}>
+              {levelLabel && (
+                <p className="text-xs opacity-60 mb-1">{t("play.vsAi.profile", { level: levelLabel })}</p>
+              )}
+              <div className="flex justify-between text-xs mb-3 gap-2 hide-in-zen">
+                <span className="opacity-70">
+                  {t("play.vsAi.yourElo", { mode: modeLabelText })} :{" "}
+                  <strong className="text-africhess-green">
+                    {formatElo(userElo, userEloProvisional)}
+                  </strong>
+                </span>
+                <span className="opacity-70">
+                  {t("play.vsAi.aiStrength")} :{" "}
+                  <strong className="text-africhess-gold">{aiElo ?? "—"}</strong>
+                </span>
+              </div>
+              <div className="mb-3 border-t border-white/10 pt-3">
+                <VariantPicker value={variant} onChange={setVariant} />
+              </div>
+              {selectedBot ? (
+                <div className="mb-3 p-2 rounded-lg border border-africhess-gold/30 text-sm">
+                  <p>{t("play.botSelected", { slug: selectedBot })}</p>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedBot(null)}
+                    className="text-xs text-africhess-gold hover:underline mt-1"
+                  >
+                    {t("play.botClear")}
+                  </button>
+                </div>
+              ) : (
+                <div className="mb-3 border-t border-white/10 pt-3">
+                  <AiStrengthPicker value={aiEloChoice} onChange={setAiEloChoice} />
+                </div>
+              )}
+              <Link href="/bots" className="text-xs text-africhess-gold hover:underline block mb-3">
+                {t("play.browseBots")}
+              </Link>
+              <select
+                value={orientation}
+                onChange={(e) =>
+                  setOrientation(e.target.value as "white" | "black")
+                }
+                className="w-full mb-3 border rounded-lg px-3 py-2 bg-transparent"
+              >
+                <option value="white">{t("play.color.white")}</option>
+                <option value="black">{t("play.color.black")}</option>
+              </select>
+              <div className="mb-3 py-2 border-t border-white/10">
+                <CommentsToggle />
+              </div>
+              <button
+                onClick={startAI}
+                className="w-full py-2 rounded-lg african-gradient text-white font-medium"
+              >
+                {t("play.vsAi.start")}
+              </button>
+            </OptionSection>
+          )}
+
+          {setupCategory === "online" && (
+            <OptionSection compact title={t("play.online.title")}>
+              {mmError && <InlineAlert className="mb-3 text-xs">{mmError}</InlineAlert>}
+              <button
+                onClick={findMatch}
+                disabled={searching || wsSearching}
+                className="w-full py-2 rounded-lg border-2 border-africhess-green text-africhess-green font-medium hover:bg-africhess-green/10 disabled:opacity-50"
+              >
+                {searching || wsSearching ? t("play.online.searching") : t("play.online.find")}
+              </button>
+              {(searching || wsSearching) && (
                 <button
                   type="button"
-                  onClick={() => setSelectedBot(null)}
-                  className="text-xs text-africhess-gold hover:underline mt-1"
+                  onClick={() => {
+                    wsCancel();
+                    gamesApi.leaveQueue().catch(() => {});
+                    setSearching(false);
+                    setStatus(t("play.status.searchCancelled"));
+                  }}
+                  className="w-full mt-2 py-1 text-xs opacity-60 hover:opacity-100"
                 >
-                  {t("play.botClear")}
+                  {t("play.online.cancel")}
                 </button>
-              </div>
-            ) : (
-              <div className="mb-3 border-t border-white/10 pt-3">
-                <AiStrengthPicker value={aiEloChoice} onChange={setAiEloChoice} />
-              </div>
-            )}
-            <Link href="/bots" className="text-xs text-africhess-gold hover:underline block mb-3">
-              {t("play.browseBots")}
-            </Link>
-            <select
-              value={orientation}
-              onChange={(e) =>
-                setOrientation(e.target.value as "white" | "black")
-              }
-              className="w-full mb-3 border rounded-lg px-3 py-2 bg-transparent"
-            >
-              <option value="white">{t("play.color.white")}</option>
-              <option value="black">{t("play.color.black")}</option>
-            </select>
-            <div className="mb-3 py-2 border-t border-white/10">
-              <CommentsToggle />
-            </div>
-            <button
-              onClick={startAI}
-              className="w-full py-2 rounded-lg african-gradient text-white font-medium"
-            >
-              {t("play.vsAi.start")}
-            </button>
-          </div>
+              )}
+            </OptionSection>
+          )}
 
-          <div className="glass-card p-4">
-            <h2 className="font-semibold mb-3">{t("play.online.title")}</h2>
-            {mmError && <InlineAlert className="mb-3 text-xs">{mmError}</InlineAlert>}
-            <button
-              onClick={findMatch}
-              disabled={searching || wsSearching}
-              className="w-full py-2 rounded-lg border-2 border-africhess-green text-africhess-green font-medium hover:bg-africhess-green/10 disabled:opacity-50"
-            >
-              {searching || wsSearching ? t("play.online.searching") : t("play.online.find")}
-            </button>
-            {(searching || wsSearching) && (
-              <button
-                type="button"
-                onClick={() => {
-                  wsCancel();
-                  gamesApi.leaveQueue().catch(() => {});
-                  setSearching(false);
-                  setStatus(t("play.status.searchCancelled"));
-                }}
-                className="w-full mt-2 py-1 text-xs opacity-60 hover:opacity-100"
-              >
-                {t("play.online.cancel")}
-              </button>
-            )}
-          </div>
-
-          <div className="glass-card p-4 space-y-4">
-            <h2 className="font-semibold text-sm uppercase tracking-wide opacity-70">
-              {t("play.options.appearance")}
-            </h2>
+          {setupCategory === "board" && (
             <OptionSection
               compact
               title={t("board.picker.title")}
               description={t("board.picker.hint")}
             >
-              <BoardThemePicker compact showHeader={false} />
+              <BoardThemePicker compact showHeader={false} showPieces={false} />
             </OptionSection>
+          )}
+
+          {setupCategory === "pieces" && (
+            <OptionSection
+              compact
+              title={t("board.picker.pieces")}
+              description={t("board.picker.piecesHint")}
+            >
+              <BoardThemePicker compact showHeader={false} showColors={false} />
+            </OptionSection>
+          )}
+
+          {setupCategory === "background" && (
             <OptionSection
               compact
               title={t("background.picker.title")}
@@ -949,9 +993,7 @@ function PlayContent() {
             >
               <BackgroundPicker compact showHeader={false} />
             </OptionSection>
-          </div>
-
-          {!gameId && <RecentGamesList limit={8} showTitle />}
+          )}
 
           {status && (
             <p className="text-sm text-africhess-gold">{status}</p>

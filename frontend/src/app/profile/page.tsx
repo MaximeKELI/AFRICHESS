@@ -152,7 +152,13 @@ export default function ProfilePage() {
           title={t("board.picker.title")}
           description={t("board.picker.hint")}
         >
-          <BoardThemePicker showHeader={false} />
+          <BoardThemePicker showHeader={false} showPieces={false} />
+        </OptionSection>
+        <OptionSection
+          title={t("board.picker.pieces")}
+          description={t("board.picker.piecesHint")}
+        >
+          <BoardThemePicker showHeader={false} showColors={false} />
         </OptionSection>
         <OptionSection
           title={t("background.picker.title")}

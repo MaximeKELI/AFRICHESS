@@ -1,18 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
 import { getBoardBackground } from "@/lib/boardBackgrounds";
-import { shouldShowSiteBackground } from "@/lib/siteBackgroundRoutes";
 import { usePreferencesStore } from "@/store/preferences";
 
-/** Arrière-plan plein écran — uniquement sur Jouer, Problèmes, Profil (pas l'accueil). */
+/** Arrière-plan plein écran (style Chess.com) — tout le site, y compris l'accueil. */
 export function SiteBackground() {
-  const pathname = usePathname();
   const boardBackgroundId = usePreferencesStore((s) => s.boardBackground);
   const bg = getBoardBackground(boardBackgroundId);
-  const onAllowedPage = shouldShowSiteBackground(pathname);
-  const active = onAllowedPage && Boolean(bg.src);
+  const active = Boolean(bg.src);
 
   useEffect(() => {
     document.documentElement.classList.toggle("has-site-background", active);

@@ -15,6 +15,10 @@ interface BoardThemePickerProps {
   className?: string;
   /** Masquer le titre quand le picker est dans une OptionSection */
   showHeader?: boolean;
+  /** Afficher la grille de couleurs du plateau */
+  showColors?: boolean;
+  /** Afficher le sélecteur de pièces */
+  showPieces?: boolean;
 }
 
 function ThemeSwatch({ theme, size }: { theme: BoardTheme; size: "sm" | "md" }) {
@@ -65,7 +69,13 @@ function ThemeButton({
   );
 }
 
-export function BoardThemePicker({ compact = false, className, showHeader = true }: BoardThemePickerProps) {
+export function BoardThemePicker({
+  compact = false,
+  className,
+  showHeader = true,
+  showColors = true,
+  showPieces = true,
+}: BoardThemePickerProps) {
   const { boardTheme, setBoardTheme, pieceSet, setPieceSet } = usePreferencesStore();
   const { t } = useTranslation();
   const classic = BOARD_THEMES.filter((t) => !t.floral);
@@ -89,10 +99,12 @@ export function BoardThemePicker({ compact = false, className, showHeader = true
         </>
       )}
 
+      {showColors && (
+        <>
       <p className={clsx("opacity-50 mb-2 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs")}>
         {t("board.picker.classics")}
       </p>
-      <div className={clsx(gridClass, "mb-4")}>
+      <div className={clsx(gridClass, showPieces ? "mb-4" : "")}>
         {classic.map((theme) => (
           <ThemeButton
             key={theme.id}
@@ -108,7 +120,7 @@ export function BoardThemePicker({ compact = false, className, showHeader = true
       <p className={clsx("opacity-50 mb-2 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs")}>
         {t("board.picker.floral")}
       </p>
-      <div className={gridClass}>
+      <div className={clsx(gridClass, showPieces ? "mb-0" : "")}>
         {floral.map((theme) => (
           <ThemeButton
             key={theme.id}
@@ -120,11 +132,15 @@ export function BoardThemePicker({ compact = false, className, showHeader = true
           />
         ))}
       </div>
+        </>
+      )}
 
-      <p className={clsx("opacity-50 mb-2 mt-4 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs")}>
+      {showPieces && (
+        <>
+      <p className={clsx("opacity-50 mb-2 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs", showColors && "mt-4")}>
         {t("board.picker.pieces")}
       </p>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {(["classic", "african", "african-svg"] as const).map((id) => (
           <button
             key={id}
@@ -153,6 +169,8 @@ export function BoardThemePicker({ compact = false, className, showHeader = true
           </button>
         ))}
       </div>
+        </>
+      )}
     </div>
   );
 }
