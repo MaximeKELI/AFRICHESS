@@ -178,7 +178,7 @@ export function useMatchmakingWebSocket(
   enabled: boolean,
   mode: string,
   onMatch: (gameId: string, roomId: string) => void,
-  timeOpts?: { isTimed: boolean; timeMinutes: number; isRated?: boolean }
+  timeOpts?: { isTimed: boolean; timePreset: string; isRated?: boolean }
 ) {
   const wsRef = useRef<WebSocket | null>(null);
   const [searching, setSearching] = useState(false);

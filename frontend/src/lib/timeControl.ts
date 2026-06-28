@@ -116,6 +116,7 @@ export function inferPresetFromMs(
   return null;
 }
 
+export function minutesToPreset(minutes: TimeMinutes): TimePresetId {
   const map: Record<TimeMinutes, TimePresetId> = {
     5: "5+0",
     10: "10+0",

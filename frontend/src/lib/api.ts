@@ -131,6 +131,7 @@ export const gamesApi = {
     include_comments?: boolean;
     is_timed?: boolean;
     time_minutes?: number | null;
+    time_control?: string;
   }) => api.post("/games/ai/", data),
   bots: (params?: { q?: string; premium?: boolean }) =>
     api.get("/games/bots/", {
@@ -158,7 +159,12 @@ export const gamesApi = {
   undo: (id: string) => api.post(`/games/${id}/undo/`),
   matchmaking: (
     mode: string,
-    opts?: { is_timed?: boolean; time_minutes?: number | null; is_rated?: boolean }
+    opts?: {
+      is_timed?: boolean;
+      time_minutes?: number | null;
+      time_control?: string;
+      is_rated?: boolean;
+    }
   ) => api.post("/games/matchmaking/", { mode, ...opts }),
   leaveQueue: () => api.delete("/games/matchmaking/"),
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),

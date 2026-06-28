@@ -623,14 +623,14 @@ function PlayContent() {
     setSearching(true);
     setStatus(
       useClock
-        ? t("play.status.searchTimed", { minutes: timeMinutes })
+        ? t("play.status.searchTimed", { minutes: TIME_PRESETS[timePreset].statMinutes })
         : t("play.status.searchUnlimited")
     );
     try {
       await gamesApi.matchmaking(mode, {
         is_timed: useClock,
         is_rated: isRated,
-        time_minutes: isRated && useClock ? null : useClock ? timeMinutes : null,
+        time_control: isRated && useClock ? undefined : useClock ? timePreset : undefined,
       });
     } catch {
       /* file HTTP optionnelle ; WS principal */
