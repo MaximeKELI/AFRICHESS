@@ -185,7 +185,7 @@ EngineMoveAnalysis StockfishClient::analyze_move(
   }
   result.eval_before_cp = best_eval;
 
-  send("position fen " + fen + " moves " + played_uci);
+  send("position " + position + " moves " + played_uci);
   send("go depth " + std::to_string(std::max(8, depth - 4)));
 
   int after_eval = best_eval;
