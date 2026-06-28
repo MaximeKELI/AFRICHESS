@@ -31,7 +31,7 @@ from django.utils import timezone
 
 from apps.ratings.services import RatingService
 
-from .anticheat import validate_move_timing
+from .anticheat import validate_move_fairplay
 from .draw_rules import can_claim_threefold_from_game, finalize_repetition_draw
 from .time_control import resolve_time_fields
 from .clock_service import (
