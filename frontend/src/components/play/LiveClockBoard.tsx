@@ -105,6 +105,8 @@ function PlayBoardCoreInner({
   disabled,
   playerColor,
   onMove,
+  onPremove,
+  enablePremoves = false,
   serverValidated = false,
   pendingDrop = null,
   onDropAtSquare,

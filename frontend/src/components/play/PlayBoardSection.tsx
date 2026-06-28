@@ -90,6 +90,8 @@ function PlayBoardSectionInner({
           disabled={disabled}
           playerColor={playerColor}
           onMove={onMove}
+          onPremove={onPremove}
+          enablePremoves={enablePremoves}
           serverValidated={serverValidated}
           pendingDrop={pendingDrop}
           onDropAtSquare={onDropAtSquare}
