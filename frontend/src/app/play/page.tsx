@@ -871,6 +871,8 @@ function PlayContent() {
             moves={gameData.moves}
             orientation={orientation}
             onMove={handleMove}
+            onPremove={telemetryEnabled ? notePremove : undefined}
+            enablePremoves={telemetryEnabled && isLiveHuman}
             disabled={boardDisabled}
             playerColor={playerColor as "w" | "b"}
             showClock={Boolean(gameId && gameIsTimed)}
@@ -879,7 +881,7 @@ function PlayContent() {
             clockRunning={Boolean(gameActive && gameIsTimed && (isLiveHuman || isMyTurn))}
             incrementMs={gameData.increment_ms ?? 0}
             clockLabel={clockLabel}
-            serverValidated={activeVariant !== "standard"}
+            serverValidated={isLiveHuman || activeVariant !== "standard"}
             pendingDrop={activeVariant === "crazyhouse" ? dropPiece : null}
             onDropAtSquare={(uci) => handleMove(uci)}
             topPlayer={topPlayerConfig}

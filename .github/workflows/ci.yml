@@ -25,6 +25,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Build Fair Play engine (C++)
+        run: |
+          sudo apt-get update && sudo apt-get install -y stockfish cmake build-essential
+          cd anticheat-cpp
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j2
+          mkdir -p ../backend/bin
+          cp build/africhess-fairplay ../backend/bin/africhess-fairplay
+          chmod +x ../backend/bin/africhess-fairplay
       - name: Install backend deps
         run: |
           cd backend

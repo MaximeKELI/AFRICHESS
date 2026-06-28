@@ -75,6 +75,25 @@ class FairPlaySanctionAdmin(admin.ModelAdmin):
     list_filter = ["sanction_type", "is_active"]
 
 
+@admin.register(FairPlayUserConsent)
+class FairPlayUserConsentAdmin(admin.ModelAdmin):
+    list_display = ["user", "consent_version", "consented_at", "ip_address"]
+    readonly_fields = ["consented_at", "ip_address", "user_agent"]
+
+
+@admin.register(FairPlayAppeal)
+class FairPlayAppealAdmin(admin.ModelAdmin):
+    list_display = ["id", "user", "review_case", "status", "created_at", "resolved_at"]
+    list_filter = ["status"]
+
+
+@admin.register(FairPlayAuditLog)
+class FairPlayAuditLogAdmin(admin.ModelAdmin):
+    list_display = ["created_at", "action", "staff", "target_type", "target_id", "ip_address"]
+    list_filter = ["action"]
+    readonly_fields = ["created_at", "action", "staff", "target_type", "target_id", "ip_address", "metadata"]
+
+
 @admin.register(GameFairPlayTelemetry)
 class GameFairPlayTelemetryAdmin(admin.ModelAdmin):
     list_display = ["game", "user", "updated_at"]
