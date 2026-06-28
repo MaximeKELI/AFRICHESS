@@ -983,9 +983,9 @@ function PlayContent() {
                   ) : (
                     <TimeControlPicker
                       isTimed={useClock}
-                      minutes={timeMinutes}
+                      preset={timePreset}
                       onTimedChange={setUseClock}
-                      onMinutesChange={setTimeMinutes}
+                      onPresetChange={setTimePreset}
                     />
                   )}
                 </div>
@@ -1045,6 +1045,15 @@ function PlayContent() {
               </select>
               <div className="mb-3 py-2 border-t border-white/10">
                 <CommentsToggle />
+              </div>
+              <div className="mb-3 py-2 border-t border-white/10">
+                <TimeControlPicker
+                  isTimed={useClock}
+                  preset={timePreset}
+                  onTimedChange={setUseClock}
+                  onPresetChange={setTimePreset}
+                  compact
+                />
               </div>
               <button
                 type="button"
