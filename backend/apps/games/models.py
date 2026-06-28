@@ -376,6 +376,7 @@ class FairPlayReport(models.Model):
         REVIEW = "review", "Review"
         SUSPICIOUS = "suspicious", "Suspicious"
         LIKELY_CHEAT = "likely_cheat", "Likely cheat"
+        ENGINE_UNAVAILABLE = "engine_unavailable", "Engine unavailable"
 
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="fairplay_reports")
     user = models.ForeignKey(
@@ -472,3 +473,87 @@ class FairPlaySanction(models.Model):
     class Meta:
         ordering = ["-created_at"]
         indexes = [models.Index(fields=["user", "is_active", "-created_at"])]
+
+
+class FairPlayUserConsent(models.Model):
+    """Consentement RGPD pour la collecte Fair Play (télémétrie comportementale)."""
+
+    CONSENT_VERSION = "1.0"
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="fairplay_consent",
+    )
+    consent_version = models.CharField(max_length=16, default=CONSENT_VERSION)
+    consented_at = models.DateTimeField()
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=512, blank=True, default="")
+
+    class Meta:
+        indexes = [models.Index(fields=["-consented_at"])]
+
+
+class FairPlayAppeal(models.Model):
+    """Recours joueur — droit de réponse (FIDE Fair Play / Lichess)."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        UNDER_REVIEW = "under_review", "Under review"
+        ACCEPTED = "accepted", "Accepted"
+        REJECTED = "rejected", "Rejected"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="fairplay_appeals",
+    )
+    review_case = models.ForeignKey(
+        FairPlayReviewCase,
+        on_delete=models.CASCADE,
+        related_name="appeals",
+    )
+    reason = models.TextField(max_length=4000)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    staff_response = models.TextField(blank=True, default="")
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["status", "-created_at"])]
+
+
+class FairPlayAuditLog(models.Model):
+    """Journal d'audit staff immuable (ISO 27001 / FIDE evidence chain)."""
+
+    class Action(models.TextChoices):
+        VIEW_OVERVIEW = "view_overview", "View overview"
+        VIEW_QUEUE = "view_queue", "View queue"
+        VIEW_GAME = "view_game", "View game"
+        VIEW_USER = "view_user", "View user"
+        DECIDE_CASE = "decide_case", "Decide case"
+        ENGINE_FAILURE = "engine_failure", "Engine failure"
+        SANCTION_EXPIRED = "sanction_expired", "Sanction expired"
+        APPEAL_RESOLVED = "appeal_resolved", "Appeal resolved"
+
+    staff = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="fairplay_audit_logs",
+    )
+    action = models.CharField(max_length=32, choices=Action.choices)
+    target_type = models.CharField(max_length=32, blank=True, default="")
+    target_id = models.CharField(max_length=64, blank=True, default="")
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["action", "-created_at"]),
+            models.Index(fields=["target_type", "target_id"]),
+        ]
