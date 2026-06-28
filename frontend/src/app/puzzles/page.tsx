@@ -529,19 +529,19 @@ export default function PuzzlesPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(200px,260px)] xl:grid-cols-[minmax(0,1fr)_minmax(200px,260px)_minmax(160px,200px)] gap-4 lg:gap-6 items-start">
             <div className="w-full min-w-0">
-            <ChessBoard
-              fen={display.fen}
-              onMove={handleMove}
-              orientation="white"
-              playerColor="w"
-              lastMove={display.lastMove}
-              playSoundOnFenChange={false}
-            />
+            <CapturedBoardStack captured={display.captured} orientation="white">
+              <ChessBoard
+                fen={display.fen}
+                onMove={handleMove}
+                orientation="white"
+                playerColor="w"
+                lastMove={display.lastMove}
+                playSoundOnFenChange={false}
+              />
+            </CapturedBoardStack>
             </div>
             <GameSidePanel
               moves={display.moveRows}
-              captured={display.captured}
-              orientation="white"
               isCheck={display.isCheck}
               turn={display.turn}
             />

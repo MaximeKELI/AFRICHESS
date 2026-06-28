@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { CapturedBoardStack } from "@/components/chess/CapturedBoardStack";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { LiveEvalBar } from "@/components/chess/LiveEvalBar";
@@ -127,18 +128,18 @@ export default function WatchGamePage() {
       )}
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(200px,240px)] gap-4 lg:gap-6 items-start">
         <div className="w-full min-w-0">
-        <ChessBoard
-          fen={display.fen}
-          orientation="white"
-          disabled
-          playerColor="w"
-          lastMove={display.lastMove}
-        />
+        <CapturedBoardStack captured={display.captured} orientation="white">
+          <ChessBoard
+            fen={display.fen}
+            orientation="white"
+            disabled
+            playerColor="w"
+            lastMove={display.lastMove}
+          />
+        </CapturedBoardStack>
         </div>
         <GameSidePanel
           moves={display.moveRows}
-          captured={display.captured}
-          orientation="white"
           isCheck={display.isCheck}
           turn={display.turn}
         />

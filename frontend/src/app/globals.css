@@ -172,6 +172,44 @@ html.has-site-background footer {
   margin-inline: auto;
 }
 
+.board-captured-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 1.75rem;
+  width: 100%;
+  max-width: min(100%, 820px);
+  margin-inline: auto;
+  padding: 0.125rem 0.25rem;
+}
+
+.board-captured-bar-empty {
+  min-height: 1.25rem;
+}
+
+.board-captured-pieces {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.125rem;
+  min-height: 1.375rem;
+}
+
+.board-captured-advantage {
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  opacity: 0.65;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.board-captured-piece {
+  opacity: 0.88;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.15));
+}
+
 .play-mobile-tabs {
   @apply flex gap-1 p-1 rounded-xl bg-black/10 border border-white/10 mb-4 lg:hidden;
 }
