@@ -197,12 +197,18 @@ export function GameReview({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") goPrev();
-      if (e.key === "ArrowRight") goNext();
+      if (e.key === "ArrowLeft") {
+        setAutoTour(false);
+        setSelectedIdx((i) => Math.max(0, i - 1));
+      }
+      if (e.key === "ArrowRight") {
+        setAutoTour(false);
+        setSelectedIdx((i) => Math.min(moves.length - 1, i + 1));
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  });
+  }, [moves.length]);
 
   return (
     <div
