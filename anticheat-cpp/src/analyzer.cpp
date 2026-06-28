@@ -24,6 +24,13 @@ AnalysisResult analyze_game(const GameInput& input, AnalysisMode mode) {
   std::vector<EngineMoveAnalysis> engine_evals_all;
   if (mode == AnalysisMode::Full) {
     int depth = std::max(10, std::min(22, input.engine_depth));
+    size_t move_count = input.moves.size();
+    if (move_count > 50) {
+      depth = std::max(10, depth - 2);
+    }
+    if (move_count > 80) {
+      depth = std::max(8, depth - 2);
+    }
     engine_evals_all = analyze_moves_with_stockfish(input.stockfish_path, all_uci, depth);
   } else {
     engine_evals_all.resize(input.moves.size());
