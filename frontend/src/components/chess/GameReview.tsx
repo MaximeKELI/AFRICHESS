@@ -13,7 +13,6 @@ import {
   speakComment,
   unlockAiSpeech,
 } from "@/lib/aiSpeech";
-import type { CapturedState } from "@/lib/chessDisplay";
 import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
 import type { GameAnalysisData } from "@/lib/gameAnalysis";
 import { coachUserMoveComment, formatEvalDisplay } from "@/lib/coachReview";

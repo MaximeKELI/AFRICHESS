@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coachPhrase, evalForBar, formatEvalDisplay } from "./coachReview";
+import { coachPhrase, coachUserMoveComment, evalForBar, formatEvalDisplay } from "./coachReview";
 
 const t = (key: string, params?: Record<string, string | number>) => {
   if (params) return `${key}:${JSON.stringify(params)}`;
@@ -43,5 +43,14 @@ describe("coachPhrase", () => {
   it("prefixes side when provided", () => {
     const phrase = coachPhrase(t, "best", 0, false);
     expect(phrase).toContain("chess.analysis.coach.black");
+  });
+
+  it("adds best move hint for user blunder", () => {
+    const phrase = coachUserMoveComment(
+      t,
+      { san: "Nf3", class: "blunder", cp_loss: 300, played_by_white: true, best_san: "Bc4" },
+      true
+    );
+    expect(phrase).toContain("chess.review.bestWas");
   });
 });

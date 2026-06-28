@@ -811,8 +811,8 @@ function PlayContent() {
               gameId={gameId}
               playerIsWhite={playerIsWhite}
               orientation={orientation}
-              captured={panelDisplay.captured}
               initialAnalysis={gameData.analysis ?? null}
+              result={gameData.result}
               onClose={() => setReviewOpen(false)}
             />
           )}
