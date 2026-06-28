@@ -328,7 +328,7 @@ void detect_opening(DetectorContext ctx, AnalysisResult& out) {
   if (elo >= 2400) {
     return;
   }
-  if (has_baseline(ctx.input) && opening_engine <= static_cast<int>(limit) - 1) {
+  if (has_baseline(ctx.input) && ctx.input->baseline.avg_top1_rate >= 0.42) {
     return;
   }
   if (opening_engine >= opening_threshold && elo < 2000) {
