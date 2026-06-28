@@ -219,6 +219,7 @@ class MakeMoveView(APIView):
             ser.validated_data["uci"],
             include_comments=ser.validated_data.get("include_comments", False),
             spent_ms=ser.validated_data.get("spent_ms"),
+            telemetry=ser.validated_data.get("telemetry"),
         )
         if "error" in result:
             return Response(result, status=400)

@@ -335,6 +335,9 @@ class GameService:
 
         new_fen, san, is_over = result
         fen_before_player = game.fen
+        from .fairplay_service import estimate_complexity_cp
+
+        complexity_cp = estimate_complexity_cp(fen_before_player) if not game.is_vs_ai else None
         pending_comment_specs: list[dict] = []
         game.fen = new_fen
         move = self._record_move(
@@ -345,6 +348,8 @@ class GameService:
             time_ms=game.white_time_ms if is_white_turn else game.black_time_ms,
             comment="",
             fen_after=new_fen,
+            think_ms=spent_ms,
+            complexity_cp=complexity_cp,
         )
         if include_comments and game.is_vs_ai:
             pending_comment_specs.append(
@@ -454,6 +459,8 @@ class GameService:
         time_ms=None,
         comment="",
         fen_after=None,
+        think_ms=None,
+        complexity_cp=None,
     ):
         from_sq, to_sq = uci_to_squares(uci)
         return Move.objects.create(
@@ -466,6 +473,8 @@ class GameService:
             fen_after=fen_after or game.fen,
             played_by_white=played_by_white,
             time_remaining_ms=time_ms,
+            think_ms=think_ms,
+            complexity_cp=complexity_cp,
             comment=comment or "",
         )
 

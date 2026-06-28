@@ -158,7 +158,27 @@ def analyze_game_async(game_id: str, job_id: int):
 
 
 @shared_task
-def generate_move_comments_async(game_id: str, specs: list[dict]):
+def analyze_fairplay_async(game_id: str):
+    """Analyse anti-triche complète (C++) pour les deux joueurs."""
+    from .fairplay_service import analyze_and_store
+    from .models import Game
+
+    try:
+        game = Game.objects.get(id=game_id)
+    except Game.DoesNotExist:
+        return
+    if game.is_vs_ai or not game.is_rated:
+        return
+    for player in (game.white_player, game.black_player):
+        if player:
+            analyze_and_store(game, player)
+
+
+def schedule_fairplay_analysis(game_id: str) -> None:
+    try:
+        analyze_fairplay_async.delay(game_id)
+    except Exception:
+        analyze_fairplay_async(game_id)
     """Commentaires coach/IA après un coup — ne bloque pas la réponse move."""
     try:
         from apps.games.commentary_async import generate_move_comments_for_specs

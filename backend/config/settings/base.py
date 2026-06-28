@@ -224,6 +224,9 @@ ACCOUNT_EMAIL_VERIFICATION = "optional"
 # Chess engine
 STOCKFISH_PATH = config("STOCKFISH_PATH", default="/usr/games/stockfish")
 ENGINE_DEPTH = config("ENGINE_DEPTH", default=18, cast=int)
+FAIRPLAY_BIN = config("FAIRPLAY_BIN", default="/usr/local/bin/africhess-fairplay")
+FAIRPLAY_DEPTH = config("FAIRPLAY_DEPTH", default=14, cast=int)
+FAIRPLAY_TIMEOUT = config("FAIRPLAY_TIMEOUT", default=120, cast=int)
 
 # ELO defaults
 DEFAULT_ELO = 1200
