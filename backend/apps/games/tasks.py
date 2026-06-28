@@ -179,6 +179,10 @@ def schedule_fairplay_analysis(game_id: str) -> None:
         analyze_fairplay_async.delay(game_id)
     except Exception:
         analyze_fairplay_async(game_id)
+
+
+@shared_task
+def generate_move_comments_async(game_id: str, specs: list[dict]):
     """Commentaires coach/IA après un coup — ne bloque pas la réponse move."""
     try:
         from apps.games.commentary_async import generate_move_comments_for_specs

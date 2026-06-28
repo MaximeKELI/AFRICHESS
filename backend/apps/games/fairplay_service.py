@@ -18,12 +18,13 @@ logger = logging.getLogger(__name__)
 
 
 def _fairplay_bin() -> str | None:
-    path = getattr(settings, "FAIRPLAY_BIN", "") or ""
-    if path and shutil.which(path):
-        return path
-    local = "/home/maxime/AFRICHESS/anticheat-cpp/build/africhess-fairplay"
-    if shutil.which(local):
-        return local
+    candidates = [
+        getattr(settings, "FAIRPLAY_BIN", ""),
+        "/usr/local/bin/africhess-fairplay",
+    ]
+    for path in candidates:
+        if path and shutil.which(path):
+            return path
     return None
 
 
