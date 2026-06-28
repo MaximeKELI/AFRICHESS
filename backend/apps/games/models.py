@@ -396,3 +396,79 @@ class FairPlayReport(models.Model):
     class Meta:
         unique_together = ["game", "user"]
         indexes = [models.Index(fields=["verdict", "-overall_score"])]
+
+
+class FairPlayReviewCase(models.Model):
+    """File de revue humaine — aucune sanction automatique."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        IN_REVIEW = "in_review", "In review"
+        DISMISSED = "dismissed", "Dismissed"
+        CONFIRMED = "confirmed", "Confirmed"
+        ESCALATED = "escalated", "Escalated"
+
+    class Decision(models.TextChoices):
+        NONE = "none", "None"
+        WARN = "warn", "Warning"
+        MATCHMAKING_BLOCK = "matchmaking_block", "Matchmaking block"
+        SUSPEND_TEMP = "suspend_temp", "Temporary suspension"
+        SUSPEND_PERM = "suspend_perm", "Permanent suspension"
+
+    report = models.OneToOneField(FairPlayReport, on_delete=models.CASCADE, related_name="review_case")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    reviewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="fairplay_reviews",
+    )
+    notes = models.TextField(blank=True)
+    decision = models.CharField(max_length=30, choices=Decision.choices, default=Decision.NONE)
+    peer_score_delta = models.FloatField(
+        default=0.0,
+        help_text="Écart de score Fair Play vs adversaire dans la même partie",
+    )
+    decided_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["status", "-created_at"]),
+            models.Index(fields=["-peer_score_delta"]),
+        ]
+
+
+class FairPlaySanction(models.Model):
+    """Sanction appliquée uniquement après décision staff."""
+
+    class SanctionType(models.TextChoices):
+        WARN = "warn", "Warning"
+        MATCHMAKING_BLOCK = "matchmaking_block", "Matchmaking block"
+        SUSPEND_TEMP = "suspend_temp", "Temporary suspension"
+        SUSPEND_PERM = "suspend_perm", "Permanent suspension"
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="fairplay_sanctions")
+    review_case = models.ForeignKey(
+        FairPlayReviewCase,
+        on_delete=models.CASCADE,
+        related_name="sanctions",
+    )
+    sanction_type = models.CharField(max_length=30, choices=SanctionType.choices)
+    until = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    notes = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="fairplay_sanctions_issued",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["user", "is_active", "-created_at"])]
