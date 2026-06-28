@@ -92,6 +92,9 @@ interface GameState {
   variant?: GameVariant;
   analysis?: GameAnalysisData | null;
   comments_pending?: boolean;
+  delta?: boolean;
+  new_moves?: ApiMove[];
+  game_over?: boolean;
 }
 
 function PlayContent() {
@@ -185,11 +188,28 @@ function PlayContent() {
     [t]
   );
 
+  const displayCacheRef = useRef<GameDisplayState>(buildGameDisplayFromFen("start"));
+  const movesLenRef = useRef(0);
+
   const panelDisplay = useMemo(() => {
-    if (gameData.moves && gameData.moves.length > 0) {
-      return buildGameDisplayFromMoves("start", gameData.moves);
+    const moves = gameData.moves ?? [];
+    if (!moves.length) {
+      displayCacheRef.current = buildGameDisplayFromFen(gameData.fen);
+      movesLenRef.current = 0;
+      return displayCacheRef.current;
     }
-    return buildGameDisplayFromFen(gameData.fen);
+
+    const prevLen = movesLenRef.current;
+    if (moves.length > prevLen && moves.length - prevLen <= 2) {
+      displayCacheRef.current = appendApiMovesToDisplay(
+        displayCacheRef.current,
+        moves.slice(prevLen)
+      );
+    } else if (moves.length !== prevLen) {
+      displayCacheRef.current = buildGameDisplayFromMoves("start", moves);
+    }
+    movesLenRef.current = moves.length;
+    return displayCacheRef.current;
   }, [gameData.fen, gameData.moves]);
 
   const turn = turnFromFen(gameData.fen);
