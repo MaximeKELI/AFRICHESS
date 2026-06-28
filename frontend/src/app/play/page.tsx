@@ -10,7 +10,7 @@ import { OptionSection } from "@/components/ui/OptionSection";
 import { OptionCategoryNav } from "@/components/ui/OptionCategoryNav";
 import { AiCommentaryPanel } from "@/components/chess/AiCommentaryPanel";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
-import { GameAnalysisPanel } from "@/components/chess/GameAnalysisPanel";
+import { GameReview } from "@/components/chess/GameReview";
 import { PlayBoardSection } from "@/components/play/PlayBoardSection";
 import { gamesApi, ratingsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
@@ -63,11 +63,7 @@ import {
   type GameBotPublic,
   type GamePlayerPublic,
 } from "@/lib/gamePlayers";
-import {
-  useGameWebSocket,
-  useMatchmakingWebSocket,
-  type WsGamePayload,
-} from "@/hooks/useGameWebSocket";
+import { parseAnalysisPayload, type GameAnalysisData } from "@/lib/gameAnalysis";
 
 interface GameState {
   fen: string;

@@ -59,6 +59,7 @@ function ChessBoardInner({
   pendingDrop = null,
   onDropAtSquare,
   extraBottom = 0,
+  reviewHighlight = null,
 }: ChessBoardProps) {
   const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
@@ -332,9 +333,30 @@ function ChessBoardInner({
   const customSquareStyles = useMemo(() => {
     const styles: Record<string, React.CSSProperties> = {};
 
-    if (lastMove) {
+    if (lastMove && !reviewHighlight?.played) {
       styles[lastMove.from] = { ...squareStyles.lastFrom };
       styles[lastMove.to] = { ...squareStyles.lastTo };
+    }
+
+    if (reviewHighlight?.best) {
+      styles[reviewHighlight.best.from] = {
+        ...styles[reviewHighlight.best.from],
+        boxShadow: "inset 0 0 0 4px rgba(34, 197, 94, 0.9)",
+      };
+      styles[reviewHighlight.best.to] = {
+        ...styles[reviewHighlight.best.to],
+        background: "rgba(34, 197, 94, 0.38)",
+      };
+    }
+    if (reviewHighlight?.played) {
+      styles[reviewHighlight.played.from] = {
+        ...styles[reviewHighlight.played.from],
+        boxShadow: "inset 0 0 0 4px rgba(239, 68, 68, 0.85)",
+      };
+      styles[reviewHighlight.played.to] = {
+        ...styles[reviewHighlight.played.to],
+        background: "rgba(239, 68, 68, 0.35)",
+      };
     }
 
     if (selectedSquare) {
@@ -368,7 +390,7 @@ function ChessBoardInner({
     }
 
     return styles;
-  }, [lastMove, selectedSquare, legalTargets, game, squareStyles, lowBandwidth, focusSquare, disabled, theme.accent, isCoarse]);
+  }, [lastMove, reviewHighlight, selectedSquare, legalTargets, game, squareStyles, lowBandwidth, focusSquare, disabled, theme.accent, isCoarse]);
 
   const notationStyle = useMemo(
     () => ({
