@@ -24,6 +24,7 @@ interface PlayBoardSectionProps {
   onDropAtSquare?: (uci: string) => void;
   topBar?: ReactNode;
   bottomBar?: ReactNode;
+  extraBottom?: number;
 }
 
 function PlayBoardSectionInner({
