@@ -1474,6 +1474,7 @@ const en: Record<string, string> = {
   "play.status.searchUnlimited": "Searching with no time limit…",
   "play.status.searchCancelled": "Search cancelled",
   "play.status.aiPreviewFailed": "AI preview unavailable.",
+  "play.provisional.banner": "Provisional rating {elo} in {mode} — {remaining} more rated online game(s) to establish it.",
   "play.status.startFailed": "Failed to start. Restart backend: docker start africhess-backend-1",
   "play.error.drawOffer": "Could not offer draw.",
   "play.error.drawAccept": "Could not accept draw.",
