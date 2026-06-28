@@ -186,8 +186,6 @@ export function useMatchmakingWebSocket(
   const search = useCallback(() => {
     const token = Cookies.get("access_token");
     if (!token) return;
-
-    if (wsRef.current) {
       wsRef.current.close();
     }
 
