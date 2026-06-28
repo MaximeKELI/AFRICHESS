@@ -53,6 +53,8 @@ function ChessBoardInner({
   orientation = "white",
   onMove,
   onMovePlayed,
+  onPremove,
+  enablePremoves = false,
   disabled = false,
   lastMove = null,
   playerColor,
@@ -168,11 +170,18 @@ function ChessBoardInner({
   const canSelectSquare = useCallback(
     (square: Square) => {
       if (disabled) return false;
-      if (playerColor && game.get(square)?.color !== playerColor) return false;
-      if (!playerColor && game.get(square)?.color !== turnColor) return false;
-      return Boolean(game.get(square));
+      const piece = game.get(square);
+      if (!piece) return false;
+      if (playerColor) {
+        if (piece.color !== playerColor) return false;
+        if (enablePremoves && piece.color !== turnColor) return true;
+        if (piece.color !== turnColor) return false;
+        return true;
+      }
+      if (piece.color !== turnColor) return false;
+      return true;
     },
-    [disabled, game, playerColor, turnColor]
+    [disabled, game, playerColor, turnColor, enablePremoves]
   );
 
   const highlightTargets = useCallback(

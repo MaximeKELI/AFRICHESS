@@ -21,6 +21,8 @@ interface PlayBoardSectionProps {
   disabled: boolean;
   playerColor: "w" | "b";
   onMove: (uci: string) => void;
+  onPremove?: () => void;
+  enablePremoves?: boolean;
   showClock: boolean;
   whiteMs: number;
   blackMs: number;
