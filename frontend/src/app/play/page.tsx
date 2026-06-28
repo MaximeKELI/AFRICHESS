@@ -27,7 +27,8 @@ import {
   type ApiMove,
 } from "@/lib/chessDisplay";
 import { usePreferencesStore } from "@/store/preferences";
-import { formatTimeControlLabel, defaultPresetForMode, playModeFromPreset, TIME_PRESETS, type TimePresetId } from "@/lib/timeControl";
+import { formatTimeControlLabel, defaultPresetForMode, playModeFromPreset, TIME_PRESETS, inferPresetFromMs, type TimePresetId } from "@/lib/timeControl";
+import { MODE_CLOCK_LABEL } from "@/lib/clock";
 import { turnFromFen } from "@/lib/gameDisplayFast";
 import { TimeControlPicker } from "@/components/chess/TimeControlPicker";
 import { playDrawWhistle } from "@/lib/chessSounds";
@@ -157,7 +158,11 @@ function PlayContent() {
     setTimePreset(defaultPresetForMode(mode));
   }, [mode]);
 
-  const clockLabel = formatTimeControlLabel(gameIsTimed, gameIsTimed ? timePreset : null);
+  const activePreset =
+    (gameId ? inferPresetFromMs(gameData.white_time_ms, gameData.increment_ms) : null) ??
+    timePreset;
+  const clockLabel = formatTimeControlLabel(gameIsTimed, gameIsTimed ? activePreset : null);
+  const fallbackBaseMs = TIME_PRESETS[activePreset].baseMs;
   const headerAiElo = isVsAi ? (gameData.ai_target_elo ?? aiElo ?? aiEloChoice) : aiEloChoice;
   const headerAi = pickAiAvatar(headerAiElo);
   const timeOpts = useMemo(
