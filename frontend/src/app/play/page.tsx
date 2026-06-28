@@ -142,6 +142,13 @@ function PlayContent() {
     return bindAiSpeechToUserGestures(true);
   }, [isVsAi, gameId]);
 
+  const playerColor = orientation === "white" ? "w" : "b";
+  const playerIsWhite = orientation === "white";
+  const levelLabel = user?.chess_level ? chessLevelLabel(t, user.chess_level) : undefined;
+  const modeLabelText = modeLabel(t, mode);
+  const gameActive = gameId && gameData.status === "active";
+  const gameCompleted = gameData.status === "completed";
+
   useEffect(() => {
     if (gameCompleted && gameId) {
       setReviewOpen(true);
@@ -149,12 +156,6 @@ function PlayContent() {
     }
   }, [gameCompleted, gameId]);
 
-  const playerColor = orientation === "white" ? "w" : "b";
-  const playerIsWhite = orientation === "white";
-  const levelLabel = user?.chess_level ? chessLevelLabel(t, user.chess_level) : undefined;
-  const modeLabelText = modeLabel(t, mode);
-  const gameActive = gameId && gameData.status === "active";
-  const gameCompleted = gameData.status === "completed";
   const isLiveHuman = Boolean(gameId && !isVsAi);
   const gameIsTimed = gameData.is_timed !== false;
   const clockLabel = formatTimeControlLabel(
