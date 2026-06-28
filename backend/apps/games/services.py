@@ -180,31 +180,30 @@ class GameService:
                 )
                 if ai_result:
                     nf, ai_san, _ = ai_result
-                    comment = ""
-                    if include_comments:
-                        eval_before = self.engine.analyze_position(fen_before, depth=10)
-                        eval_after = self.engine.analyze_position(nf, depth=10)
-                        comment = generate_move_comment(
-                            fen_before,
-                            ai_move.uci,
-                            ai_san,
-                            played_by_ai=True,
-                            mover_is_white=True,
-                            move_number=1,
-                            eval_before=eval_before,
-                            eval_after=eval_after,
-                        )
                     game.fen = nf
                     game.move_count += 1
                     game.pgn = f"1. {ai_san}"
                     game.save()
-                    self._record_move(
+                    ai_move = self._record_move(
                         game,
                         ai_move.uci,
                         ai_san,
                         played_by_white=True,
-                        comment=comment,
+                        comment="",
                     )
+                    pending_comments: list[dict] = []
+                    if include_comments:
+                        pending_comments.append(
+                            _comment_spec(
+                                ai_move,
+                                fen_before,
+                                nf,
+                                played_by_ai=True,
+                                mover_is_white=True,
+                            )
+                        )
+                        schedule_move_comments(str(game.id), pending_comments)
+                        game.comments_pending = True
         return game
 
     def create_friend_game(
