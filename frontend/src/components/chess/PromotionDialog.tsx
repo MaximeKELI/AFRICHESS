@@ -54,7 +54,7 @@ export function PromotionDialog({ color, onSelect, onCancel }: PromotionDialogPr
         <h3 id="promotion-title" className="font-semibold text-center mb-4">
           {t("chess.promotion.title")}
         </h3>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           {options.map((opt, i) => (
             <button
               key={opt.piece}
@@ -63,11 +63,11 @@ export function PromotionDialog({ color, onSelect, onCancel }: PromotionDialogPr
               onClick={() => onSelect(opt.piece)}
               aria-label={t("chess.promotion.aria", { piece: opt.label })}
               className={clsx(
-                "flex flex-col items-center p-3 rounded-xl border-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold",
-                "border-africhess-gold/40 hover:bg-africhess-gold/20 hover:border-africhess-gold"
+                "flex flex-col items-center justify-center min-h-[72px] sm:min-h-0 p-4 sm:p-3 rounded-xl border-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold",
+                "border-africhess-gold/40 hover:bg-africhess-gold/20 hover:border-africhess-gold active:scale-95 transition-transform"
               )}
             >
-              <span className="text-4xl" aria-hidden>
+              <span className="text-4xl sm:text-3xl" aria-hidden>
                 {symbols[i]}
               </span>
               <span className="text-xs mt-1 opacity-80">{opt.label}</span>

@@ -602,6 +602,7 @@ function PlayContent() {
             serverValidated={activeVariant !== "standard"}
             pendingDrop={activeVariant === "crazyhouse" ? dropPiece : null}
             onDropAtSquare={(uci) => handleMove(uci)}
+            extraBottom={isVsAi && gameId ? 52 : 0}
             bottomBar={
               isVsAi && gameId && user ? (
                 <GamePlayerBar
