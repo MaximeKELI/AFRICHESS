@@ -203,6 +203,7 @@ def generate_move_comment(
     except ValueError:
         return random.choice(NEUTRAL_AI if played_by_ai else NEUTRAL_PLAYER)
 
+    was_in_check = board.is_check()
     is_capture = board.is_capture(move)
     board.push(move)
     is_mate = board.is_checkmate()
@@ -224,6 +225,9 @@ def generate_move_comment(
 
     if is_mate:
         return pick(MATE_AI if played_by_ai else MATE_PLAYER)
+
+    if played_by_ai and was_in_check and not is_mate:
+        return pick(TAUNT_AI_UNDER_MATE_THREAT)
 
     # --- Taquineries selon menace de mat / avantage écrasant ---
     if played_by_ai:
