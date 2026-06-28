@@ -153,3 +153,16 @@ def analyze_game_async(game_id: str, job_id: int):
         job.completed_at = timezone.now()
         job.save(update_fields=["status", "error", "completed_at"])
 
+
+@shared_task
+def generate_move_comments_async(game_id: str, specs: list[dict):
+    """Commentaires coach/IA après un coup — ne bloque pas la réponse move."""
+    del game_id  # réservé pour logs / futures métriques
+    try:
+        from apps.games.commentary_async import generate_move_comments_for_specs
+
+        count = generate_move_comments_for_specs(specs)
+        logger.info("Commentaires async : %d coup(s) commenté(s)", count)
+    except Exception:
+        logger.exception("Échec génération commentaires async (game=%s)", game_id)
+
