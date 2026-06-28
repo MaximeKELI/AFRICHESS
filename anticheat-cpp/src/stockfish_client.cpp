@@ -161,8 +161,6 @@ EngineMoveAnalysis StockfishClient::analyze_move(
     return result;
   }
 
-  send("setoption name MultiPV value 3");
-  send("ucinewgame");
   send("position " + position);
   send("go depth " + std::to_string(depth));
 
@@ -205,6 +203,21 @@ EngineMoveAnalysis StockfishClient::analyze_move(
     }
   }
   result.eval_before_cp = best_eval;
+  result.complexity_cp = std::min(800, std::max(0, std::abs(best_eval)));
+
+  result.is_top1 = !result.best_uci.empty() && played_uci == result.best_uci;
+  result.is_top3 = result.is_top1;
+  for (const auto& candidate : result.top3_uci) {
+    if (candidate == played_uci) {
+      result.is_top3 = true;
+      break;
+    }
+  }
+  if (result.is_top1) {
+    result.centipawn_loss = 0;
+    result.eval_after_cp = best_eval;
+    return result;
+  }
 
   send("position " + position + " moves " + played_uci);
   send("go depth " + std::to_string(std::max(8, depth - 4)));
@@ -239,16 +252,7 @@ EngineMoveAnalysis StockfishClient::analyze_move(
     loss = 0;
   }
   result.centipawn_loss = loss;
-  result.complexity_cp = std::min(800, std::max(0, std::abs(best_eval)));
 
-  result.is_top1 = !result.best_uci.empty() && played_uci == result.best_uci;
-  result.is_top3 = result.is_top1;
-  for (const auto& candidate : result.top3_uci) {
-    if (candidate == played_uci) {
-      result.is_top3 = true;
-      break;
-    }
-  }
   if (!result.is_top3 && result.centipawn_loss <= 20) {
     result.is_top3 = true;
   }
