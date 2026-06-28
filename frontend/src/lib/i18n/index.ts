@@ -1449,6 +1449,8 @@ const en: Record<string, string> = {
   "auth.register.error.birthYear": "Invalid birth year.",
   "auth.register.emailTaken": "→ Sign in with this account",
   "auth.register.levelHint": "You can add your profile photo later. Illustrated portraits (Kofi, Amara, Nana Kofi…) represent AI opponents in games.",
+  "auth.register.ratingStart": "Starting ELO: ~{elo} (based on your chosen level).",
+  "auth.register.ratingProvisional": "Play {count} rated online games to establish your official rating.",
   "profile.level.hint": "The level chosen here is for your profile and suggestions. It is separate from your rating ELO (online games) and the AI strength set in a game.",
   "profile.error.ratings": "Could not load ratings.",
   "profile.error.save": "Could not save profile.",
