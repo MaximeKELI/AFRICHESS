@@ -11,7 +11,11 @@ import wave
 
 logger = logging.getLogger(__name__)
 
-MAX_TTS_CHARS = 500
+MAX_TTS_CHARS = 1200
+# Voix française plus douce (espeak-ng variants)
+ESPEAK_VOICE = "fr+f2"
+ESPEAK_RATE = 132
+ESPEAK_PITCH = 42
 
 
 def _pcm_to_wav(pcm: bytes, sample_rate: int) -> bytes:
