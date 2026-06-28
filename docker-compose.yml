@@ -75,8 +75,8 @@ services:
 
   celery-beat:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     command: sh -c "mkdir -p staticfiles && celery -A config beat -l info"
     volumes:
       - ./backend:/app
