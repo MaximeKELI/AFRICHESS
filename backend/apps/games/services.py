@@ -161,6 +161,7 @@ class GameService:
                     nf, ai_san, _ = ai_result
                     comment = ""
                     if include_comments:
+                        eval_before = self.engine.analyze_position(fen_before, depth=10)
                         eval_after = self.engine.analyze_position(nf, depth=10)
                         comment = generate_move_comment(
                             fen_before,
@@ -169,6 +170,7 @@ class GameService:
                             played_by_ai=True,
                             mover_is_white=True,
                             move_number=1,
+                            eval_before=eval_before,
                             eval_after=eval_after,
                         )
                     game.fen = nf

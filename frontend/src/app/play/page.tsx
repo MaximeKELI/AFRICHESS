@@ -791,6 +791,7 @@ function PlayContent() {
             }
             captured={panelDisplay.captured}
           />
+          </div>
           {gameCompleted && gameId && !reviewOpen && (
             <button
               type="button"
@@ -820,6 +821,7 @@ function PlayContent() {
                 comments={moveComments}
                 enabled={aiCommentsEnabled}
                 compact={mobileTab === "board"}
+                autoSpeak
               />
             </div>
           )}
