@@ -4,7 +4,7 @@ import { memo, useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Chessboard } from "react-chessboard";
 import { Chess, Square } from "chess.js";
 import { playChessSound, preloadChessSounds, soundForMove } from "@/lib/chessSounds";
-import { accentRgba, getBoardTheme, getThemedSquareStyles } from "@/lib/boardThemes";
+import { accentRgba, getBoardTheme, getThemedSquareStyles, themeHasTexturedSquares } from "@/lib/boardThemes";
 import { useAuthStore } from "@/store/auth";
 import { customPiecesForSet } from "@/lib/pieceSets";
 import { usePreferencesStore } from "@/store/preferences";
@@ -89,8 +89,8 @@ function ChessBoardInner({
   const dotScale = boardWidth < 360 ? 0.24 : 0.18;
 
   const squareStyles = useMemo(() => {
-    const floral = Boolean(theme.floral);
-    const selected: React.CSSProperties = floral
+    const textured = themeHasTexturedSquares(theme);
+    const selected: React.CSSProperties = textured
       ? {
           boxShadow: `inset 0 0 0 3px ${accentRgba(theme.accent, 0.95)}, inset 0 0 16px ${accentRgba(theme.accent, 0.35)}`,
         }
@@ -98,10 +98,10 @@ function ChessBoardInner({
           background: accentRgba(theme.accent, 0.55),
           boxShadow: `inset 0 0 0 3px ${accentRgba(theme.accent, 0.9)}`,
         };
-    const lastFrom: React.CSSProperties = floral
+    const lastFrom: React.CSSProperties = textured
       ? { boxShadow: `inset 0 0 14px ${theme.accentFrom}` }
       : { background: theme.accentFrom };
-    const lastTo: React.CSSProperties = floral
+    const lastTo: React.CSSProperties = textured
       ? { boxShadow: `inset 0 0 0 3px ${accentRgba(theme.accent, 0.75)}` }
       : { background: accentRgba(theme.accent, 0.4) };
     const legalDot: React.CSSProperties = {
@@ -401,9 +401,13 @@ function ChessBoardInner({
           maxWidth: "100%",
           ...(lowBandwidth
             ? undefined
-            : {
-                boxShadow: `0 8px 24px -6px rgb(0 0 0 / 0.25), 0 0 0 1px ${accentRgba(theme.accent, 0.25)}`,
-              }),
+            : theme.wood?.glossy
+              ? {
+                  boxShadow: `0 14px 48px -10px rgba(0,0,0,0.5), 0 0 0 2px ${accentRgba(theme.accent, 0.55)}, inset 0 1px 0 rgba(255,255,255,0.12)`,
+                }
+              : {
+                  boxShadow: `0 8px 24px -6px rgb(0 0 0 / 0.25), 0 0 0 1px ${accentRgba(theme.accent, 0.25)}`,
+                }),
         }}
       >
         <Chessboard

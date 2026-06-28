@@ -45,6 +45,8 @@ export interface BoardTheme {
   capture: string;
   /** Motif floral sur certaines cases */
   floral?: FloralPattern;
+  /** Texture bois (vernis, grain) */
+  wood?: WoodPattern;
 }
 
 export const BOARD_THEMES: BoardTheme[] = [
@@ -59,7 +61,17 @@ export const BOARD_THEMES: BoardTheme[] = [
     capture: "rgba(196, 92, 38, 0.75)",
   },
   {
-    id: "blue",
+    id: "wood-glossy",
+    labelFr: "Bois verni",
+    dark: "#3D2314",
+    light: "#E8C48A",
+    accent: "#D4AF37",
+    accentFrom: "rgba(212, 175, 55, 0.42)",
+    legal: "rgba(212, 175, 55, 0.88)",
+    capture: "rgba(120, 72, 32, 0.82)",
+    wood: { glossy: true },
+  },
+  {
     labelFr: "Bleu",
     dark: "#4A6FA5",
     light: "#D4E4F7",
@@ -259,7 +271,15 @@ export const BOARD_THEMES: BoardTheme[] = [
 ];
 
 export function getThemedSquareStyles(theme: BoardTheme) {
+  if (theme.wood) {
+    return buildWoodSquareStyles(theme.dark, theme.light, theme.wood);
+  }
   return buildThemedSquareStyles(theme.dark, theme.light, theme.floral);
+}
+
+/** Thèmes à texture (surbrillance par box-shadow, pas par fond plat). */
+export function themeHasTexturedSquares(theme: BoardTheme): boolean {
+  return Boolean(theme.floral || theme.wood);
 }
 
 export const DEFAULT_BOARD_THEME: BoardThemeId = "wood";
