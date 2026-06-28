@@ -137,9 +137,11 @@ export function BoardThemePicker({
 
       {showPieces && (
         <>
-      <p className={clsx("opacity-50 mb-2 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs", showColors && "mt-4")}>
+      {showColors && (
+      <p className={clsx("opacity-50 mb-2 mt-4 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs")}>
         {t("board.picker.pieces")}
       </p>
+      )}
       <div className="flex flex-wrap gap-2">
         {(["classic", "african", "african-svg"] as const).map((id) => (
           <button
