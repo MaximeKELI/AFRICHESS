@@ -49,7 +49,6 @@ interface GameReviewProps {
   gameId: string;
   playerIsWhite: boolean;
   orientation: "white" | "black";
-  captured?: CapturedState;
   initialAnalysis?: GameAnalysisData | null;
   result?: string;
   onClose: () => void;
@@ -59,7 +58,6 @@ export function GameReview({
   gameId,
   playerIsWhite,
   orientation,
-  captured,
   initialAnalysis = null,
   result,
   onClose,
@@ -95,9 +93,15 @@ export function GameReview({
   );
 
   const reviewCaptured = useMemo(() => {
-    if (!captured || selectedIdx == null || selectedIdx < 0) return captured;
-    return captured;
-  }, [captured, selectedIdx]);
+    if (selectedIdx == null || selectedIdx < 0 || !moves.length) {
+      return buildGameDisplayFromUciList(REVIEW_START_FEN, []).captured;
+    }
+    const ucis = moves
+      .slice(0, selectedIdx + 1)
+      .map((m) => m.uci)
+      .filter((u): u is string => Boolean(u));
+    return buildGameDisplayFromUciList(REVIEW_START_FEN, ucis).captured;
+  }, [moves, selectedIdx]);
 
   const coachText = useMemo(() => {
     if (!selectedMove) return null;
