@@ -65,6 +65,30 @@ body {
   max-width: min(100%, 720px);
 }
 
+.chess-board-shell-scene {
+  position: relative;
+  padding: clamp(0.75rem, 3vw, 1.25rem);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.chess-board-scene-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.82) saturate(1.05);
+  pointer-events: none;
+}
+
+.chess-board-shell-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.15) 0%, rgb(0 0 0 / 0.35) 100%);
+  pointer-events: none;
+}
+
 .chess-board-frame {
   position: relative;
 }

@@ -22,12 +22,11 @@ function BackgroundSwatch({ bg, size }: { bg: BoardBackground; size: "sm" | "md"
     return (
       <span
         className={clsx(
-          "grid place-items-center rounded border border-dashed border-white/25 bg-black/30 text-[10px] opacity-60 shrink-0",
+          "rounded border border-dashed border-white/25 bg-black/30 shrink-0",
           dim
         )}
-      >
-        ∅
-      </span>
+        aria-hidden
+      />
     );
   }
   return (

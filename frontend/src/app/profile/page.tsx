@@ -12,6 +12,7 @@ import { FlairPicker } from "@/components/profile/FlairPicker";
 import { LevelPicker } from "@/components/profile/LevelPicker";
 import { UserFlair } from "@/components/profile/UserFlair";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
+import { BackgroundPicker } from "@/components/chess/BackgroundPicker";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { type ChessLevelId } from "@/lib/avatars";
@@ -141,6 +142,8 @@ export default function ProfilePage() {
 
       <div className="glass-card p-6 space-y-6">
         <BoardThemePicker />
+        <hr className="border-white/10" />
+        <BackgroundPicker />
         <hr className="border-white/10" />
         <CommentsToggle />
       </div>

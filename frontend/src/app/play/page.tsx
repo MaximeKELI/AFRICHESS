@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Chess } from "chess.js";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
+import { BackgroundPicker } from "@/components/chess/BackgroundPicker";
 import { AiCommentaryPanel } from "@/components/chess/AiCommentaryPanel";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { GameAnalysisPanel } from "@/components/chess/GameAnalysisPanel";
@@ -882,8 +883,10 @@ function PlayContent() {
             )}
           </div>
 
-          <div className="glass-card p-4">
+          <div className="glass-card p-4 space-y-4">
             <BoardThemePicker compact />
+            <hr className="border-white/10" />
+            <BackgroundPicker compact />
           </div>
 
           {!gameId && <RecentGamesList limit={8} showTitle />}
