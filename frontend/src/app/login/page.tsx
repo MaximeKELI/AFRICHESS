@@ -55,6 +55,9 @@ function LoginContent() {
           className="w-full px-4 py-3 rounded-lg border bg-transparent"
           required
         />
+        {username.includes("@") && (
+          <p className="text-xs text-africhess-gold/90 -mt-2">{t("auth.login.emailWarning")}</p>
+        )}
         {error && (
           <p className="text-africhess-terracotta text-sm" role="alert">
             {error}
