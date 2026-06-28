@@ -353,3 +353,46 @@ class GameVote(models.Model):
 
     class Meta:
         unique_together = ["game", "user", "ply"]
+
+
+class GameFairPlayTelemetry(models.Model):
+    """Télémétrie client accumulée par joueur et par partie."""
+
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="fairplay_telemetry")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    data = models.JSONField(default=dict, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ["game", "user"]
+        indexes = [models.Index(fields=["game", "user"])]
+
+
+class FairPlayReport(models.Model):
+    """Rapport anti-triche post-partie (moteur C++)."""
+
+    class Verdict(models.TextChoices):
+        CLEAN = "clean", "Clean"
+        REVIEW = "review", "Review"
+        SUSPICIOUS = "suspicious", "Suspicious"
+        LIKELY_CHEAT = "likely_cheat", "Likely cheat"
+
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="fairplay_reports")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="fairplay_reports",
+    )
+    overall_score = models.FloatField(default=0.0)
+    verdict = models.CharField(max_length=20, choices=Verdict.choices, default=Verdict.CLEAN)
+    signals_json = models.JSONField(default=list, blank=True)
+    move_evals_json = models.JSONField(default=list, blank=True)
+    engine_top1_rate = models.FloatField(default=0.0)
+    engine_top3_rate = models.FloatField(default=0.0)
+    avg_centipawn_loss = models.FloatField(default=0.0)
+    accuracy_estimate = models.FloatField(default=0.0)
+    analyzed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ["game", "user"]
+        indexes = [models.Index(fields=["verdict", "-overall_score"])]
