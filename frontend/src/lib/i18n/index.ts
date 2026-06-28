@@ -900,7 +900,7 @@ const fr: Record<string, string> = {
   "auth.callback.incomplete": "Connexion OAuth incomplète.",
   "auth.callback.profileError": "Impossible de charger le profil.",
   "auth.callback.loading": "Connexion en cours…",
-  "auth.login.useUsername": "Connectez-vous avec votre nom d'utilisateur (ex. DKELI), pas avec l'e-mail. Plusieurs comptes peuvent partager le même e-mail sur ce site.",
+  "auth.login.useUsername": "Connectez-vous avec votre nom d'utilisateur (ex. Maxime_KELI, DKELI), pas avec l'e-mail. Plusieurs comptes peuvent partager le même e-mail sur ce site.",
   "auth.login.invalidResponse": "Réponse de connexion invalide.",
   "profile.player": "Joueur",
   "ws.error.session": "Connexion WebSocket impossible (session manquante).",
