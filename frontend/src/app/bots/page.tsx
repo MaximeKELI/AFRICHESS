@@ -71,7 +71,7 @@ export default function BotsPage() {
           placeholder={t("bots.search")}
           className="flex-1 min-w-[200px] border rounded-lg px-3 py-2 bg-transparent"
         />
-        {(["all", "free", "premium"] as const).map((f) => (
+        {(["all", "legends", "free", "premium"] as const).map((f) => (
           <button
             key={f}
             type="button"
@@ -110,7 +110,7 @@ export default function BotsPage() {
                 <h3 className="font-semibold truncate">{label(b)}</h3>
                 <p className="text-xs text-africhess-gold font-mono">{b.elo} ELO</p>
               </div>
-              {b.elo >= 2400 && (
+              {(b.is_legend ?? b.elo >= 2400) && (
                 <span className="text-[10px] uppercase tracking-wide text-emerald-400 border border-emerald-400/40 px-2 py-0.5 rounded">
                   {t("bots.legend")}
                 </span>
