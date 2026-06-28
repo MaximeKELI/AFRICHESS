@@ -221,6 +221,11 @@ export const gamesApi = {
   castVote: (gameId: string, move_uci: string) =>
     api.post(`/games/${gameId}/vote/`, { move_uci }),
   applyVote: (gameId: string) => api.post(`/games/${gameId}/vote/apply/`),
+  fairplayStatus: () => api.get("/games/fairplay/status/"),
+  fairplayConsent: () => api.post("/games/fairplay/consent/"),
+  fairplayRevokeConsent: () => api.delete("/games/fairplay/consent/"),
+  fairplayAppeal: (caseId: number, reason: string) =>
+    api.post("/games/fairplay/appeals/", { case_id: caseId, reason }),
 };
 
 export const statsApi = {
