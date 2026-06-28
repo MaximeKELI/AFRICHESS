@@ -87,6 +87,7 @@ void detect_engine_correlation(DetectorContext ctx, AnalysisResult& out) {
   if (!ctx.engine_evals || !ctx.player_moves || ctx.player_moves->empty()) {
     return;
   }
+  const bool realtime = ctx.input && ctx.input->analysis_mode == "realtime";
   int top1 = 0;
   int top3 = 0;
   int total = 0;
@@ -109,6 +110,9 @@ void detect_engine_correlation(DetectorContext ctx, AnalysisResult& out) {
     ++total;
   }
   if (total == 0) {
+    return;
+  }
+  if (realtime) {
     return;
   }
   out.engine_top1_rate = static_cast<double>(top1) / total;
