@@ -1,9 +1,12 @@
 "use client";
 
 import { createContext, memo, useContext, type ReactNode } from "react";
+import { CapturedBoardStack } from "@/components/chess/CapturedBoardStack";
+import { ChessBoard } from "@/components/chess/ChessBoard";
 import { GamePlayerStrip, type GamePlayerStripProps } from "@/components/play/GamePlayerStrip";
-import { useLiveClock } from "@/hooks/useLiveClock";
 import type { PlayerStripConfig } from "@/components/play/PlayBoardSection";
+import { useLiveClock } from "@/hooks/useLiveClock";
+import type { ApiMove, CapturedState } from "@/lib/chessDisplay";
 
 type LiveClockValue = { white: number; black: number };
 
@@ -80,27 +83,8 @@ function ClockedPlayerStripInner({
 
 export const ClockedPlayerStrip = memo(ClockedPlayerStripInner);
 
-interface PlayBoardCoreProps {
+export interface PlayBoardCoreProps {
   fen: string;
-  moves?: PlayBoardCoreProps["moves"];
-  orientation: "white" | "black";
-  disabled: boolean;
-  playerColor: "w" | "b";
-  onMove: (uci: string) => void;
-  serverValidated?: boolean;
-  pendingDrop?: string | null;
-  onDropAtSquare?: (uci: string) => void;
-  extraBottom?: number;
-  captured?: import("@/lib/chessDisplay").CapturedState;
-  lastMove: { from: string; to: string } | null;
-}
-
-// Fix the circular type - import ApiMove
-import type { ApiMove, CapturedState } from "@/lib/chessDisplay";
-
-export interface PlayBoardCorePropsFixed {
-  fen: string;
-  moves?: ApiMove[];
   orientation: "white" | "black";
   disabled: boolean;
   playerColor: "w" | "b";
@@ -125,7 +109,7 @@ function PlayBoardCoreInner({
   extraBottom = 0,
   captured,
   lastMove,
-}: PlayBoardCorePropsFixed) {
+}: PlayBoardCoreProps) {
   return (
     <CapturedBoardStack captured={captured} orientation={orientation}>
       <ChessBoard
@@ -144,8 +128,5 @@ function PlayBoardCoreInner({
     </CapturedBoardStack>
   );
 }
-
-import { CapturedBoardStack } from "@/components/chess/CapturedBoardStack";
-import { ChessBoard } from "@/components/chess/ChessBoard";
 
 export const PlayBoardCore = memo(PlayBoardCoreInner);
