@@ -1,7 +1,6 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useState, useRef } from "react";
-import clsx from "clsx";
 import { Chessboard } from "react-chessboard";
 import { Chess, Square } from "chess.js";
 import { playChessSound, preloadChessSounds, soundForMove } from "@/lib/chessSounds";

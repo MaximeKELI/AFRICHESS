@@ -20,7 +20,7 @@ export default function HomePage() {
   return (
     <div className="relative overflow-hidden">
       <div
-        className="absolute inset-0 opacity-20 dark:opacity-10 bg-cover bg-center pointer-events-none"
+        className="absolute inset-0 opacity-20 dark:opacity-10 bg-cover bg-center pointer-events-none home-default-pattern"
         style={{ backgroundImage: "url('/images/pattern-bg.png')" }}
       />
 

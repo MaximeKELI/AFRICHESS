@@ -56,6 +56,10 @@ html.has-site-background .glass-card {
   background-color: color-mix(in srgb, var(--card) 90%, transparent);
 }
 
+html.has-site-background .home-default-pattern {
+  display: none;
+}
+
 html.has-site-background nav,
 html.has-site-background main,
 html.has-site-background footer {

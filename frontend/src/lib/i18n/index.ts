@@ -1421,7 +1421,7 @@ const en: Record<string, string> = {
   "board.picker.classic": "Classic",
   "board.picker.african": "African ♛",
   "background.picker.title": "Background",
-  "background.picker.hint": "Scenery behind the board during play",
+  "background.picker.hint": "Background scenery for the entire site",
   "background.picker.category.africa": "Africa",
   "background.picker.category.nature": "Nature",
   "background.picker.category.classic": "Classic",
