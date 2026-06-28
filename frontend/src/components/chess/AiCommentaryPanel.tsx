@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MoveComment } from "@/lib/chessDisplay";
 import { initAiSpeech, isAiSpeechSupported, speakComment, stopAiSpeech, unlockAiSpeech } from "@/lib/aiSpeech";
-import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface AiCommentaryPanelProps {
