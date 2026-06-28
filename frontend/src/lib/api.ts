@@ -288,7 +288,7 @@ export const socialApi = {
   unfriend: (username: string) => api.post(`/social/friends/unfriend/${username}/`),
   blockUser: (username: string) => api.post(`/social/friends/block/${username}/`),
   searchUsers: (q: string, country?: string) =>
-    api.get<UserSearchHit[]>("/social/users/search/", { params: { q, country } }),
+    api.get<UserSearchHit[]>("/users/search/", { params: { q, country } }),
   userRelationship: (username: string) =>
     api.get<UserRelationship>(`/social/users/${username}/relationship/`),
   followUser: (username: string) => api.post(`/social/users/${username}/follow/`),

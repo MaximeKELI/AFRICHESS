@@ -210,6 +210,7 @@ class UserSearchView(APIView):
             Q(username__icontains=q)
             | Q(first_name__icontains=q)
             | Q(last_name__icontains=q)
+            | Q(email__icontains=q)
         ).exclude(pk=request.user.pk)
         if country and len(country) == 2:
             qs = qs.filter(country=country)

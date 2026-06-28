@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { socialApi, type UserSearchHit } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
+import { formatApiError } from "@/lib/errors";
 import { UserAvatar } from "@/components/profile/UserAvatar";
 import { countryFlag } from "@/lib/worldCountries";
 import clsx from "clsx";
