@@ -25,6 +25,8 @@ interface ChessBoardProps {
   orientation?: "white" | "black";
   onMove?: (uci: string) => void;
   onMovePlayed?: (info: MoveInfo) => void;
+  onPremove?: () => void;
+  enablePremoves?: boolean;
   disabled?: boolean;
   lastMove?: { from: string; to: string } | null;
   playerColor?: "w" | "b";
