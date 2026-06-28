@@ -1027,6 +1027,7 @@ const fr: Record<string, string> = {
   "bots.subtitle": "Affrontez des icônes mondiales et des joueurs africains fictifs — chaque bot a son propre portrait.",
   "bots.search": "Rechercher un bot…",
   "bots.filter.all": "Tous",
+  "bots.filter.legends": "Légendes",
   "bots.filter.free": "Gratuits",
   "bots.filter.premium": "Premium",
   "bots.premium": "Gold+",

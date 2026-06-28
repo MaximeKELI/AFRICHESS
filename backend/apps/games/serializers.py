@@ -52,6 +52,8 @@ class GameAnalysisSerializer(serializers.ModelSerializer):
 
 
 class ChessBotSerializer(serializers.ModelSerializer):
+    is_legend = serializers.SerializerMethodField()
+
     class Meta:
         model = ChessBot
         fields = [
@@ -66,8 +68,12 @@ class ChessBotSerializer(serializers.ModelSerializer):
             "description",
             "description_en",
             "is_premium",
+            "is_legend",
             "games_played",
         ]
+
+    def get_is_legend(self, obj: ChessBot) -> bool:
+        return obj.elo >= 2400
 
 
 class GameSerializer(serializers.ModelSerializer):

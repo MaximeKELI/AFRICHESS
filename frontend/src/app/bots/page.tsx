@@ -22,6 +22,7 @@ interface Bot {
   description: string;
   description_en: string;
   is_premium: boolean;
+  is_legend?: boolean;
   games_played: number;
 }
 
@@ -30,7 +31,7 @@ export default function BotsPage() {
   const { user } = useAuthStore();
   const [bots, setBots] = useState<Bot[]>([]);
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"all" | "free" | "premium">("all");
+  const [filter, setFilter] = useState<"all" | "legends" | "free" | "premium">("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +43,12 @@ export default function BotsPage() {
         premium: filter === "premium" ? true : filter === "free" ? false : undefined,
       })
       .then(({ data }) => {
-        setBots(Array.isArray(data) ? data : data.results ?? []);
+        let list: Bot[] = Array.isArray(data) ? data : data.results ?? [];
+        if (filter === "legends") {
+          list = list.filter((b) => b.is_legend ?? b.elo >= 2400);
+        }
+        list.sort((a, b) => b.elo - a.elo);
+        setBots(list);
         setError(null);
       })
       .catch((err) => setError(formatApiError(err, t("bots.error.load"))))
