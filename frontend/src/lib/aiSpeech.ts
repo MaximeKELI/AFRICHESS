@@ -4,6 +4,8 @@
  * 2) Secours serveur espeak-ng (Linux sans voix système)
  */
 
+import Cookies from "js-cookie";
+
 let preferredVoice: SpeechSynthesisVoice | null = null;
 let voicesReady = false;
 let voicesListenerAttached = false;
@@ -22,10 +24,8 @@ function apiBase(): string {
 }
 
 function authHeaders(): HeadersInit {
-  if (typeof document === "undefined") return {};
-  const match = document.cookie.match(/(?:^|;\s*)access_token=([^;]+)/);
-  if (!match) return {};
-  return { Authorization: `Bearer ${decodeURIComponent(match[1])}` };
+  const token = Cookies.get("access_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 function pickFrenchVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
