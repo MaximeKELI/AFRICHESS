@@ -1,10 +1,7 @@
+import { API_ORIGIN } from "@/lib/apiConfig";
+
 /** Origine API sans suffixe /api (flux OAuth allauth). */
-export const API_ORIGIN =
-  process.env.NEXT_PUBLIC_API_ORIGIN ||
-  (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api").replace(
-    /\/api\/?$/,
-    ""
-  );
+export { API_ORIGIN };
 
 export function oauthLoginUrl(provider: "google" | "github"): string {
   return `${API_ORIGIN}/accounts/${provider}/login/`;

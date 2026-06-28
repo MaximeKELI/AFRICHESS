@@ -1,18 +1,17 @@
 /** Helpers WebSocket — auth via Sec-WebSocket-Protocol (pas de JWT dans l'URL). */
 
+import { WS_URL } from "@/lib/apiConfig";
+
 export function wsGameUrl(gameId: string): string {
-  const base = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
-  return `${base}/ws/game/${gameId}/`;
+  return `${WS_URL}/ws/game/${gameId}/`;
 }
 
 export function wsMatchmakingUrl(): string {
-  const base = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
-  return `${base}/ws/matchmaking/`;
+  return `${WS_URL}/ws/matchmaking/`;
 }
 
 export function wsNotificationsUrl(): string {
-  const base = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
-  return `${base}/ws/notifications/`;
+  return `${WS_URL}/ws/notifications/`;
 }
 
 /** Deux sous-protocoles bearer + jwt (les points du JWT cassent un seul token). */

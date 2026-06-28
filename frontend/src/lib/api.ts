@@ -1,9 +1,10 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
+import { API_URL } from "@/lib/apiConfig";
 import { setAccessToken, setRefreshToken } from "@/lib/cookies";
 import { handleSessionExpired } from "@/lib/session";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8003/api";
+const API_URL_BASE = API_URL;
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -37,7 +38,7 @@ async function refreshAccessToken(): Promise<string> {
   const refresh = Cookies.get("refresh_token");
   if (!refresh) throw new Error("No refresh token");
   const { data } = await axios.post<{ access: string; refresh?: string }>(
-    `${API_URL}/auth/token/refresh/`,
+    `${API_URL_BASE}/auth/token/refresh/`,
     { refresh }
   );
   if (!data.access) throw new Error("Invalid refresh response");
