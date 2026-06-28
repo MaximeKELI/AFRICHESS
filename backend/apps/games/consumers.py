@@ -321,6 +321,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
                 data.get("mode", "blitz"),
                 data.get("is_timed", True),
                 data.get("time_minutes"),
+                data.get("time_control"),
                 data.get("is_rated", True),
             )
 
@@ -339,9 +340,16 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
         )
 
     async def _process_matchmaking(
-        self, mode: str, is_timed: bool = True, time_minutes=None, is_rated: bool = True
+        self,
+        mode: str,
+        is_timed: bool = True,
+        time_minutes=None,
+        time_control=None,
+        is_rated: bool = True,
     ):
-        result = await self._try_match(mode, is_timed, time_minutes, is_rated)
+        result = await self._try_match(
+            mode, is_timed, time_minutes, time_control, is_rated
+        )
         if result is None:
             await self.send(
                 text_data=json.dumps(
@@ -364,18 +372,37 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(f"user_{opponent_id}", payload)
 
     @database_sync_to_async
-    def _try_match(self, mode: str, is_timed: bool = True, time_minutes=None, is_rated: bool = True):
+    def _try_match(
+        self,
+        mode: str,
+        is_timed: bool = True,
+        time_minutes=None,
+        time_control=None,
+        is_rated: bool = True,
+    ):
         from apps.ratings.models import PlayerRating
 
         rating = PlayerRating.objects.filter(user=self.user, mode=mode).first()
         elo = rating.elo if rating else getattr(self.user, "initial_elo", 1200)
         svc = MatchmakingService()
         game = svc.find_match(
-            self.user, mode, elo, is_timed=is_timed, time_minutes=time_minutes, is_rated=is_rated
+            self.user,
+            mode,
+            elo,
+            is_timed=is_timed,
+            time_minutes=time_minutes,
+            time_control=time_control,
+            is_rated=is_rated,
         )
         if not game:
             svc.join_queue(
-                self.user, mode, elo, is_timed=is_timed, time_minutes=time_minutes, is_rated=is_rated
+                self.user,
+                mode,
+                elo,
+                is_timed=is_timed,
+                time_minutes=time_minutes,
+                time_control=time_control,
+                is_rated=is_rated,
             )
             return None
         room = ensure_game_room(game)
