@@ -48,6 +48,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { pickAiAvatar } from "@/lib/avatars";
 import { useFairPlayTelemetry } from "@/hooks/useFairPlayTelemetry";
+import { FairPlayConsentModal } from "@/components/fairplay/FairPlayConsentModal";
+import { useTranslation } from "@/hooks/useTranslation";
 import { chessLevelLabel, modeLabel } from "@/lib/i18n/labels";
 import {
   formatElo,
