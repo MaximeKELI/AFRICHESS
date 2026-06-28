@@ -16,10 +16,10 @@ let localTtsOk: boolean | null = null;
 let audioUnlocked = false;
 let pendingPlay: (() => Promise<boolean>) | null = null;
 
-type SpeechJob = { text: string; byAi: boolean };
+type SpeechJob = { text: string; byAi: boolean; generation: number };
 const pendingJobs: SpeechJob[] = [];
 let pipelineRunning = false;
-let cancelRequested = false;
+let speechGeneration = 0;
 let currentAudio: HTMLAudioElement | null = null;
 let lastSpeakingText = "";
 
@@ -216,8 +216,8 @@ function speakBrowserChunk(text: string, byAi: boolean): Promise<boolean> {
   });
 }
 
-async function speakChunk(text: string, byAi: boolean): Promise<boolean> {
-  if (cancelRequested) return false;
+async function speakChunk(text: string, byAi: boolean, generation: number): Promise<boolean> {
+  if (generation !== speechGeneration) return false;
 
   if (shouldPreferBackendTts()) {
     const buf = await fetchTtsWav(text);
@@ -237,8 +237,10 @@ async function runSpeechPipeline(): Promise<void> {
   if (pipelineRunning) return;
   pipelineRunning = true;
 
-  while (pendingJobs.length > 0 && !cancelRequested) {
+  while (pendingJobs.length > 0) {
     const job = pendingJobs.shift()!;
+    if (job.generation !== speechGeneration) continue;
+
     const fullText = normalizeSpeechText(job.text, MAX_TTS_CHARS);
     if (!fullText) continue;
 
@@ -246,21 +248,18 @@ async function runSpeechPipeline(): Promise<void> {
     const chunks = splitSpeechChunks(fullText);
 
     for (const chunk of chunks) {
-      if (cancelRequested) break;
-      const ok = await speakChunk(chunk, job.byAi);
-      if (!ok && cancelRequested) break;
-      if (!ok && chunks.length === 1) break;
+      if (job.generation !== speechGeneration) break;
+      await speakChunk(chunk, job.byAi, job.generation);
     }
   }
 
   lastSpeakingText = "";
   pipelineRunning = false;
-  cancelRequested = false;
 }
 
 function enqueueSpeech(text: string, byAi: boolean, interrupt: boolean): void {
   if (interrupt) {
-    cancelRequested = true;
+    speechGeneration += 1;
     pendingJobs.length = 0;
     stopCurrentAudio();
     if (typeof window !== "undefined" && window.speechSynthesis) {
@@ -268,8 +267,7 @@ function enqueueSpeech(text: string, byAi: boolean, interrupt: boolean): void {
     }
   }
 
-  pendingJobs.push({ text, byAi });
-  cancelRequested = false;
+  pendingJobs.push({ text, byAi, generation: speechGeneration });
   void runSpeechPipeline();
 }
 
@@ -307,7 +305,7 @@ export function isAiSpeechUnlocked(): boolean {
 }
 
 export function stopAiSpeech() {
-  cancelRequested = true;
+  speechGeneration += 1;
   pendingJobs.length = 0;
   stopKeepAlive();
   stopCurrentAudio();

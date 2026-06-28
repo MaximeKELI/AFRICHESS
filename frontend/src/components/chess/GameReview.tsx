@@ -160,6 +160,36 @@ export function GameReview({
 
   useEffect(() => {
     if (!autoTour || !analysis) return;
+
+    if (voiceOn) {
+      voiceTourRef.current = true;
+      let cancelled = false;
+
+      (async () => {
+        await new Promise((r) => setTimeout(r, 350));
+        while (!cancelled && voiceTourRef.current) {
+          await waitForSpeechIdle();
+          if (cancelled || !voiceTourRef.current) break;
+          await new Promise((r) => setTimeout(r, 450));
+          setSelectedIdx((i) => {
+            const next = i + 1;
+            if (next >= moves.length) {
+              setAutoTour(false);
+              voiceTourRef.current = false;
+              return i;
+            }
+            return next;
+          });
+          await new Promise((r) => setTimeout(r, 120));
+        }
+      })();
+
+      return () => {
+        cancelled = true;
+        voiceTourRef.current = false;
+      };
+    }
+
     autoTourRef.current = setInterval(() => {
       setSelectedIdx((i) => {
         const next = i + 1;
@@ -173,7 +203,7 @@ export function GameReview({
     return () => {
       if (autoTourRef.current) clearInterval(autoTourRef.current);
     };
-  }, [autoTour, analysis, moves.length]);
+  }, [autoTour, analysis, voiceOn, moves.length]);
 
   useEffect(() => {
     if (autoTour && voiceOn) speakCurrent(true);
