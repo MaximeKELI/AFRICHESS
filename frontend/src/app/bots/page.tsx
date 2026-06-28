@@ -106,20 +106,22 @@ export default function BotsPage() {
                   sizes="48px"
                 />
               </span>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <h3 className="font-semibold truncate">{label(b)}</h3>
                 <p className="text-xs text-africhess-gold font-mono">{b.elo} ELO</p>
               </div>
+              <div className="flex flex-col gap-1 items-end shrink-0">
               {(b.is_legend ?? b.elo >= 2400) && (
                 <span className="text-[10px] uppercase tracking-wide text-emerald-400 border border-emerald-400/40 px-2 py-0.5 rounded">
                   {t("bots.legend")}
                 </span>
               )}
               {b.is_premium && (
-                <span className="ml-auto text-[10px] uppercase tracking-wide text-africhess-gold border border-africhess-gold/40 px-2 py-0.5 rounded">
+                <span className="text-[10px] uppercase tracking-wide text-africhess-gold border border-africhess-gold/40 px-2 py-0.5 rounded">
                   {t("bots.premium")}
                 </span>
               )}
+              </div>
             </div>
             <p className="text-xs opacity-60 line-clamp-2">{desc(b)}</p>
             <p className="text-[10px] opacity-45">
