@@ -145,9 +145,19 @@ def analyze_and_store(game: Game, user) -> FairPlayReport | None:
 
 
 def merge_telemetry(game: Game, user, patch: dict[str, Any]) -> GameFairPlayTelemetry:
+    aliases = {
+        "tab_blur": "tab_blur_count",
+        "window_switch": "window_switch_count",
+        "copy_paste": "copy_paste_events",
+        "devtools": "devtools_open_count",
+        "premove": "premove_count",
+    }
+    normalized: dict[str, Any] = {}
+    for key, value in patch.items():
+        normalized[aliases.get(key, key)] = value
     row, _ = GameFairPlayTelemetry.objects.get_or_create(game=game, user=user)
     data = dict(row.data or {})
-    for key, value in patch.items():
+    for key, value in normalized.items():
         if key in ("tab_blur_count", "window_switch_count", "copy_paste_events", "devtools_open_count", "premove_count"):
             data[key] = int(data.get(key, 0)) + int(value or 0)
         elif key == "focus_loss_ms":
