@@ -13,7 +13,7 @@ import { AiTauntBubble } from "@/components/chess/AiTauntBubble";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { GameReview } from "@/components/chess/GameReview";
 import { PlayBoardSection } from "@/components/play/PlayBoardSection";
-import { gamesApi, ratingsApi } from "@/lib/api";
+import { pollPendingMoveComments } from "@/lib/pollGameComments";
 import { useAuthStore } from "@/store/auth";
 import { unlockAiSpeech, speakComment, bindAiSpeechToUserGestures } from "@/lib/aiSpeech";
 import { defaultAiEloForUser, normalizeToPreset, resolveAiPlayMode, type AiLevelElo } from "@/lib/aiStrength";
@@ -91,6 +91,7 @@ interface GameState {
   ai_target_elo?: number;
   variant?: GameVariant;
   analysis?: GameAnalysisData | null;
+  comments_pending?: boolean;
 }
 
 function PlayContent() {
@@ -347,6 +348,16 @@ function PlayContent() {
     }
   }, [t]);
 
+  const refreshPendingComments = useCallback(
+    (data: Partial<GameState> & { comments_pending?: boolean }, id: string | null) => {
+      if (!id || !data.comments_pending || !aiCommentsEnabled) return;
+      void pollPendingMoveComments(id, (fresh) => {
+        applyGameResponse(fresh as Partial<GameState> & { id?: string; fen?: string });
+      });
+    },
+    [aiCommentsEnabled, applyGameResponse]
+  );
+
   const wsPendingRef = useRef<WsGamePayload | null>(null);
   const wsRafRef = useRef(0);
 
@@ -484,6 +495,7 @@ function PlayContent() {
       setIsVsAi(true);
       setGameId(data.id);
       applyGameResponse(data);
+      refreshPendingComments(data, data.id);
       saveActiveGame({
         gameId: data.id,
         mode: aiPlayMode,
@@ -518,6 +530,7 @@ function PlayContent() {
     useClock,
     timePreset,
     applyGameResponse,
+    refreshPendingComments,
     t,
   ]);
 
@@ -570,6 +583,7 @@ function PlayContent() {
           spentMs,
         });
         applyGameResponse(data);
+        refreshPendingComments(data, gameId);
         if (data.status === "completed" && data.termination_reason !== "repetition") {
           setStatus(
             t("play.status.gameEnd", {
@@ -594,6 +608,7 @@ function PlayContent() {
       wsSendMove,
       applyOptimisticUci,
       applyGameResponse,
+      refreshPendingComments,
       gameIsTimed,
       playerIsWhite,
       gameData.white_time_ms,

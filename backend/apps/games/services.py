@@ -184,7 +184,7 @@ class GameService:
                     game.move_count += 1
                     game.pgn = f"1. {ai_san}"
                     game.save()
-                    ai_move = self._record_move(
+                    ai_move_record = self._record_move(
                         game,
                         ai_move.uci,
                         ai_san,
@@ -195,7 +195,7 @@ class GameService:
                     if include_comments:
                         pending_comments.append(
                             _comment_spec(
-                                ai_move,
+                                ai_move_record,
                                 fen_before,
                                 nf,
                                 played_by_ai=True,
@@ -370,6 +370,8 @@ class GameService:
             finalize_repetition_draw(game)
             game.save()
             on_game_completed(game)
+            if pending_comment_specs:
+                schedule_move_comments(str(game.id), pending_comment_specs)
             return {
                 "move": move,
                 "fen": game.fen,
@@ -377,6 +379,7 @@ class GameService:
                 "result": game.result,
                 "termination_reason": "repetition",
                 "draw_claim": "threefold",
+                "comments_pending": bool(pending_comment_specs),
             }
 
         response = {"move": move, "fen": new_fen, "game_over": is_over}

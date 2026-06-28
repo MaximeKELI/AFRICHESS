@@ -110,7 +110,10 @@ class CreateAIGameView(APIView):
             bot=bot,
             variant=vd.get("variant", Game.Variant.STANDARD),
         )
-        return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
+        data = GameSerializer(game).data
+        if getattr(game, "comments_pending", False):
+            data["comments_pending"] = True
+        return Response(data, status=status.HTTP_201_CREATED)
 
 
 @extend_schema(
@@ -219,7 +222,10 @@ class MakeMoveView(APIView):
         if "error" in result:
             return Response(result, status=400)
         game.refresh_from_db()
-        return Response(GameSerializer(game).data)
+        data = GameSerializer(game).data
+        if result.get("comments_pending"):
+            data["comments_pending"] = True
+        return Response(data)
 
 
 class UndoMoveView(APIView):
