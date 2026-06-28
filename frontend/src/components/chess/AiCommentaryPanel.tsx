@@ -55,7 +55,7 @@ export function AiCommentaryPanel({
   if (!enabled) {
     return (
       <div className={compact ? "text-xs opacity-50" : "text-sm opacity-60"}>
-        Activez les commentaires : l&apos;IA et le coach parlent en français
+        Activez les commentaires : l&apos;IA parle et commente en français
         {voiceSupported ? "" : " (texte seul sur ce navigateur)"}.
       </div>
     );

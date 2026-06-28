@@ -2,10 +2,16 @@
 
 import { usePreferencesStore } from "@/store/preferences";
 import { useTranslation } from "@/hooks/useTranslation";
+import { unlockAiSpeech } from "@/lib/aiSpeech";
 
 export function CommentsToggle({ compact = false }: { compact?: boolean }) {
   const { aiCommentsEnabled, setAiCommentsEnabled } = usePreferencesStore();
   const { t } = useTranslation();
+
+  const onToggle = (checked: boolean) => {
+    if (checked) unlockAiSpeech();
+    setAiCommentsEnabled(checked);
+  };
 
   if (compact) {
     return (
@@ -13,7 +19,7 @@ export function CommentsToggle({ compact = false }: { compact?: boolean }) {
         <input
           type="checkbox"
           checked={aiCommentsEnabled}
-          onChange={(e) => setAiCommentsEnabled(e.target.checked)}
+          onChange={(e) => onToggle(e.target.checked)}
           className="w-4 h-4 rounded border-white/30 text-africhess-gold focus:ring-africhess-gold"
         />
         <span className="text-xs font-medium">{t("comments.toggle")}</span>
@@ -26,7 +32,7 @@ export function CommentsToggle({ compact = false }: { compact?: boolean }) {
       <input
         type="checkbox"
         checked={aiCommentsEnabled}
-        onChange={(e) => setAiCommentsEnabled(e.target.checked)}
+        onChange={(e) => onToggle(e.target.checked)}
         className="w-4 h-4 rounded border-white/30 text-africhess-gold focus:ring-africhess-gold"
       />
       <span className="text-sm">
