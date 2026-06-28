@@ -21,6 +21,18 @@ export function AiCommentaryPanel({
   const latest = comments.at(-1);
   const voiceSupported = isAiSpeechSupported();
 
+  const handleTestVoice = () => {
+    unlockAiSpeech();
+    void testAiSpeech(t("comments.voice.testPhrase"));
+  };
+
+  const handleListenLatest = () => {
+    unlockAiSpeech();
+    if (latest) {
+      speakComment(latest.text, { byAi: latest.byAi, enabled: true, forceUnlock: true });
+    }
+  };
+
   useEffect(() => {
     initAiSpeech();
     return () => stopAiSpeech();
@@ -44,21 +56,27 @@ export function AiCommentaryPanel({
   return (
     <div className="space-y-3">
       {voiceSupported && (
-        <p className="text-[10px] opacity-50">{t("comments.voice.hint")}</p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={handleTestVoice}
+            className="text-xs px-2.5 py-1 rounded-lg border border-africhess-gold/40 text-africhess-gold hover:bg-africhess-gold/10"
+          >
+            🔊 {t("comments.voice.test")}
+          </button>
+          {latest && (
+            <button
+              type="button"
+              onClick={handleListenLatest}
+              className="text-xs px-2.5 py-1 rounded-lg border border-white/20 opacity-80 hover:opacity-100"
+            >
+              {t("comments.voice.listen")}
+            </button>
+          )}
+        </div>
       )}
-      {voiceSupported && latest && (
-        <button
-          type="button"
-          onClick={() => {
-            unlockAiSpeech();
-            if (latest) {
-              speakComment(latest.text, { byAi: latest.byAi, enabled: true, forceUnlock: true });
-            }
-          }}
-          className="text-[10px] opacity-60 hover:opacity-100 flex items-center gap-1 transition-opacity"
-        >
-          <span aria-hidden>🔊</span> {t("comments.voice.listen")}
-        </button>
+      {voiceSupported && (
+        <p className="text-[10px] opacity-50">{t("comments.voice.hint")}</p>
       )}
       {!voiceSupported && (
         <p className="text-[10px] text-africhess-terracotta opacity-80">
