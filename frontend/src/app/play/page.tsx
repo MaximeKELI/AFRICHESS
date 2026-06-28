@@ -647,6 +647,9 @@ function PlayContent() {
         : undefined;
       applyOptimisticUci(uci);
       turnStartRef.current = Date.now();
+      if (telemetryEnabled && spentMs !== undefined && spentMs <= 80) {
+        notePremove();
+      }
       const telemetry = consumeFairPlayPatch();
 
       if (isLiveHuman && wsConnected) {
@@ -737,6 +740,17 @@ function PlayContent() {
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 md:py-8">
+      <FairPlayConsentModal
+        open={showConsentModal}
+        onAccepted={() => {
+          setFairplayConsent(true);
+          setShowConsentModal(false);
+        }}
+        onDecline={() => {
+          setShowConsentModal(false);
+          setIsRated(false);
+        }}
+      />
       <div className="flex items-center gap-3 mb-4 md:mb-6 flex-wrap">
         <h1 className="font-display text-2xl md:text-3xl font-bold capitalize">
           {t("play.title", { mode: modeLabelText })}
