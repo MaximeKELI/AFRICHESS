@@ -94,7 +94,7 @@ class ChessConsumer(AsyncWebsocketConsumer):
         if not uci:
             await self._send_event("error", {"message": "Coup manquant (uci)"})
             return
-        result = await self._make_move(uci, data.get("spent_ms"))
+        result = await self._make_move(uci, data.get("spent_ms"), data.get("telemetry"))
         if result.get("error"):
             await self._send_event("error", result)
             return
@@ -227,11 +227,17 @@ class ChessConsumer(AsyncWebsocketConsumer):
         return build_ws_payload(game)
 
     @database_sync_to_async
-    def _make_move(self, uci: str, spent_ms):
+    def _make_move(self, uci: str, spent_ms, telemetry=None):
         game = Game.objects.get(id=self.game_id)
         if game.is_vs_ai:
             return {"error": "Parties IA : utilisez l'API REST"}
-        result = GameService().make_move(game, self.user, uci, spent_ms=spent_ms)
+        result = GameService().make_move(
+            game,
+            self.user,
+            uci,
+            spent_ms=spent_ms,
+            telemetry=telemetry,
+        )
         if "error" in result:
             return result
         game.refresh_from_db()
