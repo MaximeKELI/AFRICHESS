@@ -4,8 +4,14 @@ import {
   isBoardThemeId,
   type BoardThemeId,
 } from "@/lib/boardThemes";
+import {
+  DEFAULT_BOARD_BACKGROUND,
+  isBoardBackgroundId,
+  type BoardBackgroundId,
+} from "@/lib/boardBackgrounds";
 
 const BOARD_THEME_KEY = "board_theme";
+const BOARD_BACKGROUND_KEY = "board_background";
 const AI_COMMENTS_KEY = "ai_comments";
 const PIECE_SET_KEY = "piece_set";
 
