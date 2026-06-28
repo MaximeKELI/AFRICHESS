@@ -92,7 +92,7 @@ class AsyncMoveCommentsTests(TestCase):
         mock_engine.analyze_position.side_effect = [0.0, 0.3]
 
         with patch(
-            "apps.games.commentary_async.generate_move_comment",
+            "apps.games.commentary.generate_move_comment",
             return_value="Coup solide.",
         ):
             count = generate_move_comments_for_specs(
