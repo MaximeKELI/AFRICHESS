@@ -126,7 +126,8 @@ export function stopAiSpeech() {
 }
 
 export function isAiSpeechSupported(): boolean {
-  return typeof window !== "undefined" && ("speechSynthesis" in window || true);
+  if (typeof window === "undefined") return false;
+  return "speechSynthesis" in window || Boolean(process.env.NEXT_PUBLIC_API_URL);
 }
 
 async function speakViaBackend(text: string): Promise<boolean> {
