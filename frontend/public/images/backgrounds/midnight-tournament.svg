@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+
+      <defs><radialGradient id="spot" cx="50%" cy="50%" r="70%"><stop offset="0%" stop-color="#1E293B"/><stop offset="50%" stop-color="#0F172A"/><stop offset="100%" stop-color="#020617"/></radialGradient></defs>
+      <rect width="1920" height="1080" fill="url(#spot)"/>
+      <ellipse cx="960" cy="200" rx="400" ry="120" fill="#FDE047" opacity="0.08"/>
+      <rect x="560" y="600" width="800" height="400" rx="20" fill="#334155" opacity="0.3"/>
+</svg>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+
+      <defs><linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#422006"/><stop offset="100%" stop-color="#292524"/></linearGradient></defs>
+      <rect width="1920" height="1080" fill="url(#bg)"/>
+      <rect x="60" y="80" width="100" height="920" fill="#7F1D1D" opacity="0.5" rx="4"/><rect x="190" y="80" width="100" height="920" fill="#92400E" opacity="0.5" rx="4"/><rect x="320" y="80" width="100" height="920" fill="#365314" opacity="0.5" rx="4"/><rect x="450" y="80" width="100" height="920" fill="#1E3A8A" opacity="0.5" rx="4"/><rect x="580" y="80" width="100" height="920" fill="#7F1D1D" opacity="0.5" rx="4"/><rect x="710" y="80" width="100" height="920" fill="#92400E" opacity="0.5" rx="4"/><rect x="840" y="80" width="100" height="920" fill="#365314" opacity="0.5" rx="4"/><rect x="970" y="80" width="100" height="920" fill="#1E3A8A" opacity="0.5" rx="4"/><rect x="1100" y="80" width="100" height="920" fill="#7F1D1D" opacity="0.5" rx="4"/><rect x="1230" y="80" width="100" height="920" fill="#92400E" opacity="0.5" rx="4"/><rect x="1360" y="80" width="100" height="920" fill="#365314" opacity="0.5" rx="4"/><rect x="1490" y="80" width="100" height="920" fill="#1E3A8A" opacity="0.5" rx="4"/><rect x="1620" y="80" width="100" height="920" fill="#7F1D1D" opacity="0.5" rx="4"/><rect x="1750" y="80" width="100" height="920" fill="#92400E" opacity="0.5" rx="4"/>
+</svg>

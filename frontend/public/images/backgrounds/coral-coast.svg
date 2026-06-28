@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+
+      <defs><linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#38BDF8"/><stop offset="60%" stop-color="#7DD3FC"/><stop offset="100%" stop-color="#FEF9C3"/></linearGradient>
+      <linearGradient id="sea" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#0891B2"/><stop offset="100%" stop-color="#06B6D4"/></linearGradient></defs>
+      <rect width="1920" height="1080" fill="url(#sky)"/>
+      <rect y="620" width="1920" height="460" fill="url(#sea)"/>
+      <ellipse cx="960" cy="620" rx="960" ry="30" fill="#22D3EE" opacity="0.4"/>
+</svg>

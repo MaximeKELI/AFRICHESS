@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+
+      <defs><linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#64748B"/><stop offset="100%" stop-color="#CBD5E1"/></linearGradient>
+      <linearGradient id="water" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#0E7490"/><stop offset="100%" stop-color="#22D3EE"/></linearGradient></defs>
+      <rect width="1920" height="1080" fill="url(#sky)"/>
+      <rect y="500" width="1920" height="580" fill="url(#water)"/>
+      <ellipse cx="200" cy="480" rx="100" ry="60" fill="#F8FAFC" opacity="0.35"/><ellipse cx="320" cy="500" rx="100" ry="60" fill="#F8FAFC" opacity="0.35"/><ellipse cx="440" cy="520" rx="100" ry="60" fill="#F8FAFC" opacity="0.35"/><ellipse cx="560" cy="480" rx="100" ry="60" fill="#F8FAFC" opacity="0.35"/><ellipse cx="680" cy="500" rx="100" ry="60" fill="#F8FAFC" opacity="0.35"/><ellipse cx="800" cy="520" rx="100" ry="60" fill="#F8FAFC" opacity="0.35"/><ellipse cx="920" cy="480" rx="100" ry="60" fill="#F8FAFC" opacity="0.35"/><ellipse cx="1040" cy="500" rx="100" ry="60" fill="#F8FAFC" opacity="0.35"/><ellipse cx="1160" cy="520" rx="100" ry="60" fill="#F8FAFC" opacity="0.35"/><ellipse cx="1280" cy="480" rx="100" ry="60" fill="#F8FAFC" opacity="0.35"/><ellipse cx="1400" cy="500" rx="100" ry="60" fill="#F8FAFC" opacity="0.35"/><ellipse cx="1520" cy="520" rx="100" ry="60" fill="#F8FAFC" opacity="0.35"/><ellipse cx="1640" cy="480" rx="100" ry="60" fill="#F8FAFC" opacity="0.35"/><ellipse cx="1760" cy="500" rx="100" ry="60" fill="#F8FAFC" opacity="0.35"/><ellipse cx="1880" cy="520" rx="100" ry="60" fill="#F8FAFC" opacity="0.35"/>
+</svg>

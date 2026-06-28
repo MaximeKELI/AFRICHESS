@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+
+      <defs><linearGradient id="sea" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#0C4A6E"/><stop offset="50%" stop-color="#0369A1"/><stop offset="100%" stop-color="#082F49"/></linearGradient></defs>
+      <rect width="1920" height="1080" fill="url(#sea)"/>
+      <ellipse cx="0" cy="200" rx="200" ry="30" fill="#38BDF8" opacity="0.1"/><ellipse cx="240" cy="280" rx="200" ry="30" fill="#38BDF8" opacity="0.1"/><ellipse cx="480" cy="360" rx="200" ry="30" fill="#38BDF8" opacity="0.1"/><ellipse cx="720" cy="440" rx="200" ry="30" fill="#38BDF8" opacity="0.1"/><ellipse cx="960" cy="520" rx="200" ry="30" fill="#38BDF8" opacity="0.1"/><ellipse cx="1200" cy="600" rx="200" ry="30" fill="#38BDF8" opacity="0.1"/><ellipse cx="1440" cy="680" rx="200" ry="30" fill="#38BDF8" opacity="0.1"/><ellipse cx="1680" cy="760" rx="200" ry="30" fill="#38BDF8" opacity="0.1"/>
+</svg>

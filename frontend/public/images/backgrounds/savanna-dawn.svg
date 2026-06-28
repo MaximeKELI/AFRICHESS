@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+
+      <defs><linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#1E3A5F"/><stop offset="35%" stop-color="#E879A9"/><stop offset="60%" stop-color="#FBBF24"/><stop offset="100%" stop-color="#FEF3C7"/></linearGradient></defs>
+      <rect width="1920" height="1080" fill="url(#sky)"/>
+      <circle cx="300" cy="280" r="70" fill="#FDE68A" opacity="0.9"/>
+  <circle cx="300" cy="280" r="126" fill="#FDE68A" opacity="0.15"/>
+      <path d="M0 800 Q200 650 400 710 T800 680 T1200 725 T1600 695 T1920 740 L1920 1080 L0 1080 Z" fill="#4A6741" opacity="0.85"/>
+<path d="M0 800 Q280 700 400 740 T800 720 T1200 750 T1600 730 T1920 760 L1920 1080 L0 1080 Z" fill="#2D5016" opacity="0.73"/>
+<path d="M0 800 Q360 740 400 764 T800 752 T1200 770 T1600 758 T1920 776 L1920 1080 L0 1080 Z" fill="#1B4332" opacity="0.61"/>
+</svg>
