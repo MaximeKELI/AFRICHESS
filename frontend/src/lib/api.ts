@@ -287,8 +287,17 @@ export const socialApi = {
   cancelFriendRequest: (id: number) => api.post(`/social/friends/${id}/cancel/`),
   unfriend: (username: string) => api.post(`/social/friends/unfriend/${username}/`),
   blockUser: (username: string) => api.post(`/social/friends/block/${username}/`),
-  searchUsers: (q: string, country?: string) =>
-    api.get<UserSearchHit[]>("/users/search/", { params: { q, country } }),
+  searchUsers: async (q: string, country?: string) => {
+    const params = { q, country };
+    try {
+      return await api.get<UserSearchHit[]>("/users/search/", { params });
+    } catch (err) {
+      if (err instanceof AxiosError && err.response?.status === 404) {
+        return api.get<UserSearchHit[]>("/social/users/search/", { params });
+      }
+      throw err;
+    }
+  },
   userRelationship: (username: string) =>
     api.get<UserRelationship>(`/social/users/${username}/relationship/`),
   followUser: (username: string) => api.post(`/social/users/${username}/follow/`),
