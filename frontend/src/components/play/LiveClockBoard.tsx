@@ -120,6 +120,8 @@ function PlayBoardCoreInner({
         fen={fen}
         orientation={orientation}
         onMove={onMove}
+        onPremove={onPremove}
+        enablePremoves={enablePremoves}
         disabled={disabled}
         playerColor={playerColor}
         lastMove={lastMove}
