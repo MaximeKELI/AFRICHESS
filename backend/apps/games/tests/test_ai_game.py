@@ -141,9 +141,9 @@ class AIGameAPITests(TestCase):
         game = svc.create_ai_game(self.user, mode="blitz", color="white", ai_elo=1250)
         self.assertEqual(game.ai_target_elo, 1330)
 
+    @patch("apps.games.services.GameService.__init__", lambda self: None)
     def test_serializer_exposes_side_elos(self):
         from apps.games.serializers import GameSerializer
-        from apps.games.services import GameService
 
         svc = GameService()
         svc.engine = MagicMock()
