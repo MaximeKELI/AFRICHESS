@@ -17,6 +17,7 @@ from .serializers import (
     GameSerializer,
     MakeMoveSerializer,
     MatchmakingJoinSerializer,
+    serialize_game_move_delta,
 )
 from .elo_adapt import resolve_final_ai_elo
 from .elo_config import elo_strength_label, get_user_elo, suggested_ai_elo_for_user

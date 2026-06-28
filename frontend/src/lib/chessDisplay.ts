@@ -110,6 +110,77 @@ export function buildGameDisplayFromMoves(
   return extractDisplayState(chess, applied);
 }
 
+/** Met à jour l'affichage en appliquant seulement les nouveaux coups (O(k) au lieu de O(n)). */
+export function appendApiMovesToDisplay(
+  prev: GameDisplayState,
+  newMoves: ApiMove[]
+): GameDisplayState {
+  if (!newMoves.length) return prev;
+  const chess = new Chess(prev.fen === "start" ? undefined : prev.fen);
+  const applied: ApiMove[] = [];
+
+  for (const m of newMoves) {
+    try {
+      const move = chess.move(m.uci);
+      if (move) applied.push(m);
+    } catch {
+      break;
+    }
+  }
+  if (!applied.length) return prev;
+
+  const prevHistoryLen = prev.lastMove ? 1 : 0;
+  const full = extractDisplayState(chess, applied);
+  if (prevHistoryLen === 0 && applied.length === 1) {
+    return full;
+  }
+
+  const captured = { ...prev.captured };
+  for (const m of applied) {
+    try {
+      const verbose = chess.history({ verbose: true }).at(-1);
+      if (!verbose?.captured) continue;
+      const pieceKey = (verbose.color === "w" ? "b" : "w") + verbose.captured;
+      if (verbose.color === "w") {
+        captured.byWhite = [...captured.byWhite, pieceKey].sort(
+          (a, b) => PIECE_VALUE[b[1]] - PIECE_VALUE[a[1]]
+        );
+        captured.materialWhite += PIECE_VALUE[pieceKey[1]];
+      } else {
+        captured.byBlack = [...captured.byBlack, pieceKey].sort(
+          (a, b) => PIECE_VALUE[b[1]] - PIECE_VALUE[a[1]]
+        );
+        captured.materialBlack += PIECE_VALUE[pieceKey[1]];
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const lastVerbose = chess.history({ verbose: true }).at(-1);
+  const sans = chess.history();
+  const moveRows = [...prev.moveRows];
+  for (const m of applied) {
+    const san = m.san;
+    if (m.played_by_white) {
+      moveRows.push({ number: m.move_number, white: san });
+    } else {
+      const row = moveRows.find((r) => r.number === m.move_number);
+      if (row) row.black = san;
+      else moveRows.push({ number: m.move_number, black: san });
+    }
+  }
+
+  return {
+    fen: chess.fen(),
+    moveRows,
+    captured,
+    lastMove: lastVerbose ? { from: lastVerbose.from, to: lastVerbose.to } : null,
+    isCheck: chess.inCheck(),
+    turn: chess.turn(),
+  };
+}
+
 function extractDisplayState(chess: Chess, _applied: ApiMove[]): GameDisplayState {
   const history = chess.history({ verbose: true });
   const capturedByWhite: string[] = [];
