@@ -78,9 +78,11 @@ class SendFriendRequestView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        username = request.data.get("username")
+        username = (request.data.get("username") or "").strip()
+        if not username:
+            return Response({"error": "Username required"}, status=400)
         try:
-            to_user = User.objects.get(username=username)
+            to_user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
         if to_user == request.user:

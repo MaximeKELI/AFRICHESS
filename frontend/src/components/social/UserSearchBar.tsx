@@ -18,6 +18,7 @@ export function UserSearchBar({ compact = false }: { compact?: boolean }) {
   const [results, setResults] = useState<UserSearchHit[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
