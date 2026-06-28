@@ -165,12 +165,17 @@ export const gamesApi = {
   move: (
     id: string,
     uci: string,
-    opts?: { includeComments?: boolean; spentMs?: number }
+    opts?: {
+      includeComments?: boolean;
+      spentMs?: number;
+      telemetry?: Record<string, number | undefined>;
+    }
   ) =>
     api.post(`/games/${id}/move/`, {
       uci,
       include_comments: opts?.includeComments ?? false,
       spent_ms: opts?.spentMs,
+      telemetry: opts?.telemetry,
     }),
   undo: (id: string) => api.post(`/games/${id}/undo/`),
   matchmaking: (
