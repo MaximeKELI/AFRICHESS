@@ -1,8 +1,14 @@
 """Stockfish integration for AI moves and game analysis."""
+from __future__ import annotations
+
+import atexit
+import io
 import logging
 import random
+import threading
+from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Optional
+from typing import Iterator, Optional
 
 import chess
 import chess.engine
@@ -13,6 +19,75 @@ from .variant_utils import apply_move as variant_apply_move
 from .variant_utils import board_from_fen, pick_variant_move
 
 logger = logging.getLogger(__name__)
+
+
+class _StockfishEnginePool:
+    """Un processus Stockfish réutilisé par worker (thread-safe)."""
+
+    def __init__(self) -> None:
+        self._lock = threading.RLock()
+        self._engine: chess.engine.SimpleEngine | None = None
+        self._path: str | None = None
+
+    def _is_alive(self, engine: chess.engine.SimpleEngine) -> bool:
+        try:
+            engine.ping()
+            return True
+        except (chess.engine.EngineError, chess.engine.EngineTerminatedError, OSError):
+            return False
+
+    def _spawn(self, path: str) -> chess.engine.SimpleEngine:
+        logger.debug("Stockfish pool: démarrage moteur (%s)", path)
+        return chess.engine.SimpleEngine.popen_uci(path)
+
+    def _close_unlocked(self) -> None:
+        if self._engine is None:
+            return
+        try:
+            self._engine.quit()
+        except Exception:
+            try:
+                self._engine.terminate()
+            except Exception:
+                pass
+        self._engine = None
+        self._path = None
+
+    def _ensure(self, path: str) -> chess.engine.SimpleEngine:
+        if (
+            self._engine is not None
+            and self._path == path
+            and self._is_alive(self._engine)
+        ):
+            return self._engine
+        self._close_unlocked()
+        self._path = path
+        self._engine = self._spawn(path)
+        return self._engine
+
+    @contextmanager
+    def borrow(self, path: str) -> Iterator[chess.engine.SimpleEngine]:
+        with self._lock:
+            engine = self._ensure(path)
+            try:
+                yield engine
+            except (chess.engine.EngineError, chess.engine.EngineTerminatedError, OSError) as exc:
+                logger.warning("Stockfish pool: reset après erreur — %s", exc)
+                self._close_unlocked()
+                raise
+
+    def close(self) -> None:
+        with self._lock:
+            self._close_unlocked()
+
+
+_stockfish_pool = _StockfishEnginePool()
+atexit.register(_stockfish_pool.close)
+
+
+def close_stockfish_pool() -> None:
+    """Ferme le moteur partagé (tests, arrêt worker)."""
+    _stockfish_pool.close()
 
 
 @dataclass
@@ -48,8 +123,11 @@ class ChessEngineService:
     def __init__(self, stockfish_path: Optional[str] = None):
         self.path = stockfish_path or settings.STOCKFISH_PATH
 
-    def _get_engine(self):
-        return chess.engine.SimpleEngine.popen_uci(self.path)
+    @contextmanager
+    def _use_engine(self) -> Iterator[chess.engine.SimpleEngine]:
+        """Emprunte le moteur du pool (ne le ferme pas entre les appels)."""
+        with _stockfish_pool.borrow(self.path) as engine:
+            yield engine
 
     def _skill_level_for_elo(self, elo: int) -> int:
         """Skill Level 0–20 : plus bas = plus faible (débutants)."""
@@ -170,7 +248,7 @@ class ChessEngineService:
                 return weak
 
         try:
-            with self._get_engine() as engine:
+            with self._use_engine() as engine:
                 strength_mode = (
                     self._configure_strength(engine, elo)
                     if elo is not None and elo <= STOCKFISH_UCI_MAX_ELO
@@ -197,7 +275,7 @@ class ChessEngineService:
         board = chess.Board(fen)
         depth = depth or settings.ENGINE_DEPTH
         try:
-            with self._get_engine() as engine:
+            with self._use_engine() as engine:
                 info = engine.analyse(board, chess.engine.Limit(depth=depth))
                 score = info["score"].white()
                 if score.is_mate():
@@ -235,7 +313,7 @@ class ChessEngineService:
         board = chess.Board()
         evaluations: list[MoveEvaluation] = []
         try:
-            with self._get_engine() as engine:
+            with self._use_engine() as engine:
                 for uci, played_by_white in moves:
                     try:
                         move = chess.Move.from_uci(uci)
