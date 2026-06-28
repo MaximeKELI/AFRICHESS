@@ -1,5 +1,6 @@
 """Tâches Celery — matchmaking automatique et forfeits."""
 
+import logging
 from datetime import timedelta
 
 from celery import shared_task
@@ -7,6 +8,8 @@ from django.utils import timezone
 
 from .models import Game, GameRoom, MatchmakingQueue, GameAnalysis, AnalysisJob
 from .services import GameService, MatchmakingService
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task
@@ -155,14 +158,13 @@ def analyze_game_async(game_id: str, job_id: int):
 
 
 @shared_task
-def generate_move_comments_async(game_id: str, specs: list[dict):
+def generate_move_comments_async(game_id: str, specs: list[dict]):
     """Commentaires coach/IA après un coup — ne bloque pas la réponse move."""
-    del game_id  # réservé pour logs / futures métriques
     try:
         from apps.games.commentary_async import generate_move_comments_for_specs
 
         count = generate_move_comments_for_specs(specs)
-        logger.info("Commentaires async : %d coup(s) commenté(s)", count)
+        logger.info("Commentaires async game=%s : %d coup(s) commenté(s)", game_id, count)
     except Exception:
         logger.exception("Échec génération commentaires async (game=%s)", game_id)
 
