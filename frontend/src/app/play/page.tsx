@@ -882,8 +882,6 @@ function PlayContent() {
           <div className={mobileTab === "moves" ? "block space-y-4" : "hidden lg:block lg:space-y-4"}>
             <GameSidePanel
               moves={panelDisplay.moveRows}
-              captured={panelDisplay.captured}
-              orientation={orientation}
               isCheck={panelDisplay.isCheck}
               turn={panelDisplay.turn}
               openingName={openingName}
