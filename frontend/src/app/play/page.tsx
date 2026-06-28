@@ -772,8 +772,8 @@ function PlayContent() {
             disabled={!gameId || gameCompleted || movePending || (isLiveHuman && !isMyTurn)}
             playerColor={playerColor as "w" | "b"}
             showClock={Boolean(gameId && gameIsTimed)}
-            whiteMs={gameData.white_time_ms ?? timeMinutes * 60_000}
-            blackMs={gameData.black_time_ms ?? timeMinutes * 60_000}
+            whiteMs={gameData.white_time_ms ?? fallbackBaseMs}
+            blackMs={gameData.black_time_ms ?? fallbackBaseMs}
             clockRunning={Boolean(
               gameActive &&
                 gameIsTimed &&

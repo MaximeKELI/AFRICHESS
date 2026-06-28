@@ -102,7 +102,20 @@ export function playModeFromPreset(preset: TimePresetId): "bullet" | "blitz" | "
   return category;
 }
 
-export function minutesToPreset(minutes: TimeMinutes): TimePresetId {
+export function inferPresetFromMs(
+  baseMs?: number,
+  incrementMs?: number
+): TimePresetId | null {
+  if (baseMs == null) return null;
+  const inc = incrementMs ?? 0;
+  for (const preset of Object.values(TIME_PRESETS)) {
+    if (preset.baseMs === baseMs && preset.incrementMs === inc) {
+      return preset.id;
+    }
+  }
+  return null;
+}
+
   const map: Record<TimeMinutes, TimePresetId> = {
     5: "5+0",
     10: "10+0",
