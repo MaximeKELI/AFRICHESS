@@ -173,6 +173,15 @@ def analyze_and_store(game: Game, user) -> FairPlayReport | None:
     result = run_fairplay_analysis(game, user, analysis_mode="full")
     if not result:
         return None
+    baseline = player_baseline(user, game)
+    if int(baseline["games_analyzed"]) >= 10:
+        avg_hist = float(baseline["avg_overall_score"])
+        verdict = result.get("verdict", "clean")
+        score = float(result.get("overall_score", 0))
+        if avg_hist < 18.0 and verdict == "suspicious" and score < 75.0:
+            result["verdict"] = "review"
+        if avg_hist < 12.0 and verdict == "likely_cheat" and score < 88.0:
+            result["verdict"] = "suspicious"
     return persist_fairplay_report(game, user, result)
 
 
