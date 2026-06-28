@@ -262,8 +262,18 @@ class MatchmakingJoinSerializer(serializers.Serializer):
         return value
 
 
+class FairPlayTelemetrySerializer(serializers.Serializer):
+    tab_blur = serializers.IntegerField(min_value=0, max_value=4, required=False)
+    focus_loss_ms = serializers.IntegerField(min_value=0, max_value=120_000, required=False)
+    window_switch = serializers.IntegerField(min_value=0, max_value=6, required=False)
+    copy_paste = serializers.IntegerField(min_value=0, max_value=3, required=False)
+    devtools = serializers.IntegerField(min_value=0, max_value=2, required=False)
+    mouse_entropy = serializers.FloatField(min_value=0, max_value=1.0, required=False)
+    premove = serializers.IntegerField(min_value=0, max_value=20, required=False)
+
+
 class MakeMoveSerializer(serializers.Serializer):
     uci = serializers.CharField(max_length=10)
     include_comments = serializers.BooleanField(default=False, required=False)
     spent_ms = serializers.IntegerField(min_value=0, required=False)
-    telemetry = serializers.DictField(required=False)
+    telemetry = FairPlayTelemetrySerializer(required=False)

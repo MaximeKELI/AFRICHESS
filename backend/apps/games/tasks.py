@@ -182,6 +182,14 @@ def schedule_fairplay_analysis(game_id: str) -> None:
 
 
 @shared_task
+def expire_fairplay_sanctions_task():
+    """Réactive les comptes suspendus temporairement et expire les sanctions."""
+    from .fairplay_review import expire_fairplay_sanctions
+
+    return expire_fairplay_sanctions()
+
+
+@shared_task
 def generate_move_comments_async(game_id: str, specs: list[dict]):
     """Commentaires coach/IA après un coup — ne bloque pas la réponse move."""
     try:

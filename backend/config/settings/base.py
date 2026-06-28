@@ -250,6 +250,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.games.tasks.forfeit_overdue_correspondence_games",
         "schedule": 900.0,
     },
+    "expire-fairplay-sanctions": {
+        "task": "apps.games.tasks.expire_fairplay_sanctions_task",
+        "schedule": 3600.0,
+    },
 }
 
 DISCONNECT_FORFEIT_SECONDS = 90

@@ -34,6 +34,11 @@ def validate_move_timing(game: Game, user, think_ms: int | None = None) -> dict 
 def validate_move_telemetry(game: Game, user, telemetry: dict | None) -> dict | None:
     if game.is_vs_ai or not telemetry:
         return None
+    if not user_has_fairplay_consent(user):
+        return None
+    telemetry = sanitize_telemetry_patch(telemetry)
+    if not telemetry:
+        return None
     tab_blur = int(telemetry.get("tab_blur", 0) or 0)
     if tab_blur > MAX_TAB_BLUR_PER_MOVE:
         return {"error": "Activité d'onglet suspecte pendant le coup", "code": "anticheat"}
