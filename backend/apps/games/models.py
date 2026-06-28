@@ -208,6 +208,8 @@ class Move(models.Model):
     fen_after = models.CharField(max_length=100)
     played_by_white = models.BooleanField()
     time_remaining_ms = models.PositiveIntegerField(null=True, blank=True)
+    think_ms = models.PositiveIntegerField(null=True, blank=True, help_text="Temps de réflexion du joueur")
+    complexity_cp = models.PositiveSmallIntegerField(null=True, blank=True)
     comment = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 

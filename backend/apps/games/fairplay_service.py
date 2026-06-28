@@ -169,7 +169,7 @@ def estimate_complexity_cp(fen: str) -> int:
     try:
         from .engine import ChessEngineService
 
-        ev = ChessEngineService().evaluate_fen(fen)
+        ev = ChessEngineService().analyze_position(fen, depth=10)
         if ev is None:
             return 0
         return min(800, abs(int(ev * 100)))
