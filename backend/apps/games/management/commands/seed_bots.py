@@ -1,71 +1,58 @@
-"""Seed 100 named chess bots for the bot catalog."""
+"""Seed 100 chess bots — légendes + personnages fictifs uniques."""
 
 from django.core.management.base import BaseCommand
 
+from apps.games.bot_catalog import BOT_CATALOG
 from apps.games.models import ChessBot
-
-FIRST_NAMES = [
-    "Kwame", "Amara", "Zara", "Moussa", "Nia", "Kofi", "Amina", "Fatou", "Ibrahim", "Aisha",
-    "Omar", "Lerato", "Thabo", "Zinhle", "Sipho", "Naledi", "Jabari", "Zola", "Kendi", "Ayana",
-    "Malik", "Nuru", "Sefu", "Adama", "Binta", "Cheikh", "Diarra", "Esi", "Femi", "Gugu",
-    "Hassan", "Imani", "Jengo", "Kesi", "Lamine", "Makena", "Ngozi", "Olu", "Pendo", "Rashid",
-    "Sanaa", "Tendai", "Umi", "Wanjiru", "Xolani", "Yaa", "Zuberi", "Abeni", "Chidi", "Dalia",
-]
-
-LAST_NAMES = [
-    "Diallo", "Mensah", "Okafor", "Keita", "Nkosi", "Traoré", "Adeyemi", "Kamau", "Sow", "Banda",
-    "Mbeki", "Touré", "Okonkwo", "Mwangi", "Bah", "Ndlovu", "Sankara", "Eze", "Diop", "Moyo",
-    "Sissoko", "Osei", "Kone", "Mabaso", "Fofana", "Chukwu", "Dlamini", "Coulibaly", "Achebe", "Zuma",
-]
-
-PERSONALITIES = ["aggressive", "positional", "tactical", "solid", "creative", "endgame"]
-OPENINGS = [
-    "Sicilienne", "Partie ouverte", "Caro-Kann", "Dame indienne", "Réti", "Anglaise",
-    "Gambit de la dame", "Scandinave", "Alekhine", "Pirc", "Nimzo-indienne",
-]
-AVATARS = [f"avatar-{i}" for i in range(1, 9)]
-COUNTRIES = ["SN", "NG", "KE", "GH", "CI", "ZA", "EG", "MA", "CM", "TZ", "ET", "RW", "UG", "ML", "BF"]
 
 
 class Command(BaseCommand):
-    help = "Create 100 chess bots with African names and varied ELO"
+    help = "Create or update 100 chess bots from bot_catalog (legends + fictional)"
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--deactivate-old",
+            action="store_true",
+            help="Deactivate bots whose slug is not in the catalog",
+        )
 
     def handle(self, *args, **options):
         created = 0
-        for i in range(100):
-            elo = 200 + i * 48
-            if elo > 5000:
-                elo = 5000
-            first = FIRST_NAMES[i % len(FIRST_NAMES)]
-            last = LAST_NAMES[(i * 3) % len(LAST_NAMES)]
-            name = f"{first} {last}"
-            slug = f"bot-{i + 1:03d}"
-            personality = PERSONALITIES[i % len(PERSONALITIES)]
-            opening = OPENINGS[i % len(OPENINGS)]
-            is_premium = elo >= 2400
+        updated = 0
+        catalog_slugs = set()
+
+        for spec in BOT_CATALOG:
+            catalog_slugs.add(spec["slug"])
             _, was_created = ChessBot.objects.update_or_create(
-                slug=slug,
+                slug=spec["slug"],
                 defaults={
-                    "name": name,
-                    "name_en": name,
-                    "country": COUNTRIES[i % len(COUNTRIES)],
-                    "elo": elo,
-                    "avatar_id": AVATARS[i % len(AVATARS)],
-                    "personality": personality,
-                    "opening_style": opening,
-                    "description": (
-                        f"{name} joue un style {personality} avec la {opening}. "
-                        f"ELO estimé : {elo}."
-                    ),
-                    "description_en": (
-                        f"{name} plays a {personality} style with the {opening}. "
-                        f"Estimated ELO: {elo}."
-                    ),
-                    "is_premium": is_premium,
+                    "name": spec["name"],
+                    "name_en": spec["name_en"],
+                    "country": spec["country"],
+                    "elo": spec["elo"],
+                    "avatar_id": spec["avatar_id"],
+                    "personality": spec["personality"],
+                    "opening_style": spec["opening_style"],
+                    "description": spec["description"],
+                    "description_en": spec["description_en"],
+                    "is_premium": spec["is_premium"],
                     "is_active": True,
                 },
             )
             if was_created:
                 created += 1
-        total = ChessBot.objects.count()
-        self.stdout.write(self.style.SUCCESS(f"Bots: {created} new, {total} total."))
+            else:
+                updated += 1
+
+        deactivated = 0
+        if options["deactivate_old"]:
+            deactivated = ChessBot.objects.exclude(slug__in=catalog_slugs).update(is_active=False)
+
+        total = ChessBot.objects.filter(is_active=True).count()
+        legends = sum(1 for s in BOT_CATALOG if s["is_legend"])
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Bots: {created} new, {updated} updated, {legends} legends, "
+                f"{deactivated} deactivated, {total} active total."
+            )
+        )

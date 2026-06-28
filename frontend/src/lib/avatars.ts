@@ -55,6 +55,9 @@ export function resolveMediaUrl(path?: string | null): string | null {
 }
 
 export function getAiAvatarSrc(id?: AiAvatarId | string | null): string {
+  if (id && !id.startsWith("avatar-")) {
+    return `/avatars/bots/${id}.png`;
+  }
   const found = AI_AVATARS.find((a) => a.id === id);
   return found?.src ?? AI_AVATARS[0].src;
 }
