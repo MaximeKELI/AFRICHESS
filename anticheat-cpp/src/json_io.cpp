@@ -198,6 +198,35 @@ MoveInput parse_move_object(const std::string& obj) {
   return m;
 }
 
+PlayerBaseline parse_baseline(const std::string& json) {
+  PlayerBaseline b;
+  size_t pos = find_key(json, "baseline");
+  if (pos == std::string::npos) {
+    return b;
+  }
+  pos = json.find('{', pos);
+  if (pos == std::string::npos) {
+    return b;
+  }
+  size_t end = pos + 1;
+  int depth = 1;
+  while (end < json.size() && depth > 0) {
+    if (json[end] == '{') {
+      ++depth;
+    } else if (json[end] == '}') {
+      --depth;
+    }
+    ++end;
+  }
+  std::string block = json.substr(pos, end - pos);
+  b.games_analyzed = parse_int_field(block, "games_analyzed");
+  b.avg_accuracy = parse_double_field(block, "avg_accuracy");
+  b.avg_top1_rate = parse_double_field(block, "avg_top1_rate");
+  b.avg_cpl = parse_double_field(block, "avg_cpl");
+  b.avg_overall_score = parse_double_field(block, "avg_overall_score");
+  return b;
+}
+
 GameInput parse_game_input(const std::string& json) {
   GameInput input;
   input.game_id = parse_string_field(json, "game_id");
@@ -218,6 +247,7 @@ GameInput parse_game_input(const std::string& json) {
     input.analysis_mode = "full";
   }
   input.telemetry = parse_telemetry(json);
+  input.baseline = parse_baseline(json);
   for (const auto& obj : extract_objects(json, "moves")) {
     input.moves.push_back(parse_move_object(obj));
   }

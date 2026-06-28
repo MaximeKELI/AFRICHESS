@@ -25,6 +25,14 @@ struct TelemetryInput {
   int premove_count = 0;
 };
 
+struct PlayerBaseline {
+  int games_analyzed = 0;
+  double avg_accuracy = 0.0;
+  double avg_top1_rate = 0.0;
+  double avg_cpl = 0.0;
+  double avg_overall_score = 0.0;
+};
+
 struct GameInput {
   std::string game_id;
   int player_elo = 1200;
@@ -33,6 +41,7 @@ struct GameInput {
   bool is_rated = true;
   std::vector<MoveInput> moves;
   TelemetryInput telemetry;
+  PlayerBaseline baseline;
   std::string stockfish_path = "/usr/games/stockfish";
   int engine_depth = 16;
   std::string analysis_mode = "full";
