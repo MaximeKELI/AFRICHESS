@@ -208,13 +208,28 @@ def merge_telemetry(game: Game, user, patch: dict[str, Any]) -> GameFairPlayTele
 
 
 def estimate_complexity_cp(fen: str) -> int:
-    """Estimation légère sans moteur pour le temps réel."""
+    """Heuristique instantanée — pas d'appel moteur sur le chemin critique du coup."""
     try:
-        from .engine import ChessEngineService
+        import chess
 
-        ev = ChessEngineService().analyze_position(fen, depth=10)
-        if ev is None:
-            return 0
-        return min(800, abs(int(ev * 100)))
+        board = chess.Board(fen)
+        piece_vals = {
+            chess.PAWN: 100,
+            chess.KNIGHT: 320,
+            chess.BISHOP: 330,
+            chess.ROOK: 500,
+            chess.QUEEN: 900,
+        }
+        material = 0
+        for piece in board.piece_map().values():
+            v = piece_vals.get(piece.piece_type, 0)
+            material += v if piece.color == chess.WHITE else -v
+        complexity = min(
+            800,
+            abs(material) // 2 + board.fullmove_number * 6 + len(list(board.legal_moves)) * 2,
+        )
+        if board.is_check():
+            complexity += 100
+        return complexity
     except Exception:
         return 0
