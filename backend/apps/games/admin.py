@@ -1,9 +1,12 @@
 from django.contrib import admin
 
 from .models import (
+    FairPlayAppeal,
+    FairPlayAuditLog,
     FairPlayReport,
     FairPlayReviewCase,
     FairPlaySanction,
+    FairPlayUserConsent,
     Game,
     GameAnalysis,
     GameFairPlayTelemetry,
