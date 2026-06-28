@@ -780,6 +780,7 @@ function PlayContent() {
                   }
                 : undefined
             }
+            captured={panelDisplay.captured}
           />
           {isVsAi && gameId && (
             <div className="glass-card p-3 sm:p-4">
