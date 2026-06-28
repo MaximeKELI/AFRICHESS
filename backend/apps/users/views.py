@@ -48,18 +48,25 @@ class RegisterView(APIView):
             else:
                 detail = "Impossible de créer ce compte. Vérifiez vos informations."
             return Response({"detail": detail}, status=status.HTTP_400_BAD_REQUEST)
-        log_event(
-            "register",
-            user=user,
-            path="/register",
-            metadata={
-                "country": user.country,
-                "discovery_source": user.discovery_source,
-                "registration_locale": user.registration_locale,
-            },
-            request=request,
-        )
-        return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+        try:
+            log_event(
+                "register",
+                user=user,
+                path="/register",
+                metadata={
+                    "country": user.country,
+                    "discovery_source": user.discovery_source,
+                    "registration_locale": user.registration_locale,
+                },
+                request=request,
+            )
+        except Exception:
+            pass  # analytics ne doit pas bloquer l'inscription
+        refresh = RefreshToken.for_user(user)
+        payload = UserSerializer(user).data
+        payload["access"] = str(refresh.access_token)
+        payload["refresh"] = str(refresh)
+        return Response(payload, status=status.HTTP_201_CREATED)
 
 
 @extend_schema(summary="Profil du joueur connecté (lecture / mise à jour)")

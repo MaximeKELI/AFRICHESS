@@ -124,8 +124,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (data.gender) payload.gender = data.gender;
       if (data.discovery_source) payload.discovery_source = data.discovery_source;
       if (data.registration_locale) payload.registration_locale = data.registration_locale;
-      await authApi.register(payload);
-      await get().login(data.username.trim(), data.password); // toujours par username après inscription
+      const { data: res } = await authApi.register(payload);
+      if (res.access && res.refresh) {
+        setAccessToken(res.access);
+        setRefreshToken(res.refresh);
+        await get().fetchProfile();
+        if (!get().user) {
+          throw new Error(translate(get().locale, "errors.profileLoadFailed"));
+        }
+      } else {
+        await get().login(data.username.trim(), data.password);
+      }
     } catch (error) {
       throw new Error(formatApiError(error));
     } finally {

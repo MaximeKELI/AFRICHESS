@@ -12,8 +12,8 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
+from config.auth_views import registration_deprecated
 from apps.users.auth_views import SecureLoginView, SecureLogoutView
-from apps.users.views import registration_deprecated
 
 if settings.DEBUG and getattr(settings, "ALLOW_PUBLIC_API_DOCS", False):
     _doc_permissions = [AllowAny]

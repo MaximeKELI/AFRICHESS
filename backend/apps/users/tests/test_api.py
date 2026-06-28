@@ -24,6 +24,8 @@ class UsersApiTests(TestCase):
         )
         self.assertEqual(res.status_code, 201)
         self.assertEqual(res.data["username"], "newbie")
+        self.assertIn("access", res.data)
+        self.assertIn("refresh", res.data)
 
     def test_profile_requires_auth(self):
         res = self.client.get("/api/users/profile/")
