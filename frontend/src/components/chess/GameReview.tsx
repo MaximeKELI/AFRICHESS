@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import Link from "next/link";
 import { CapturedBoardStack } from "@/components/chess/CapturedBoardStack";
@@ -73,10 +73,19 @@ export function GameReview({
   });
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [voiceOn, setVoiceOn] = useState(true);
+  const [userMovesOnly, setUserMovesOnly] = useState(true);
+  const [autoTour, setAutoTour] = useState(false);
+  const autoTourRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     initAiSpeech();
-    unlockAiSpeech();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopAiSpeech();
+      if (autoTourRef.current) clearInterval(autoTourRef.current);
+    };
   }, []);
 
   useEffect(() => {
