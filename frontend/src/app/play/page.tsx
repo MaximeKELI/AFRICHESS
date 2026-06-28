@@ -322,10 +322,18 @@ function PlayContent() {
     if (data.termination_reason === "repetition") {
       playDrawWhistle();
     }
-    setGameData((prev) => ({
-      ...prev,
-      fen: data.fen ?? prev.fen,
-      moves: data.moves ?? prev.moves ?? [],
+    setGameData((prev) => {
+      let mergedMoves = prev.moves ?? [];
+      if (data.delta && data.new_moves?.length) {
+        mergedMoves = mergeApiMoves(mergedMoves, data.new_moves);
+      } else if (data.moves !== undefined) {
+        mergedMoves = data.moves;
+      }
+
+      return {
+        ...prev,
+        fen: data.fen ?? prev.fen,
+        moves: mergedMoves,
       white_time_ms: data.white_time_ms ?? prev.white_time_ms,
       black_time_ms: data.black_time_ms ?? prev.black_time_ms,
       increment_ms: data.increment_ms ?? prev.increment_ms,
@@ -350,11 +358,12 @@ function PlayContent() {
           : prev.black_elo_provisional,
       bot: data.bot !== undefined ? data.bot : prev.bot,
       variant: (data.variant as GameVariant) ?? prev.variant ?? "standard",
-      analysis:
-        data.analysis !== undefined
-          ? parseAnalysisPayload(data.analysis) ?? prev.analysis ?? null
-          : prev.analysis,
-    }));
+        analysis:
+          data.analysis !== undefined
+            ? parseAnalysisPayload(data.analysis) ?? prev.analysis ?? null
+            : prev.analysis,
+      };
+    });
     if (data.variant) setActiveVariant(data.variant as GameVariant);
     if (data.ai_target_elo) setAiElo(data.ai_target_elo);
     if (data.is_vs_ai !== undefined) setIsVsAi(data.is_vs_ai);
