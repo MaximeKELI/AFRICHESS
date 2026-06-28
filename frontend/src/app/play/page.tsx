@@ -47,7 +47,7 @@ import { openingNameFromMoves } from "@/lib/openings";
 import Link from "next/link";
 import Image from "next/image";
 import { pickAiAvatar } from "@/lib/avatars";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useFairPlayTelemetry } from "@/hooks/useFairPlayTelemetry";
 import { chessLevelLabel, modeLabel } from "@/lib/i18n/labels";
 import {
   formatElo,
