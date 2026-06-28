@@ -1,17 +1,32 @@
 /**
- * Synthèse vocale des commentaires IA (Web Speech API, français).
+ * Synthèse vocale des commentaires IA.
+ * 1) Web Speech API (navigateur)
+ * 2) Secours serveur espeak-ng (Linux sans voix système)
  */
 
 let preferredVoice: SpeechSynthesisVoice | null = null;
 let voicesReady = false;
 let voicesListenerAttached = false;
 let keepAliveId: ReturnType<typeof setInterval> | null = null;
+let backendTtsOk: boolean | null = null;
 
 type QueuedUtterance = { text: string; byAi: boolean };
 
 const queue: QueuedUtterance[] = [];
 let draining = false;
 let lastQueuedText = "";
+let currentAudio: HTMLAudioElement | null = null;
+
+function apiBase(): string {
+  return process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8003/api";
+}
+
+function authHeaders(): HeadersInit {
+  if (typeof document === "undefined") return {};
+  const match = document.cookie.match(/(?:^|;\s*)access_token=([^;]+)/);
+  if (!match) return {};
+  return { Authorization: `Bearer ${decodeURIComponent(match[1])}` };
+}
 
 function pickFrenchVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
   if (!voices.length) return null;
@@ -19,7 +34,7 @@ function pickFrenchVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice |
     (v) => v.lang.startsWith("fr") || v.lang.includes("FR")
   );
   return (
-    fr.find((v) => v.name.includes("Google") && v.lang.startsWith("fr")) ??
+    fr.find((v) => /google|espeak|french|france/i.test(v.name)) ??
     fr.find((v) => v.localService) ??
     fr[0] ??
     voices.find((v) => v.lang.startsWith("fr")) ??
@@ -43,13 +58,26 @@ function attachVoicesListener() {
   window.speechSynthesis.addEventListener("voiceschanged", refreshVoices);
 }
 
+function isLinuxDesktop(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Linux/i.test(navigator.userAgent) && !/Android/i.test(navigator.userAgent);
+}
+
+function shouldPreferBackendTts(): boolean {
+  if (backendTtsOk === true) return true;
+  if (typeof window === "undefined" || !window.speechSynthesis) return true;
+  refreshVoices();
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length === 0) return true;
+  if (isLinuxDesktop() && !preferredVoice) return true;
+  return false;
+}
+
 function startKeepAlive() {
   if (keepAliveId != null) return;
   keepAliveId = window.setInterval(() => {
     const synth = window.speechSynthesis;
-    if (synth.speaking && synth.paused) {
-      synth.resume();
-    }
+    if (synth.speaking && synth.paused) synth.resume();
   }, 400);
 }
 
@@ -60,33 +88,23 @@ function stopKeepAlive() {
   }
 }
 
-/** Charge les voix — appeler tôt (montage composant). */
 export function initAiSpeech() {
   attachVoicesListener();
   refreshVoices();
-  if (!voicesReady) {
-    window.setTimeout(refreshVoices, 120);
-    window.setTimeout(refreshVoices, 500);
-  }
+  [120, 500, 1200, 2500].forEach((ms) => window.setTimeout(refreshVoices, ms));
 }
 
-/**
- * Débloque la synthèse vocale — appeler sur clic / toucher (geste utilisateur).
- */
 export function unlockAiSpeech(): boolean {
   if (!isAiSpeechSupported()) return false;
   initAiSpeech();
-
   const synth = window.speechSynthesis;
   refreshVoices();
-
   const warmup = new SpeechSynthesisUtterance(".");
   warmup.volume = 0.01;
   warmup.rate = 3;
   warmup.lang = "fr-FR";
   if (preferredVoice) warmup.voice = preferredVoice;
   synth.speak(warmup);
-
   return true;
 }
 
@@ -95,15 +113,55 @@ export function isAiSpeechUnlocked(): boolean {
 }
 
 export function stopAiSpeech() {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-  queue.length = 0;
-  draining = false;
-  stopKeepAlive();
-  window.speechSynthesis.cancel();
+  if (typeof window !== "undefined" && window.speechSynthesis) {
+    queue.length = 0;
+    draining = false;
+    stopKeepAlive();
+    window.speechSynthesis.cancel();
+  }
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
 }
 
 export function isAiSpeechSupported(): boolean {
-  return typeof window !== "undefined" && "speechSynthesis" in window;
+  return typeof window !== "undefined" && ("speechSynthesis" in window || true);
+}
+
+async function speakViaBackend(text: string): Promise<boolean> {
+  try {
+    const url = `${apiBase()}/games/tts/?text=${encodeURIComponent(text.slice(0, 500))}`;
+    const res = await fetch(url, {
+      credentials: "include",
+      headers: authHeaders(),
+    });
+    if (!res.ok) {
+      backendTtsOk = false;
+      return false;
+    }
+    const buf = await res.arrayBuffer();
+    if (!buf.byteLength) return false;
+    backendTtsOk = true;
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
+    const blob = new Blob([buf], { type: "audio/wav" });
+    const objectUrl = URL.createObjectURL(blob);
+    const audio = new Audio(objectUrl);
+    currentAudio = audio;
+    audio.volume = 1;
+    await audio.play();
+    audio.onended = () => {
+      URL.revokeObjectURL(objectUrl);
+      if (currentAudio === audio) currentAudio = null;
+    };
+    return true;
+  } catch {
+    backendTtsOk = false;
+    return false;
+  }
 }
 
 function drainQueue() {
@@ -125,9 +183,7 @@ function drainQueue() {
   utterance.volume = 1;
 
   refreshVoices();
-  if (preferredVoice) {
-    utterance.voice = preferredVoice;
-  }
+  if (preferredVoice) utterance.voice = preferredVoice;
 
   utterance.onstart = () => startKeepAlive();
   utterance.onend = () => {
@@ -137,7 +193,9 @@ function drainQueue() {
   };
   utterance.onerror = () => {
     draining = false;
-    window.setTimeout(drainQueue, 60);
+    void speakViaBackend(item.text).then((ok) => {
+      if (!ok) window.setTimeout(drainQueue, 60);
+    });
   };
 
   synth.speak(utterance);
@@ -152,35 +210,86 @@ export function speakComment(
 ) {
   const { byAi = true, enabled = true } = options;
   if (!enabled || !text.trim()) return;
-  if (!isAiSpeechSupported()) return;
+  if (typeof window === "undefined") return;
 
   const normalized = text.trim();
   if (normalized === lastQueuedText && (draining || queue.length > 0)) return;
   lastQueuedText = normalized;
 
+  const prefix = byAi ? "" : "Conseil. ";
+  const fullText = `${prefix}${normalized}`;
+
+  if (shouldPreferBackendTts()) {
+    void speakViaBackend(fullText).then((ok) => {
+      if (!ok && isAiSpeechSupported()) {
+        initAiSpeech();
+        queue.push({ text: normalized, byAi });
+        drainQueue();
+      }
+    });
+    return;
+  }
+
+  if (!isAiSpeechSupported()) {
+    void speakViaBackend(fullText);
+    return;
+  }
+
   initAiSpeech();
-  queue.push({ text, byAi });
+  queue.push({ text: normalized, byAi });
 
   if (!voicesReady) {
     window.speechSynthesis.addEventListener(
       "voiceschanged",
       () => {
         refreshVoices();
-        drainQueue();
+        if (shouldPreferBackendTts()) {
+          queue.pop();
+          void speakViaBackend(fullText);
+        } else {
+          drainQueue();
+        }
       },
       { once: true }
     );
     window.setTimeout(() => {
       refreshVoices();
-      drainQueue();
-    }, 200);
+      if (shouldPreferBackendTts()) {
+        queue.pop();
+        void speakViaBackend(fullText);
+      } else {
+        drainQueue();
+      }
+    }, 250);
     return;
   }
 
   drainQueue();
 }
 
-/** Ré-enclenche le déblocage à chaque interaction pendant une partie IA. */
+/** Test vocal — retourne true si au moins une méthode fonctionne. */
+export async function testAiSpeech(phrase: string): Promise<boolean> {
+  unlockAiSpeech();
+  if (shouldPreferBackendTts()) {
+    return speakViaBackend(phrase);
+  }
+  return new Promise((resolve) => {
+    if (!window.speechSynthesis) {
+      void speakViaBackend(phrase).then(resolve);
+      return;
+    }
+    const u = new SpeechSynthesisUtterance(phrase);
+    u.lang = "fr-FR";
+    if (preferredVoice) u.voice = preferredVoice;
+    u.onstart = () => resolve(true);
+    u.onerror = () => {
+      void speakViaBackend(phrase).then(resolve);
+    };
+    window.speechSynthesis.speak(u);
+    window.setTimeout(() => resolve(false), 3000);
+  });
+}
+
 export function bindAiSpeechToUserGestures(active: boolean) {
   if (typeof window === "undefined" || !active) return () => undefined;
 

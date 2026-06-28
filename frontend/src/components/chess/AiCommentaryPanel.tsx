@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MoveComment } from "@/lib/chessDisplay";
-import { initAiSpeech, isAiSpeechSupported, speakComment, stopAiSpeech, unlockAiSpeech } from "@/lib/aiSpeech";
+import { initAiSpeech, isAiSpeechSupported, speakComment, stopAiSpeech, unlockAiSpeech, testAiSpeech } from "@/lib/aiSpeech";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface AiCommentaryPanelProps {

@@ -150,6 +150,25 @@ def ai_strength_preview(request):
     })
 
 
+@extend_schema(
+    summary="Synthèse vocale (secours Linux — espeak-ng)",
+    parameters=[OpenApiParameter(name="text", type=str, required=True)],
+)
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def speech_tts(request):
+    text = request.query_params.get("text", "")
+    wav = synthesize_wav(text)
+    if not wav:
+        return Response(
+            {"error": "Synthèse vocale indisponible (espeak-ng manquant sur le serveur)."},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    from django.http import HttpResponse
+
+    return HttpResponse(wav, content_type="audio/wav")
+
+
 @extend_schema(summary="Coups légaux (variantes Chess960 / Crazyhouse)")
 @api_view(["GET"])
 def legal_moves(request, game_id):
