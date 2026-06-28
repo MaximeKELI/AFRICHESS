@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store/auth";
 import { ActivityTracker } from "@/components/analytics/ActivityTracker";
 import { SiteBackground } from "@/components/layout/SiteBackground";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
+import { initAiSpeech } from "@/lib/aiSpeech";
 import Cookies from "js-cookie";
 
 export function Providers({ children }: { children: React.ReactNode }) {

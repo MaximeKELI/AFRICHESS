@@ -471,10 +471,14 @@ function PlayContent() {
           : t("play.status.gameStarted")
       );
       if (aiCommentsEnabled && data.moves?.length) {
-        const aiComments = commentsFromMoves(data.moves, orientation === "white");
-        const lastAi = [...aiComments].reverse().find((c) => c.byAi);
-        if (lastAi) {
-          speakComment(lastAi.text, { byAi: true, enabled: true, forceUnlock: true });
+        const allComments = commentsFromMoves(data.moves, orientation === "white");
+        const lastComment = allComments.at(-1);
+        if (lastComment) {
+          speakComment(lastComment.text, {
+            byAi: lastComment.byAi,
+            enabled: true,
+            forceUnlock: true,
+          });
         }
       }
     } catch (err) {
