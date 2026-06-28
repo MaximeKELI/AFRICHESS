@@ -329,11 +329,40 @@ export function GameReview({
               </div>
 
               {analysis.summary_fr && (
-                <div className="rounded-xl bg-africhess-gold/10 border border-africhess-gold/20 p-3 text-sm">
-                  <p className="font-semibold text-africhess-gold mb-1">
-                    {t("chess.analysis.reviewTitle")}
-                  </p>
+                <div className="rounded-xl bg-africhess-gold/10 border border-africhess-gold/20 p-3 text-sm space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold text-africhess-gold">
+                      {t("chess.analysis.reviewTitle")}
+                    </p>
+                    {isAiSpeechSupported() && (
+                      <button
+                        type="button"
+                        onClick={handleListenSummary}
+                        className="text-xs px-2 py-1 rounded border border-africhess-gold/40 text-africhess-gold shrink-0"
+                      >
+                        🔊 {t("chess.review.listenSummary")}
+                      </button>
+                    )}
+                  </div>
                   <p className="opacity-90">{analysis.summary_fr}</p>
+                  {analysis.key_moments_json && analysis.key_moments_json.length > 0 && (
+                    <ul className="space-y-1 text-xs opacity-85 border-t border-white/10 pt-2">
+                      {analysis.key_moments_json.map((m) => (
+                        <li key={m.ply}>
+                          <button
+                            type="button"
+                            className="text-left hover:text-africhess-gold"
+                            onClick={() => {
+                              setAutoTour(false);
+                              setSelectedIdx(Math.max(0, m.ply - 1));
+                            }}
+                          >
+                            • {m.text}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
 
