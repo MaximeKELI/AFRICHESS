@@ -647,9 +647,6 @@ function PlayContent() {
         : undefined;
       applyOptimisticUci(uci);
       turnStartRef.current = Date.now();
-      if (telemetryEnabled && spentMs !== undefined && spentMs <= 80) {
-        notePremove();
-      }
       const telemetry = consumeFairPlayPatch();
 
       if (isLiveHuman && wsConnected) {
@@ -699,7 +696,7 @@ function PlayContent() {
       gameData.black_time_ms,
       playerIsWhite,
       consumeFairPlayPatch,
-      t,
+      telemetryEnabled,
     ]
   );
 
