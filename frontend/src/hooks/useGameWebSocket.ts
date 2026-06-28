@@ -204,11 +204,11 @@ export function useMatchmakingWebSocket(
           mode,
           is_timed: timeOpts?.isTimed ?? true,
           is_rated: timeOpts?.isRated ?? true,
-          time_minutes:
+          time_control:
             timeOpts?.isRated && timeOpts?.isTimed
               ? null
               : timeOpts?.isTimed
-                ? timeOpts.timeMinutes
+                ? timeOpts.timePreset
                 : null,
         })
       );
@@ -240,7 +240,7 @@ export function useMatchmakingWebSocket(
       setMmError(tr("ws.error.matchmaking"));
       setSearching(false);
     };
-  }, [mode, onMatch, timeOpts?.isTimed, timeOpts?.timeMinutes]);
+  }, [mode, onMatch, timeOpts?.isTimed, timeOpts?.timePreset]);
 
   const cancel = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

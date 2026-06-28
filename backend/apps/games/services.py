@@ -494,9 +494,12 @@ class MatchmakingService:
         elo: int,
         is_timed: bool = True,
         time_minutes: int | None = None,
+        time_control: str | None = None,
         is_rated: bool = True,
     ):
-        _, _, _, _, tcm = resolve_time_fields(is_timed, time_minutes)
+        _, _, _, _, tcm = resolve_time_fields(
+            is_timed, time_minutes, time_control=time_control
+        )
         MatchmakingQueue.objects.update_or_create(
             user=user,
             defaults={
@@ -518,9 +521,12 @@ class MatchmakingService:
         elo: int,
         is_timed: bool = True,
         time_minutes: int | None = None,
+        time_control: str | None = None,
         is_rated: bool = True,
     ):
-        _, _, _, _, tcm = resolve_time_fields(is_timed, time_minutes)
+        _, _, _, _, tcm = resolve_time_fields(
+            is_timed, time_minutes, time_control=time_control
+        )
         candidates = MatchmakingQueue.objects.filter(
             mode=mode,
             is_timed=is_timed,

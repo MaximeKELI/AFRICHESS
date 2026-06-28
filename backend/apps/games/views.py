@@ -352,6 +352,7 @@ class MatchmakingView(APIView):
         is_timed = vd.get("is_timed", True)
         is_rated = vd.get("is_rated", True)
         time_minutes = vd.get("time_minutes")
+        time_control = vd.get("time_control")
         rating = PlayerRating.objects.filter(user=request.user, mode=mode).first()
         elo = rating.elo if rating else request.user.initial_elo
         svc = MatchmakingService()
@@ -361,6 +362,7 @@ class MatchmakingView(APIView):
             elo,
             is_timed=is_timed,
             time_minutes=time_minutes,
+            time_control=time_control,
             is_rated=is_rated,
         )
         if game:
@@ -371,6 +373,7 @@ class MatchmakingView(APIView):
             elo,
             is_timed=is_timed,
             time_minutes=time_minutes,
+            time_control=time_control,
             is_rated=is_rated,
         )
         svc.pair_all_waiting()
