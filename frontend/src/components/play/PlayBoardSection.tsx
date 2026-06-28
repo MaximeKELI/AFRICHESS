@@ -1,11 +1,12 @@
 "use client";
 
 import { memo } from "react";
+import { CapturedBoardStack } from "@/components/chess/CapturedBoardStack";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { GamePlayerStrip, type GamePlayerStripProps } from "@/components/play/GamePlayerStrip";
 import type { PlayerDisplayInfo } from "@/lib/gamePlayers";
 import { useLiveClock } from "@/hooks/useLiveClock";
-import type { ApiMove } from "@/lib/chessDisplay";
+import type { ApiMove, CapturedState } from "@/lib/chessDisplay";
 import { lastMoveFromMoves, turnFromFen } from "@/lib/gameDisplayFast";
 
 export interface PlayerStripConfig {
@@ -33,6 +34,7 @@ interface PlayBoardSectionProps {
   topPlayer?: PlayerStripConfig;
   bottomPlayer?: PlayerStripConfig;
   extraBottom?: number;
+  captured?: CapturedState;
 }
 
 function PlayBoardSectionInner({
@@ -54,6 +56,7 @@ function PlayBoardSectionInner({
   topPlayer,
   bottomPlayer,
   extraBottom = 0,
+  captured,
 }: PlayBoardSectionProps) {
   const turn = turnFromFen(fen);
   const lastMove = lastMoveFromMoves(moves);
@@ -89,25 +92,27 @@ function PlayBoardSectionInner({
   return (
     <div className="game-board-stack w-full min-w-0 max-w-full">
       {topStrip && (
-        <div className="mb-2">
+        <div className="mb-1.5">
           <GamePlayerStrip {...topStrip} />
         </div>
       )}
-      <ChessBoard
-        fen={fen}
-        orientation={orientation}
-        onMove={onMove}
-        disabled={disabled}
-        playerColor={playerColor}
-        lastMove={lastMove}
-        playSoundOnFenChange={true}
-        serverValidated={serverValidated}
-        pendingDrop={pendingDrop}
-        onDropAtSquare={onDropAtSquare}
-        extraBottom={extraBottom}
-      />
+      <CapturedBoardStack captured={captured} orientation={orientation}>
+        <ChessBoard
+          fen={fen}
+          orientation={orientation}
+          onMove={onMove}
+          disabled={disabled}
+          playerColor={playerColor}
+          lastMove={lastMove}
+          playSoundOnFenChange={true}
+          serverValidated={serverValidated}
+          pendingDrop={pendingDrop}
+          onDropAtSquare={onDropAtSquare}
+          extraBottom={extraBottom}
+        />
+      </CapturedBoardStack>
       {bottomStrip && (
-        <div className="mt-2">
+        <div className="mt-1.5">
           <GamePlayerStrip {...bottomStrip} />
         </div>
       )}

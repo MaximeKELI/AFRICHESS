@@ -1,5 +1,6 @@
 "use client";
 
+import { resolveCapturedSides } from "@/lib/capturedSides";
 import { PIECE_SYMBOLS, type CapturedState } from "@/lib/chessDisplay";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -10,27 +11,29 @@ interface CapturedPiecesProps {
 
 export function CapturedPieces({ captured, orientation = "white" }: CapturedPiecesProps) {
   const { t } = useTranslation();
+  const { top, bottom, topAdvantage, bottomAdvantage } = resolveCapturedSides(
+    captured,
+    orientation
+  );
   const topLabel =
-    orientation === "white" ? t("chess.captured.whiteTook") : t("chess.captured.blackTook");
-  const bottomLabel =
     orientation === "white" ? t("chess.captured.blackTook") : t("chess.captured.whiteTook");
-  const topPieces = captured.byWhite;
-  const bottomPieces = captured.byBlack;
-  const topAdvantage = captured.materialWhite - captured.materialBlack;
-  const bottomAdvantage = captured.materialBlack - captured.materialWhite;
+  const bottomLabel =
+    orientation === "white" ? t("chess.captured.whiteTook") : t("chess.captured.blackTook");
+  const topPieces = top;
+  const bottomPieces = bottom;
 
   return (
     <div className="space-y-3 text-sm">
       <CapturedRow
         label={topLabel}
         pieces={topPieces}
-        advantage={topAdvantage > 0 ? `+${topAdvantage}` : undefined}
+        advantage={topAdvantage != null ? `+${topAdvantage}` : undefined}
         pieceClass="text-[var(--text)]"
       />
       <CapturedRow
         label={bottomLabel}
         pieces={bottomPieces}
-        advantage={bottomAdvantage > 0 ? `+${bottomAdvantage}` : undefined}
+        advantage={bottomAdvantage != null ? `+${bottomAdvantage}` : undefined}
         pieceClass="opacity-70"
       />
     </div>
