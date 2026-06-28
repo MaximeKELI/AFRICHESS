@@ -163,8 +163,23 @@ function PlayContent() {
     }
   }, [gameCompleted, gameId]);
 
+  const [fairplayConsent, setFairplayConsent] = useState<boolean | null>(null);
+  const [showConsentModal, setShowConsentModal] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setFairplayConsent(null);
+      return;
+    }
+    gamesApi
+      .fairplayStatus()
+      .then(({ data }) => setFairplayConsent(Boolean(data.consent_given)))
+      .catch(() => setFairplayConsent(false));
+  }, [user?.id]);
+
   const isLiveHuman = Boolean(gameId && !isVsAi);
-  const { consumePatch: consumeFairPlayPatch } = useFairPlayTelemetry(isLiveHuman);
+  const telemetryEnabled = isLiveHuman && fairplayConsent === true;
+  const { consumePatch: consumeFairPlayPatch, notePremove } = useFairPlayTelemetry(telemetryEnabled);
   const gameIsTimed = gameData.is_timed !== false;
   useEffect(() => {
     setTimePreset(defaultPresetForMode(mode));
