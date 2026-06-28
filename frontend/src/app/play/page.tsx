@@ -819,12 +819,12 @@ function PlayContent() {
               )}
             </div>
           )}
-          {movePending && isVsAi && (
-            <p className="pointer-events-none absolute bottom-3 right-3 z-30 rounded-lg bg-black/75 px-2.5 py-1 text-[11px] text-africhess-gold shadow-lg">
-              {t("play.ai.thinking")}
-            </p>
-          )}
           <div className="relative w-full">
+            {movePending && isVsAi && (
+              <p className="pointer-events-none absolute bottom-3 right-3 z-30 rounded-lg bg-black/75 px-2.5 py-1 text-[11px] text-africhess-gold shadow-lg animate-pulse">
+                {t("play.ai.thinking")}
+              </p>
+            )}
             <AiTauntBubble
               comment={latestAiComment}
               enabled={Boolean(isVsAi && gameId && aiCommentsEnabled)}
