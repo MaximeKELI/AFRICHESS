@@ -2,7 +2,26 @@ from rest_framework import serializers
 
 from apps.users.serializers import UserPublicSerializer
 
+from .elo_config import get_user_elo
 from .models import ChessBot, Game, GameAnalysis, Move
+
+
+def _game_rating_mode(game: Game) -> str:
+    """Mode de classement pour afficher l'ELO (les parties IA stockent mode=ai)."""
+    if game.mode != Game.Mode.AI:
+        return game.mode
+    tcm = game.time_control_minutes
+    if tcm is not None and tcm <= 3:
+        return "bullet"
+    if tcm is not None and tcm >= 15:
+        return "rapid"
+    return "blitz"
+
+
+def _ai_side_elo(game: Game) -> int:
+    if game.bot_id and game.bot:
+        return game.bot.elo
+    return game.ai_target_elo
 
 
 class MoveSerializer(serializers.ModelSerializer):
@@ -55,6 +74,22 @@ class GameSerializer(serializers.ModelSerializer):
     moves = MoveSerializer(many=True, read_only=True)
     analysis = GameAnalysisSerializer(read_only=True)
     bot = ChessBotSerializer(read_only=True)
+    white_elo = serializers.SerializerMethodField()
+    black_elo = serializers.SerializerMethodField()
+
+    def get_white_elo(self, obj: Game):
+        if obj.white_player_id:
+            return get_user_elo(obj.white_player, _game_rating_mode(obj))
+        if obj.is_vs_ai:
+            return _ai_side_elo(obj)
+        return None
+
+    def get_black_elo(self, obj: Game):
+        if obj.black_player_id:
+            return get_user_elo(obj.black_player, _game_rating_mode(obj))
+        if obj.is_vs_ai:
+            return _ai_side_elo(obj)
+        return None
 
     class Meta:
         model = Game
@@ -64,7 +99,9 @@ class GameSerializer(serializers.ModelSerializer):
             "fen", "pgn", "move_count", "white_time_ms", "black_time_ms",
             "increment_ms",
             "is_timed", "time_control_minutes", "is_rated",
-            "is_vs_ai", "ai_difficulty", "ai_target_elo", "moves", "analysis",
+            "is_vs_ai", "ai_difficulty", "ai_target_elo",
+            "white_elo", "black_elo",
+            "moves", "analysis",
             "termination_reason",
             "created_at", "started_at", "ended_at",
             "days_per_move", "turn_deadline",
