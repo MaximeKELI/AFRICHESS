@@ -11,11 +11,13 @@ import {
   initAiSpeech,
   isAiSpeechSupported,
   speakComment,
+  stopAiSpeech,
+  testAiSpeech,
   unlockAiSpeech,
 } from "@/lib/aiSpeech";
 import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
 import type { GameAnalysisData } from "@/lib/gameAnalysis";
-import { coachUserMoveComment, formatEvalDisplay } from "@/lib/coachReview";
+import { coachUserMoveComment, cpLossLabel, formatEvalDisplay, moveClassSymbol } from "@/lib/coachReview";
 import {
   firstUserMistakeIndex,
   reviewBoardState,
