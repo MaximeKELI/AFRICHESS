@@ -10,11 +10,15 @@ from typing import Any
 
 from django.conf import settings
 
+from apps.notifications.models import Notification
 from apps.ratings.models import PlayerRating
 
+from .fairplay_audit import log_fairplay_audit
 from .models import FairPlayReport, Game, GameFairPlayTelemetry, Move
 
 logger = logging.getLogger(__name__)
+
+ENGINE_UNAVAILABLE_VERDICT = FairPlayReport.Verdict.ENGINE_UNAVAILABLE
 
 
 def _fairplay_bin() -> str | None:
