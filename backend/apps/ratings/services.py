@@ -4,6 +4,9 @@ from apps.games.models import Game
 
 from .constants import PROVISIONAL_GAMES_REQUIRED, RATED_MODES
 from .models import PlayerRating, RatingHistory
+
+
+class RatingService:
     K_FACTORS = {
         "bullet": settings.K_FACTOR_BULLET,
         "blitz": settings.K_FACTOR_BLITZ,
