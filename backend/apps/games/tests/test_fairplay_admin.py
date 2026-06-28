@@ -168,14 +168,16 @@ class FairPlayAdminServiceTests(TestCase):
         mock_run.return_value = (
             {
                 "overall_score": 70.0,
-            "verdict": "suspicious",
-            "signals": [],
-            "move_evals": [],
-            "engine_top1_rate": 0.6,
-            "engine_top3_rate": 0.7,
-            "avg_centipawn_loss": 20.0,
-            "accuracy_estimate": 92.0,
-        }
+                "verdict": "suspicious",
+                "signals": [],
+                "move_evals": [],
+                "engine_top1_rate": 0.6,
+                "engine_top3_rate": 0.7,
+                "avg_centipawn_loss": 20.0,
+                "accuracy_estimate": 92.0,
+            },
+            None,
+        )
         game = Game.objects.create(
             white_player=self.white,
             black_player=self.black,
