@@ -701,6 +701,11 @@ function PlayContent() {
   );
 
   const findMatch = async () => {
+    if (isRated && fairplayConsent !== true) {
+      setShowConsentModal(true);
+      setStatus(t("fairplay.consent.required"));
+      return;
+    }
     setSearching(true);
     setStatus(
       useClock
