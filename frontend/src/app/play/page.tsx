@@ -690,7 +690,7 @@ function PlayContent() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(260px,340px)] gap-4 lg:gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(240px,300px)] gap-4 lg:gap-5 items-start">
         <div className={`w-full min-w-0 max-w-full space-y-3 ${mobileTab !== "board" ? "hidden lg:block" : ""}`}>
           {isLiveHuman && (
             <div className="space-y-1">
@@ -746,6 +746,19 @@ function PlayContent() {
                 : undefined
             }
           />
+          {isVsAi && gameId && (
+            <div className="glass-card p-3 sm:p-4">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <h3 className="font-semibold text-sm">{t("play.comments")}</h3>
+                <CommentsToggle compact />
+              </div>
+              <AiCommentaryPanel
+                comments={moveComments}
+                enabled={aiCommentsEnabled}
+                compact={mobileTab === "board"}
+              />
+            </div>
+          )}
           {activeVariant === "crazyhouse" && gameId && isMyTurn && (
             <PocketBar
               pieces={crazyhousePockets}
@@ -839,10 +852,10 @@ function PlayContent() {
               turn={panelDisplay.turn}
               openingName={openingName}
             />
-            {isVsAi && (
-              <div className="glass-card p-4">
+            {isVsAi && !gameId && (
+              <div className="glass-card p-4 hidden lg:block">
                 <h3 className="font-semibold text-sm mb-3">{t("play.comments")}</h3>
-                <AiCommentaryPanel comments={moveComments} enabled={aiCommentsEnabled} />
+                <CommentsToggle />
               </div>
             )}
             {gameCompleted && gameId && (
