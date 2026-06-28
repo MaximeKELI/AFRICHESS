@@ -120,12 +120,67 @@ def build_game_input(game: Game, user, *, analysis_mode: str = "full") -> dict[s
     }
 
 
-def run_fairplay_analysis(game: Game, user, *, analysis_mode: str = "full") -> dict[str, Any] | None:
+def _engine_unavailable_result(reason: str) -> dict[str, Any]:
+    return {
+        "overall_score": 0.0,
+        "verdict": ENGINE_UNAVAILABLE_VERDICT,
+        "signals": [
+            {
+                "code": "ENGINE_UNAVAILABLE",
+                "score": 0.0,
+                "weight": 0.0,
+                "detail": reason[:500],
+            }
+        ],
+        "move_evals": [],
+        "engine_top1_rate": 0.0,
+        "engine_top3_rate": 0.0,
+        "avg_centipawn_loss": 0.0,
+        "accuracy_estimate": 0.0,
+        "analysis_error": reason[:500],
+    }
+
+
+def _notify_ops_engine_failure(game: Game, user, reason: str) -> None:
+    logger.error("FairPlay engine unavailable game=%s user=%s: %s", game.id, user.id, reason)
+    log_fairplay_audit(
+        action="engine_failure",
+        target_type="game",
+        target_id=str(game.id),
+        metadata={"user_id": user.id, "reason": reason[:500]},
+    )
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    title = "Fair Play : moteur d'analyse indisponible"
+    body = f"Partie {game.id} — joueur {user.username} — {reason[:200]}"
+    for staff in User.objects.filter(is_staff=True, is_active=True).only("id")[:20]:
+        Notification.objects.create(
+            user_id=staff.id,
+            type=Notification.Type.SYSTEM,
+            title=title,
+            body=body,
+            data={
+                "kind": "fairplay_engine_failure",
+                "game_id": str(game.id),
+                "user_id": user.id,
+            },
+        )
+
+
+def run_fairplay_analysis(
+    game: Game,
+    user,
+    *,
+    analysis_mode: str = "full",
+) -> tuple[dict[str, Any], str | None]:
+    """Retourne (result, error_reason). error_reason non-None si moteur indisponible."""
     payload = build_game_input(game, user, analysis_mode=analysis_mode)
     binary = _fairplay_bin()
     if not binary:
-        logger.warning("FairPlay binary unavailable — skipping analysis for game %s", game.id)
-        return None
+        reason = "FairPlay binary not found"
+        logger.warning("%s — game %s", reason, game.id)
+        return _engine_unavailable_result(reason), reason
     try:
         proc = subprocess.run(
             [binary],
@@ -135,22 +190,24 @@ def run_fairplay_analysis(game: Game, user, *, analysis_mode: str = "full") -> d
             timeout=getattr(settings, "FAIRPLAY_TIMEOUT", 120),
             check=False,
         )
-    except (subprocess.TimeoutExpired, OSError) as exc:
-        logger.exception("FairPlay subprocess failed: %s", exc)
-        return None
+    except subprocess.TimeoutExpired:
+        reason = "FairPlay subprocess timeout"
+        logger.exception("%s — game %s", reason, game.id)
+        return _engine_unavailable_result(reason), reason
+    except OSError as exc:
+        reason = f"FairPlay subprocess error: {exc}"
+        logger.exception("%s — game %s", reason, game.id)
+        return _engine_unavailable_result(reason), reason
     if proc.returncode != 0 or not proc.stdout.strip():
-        logger.warning(
-            "FairPlay error game=%s rc=%s stderr=%s",
-            game.id,
-            proc.returncode,
-            (proc.stderr or "")[:300],
-        )
-        return None
+        reason = f"FairPlay rc={proc.returncode} stderr={(proc.stderr or '')[:300]}"
+        logger.warning("FairPlay error game=%s %s", game.id, reason)
+        return _engine_unavailable_result(reason), reason
     try:
-        return json.loads(proc.stdout)
+        return json.loads(proc.stdout), None
     except json.JSONDecodeError:
-        logger.warning("FairPlay invalid JSON: %s", proc.stdout[:200])
-        return None
+        reason = f"FairPlay invalid JSON: {proc.stdout[:200]}"
+        logger.warning("%s — game %s", reason, game.id)
+        return _engine_unavailable_result(reason), reason
 
 
 def persist_fairplay_report(game: Game, user, result: dict[str, Any]) -> FairPlayReport:
@@ -177,9 +234,10 @@ def persist_fairplay_report(game: Game, user, result: dict[str, Any]) -> FairPla
 def analyze_and_store(game: Game, user) -> FairPlayReport | None:
     if game.is_vs_ai or not game.is_rated:
         return None
-    result = run_fairplay_analysis(game, user, analysis_mode="full")
-    if not result:
-        return None
+    result, error_reason = run_fairplay_analysis(game, user, analysis_mode="full")
+    if error_reason:
+        _notify_ops_engine_failure(game, user, error_reason)
+        return persist_fairplay_report(game, user, result)
     baseline = player_baseline(user, game)
     if int(baseline["games_analyzed"]) >= 10:
         avg_hist = float(baseline["avg_overall_score"])
@@ -193,6 +251,16 @@ def analyze_and_store(game: Game, user) -> FairPlayReport | None:
 
 
 def merge_telemetry(game: Game, user, patch: dict[str, Any]) -> GameFairPlayTelemetry:
+    from .fairplay_telemetry import sanitize_telemetry_patch, user_has_fairplay_consent
+
+    if not user_has_fairplay_consent(user):
+        row, _ = GameFairPlayTelemetry.objects.get_or_create(game=game, user=user)
+        return row
+    sanitized = sanitize_telemetry_patch(patch)
+    if not sanitized:
+        row, _ = GameFairPlayTelemetry.objects.get_or_create(game=game, user=user)
+        return row
+    patch = sanitized
     aliases = {
         "tab_blur": "tab_blur_count",
         "window_switch": "window_switch_count",
