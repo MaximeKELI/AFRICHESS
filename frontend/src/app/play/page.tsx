@@ -231,6 +231,11 @@ function PlayContent() {
     return commentsFromMoves(gameData.moves, playerIsWhite);
   }, [gameData.moves, playerIsWhite]);
 
+  const latestAiComment = useMemo(
+    () => moveComments.filter((comment) => comment.byAi).at(-1),
+    [moveComments]
+  );
+
   const userEloProvisional = isProvisionalRating(modeRating ?? undefined);
 
   useEffect(() => {
@@ -491,17 +496,6 @@ function PlayContent() {
           ? t("play.status.gameStartedElo", { elo: data.ai_target_elo })
           : t("play.status.gameStarted")
       );
-      if (aiCommentsEnabled && data.moves?.length) {
-        const allComments = commentsFromMoves(data.moves, orientation === "white");
-        const lastComment = allComments.at(-1);
-        if (lastComment) {
-          speakComment(lastComment.text, {
-            byAi: lastComment.byAi,
-            enabled: true,
-            forceUnlock: true,
-          });
-        }
-      }
     } catch (err) {
       const msg = formatApiError(err);
       setStatus(
@@ -576,17 +570,6 @@ function PlayContent() {
           spentMs,
         });
         applyGameResponse(data);
-        if (isVsAi && aiCommentsEnabled && data.moves?.length) {
-          const allComments = commentsFromMoves(data.moves, playerIsWhite);
-          const lastComment = allComments.at(-1);
-          if (lastComment) {
-            speakComment(lastComment.text, {
-              byAi: lastComment.byAi,
-              enabled: true,
-              forceUnlock: true,
-            });
-          }
-        }
         if (data.status === "completed" && data.termination_reason !== "repetition") {
           setStatus(
             t("play.status.gameEnd", {
@@ -765,7 +748,12 @@ function PlayContent() {
               {t("play.ai.thinking")}
             </p>
           )}
-          <PlayBoardSection
+          <div className="relative w-full">
+            <AiTauntBubble
+              comment={latestAiComment}
+              enabled={Boolean(isVsAi && gameId && aiCommentsEnabled)}
+            />
+            <PlayBoardSection
             fen={gameData.fen}
             moves={gameData.moves}
             orientation={orientation}
