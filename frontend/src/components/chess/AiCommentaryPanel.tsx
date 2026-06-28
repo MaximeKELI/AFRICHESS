@@ -19,7 +19,6 @@ export function AiCommentaryPanel({
   compact = false,
 }: AiCommentaryPanelProps) {
   const { t } = useTranslation();
-  const { lowBandwidth } = useAuthStore();
   const latest = comments.at(-1);
   const lastSpokenKey = useRef<string | null>(null);
   const voiceSupported = isAiSpeechSupported();
@@ -30,20 +29,24 @@ export function AiCommentaryPanel({
   }, []);
 
   useEffect(() => {
-    if (!enabled || !latest || lowBandwidth) return;
+    if (!enabled || !latest) return;
     if (!isAiSpeechSupported()) return;
 
     const key = `${latest.moveNumber}-${latest.san}-${latest.text}`;
     if (lastSpokenKey.current === key) return;
     lastSpokenKey.current = key;
 
-    const delay = latest.byAi ? 450 : 250;
+    const delay = latest.byAi ? 500 : 300;
     const timer = window.setTimeout(() => {
-      speakComment(latest.text, { byAi: latest.byAi, enabled: true });
+      speakComment(latest.text, {
+        byAi: latest.byAi,
+        enabled: true,
+        forceUnlock: true,
+      });
     }, delay);
 
     return () => window.clearTimeout(timer);
-  }, [enabled, latest, lowBandwidth]);
+  }, [enabled, latest]);
 
   useEffect(() => {
     if (!enabled) {

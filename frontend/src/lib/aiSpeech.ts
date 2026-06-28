@@ -1,14 +1,19 @@
 /**
  * Synthèse vocale des commentaires IA (Web Speech API, français).
- * Nécessite unlockAiSpeech() après un geste utilisateur (clic).
  */
 
 let preferredVoice: SpeechSynthesisVoice | null = null;
 let voicesReady = false;
-let speechUnlocked = false;
 let voicesListenerAttached = false;
+let keepAliveId: ReturnType<typeof setInterval> | null = null;
+
+type QueuedUtterance = { text: string; byAi: boolean };
+
+const queue: QueuedUtterance[] = [];
+let draining = false;
 
 function pickFrenchVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+  if (!voices.length) return null;
   const fr = voices.filter(
     (v) => v.lang.startsWith("fr") || v.lang.includes("FR")
   );
@@ -17,6 +22,7 @@ function pickFrenchVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice |
     fr.find((v) => v.localService) ??
     fr[0] ??
     voices.find((v) => v.lang.startsWith("fr")) ??
+    voices[0] ??
     null
   );
 }
@@ -36,29 +42,46 @@ function attachVoicesListener() {
   window.speechSynthesis.addEventListener("voiceschanged", refreshVoices);
 }
 
+function startKeepAlive() {
+  if (keepAliveId != null) return;
+  keepAliveId = window.setInterval(() => {
+    const synth = window.speechSynthesis;
+    if (synth.speaking && synth.paused) {
+      synth.resume();
+    }
+  }, 400);
+}
+
+function stopKeepAlive() {
+  if (keepAliveId != null) {
+    window.clearInterval(keepAliveId);
+    keepAliveId = null;
+  }
+}
+
 /** Charge les voix — appeler tôt (montage composant). */
 export function initAiSpeech() {
   attachVoicesListener();
   refreshVoices();
+  if (!voicesReady) {
+    window.setTimeout(refreshVoices, 120);
+    window.setTimeout(refreshVoices, 500);
+  }
 }
 
 /**
- * Débloque la synthèse vocale — à appeler dans un gestionnaire de clic
- * (politique autoplay des navigateurs).
+ * Débloque la synthèse vocale — appeler sur clic / toucher (geste utilisateur).
  */
 export function unlockAiSpeech(): boolean {
   if (!isAiSpeechSupported()) return false;
   initAiSpeech();
-  speechUnlocked = true;
 
   const synth = window.speechSynthesis;
-  synth.cancel();
   refreshVoices();
 
-  // Chrome / Safari : amorce silencieuse sur geste utilisateur
-  const warmup = new SpeechSynthesisUtterance("\u200B");
+  const warmup = new SpeechSynthesisUtterance(".");
   warmup.volume = 0.01;
-  warmup.rate = 2;
+  warmup.rate = 3;
   warmup.lang = "fr-FR";
   if (preferredVoice) warmup.voice = preferredVoice;
   synth.speak(warmup);
@@ -67,11 +90,14 @@ export function unlockAiSpeech(): boolean {
 }
 
 export function isAiSpeechUnlocked(): boolean {
-  return speechUnlocked;
+  return isAiSpeechSupported();
 }
 
 export function stopAiSpeech() {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
+  queue.length = 0;
+  draining = false;
+  stopKeepAlive();
   window.speechSynthesis.cancel();
 }
 
@@ -79,73 +105,86 @@ export function isAiSpeechSupported(): boolean {
   return typeof window !== "undefined" && "speechSynthesis" in window;
 }
 
-function doSpeak(text: string, byAi: boolean) {
+function drainQueue() {
+  if (draining || queue.length === 0 || typeof window === "undefined") return;
+
   const synth = window.speechSynthesis;
-  synth.cancel();
+  if (synth.speaking) {
+    window.setTimeout(drainQueue, 80);
+    return;
+  }
 
-  const prefix = byAi ? "" : "Conseil. ";
-  const utterance = new SpeechSynthesisUtterance(`${prefix}${text.trim()}`);
+  draining = true;
+  const item = queue.shift()!;
+  const prefix = item.byAi ? "" : "Conseil. ";
+  const utterance = new SpeechSynthesisUtterance(`${prefix}${item.text.trim()}`);
   utterance.lang = "fr-FR";
-  utterance.rate = byAi ? 0.92 : 1.0;
-  utterance.pitch = byAi ? 0.85 : 1.05;
-  utterance.volume = 0.95;
+  utterance.rate = item.byAi ? 0.93 : 1.0;
+  utterance.pitch = item.byAi ? 0.88 : 1.05;
+  utterance.volume = 1;
 
+  refreshVoices();
   if (preferredVoice) {
     utterance.voice = preferredVoice;
   }
 
-  // Contournement bug Chrome : relance si la file reste bloquée
+  utterance.onstart = () => startKeepAlive();
   utterance.onend = () => {
-    if (synth.pending && !synth.speaking) {
-      synth.resume();
-    }
+    draining = false;
+    if (queue.length === 0) stopKeepAlive();
+    window.setTimeout(drainQueue, 60);
+  };
+  utterance.onerror = () => {
+    draining = false;
+    window.setTimeout(drainQueue, 60);
   };
 
   synth.speak(utterance);
-
-  // Chrome pause parfois la synthèse sans raison
   window.setTimeout(() => {
     if (synth.paused) synth.resume();
-  }, 120);
+  }, 100);
 }
 
 export function speakComment(
   text: string,
   options: { byAi?: boolean; enabled?: boolean; forceUnlock?: boolean } = {}
 ) {
-  const { byAi = true, enabled = true, forceUnlock = false } = options;
+  const { byAi = true, enabled = true } = options;
   if (!enabled || !text.trim()) return;
   if (!isAiSpeechSupported()) return;
 
-  if (forceUnlock) {
-    speechUnlocked = true;
-  }
-
-  if (!speechUnlocked) {
-    return;
-  }
-
   initAiSpeech();
+  queue.push({ text, byAi });
 
-  const speak = () => doSpeak(text, byAi);
-
-  if (!voicesReady || !preferredVoice) {
-    refreshVoices();
-    if (voicesReady && preferredVoice) {
-      speak();
-      return;
-    }
-    const onVoices = () => {
-      refreshVoices();
-      speak();
-    };
-    window.speechSynthesis.addEventListener("voiceschanged", onVoices, { once: true });
+  if (!voicesReady) {
+    window.speechSynthesis.addEventListener(
+      "voiceschanged",
+      () => {
+        refreshVoices();
+        drainQueue();
+      },
+      { once: true }
+    );
     window.setTimeout(() => {
       refreshVoices();
-      speak();
-    }, 250);
+      drainQueue();
+    }, 200);
     return;
   }
 
-  speak();
+  drainQueue();
+}
+
+/** Ré-enclenche le déblocage à chaque interaction pendant une partie IA. */
+export function bindAiSpeechToUserGestures(active: boolean) {
+  if (typeof window === "undefined" || !active) return () => undefined;
+
+  const onGesture = () => unlockAiSpeech();
+  window.addEventListener("pointerdown", onGesture, { capture: true, passive: true });
+  window.addEventListener("keydown", onGesture, { capture: true, passive: true });
+
+  return () => {
+    window.removeEventListener("pointerdown", onGesture, { capture: true });
+    window.removeEventListener("keydown", onGesture, { capture: true });
+  };
 }

@@ -14,7 +14,7 @@ import { GameAnalysisPanel } from "@/components/chess/GameAnalysisPanel";
 import { PlayBoardSection } from "@/components/play/PlayBoardSection";
 import { gamesApi, ratingsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
-import { unlockAiSpeech, speakComment } from "@/lib/aiSpeech";
+import { unlockAiSpeech, speakComment, bindAiSpeechToUserGestures } from "@/lib/aiSpeech";
 import { defaultAiEloForUser, normalizeToPreset, resolveAiPlayMode, type AiLevelElo } from "@/lib/aiStrength";
 import { AiStrengthPicker } from "@/components/chess/AiStrengthPicker";
 import { VariantPicker, type GameVariant } from "@/components/chess/VariantPicker";
@@ -132,6 +132,11 @@ function PlayContent() {
   useEffect(() => {
     if (gameId) setMobileTab("board");
   }, [gameId]);
+
+  useEffect(() => {
+    if (!isVsAi || !gameId) return;
+    return bindAiSpeechToUserGestures(true);
+  }, [isVsAi, gameId]);
 
   const playerColor = orientation === "white" ? "w" : "b";
   const playerIsWhite = orientation === "white";
@@ -434,6 +439,9 @@ function PlayContent() {
   const startAI = useCallback(async () => {
     if (aiStarting || gameId) return;
     unlockAiSpeech();
+    if (aiCommentsEnabled) {
+      speakComment(t("comments.voice.gameStart"), { byAi: true, enabled: true, forceUnlock: true });
+    }
     setAiStarting(true);
     setSetupCategory("ai");
     setMobileTab("board");
@@ -462,8 +470,12 @@ function PlayContent() {
           ? t("play.status.gameStartedElo", { elo: data.ai_target_elo })
           : t("play.status.gameStarted")
       );
-      if (aiCommentsEnabled) {
-        speakComment(t("comments.voice.gameStart"), { byAi: true, enabled: true, forceUnlock: true });
+      if (aiCommentsEnabled && data.moves?.length) {
+        const aiComments = commentsFromMoves(data.moves, orientation === "white");
+        const lastAi = [...aiComments].reverse().find((c) => c.byAi);
+        if (lastAi) {
+          speakComment(lastAi.text, { byAi: true, enabled: true, forceUnlock: true });
+        }
       }
     } catch (err) {
       const msg = formatApiError(err);
@@ -486,7 +498,6 @@ function PlayContent() {
     aiCommentsEnabled,
     useClock,
     timeMinutes,
-    aiCommentsEnabled,
     applyGameResponse,
     t,
   ]);
@@ -540,6 +551,13 @@ function PlayContent() {
           spentMs,
         });
         applyGameResponse(data);
+        if (isVsAi && aiCommentsEnabled && data.moves?.length) {
+          const aiComments = commentsFromMoves(data.moves, playerIsWhite);
+          const lastAi = [...aiComments].reverse().find((c) => c.byAi);
+          if (lastAi) {
+            speakComment(lastAi.text, { byAi: true, enabled: true, forceUnlock: true });
+          }
+        }
         if (data.status === "completed" && data.termination_reason !== "repetition") {
           setStatus(
             t("play.status.gameEnd", {
@@ -568,6 +586,8 @@ function PlayContent() {
       playerIsWhite,
       gameData.white_time_ms,
       gameData.black_time_ms,
+      playerIsWhite,
+      t,
     ]
   );
 
