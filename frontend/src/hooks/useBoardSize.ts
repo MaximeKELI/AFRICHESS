@@ -59,9 +59,9 @@ export function useBoardSize(
       if (isMobile) {
         cap = Math.min(maxByWidth, maxByHeight, max);
       } else if (isTablet) {
-        cap = Math.min(viewportW * 0.92, maxByHeight, 560);
+        cap = Math.min(viewportW * 0.94, maxByHeight, 640);
       } else {
-        cap = Math.min(viewportW * 0.58, maxByHeight, max);
+        cap = Math.min(viewportW * 0.68, maxByHeight, max);
       }
 
       const next = Math.min(containerW, maxByHeight, cap);

@@ -146,7 +146,10 @@ class GameListSerializer(serializers.ModelSerializer):
 
 
 class CreateAIGameSerializer(serializers.Serializer):
-    mode = serializers.ChoiceField(choices=["bullet", "blitz", "rapid"], default="blitz")
+    mode = serializers.ChoiceField(
+        choices=["bullet", "blitz", "rapid", "classical"],
+        default="blitz",
+    )
     difficulty = serializers.IntegerField(min_value=1, max_value=20, required=False)
     ai_elo = serializers.IntegerField(min_value=100, max_value=5000, required=False)
     bot_slug = serializers.SlugField(required=False, allow_blank=True)
@@ -171,10 +174,16 @@ class CreateAIGameSerializer(serializers.Serializer):
             )
         return value
 
+    def validate_mode(self, value):
+        if value == "classical":
+            return "rapid"
+        return value
+
 
 class MatchmakingJoinSerializer(serializers.Serializer):
     mode = serializers.ChoiceField(
         choices=["bullet", "blitz", "rapid", "classical"],
+  "classical",
         default="blitz",
     )
     is_timed = serializers.BooleanField(default=True, required=False)

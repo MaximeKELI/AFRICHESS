@@ -14,7 +14,7 @@ import { GameAnalysisPanel } from "@/components/chess/GameAnalysisPanel";
 import { PlayBoardSection } from "@/components/play/PlayBoardSection";
 import { gamesApi, ratingsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
-import { defaultAiEloForUser, normalizeToPreset, type AiLevelElo } from "@/lib/aiStrength";
+import { defaultAiEloForUser, normalizeToPreset, resolveAiPlayMode, type AiLevelElo } from "@/lib/aiStrength";
 import { AiStrengthPicker } from "@/components/chess/AiStrengthPicker";
 import { VariantPicker, type GameVariant } from "@/components/chess/VariantPicker";
 import { PocketBar } from "@/components/chess/PocketBar";
@@ -123,6 +123,8 @@ function PlayContent() {
   const [setupCategory, setSetupCategory] = useState<
     "game" | "ai" | "online" | "board" | "pieces" | "background"
   >("game");
+  const [aiStarting, setAiStarting] = useState(false);
+  const botAutoStartRef = useRef(false);
   const { aiCommentsEnabled } = usePreferencesStore();
   const turnStartRef = useRef(Date.now());
 
@@ -209,7 +211,7 @@ function PlayContent() {
     return commentsFromMoves(gameData.moves, playerIsWhite);
   }, [gameData.moves, playerIsWhite]);
 
-  const userEloProvisional = isProvisionalRating(modeRating);
+  const userEloProvisional = isProvisionalRating(modeRating ?? undefined);
 
   useEffect(() => {
     if (!user) {
@@ -225,11 +227,13 @@ function PlayContent() {
       .catch(() => setModeRating(null));
   }, [user, mode]);
 
+  const aiPlayMode = useMemo(() => resolveAiPlayMode(mode), [mode]);
+
   useEffect(() => {
     if (!user) return;
     setAiDefaultSet(false);
     gamesApi
-      .aiPreview(mode)
+      .aiPreview(aiPlayMode)
       .then(({ data }) => {
         setUserElo(data.user_elo);
         const suggested = normalizeToPreset(
@@ -243,18 +247,18 @@ function PlayContent() {
         setAiDefaultSet(true);
         setStatus(formatApiError(err, t("play.status.aiPreviewFailed")));
       });
-  }, [user, mode, t]);
+  }, [user, aiPlayMode, t]);
 
   useEffect(() => {
     if (!user || !aiDefaultSet) return;
     gamesApi
-      .aiPreview(mode, aiEloChoice)
+      .aiPreview(aiPlayMode, aiEloChoice)
       .then(({ data }) => {
         setUserElo(data.user_elo);
         setAiElo(data.ai_target_elo);
       })
       .catch((err) => setStatus(formatApiError(err, t("play.status.aiPreviewFailed"))));
-  }, [user, mode, aiEloChoice, aiDefaultSet, t]);
+  }, [user, aiPlayMode, aiEloChoice, aiDefaultSet, t]);
 
   useEffect(() => {
     const saved = loadActiveGame();
@@ -426,10 +430,14 @@ function PlayContent() {
     if (botFromUrl) setSelectedBot(botFromUrl);
   }, [botFromUrl]);
 
-  const startAI = async () => {
+  const startAI = useCallback(async () => {
+    if (aiStarting || gameId) return;
+    setAiStarting(true);
+    setSetupCategory("ai");
+    setMobileTab("board");
     try {
       const { data } = await gamesApi.createAI({
-        mode,
+        mode: aiPlayMode,
         ...(selectedBot ? { bot_slug: selectedBot } : { ai_elo: aiEloChoice }),
         variant,
         color: orientation,
@@ -442,7 +450,7 @@ function PlayContent() {
       applyGameResponse(data);
       saveActiveGame({
         gameId: data.id,
-        mode,
+        mode: aiPlayMode,
         orientation,
         aiElo: aiEloChoice,
         savedAt: Date.now(),
@@ -459,8 +467,29 @@ function PlayContent() {
           ? msg
           : msg || t("play.status.startFailed")
       );
+    } finally {
+      setAiStarting(false);
     }
-  };
+  }, [
+    aiStarting,
+    gameId,
+    aiPlayMode,
+    selectedBot,
+    aiEloChoice,
+    variant,
+    orientation,
+    aiCommentsEnabled,
+    useClock,
+    timeMinutes,
+    applyGameResponse,
+    t,
+  ]);
+
+  useEffect(() => {
+    if (!user || !botFromUrl || gameId || botAutoStartRef.current) return;
+    botAutoStartRef.current = true;
+    void startAI();
+  }, [user, botFromUrl, gameId, startAI]);
 
   const handleUndo = async () => {
     if (!gameId || !isVsAi) return;
@@ -566,7 +595,7 @@ function PlayContent() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 md:py-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 md:py-8">
       <div className="flex items-center gap-3 mb-4 md:mb-6 flex-wrap">
         <h1 className="font-display text-2xl md:text-3xl font-bold capitalize">
           {t("play.title", { mode: modeLabelText })}
@@ -626,16 +655,19 @@ function PlayContent() {
       )}
 
       {!gameId && (
-        <div className="lg:hidden flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4">
           <button
+            type="button"
             onClick={startAI}
-            className="flex-1 py-3 rounded-xl african-gradient text-white text-sm font-semibold"
+            disabled={aiStarting}
+            className="flex-1 py-3 rounded-xl african-gradient text-white text-sm font-semibold disabled:opacity-50"
           >
-            {t("play.vsAi.start")}
+            {aiStarting ? t("common.loading") : t("play.vsAi.start")}
           </button>
           <button
+            type="button"
             onClick={findMatch}
-            disabled={searching || wsSearching}
+            disabled={searching || wsSearching || aiStarting}
             className="flex-1 py-3 rounded-xl border-2 border-africhess-green text-africhess-green text-sm font-semibold disabled:opacity-50"
           >
             {searching || wsSearching ? t("play.online.searching") : t("play.online.find")}
@@ -930,10 +962,12 @@ function PlayContent() {
                 <CommentsToggle />
               </div>
               <button
+                type="button"
                 onClick={startAI}
-                className="w-full py-2 rounded-lg african-gradient text-white font-medium"
+                disabled={aiStarting}
+                className="w-full py-2 rounded-lg african-gradient text-white font-medium disabled:opacity-50"
               >
-                {t("play.vsAi.start")}
+                {aiStarting ? t("common.loading") : t("play.vsAi.start")}
               </button>
             </OptionSection>
           )}

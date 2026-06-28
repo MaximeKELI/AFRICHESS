@@ -94,3 +94,13 @@ export function defaultAiEloForUser(
   }
   return defaultAiEloForLevel(levelId);
 }
+
+/** Modes acceptés par POST /games/ai/ (classical → rapid). */
+export const AI_PLAY_MODES = ["bullet", "blitz", "rapid"] as const;
+export type AiPlayMode = (typeof AI_PLAY_MODES)[number];
+
+export function resolveAiPlayMode(mode: string): AiPlayMode {
+  if (mode === "classical") return "rapid";
+  if ((AI_PLAY_MODES as readonly string[]).includes(mode)) return mode as AiPlayMode;
+  return "blitz";
+}

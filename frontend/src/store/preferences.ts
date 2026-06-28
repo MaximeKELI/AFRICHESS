@@ -38,8 +38,10 @@ function readBoardBackground(): BoardBackgroundId {
 }
 
 function readAiComments(): boolean {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem(preferenceStorageKey(AI_COMMENTS_KEY)) === "1";
+  if (typeof window === "undefined") return true;
+  const stored = localStorage.getItem(preferenceStorageKey(AI_COMMENTS_KEY));
+  if (stored === null) return true;
+  return stored === "1";
 }
 
 function readPieceSet(): PieceSetId {

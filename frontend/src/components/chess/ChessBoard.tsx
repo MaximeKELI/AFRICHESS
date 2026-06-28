@@ -73,7 +73,7 @@ function ChessBoardInner({
   const prevPliesRef = useRef(0);
   const soundsReadyRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const boardWidth = useBoardSize(containerRef, { extraBottom, min: 260, max: 720 });
+  const boardWidth = useBoardSize(containerRef, { extraBottom, min: 280, max: 820 });
   const [focusSquare, setFocusSquare] = useState<Square>("e4");
   const [boardStatus, setBoardStatus] = useState("");
 
