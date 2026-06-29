@@ -57,9 +57,15 @@ export const authApi = {
 export interface Bot {
   slug: string;
   name: string;
+  name_en?: string;
   elo: number;
   avatar_id: string;
+  avatar_url?: string;
   is_premium: boolean;
+  is_legend?: boolean;
+  personality?: string;
+  opening_style?: string;
+  description?: string;
 }
 
 export interface GameMove {
@@ -122,7 +128,13 @@ export const puzzlesApi = {
 };
 
 export const gamesApi = {
-  bots: () => api.get<Bot[]>("/games/bots/"),
+  bots: (params?: { q?: string; legends?: boolean }) =>
+    api.get<Bot[]>("/games/bots/", {
+      params: {
+        q: params?.q,
+        legends: params?.legends ? "1" : undefined,
+      },
+    }),
   createAI: (data: {
     mode: string;
     color: "white" | "black";

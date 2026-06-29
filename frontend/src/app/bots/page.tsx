@@ -30,10 +30,18 @@ export default function BotsPage() {
   const { t, locale } = useTranslation();
   const { user } = useAuthStore();
   const [bots, setBots] = useState<Bot[]>([]);
+  const [featured, setFeatured] = useState<Bot[]>([]);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "legends" | "free" | "premium">("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    gamesApi.bots({ legends: true }).then(({ data }) => {
+      const list: Bot[] = Array.isArray(data) ? data : data.results ?? [];
+      setFeatured(list.slice(0, 8));
+    }).catch(() => setFeatured([]));
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -81,6 +89,33 @@ export default function BotsPage() {
           </button>
         ))}
       </div>
+
+      {featured.length > 0 && filter === "all" && !q && (
+        <section className="mb-8">
+          <h2 className="font-display text-lg font-semibold mb-3">{t("bots.featuredLegends")}</h2>
+          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
+            {featured.map((b) => (
+              <Link
+                key={b.slug}
+                href={user ? `/play?mode=blitz&bot=${b.slug}` : "/login"}
+                className="glass-card p-3 min-w-[140px] snap-start flex flex-col items-center gap-2 hover:ring-1 hover:ring-africhess-gold/50 transition"
+              >
+                <span className="relative w-16 h-16 rounded-xl overflow-hidden ring-2 ring-emerald-400/50">
+                  <Image
+                    src={getAiAvatarSrc(b.avatar_id)}
+                    alt={label(b)}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                  />
+                </span>
+                <span className="text-xs font-semibold text-center line-clamp-2">{label(b)}</span>
+                <span className="text-[10px] text-africhess-gold font-mono">{b.elo}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {error && (
         <InlineAlert className="mb-4" onDismiss={() => setError(null)}>

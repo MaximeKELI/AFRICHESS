@@ -53,6 +53,7 @@ class GameAnalysisSerializer(serializers.ModelSerializer):
 
 class ChessBotSerializer(serializers.ModelSerializer):
     is_legend = serializers.SerializerMethodField()
+    avatar_url = serializers.SerializerMethodField()
 
     class Meta:
         model = ChessBot
@@ -63,6 +64,7 @@ class ChessBotSerializer(serializers.ModelSerializer):
             "country",
             "elo",
             "avatar_id",
+            "avatar_url",
             "personality",
             "opening_style",
             "description",
@@ -74,6 +76,12 @@ class ChessBotSerializer(serializers.ModelSerializer):
 
     def get_is_legend(self, obj: ChessBot) -> bool:
         return obj.elo >= 2400
+
+    def get_avatar_url(self, obj: ChessBot) -> str:
+        from django.conf import settings
+
+        base = getattr(settings, "FRONTEND_URL", "http://localhost:3000").rstrip("/")
+        return f"{base}/avatars/bots/{obj.avatar_id}.png"
 
 
 class GameSerializer(serializers.ModelSerializer):
