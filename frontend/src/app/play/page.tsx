@@ -1102,15 +1102,38 @@ function PlayContent() {
                 <VariantPicker value={variant} onChange={setVariant} />
               </div>
               {selectedBot ? (
-                <div className="mb-3 p-2 rounded-lg border border-africhess-gold/30 text-sm">
-                  <p>{t("play.botSelected", { slug: selectedBot })}</p>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedBot(null)}
-                    className="text-xs text-africhess-gold hover:underline mt-1"
-                  >
-                    {t("play.botClear")}
-                  </button>
+                <div className="mb-3 p-2 rounded-lg border border-africhess-gold/30 text-sm flex items-center gap-3">
+                  {selectedBotInfo && (
+                    <span className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0 ring-1 ring-africhess-gold/40">
+                      <Image
+                        src={getAiAvatarSrc(selectedBotInfo.avatar_id ?? selectedBot)}
+                        alt={selectedBotInfo.name}
+                        fill
+                        className="object-cover"
+                        sizes="40px"
+                      />
+                    </span>
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">
+                      {selectedBotInfo?.name ?? selectedBot}
+                      {selectedBotInfo?.elo ? (
+                        <span className="text-africhess-gold font-mono text-xs ml-2">
+                          {selectedBotInfo.elo}
+                        </span>
+                      ) : null}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedBot(null);
+                        setSelectedBotInfo(null);
+                      }}
+                      className="text-xs text-africhess-gold hover:underline mt-1"
+                    >
+                      {t("play.botClear")}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="mb-3 border-t border-white/10 pt-3">
