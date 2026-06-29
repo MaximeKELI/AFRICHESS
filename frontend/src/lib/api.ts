@@ -149,11 +149,12 @@ export const gamesApi = {
     time_minutes?: number | null;
     time_control?: string;
   }) => api.post("/games/ai/", data),
-  bots: (params?: { q?: string; premium?: boolean }) =>
+  bots: (params?: { q?: string; premium?: boolean; legends?: boolean }) =>
     api.get("/games/bots/", {
       params: {
         q: params?.q,
         premium: params?.premium === true ? "1" : params?.premium === false ? "0" : undefined,
+        legends: params?.legends ? "1" : undefined,
       },
     }),
   bot: (slug: string) => api.get(`/games/bots/${slug}/`),

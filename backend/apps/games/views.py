@@ -432,7 +432,10 @@ class BotListView(generics.ListAPIView):
         q = self.request.query_params.get("q", "").strip()
         if q:
             qs = qs.filter(models.Q(name__icontains=q) | models.Q(name_en__icontains=q))
-        return qs.order_by("elo", "name")
+        legends = self.request.query_params.get("legends")
+        if legends == "1":
+            qs = qs.filter(elo__gte=2400)
+        return qs.order_by("-elo", "name")
 
 
 @extend_schema(summary="Détail d'un bot IA")

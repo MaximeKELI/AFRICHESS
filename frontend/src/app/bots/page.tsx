@@ -41,13 +41,10 @@ export default function BotsPage() {
       .bots({
         q: q || undefined,
         premium: filter === "premium" ? true : filter === "free" ? false : undefined,
+        legends: filter === "legends",
       })
       .then(({ data }) => {
-        let list: Bot[] = Array.isArray(data) ? data : data.results ?? [];
-        if (filter === "legends") {
-          list = list.filter((b) => b.is_legend ?? b.elo >= 2400);
-        }
-        list.sort((a, b) => b.elo - a.elo);
+        const list: Bot[] = Array.isArray(data) ? data : data.results ?? [];
         setBots(list);
         setError(null);
       })

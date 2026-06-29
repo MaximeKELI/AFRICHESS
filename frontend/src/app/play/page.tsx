@@ -46,7 +46,7 @@ import {
 import { openingNameFromMoves } from "@/lib/openings";
 import Link from "next/link";
 import Image from "next/image";
-import { pickAiAvatar } from "@/lib/avatars";
+import { getAiAvatarSrc, pickAiAvatar } from "@/lib/avatars";
 import { useFairPlayTelemetry } from "@/hooks/useFairPlayTelemetry";
 import { FairPlayConsentModal } from "@/components/fairplay/FairPlayConsentModal";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -116,7 +116,7 @@ function PlayContent() {
   const [status, setStatus] = useState<string>("");
   const [searching, setSearching] = useState(false);
   const [aiEloChoice, setAiEloChoice] = useState<AiLevelElo>(1250);
-  const [selectedBot, setSelectedBot] = useState<string | null>(botFromUrl);
+  const [selectedBotInfo, setSelectedBotInfo] = useState<GameBotPublic | null>(null);
   const [variant, setVariant] = useState<GameVariant>("standard");
   const [aiDefaultSet, setAiDefaultSet] = useState(false);
   const [useClock, setUseClock] = useState(true);
