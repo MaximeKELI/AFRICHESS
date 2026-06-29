@@ -268,6 +268,18 @@ function PlayContent() {
     );
   }, [gameId, gamePlayersSource, orientation, user?.id, userElo]);
 
+  const opponentName = useMemo(() => {
+    if (!boardPlayers || isVsAi) return undefined;
+    return boardPlayers.top.name;
+  }, [boardPlayers, isVsAi]);
+
+  const mobileTabs = useMemo(() => {
+    const tabs: Array<"board" | "moves" | "chat" | "setup"> = ["board", "moves"];
+    if (isLiveHuman && gameId) tabs.push("chat");
+    tabs.push("setup");
+    return tabs;
+  }, [isLiveHuman, gameId]);
+
   const topPlayerConfig = useMemo(
     () =>
       boardPlayers
@@ -827,7 +839,7 @@ function PlayContent() {
       )}
 
       <div className="play-mobile-tabs lg:hidden" role="tablist" aria-label={t("play.mobileTabs")}>
-        {(["board", "moves", "setup"] as const).map((tab) => (
+        {mobileTabs.map((tab) => (
           <button
             key={tab}
             type="button"
