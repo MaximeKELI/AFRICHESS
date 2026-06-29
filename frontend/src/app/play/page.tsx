@@ -130,7 +130,7 @@ function PlayContent() {
   const [movePending, setMovePending] = useState(false);
   const [dropPiece, setDropPiece] = useState<string | null>(null);
   const [activeVariant, setActiveVariant] = useState<GameVariant>("standard");
-  const [mobileTab, setMobileTab] = useState<"board" | "moves" | "setup">("setup");
+  const [mobileTab, setMobileTab] = useState<"board" | "moves" | "chat" | "setup">("setup");
   const [setupCategory, setSetupCategory] = useState<
     "game" | "ai" | "online" | "board" | "pieces" | "background"
   >("game");
@@ -458,7 +458,7 @@ function PlayContent() {
   );
 
 
-  const { connected: wsConnected, wsError, sendMove: wsSendMove, resign: wsResign } = useGameWebSocket(
+  const { connected: wsConnected, wsError, sendMove: wsSendMove, resign: wsResign, sendChat: wsSendChat, subscribeChat: wsSubscribeChat } = useGameWebSocket(
     gameId,
     isLiveHuman,
     handleWsUpdate,
