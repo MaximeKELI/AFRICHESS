@@ -45,6 +45,7 @@ const NAV_GROUPS = [
       { href: "/coaches", key: "nav.coaches" },
       { href: "/classroom", key: "nav.classroom" },
       { href: "/learning/glossary", key: "nav.glossary" },
+      { href: "/training", key: "nav.training" },
       { href: "/training/endgames", key: "nav.endgames" },
     ],
   },
