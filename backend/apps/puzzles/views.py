@@ -300,6 +300,44 @@ class CustomPuzzleCreateView(APIView):
         return Response(PuzzleSerializer(qs, many=True).data)
 
 
+class PuzzleSurvivalStartView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        from .rush_battle import start_survival_session
+
+        session = start_survival_session(request.user)
+        first = Puzzle.objects.get(pk=session.puzzle_ids[0]) if session.puzzle_ids else None
+        return Response(
+            {
+                "session_id": session.id,
+                "puzzle": PuzzleSerializer(first).data if first else None,
+                "mode": "survival",
+            },
+            status=201,
+        )
+
+
+class PuzzleSurvivalSubmitView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, session_id):
+        from .rush_battle import survival_submit
+
+        try:
+            session = PuzzleRushSession.objects.get(pk=session_id, user=request.user)
+        except PuzzleRushSession.DoesNotExist:
+            return Response({"error": "Introuvable"}, status=404)
+        ser = SubmitPuzzleSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        result = survival_submit(session, ser.validated_data["moves"])
+        if result.get("next_puzzle_id"):
+            result["next_puzzle"] = PuzzleSerializer(
+                Puzzle.objects.get(pk=result["next_puzzle_id"])
+            ).data
+        return Response(result)
+
+
 class PuzzleRushLeaderboardView(APIView):
     permission_classes = [permissions.AllowAny]
 

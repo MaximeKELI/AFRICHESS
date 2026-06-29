@@ -71,6 +71,14 @@ class ChessConsumer(AsyncWebsocketConsumer):
             await self._handle_draw_accept()
         elif event in ("refuser_nulle", "decline_draw"):
             await self._handle_draw_decline()
+        elif event in ("annuler_partie", "abort_game"):
+            await self._handle_abort()
+        elif event in ("demander_reprise", "offer_takeback"):
+            await self._handle_takeback_offer()
+        elif event in ("accepter_reprise", "accept_takeback"):
+            await self._handle_takeback_accept()
+        elif event in ("refuser_reprise", "decline_takeback"):
+            await self._handle_takeback_decline()
         elif event in ("abandonner_partie", "resign"):
             await self._handle_resign()
         elif event in ("demarrer_partie", "start"):
@@ -215,6 +223,46 @@ class ChessConsumer(AsyncWebsocketConsumer):
             {"type": "broadcast_draw", "payload": {"declined": True}},
         )
 
+    async def _handle_abort(self):
+        payload = await self._abort_game()
+        if payload.get("error"):
+            await self._send_event("error", payload)
+            return
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {"type": "broadcast_game_over", "payload": payload},
+        )
+
+    async def _handle_takeback_offer(self):
+        result = await self._takeback_offer()
+        if result.get("error"):
+            await self._send_event("error", result)
+            return
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {"type": "broadcast_takeback", "payload": result},
+        )
+
+    async def _handle_takeback_accept(self):
+        payload = await self._takeback_accept()
+        if payload.get("error"):
+            await self._send_event("error", payload)
+            return
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {"type": "broadcast_takeback", "payload": payload},
+        )
+
+    async def _handle_takeback_decline(self):
+        await self._takeback_decline()
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {"type": "broadcast_takeback", "payload": {"declined": True}},
+        )
+
+    async def broadcast_takeback(self, event):
+        await self._send_event("proposition_reprise", event["payload"])
+
     async def broadcast_draw(self, event):
         await self._send_event("proposition_nulle", event["payload"])
 
@@ -240,6 +288,42 @@ class ChessConsumer(AsyncWebsocketConsumer):
 
         game = Game.objects.get(id=self.game_id)
         decline_draw(game, self.user)
+
+    @database_sync_to_async
+    def _abort_game(self):
+        from .game_actions import abort_game
+
+        game = Game.objects.get(id=self.game_id)
+        result = abort_game(game, self.user)
+        if result.get("error"):
+            return result
+        game.refresh_from_db()
+        return build_ws_payload(game, {"game_over": True})
+
+    @database_sync_to_async
+    def _takeback_offer(self):
+        from .game_actions import offer_takeback
+
+        game = Game.objects.get(id=self.game_id)
+        return offer_takeback(game, self.user)
+
+    @database_sync_to_async
+    def _takeback_accept(self):
+        from .game_actions import accept_takeback
+
+        game = Game.objects.get(id=self.game_id)
+        result = accept_takeback(game, self.user)
+        if result.get("error"):
+            return result
+        game.refresh_from_db()
+        return build_ws_payload(game, {"takeback": True})
+
+    @database_sync_to_async
+    def _takeback_decline(self):
+        from .game_actions import decline_takeback
+
+        game = Game.objects.get(id=self.game_id)
+        decline_takeback(game, self.user)
 
     @database_sync_to_async
     def _set_connected(self, connected: bool):

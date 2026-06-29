@@ -104,6 +104,9 @@ class User(AbstractUser):
         blank=True,
         help_text="En vacances : les échéances daily chess sont suspendues",
     )
+    profile_banner = models.URLField(max_length=500, blank=True)
+    totp_enabled = models.BooleanField(default=False)
+    totp_secret = models.CharField(max_length=64, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

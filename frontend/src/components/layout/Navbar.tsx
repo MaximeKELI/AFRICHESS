@@ -45,12 +45,14 @@ const NAV_GROUPS = [
       { href: "/coaches", key: "nav.coaches" },
       { href: "/classroom", key: "nav.classroom" },
       { href: "/learning/glossary", key: "nav.glossary" },
+      { href: "/training/endgames", key: "nav.endgames" },
     ],
   },
   {
     key: "nav.group.compete",
     links: [
       { href: "/tournaments", key: "nav.tournaments" },
+      { href: "/events", key: "nav.events" },
       { href: "/leagues", key: "nav.leagues" },
       { href: "/leaderboard", key: "leaderboard.african" },
       { href: "/achievements", key: "nav.achievements" },

@@ -61,6 +61,50 @@ def rush_submit(session: PuzzleRushSession, moves: list[str]) -> dict:
     }
 
 
+def start_survival_session(user) -> PuzzleRushSession:
+    """Survival : une erreur élimine, puzzles illimités."""
+    puzzles = random_queryset(Puzzle.objects.all(), 50)
+    return PuzzleRushSession.objects.create(
+        user=user,
+        puzzle_ids=[p.id for p in puzzles],
+        ends_at=timezone.now() + timedelta(hours=2),
+    )
+
+
+def survival_submit(session: PuzzleRushSession, moves: list[str]) -> dict:
+    if session.status != PuzzleRushSession.Status.ACTIVE:
+        return {"error": "Session terminée", "completed": True, "score": session.score}
+
+    idx = session.current_index
+    if idx >= len(session.puzzle_ids):
+        extra = random_queryset(Puzzle.objects.all(), 10)
+        session.puzzle_ids.extend([p.id for p in extra])
+        session.save(update_fields=["puzzle_ids"])
+
+    puzzle = Puzzle.objects.get(pk=session.puzzle_ids[idx])
+    solved = moves == puzzle.solution_moves
+    if solved:
+        session.score += 1
+        session.current_index += 1
+    else:
+        session.misses += 1
+        session.status = PuzzleRushSession.Status.COMPLETED
+
+    session.save()
+    next_puzzle = None
+    if session.status == PuzzleRushSession.Status.ACTIVE and session.current_index < len(session.puzzle_ids):
+        next_puzzle = Puzzle.objects.get(pk=session.puzzle_ids[session.current_index])
+
+    return {
+        "solved": solved,
+        "score": session.score,
+        "misses": session.misses,
+        "completed": session.status == PuzzleRushSession.Status.COMPLETED,
+        "next_puzzle_id": next_puzzle.id if next_puzzle else None,
+        "mode": "survival",
+    }
+
+
 def join_battle_queue(user) -> PuzzleBattle | None:
     opponent_entry = PuzzleBattleQueue.objects.exclude(user=user).order_by("joined_at").first()
     puzzles = random_queryset(Puzzle.objects.all(), 5)

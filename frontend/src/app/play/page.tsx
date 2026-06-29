@@ -3,6 +3,7 @@
 import { useState, useCallback, Suspense, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Chess } from "chess.js";
+import { MessageCircle } from "lucide-react";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { BackgroundPicker } from "@/components/chess/BackgroundPicker";
@@ -94,6 +95,10 @@ interface GameState {
   is_timed?: boolean;
   time_control_minutes?: number | null;
   is_vs_ai?: boolean;
+  is_rated?: boolean;
+  move_count?: number;
+  takeback_requested_by?: number | null;
+  draw_offered_by?: number | null;
   ai_target_elo?: number;
   variant?: GameVariant;
   analysis?: GameAnalysisData | null;
@@ -900,6 +905,16 @@ function PlayContent() {
             captured={panelDisplay.captured}
           />
           </div>
+          {isLiveHuman && gameId && mobileTab === "board" && (
+            <button
+              type="button"
+              onClick={() => setMobileTab("chat")}
+              className="lg:hidden w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-white/20 bg-black/20 text-sm font-medium hover:border-africhess-gold/40 transition"
+            >
+              <MessageCircle className="w-4 h-4 text-africhess-gold" aria-hidden />
+              {t("play.chat.open")}
+            </button>
+          )}
           {gameCompleted && gameId && !reviewOpen && (
             <button
               type="button"
@@ -943,6 +958,73 @@ function PlayContent() {
           )}
           {isLiveHuman && gameActive && (
             <div className="flex flex-wrap gap-2 justify-center w-full">
+              {!gameData.is_rated && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      gameId &&
+                      gamesApi
+                        .offerTakeback(gameId)
+                        .then(() => setStatus(t("play.takeback.sent")))
+                        .catch((err) => setStatus(formatApiError(err, t("play.error.takeback"))))
+                    }
+                    className="text-xs px-3 py-1 rounded border border-white/20"
+                  >
+                    {t("play.takeback.offer")}
+                  </button>
+                  {gameData.takeback_requested_by &&
+                    gameData.takeback_requested_by !== user?.id && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            gameId &&
+                            gamesApi
+                              .respondTakeback(gameId, true)
+                              .then(({ data }) => applyGameResponse(data))
+                              .catch((err) =>
+                                setStatus(formatApiError(err, t("play.error.takeback")))
+                              )
+                          }
+                          className="text-xs px-3 py-1 rounded border border-africhess-green text-africhess-green"
+                        >
+                          {t("play.takeback.accept")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            gameId &&
+                            gamesApi
+                              .respondTakeback(gameId, false)
+                              .then(() => setStatus(t("play.takeback.declined")))
+                              .catch((err) =>
+                                setStatus(formatApiError(err, t("play.error.takeback")))
+                              )
+                          }
+                          className="text-xs px-3 py-1 rounded border border-white/20"
+                        >
+                          {t("play.takeback.decline")}
+                        </button>
+                      </>
+                    )}
+                </>
+              )}
+              {gameData.move_count < 2 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    gameId &&
+                    gamesApi
+                      .abort(gameId)
+                      .then(({ data }) => applyGameResponse(data))
+                      .catch((err) => setStatus(formatApiError(err, t("play.error.abort"))))
+                  }
+                  className="text-xs px-3 py-1 rounded border border-white/20"
+                >
+                  {t("play.abort")}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() =>

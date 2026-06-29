@@ -31,7 +31,7 @@ interface LeaderboardRow {
   solved_count: number;
 }
 
-type Tab = "daily" | "training" | "rush" | "battle" | "leaderboard";
+type Tab = "daily" | "training" | "rush" | "battle" | "survival" | "leaderboard";
 
 export default function PuzzlesPage() {
   const { user } = useAuthStore();
@@ -49,6 +49,8 @@ export default function PuzzlesPage() {
   const [rushQueue, setRushQueue] = useState<Puzzle[]>([]);
   const [rushIndex, setRushIndex] = useState(0);
   const [rushSessionId, setRushSessionId] = useState<number | null>(null);
+  const [survivalSessionId, setSurvivalSessionId] = useState<number | null>(null);
+  const [survivalScore, setSurvivalScore] = useState(0);
   const [rushEndsAt, setRushEndsAt] = useState<number | null>(null);
   const [rushScore, setRushScore] = useState(0);
   const [rushMisses, setRushMisses] = useState(0);
@@ -158,6 +160,24 @@ export default function PuzzlesPage() {
       });
   };
 
+  const loadSurvival = () => {
+    if (!user) return;
+    setSurvivalSessionId(null);
+    setSurvivalScore(0);
+    setPuzzle(null);
+    setResult(null);
+    setUciMoves([]);
+    setLoadError(null);
+    puzzlesApi
+      .survivalStart()
+      .then(({ data }) => {
+        setSurvivalSessionId(data.session_id);
+        setPuzzle(data.puzzle);
+        setStartTime(Date.now());
+      })
+      .catch((err) => setLoadError(formatApiError(err, t("puzzles.error.survival"))));
+  };
+
   const loadBattle = () => {
     setBattleId(null);
     setBattleStatus("idle");
@@ -230,6 +250,7 @@ export default function PuzzlesPage() {
     else if (tab === "training") loadTraining();
     else if (tab === "rush") loadRush();
     else if (tab === "battle") loadBattle();
+    else if (tab === "survival") loadSurvival();
     else if (tab === "leaderboard") loadLeaderboard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, difficulty]);
@@ -271,6 +292,28 @@ export default function PuzzlesPage() {
         if (data.next_puzzle) {
           setRushIndex((i) => i + 1);
           setRushQueue((q) => [...q, data.next_puzzle]);
+          setPuzzle(data.next_puzzle);
+          setUciMoves([]);
+          setStartTime(Date.now());
+        }
+        return;
+      }
+
+      if (tab === "survival" && survivalSessionId) {
+        const { data } = await puzzlesApi.survivalSubmit(survivalSessionId, uciMoves, time);
+        setSurvivalScore(data.score ?? survivalScore);
+        if (data.completed) {
+          setResult(
+            data.solved
+              ? t("puzzles.survival.over", { score: data.score })
+              : t("puzzles.survival.eliminated", { score: data.score })
+          );
+          setPuzzle(null);
+          setSurvivalSessionId(null);
+          return;
+        }
+        setResult(t("puzzles.solved.bravo", { streak: streak, rush: "" }));
+        if (data.next_puzzle) {
           setPuzzle(data.next_puzzle);
           setUciMoves([]);
           setStartTime(Date.now());
@@ -422,6 +465,13 @@ export default function PuzzlesPage() {
           className={`px-4 py-2 rounded-lg ${tab === "battle" ? "african-gradient text-white" : "border"}`}
         >
           {t("puzzles.tab.battle")}
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("survival")}
+          className={`px-4 py-2 rounded-lg ${tab === "survival" ? "african-gradient text-white" : "border"}`}
+        >
+          {t("puzzles.tab.survival")}
         </button>
         <Link
           href="/puzzles/build"

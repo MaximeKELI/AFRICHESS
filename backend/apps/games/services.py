@@ -372,6 +372,19 @@ class GameService:
             refresh_turn_deadline(game)
         game.save()
 
+        if is_correspondence and not is_over and not game.is_vs_ai:
+            from .game_actions import try_apply_conditional_response
+
+            auto = try_apply_conditional_response(game, uci)
+            if auto and auto.get("move") and not auto.get("error"):
+                game.refresh_from_db()
+                response["conditional_move"] = auto.get("move")
+                response["fen"] = game.fen
+                response["game_over"] = auto.get("game_over", False)
+                if auto.get("game_over"):
+                    response["result"] = game.result
+                is_over = auto.get("game_over", is_over)
+
         if can_claim_threefold_from_game(game):
             finalize_repetition_draw(game)
             game.save()

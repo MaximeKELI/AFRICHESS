@@ -210,3 +210,53 @@ class ChatMessage(models.Model):
     class Meta:
         ordering = ["created_at"]
         indexes = [models.Index(fields=["room_type", "room_id", "-created_at"])]
+
+
+class PlayerReport(models.Model):
+    class Category(models.TextChoices):
+        HARASSMENT = "harassment", "Harassment"
+        CHEATING = "cheating", "Cheating"
+        SPAM = "spam", "Spam"
+        OTHER = "other", "Other"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        REVIEWED = "reviewed", "Reviewed"
+        DISMISSED = "dismissed", "Dismissed"
+
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reports_filed"
+    )
+    reported_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reports_received"
+    )
+    game = models.ForeignKey(
+        "games.Game", on_delete=models.SET_NULL, null=True, blank=True, related_name="player_reports"
+    )
+    category = models.CharField(max_length=20, choices=Category.choices)
+    description = models.TextField(max_length=2000, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+class PlatformEvent(models.Model):
+    class EventType(models.TextChoices):
+        TOURNAMENT = "tournament", "Tournament"
+        ARENA = "arena", "Arena"
+        COMMUNITY = "community", "Community"
+        LESSON = "lesson", "Lesson"
+
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    event_type = models.CharField(max_length=20, choices=EventType.choices, default=EventType.TOURNAMENT)
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField(null=True, blank=True)
+    url_path = models.CharField(max_length=300, blank=True)
+    is_featured = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["starts_at"]

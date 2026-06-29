@@ -5,6 +5,7 @@ from django.test import TransactionTestCase, override_settings
 from rest_framework_simplejwt.tokens import AccessToken
 
 from apps.games.models import Game
+from apps.social.models import ChatMessage
 from config.asgi import application
 
 User = get_user_model()
@@ -12,6 +13,12 @@ User = get_user_model()
 IN_MEMORY_CHANNEL = {
     "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
 }
+
+
+async def _drain_join_messages(communicator):
+    """Consomme game_state + rejoindre_partie après connexion."""
+    await communicator.receive_json_from()
+    await communicator.receive_json_from()
 
 
 @override_settings(CHANNEL_LAYERS=IN_MEMORY_CHANNEL, WS_ALLOW_QUERY_TOKEN=True)
@@ -36,6 +43,81 @@ class ChessConsumerTests(TransactionTestCase):
         self.assertEqual(msg["event"], "game_state")
         msg2 = await communicator.receive_json_from()
         self.assertEqual(msg2["event"], "rejoindre_partie")
+        await communicator.disconnect()
+
+    def test_chat_persisted_and_broadcast(self):
+        async_to_sync(self._test_chat_persisted_and_broadcast)()
+
+    async def _test_chat_persisted_and_broadcast(self):
+        white = await User.objects.acreate(username="chat_w", password="x")
+        black = await User.objects.acreate(username="chat_b", password="x")
+        game = await Game.objects.acreate(
+            white_player=white,
+            black_player=black,
+            status=Game.Status.ACTIVE,
+            is_vs_ai=False,
+        )
+        white_token = str(AccessToken.for_user(white))
+        black_token = str(AccessToken.for_user(black))
+
+        white_ws = WebsocketCommunicator(
+            application,
+            f"/ws/game/{game.id}/?token={white_token}",
+        )
+        black_ws = WebsocketCommunicator(
+            application,
+            f"/ws/game/{game.id}/?token={black_token}",
+        )
+        self.assertTrue((await white_ws.connect())[0])
+        self.assertTrue((await black_ws.connect())[0])
+        await _drain_join_messages(white_ws)
+        await _drain_join_messages(black_ws)
+
+        await white_ws.send_json_to({"event": "chat", "message": "Bonne chance !"})
+        white_msg = await white_ws.receive_json_from()
+        black_msg = await black_ws.receive_json_from()
+
+        self.assertEqual(white_msg["event"], "chat")
+        self.assertEqual(black_msg["event"], "chat")
+        self.assertEqual(white_msg["data"]["content"], "Bonne chance !")
+        self.assertEqual(black_msg["data"]["content"], "Bonne chance !")
+        self.assertEqual(white_msg["data"]["sender"]["username"], "chat_w")
+
+        saved = await ChatMessage.objects.filter(
+            room_type=ChatMessage.RoomType.GAME,
+            room_id=str(game.id),
+        ).afirst()
+        self.assertIsNotNone(saved)
+        self.assertEqual(saved.content, "Bonne chance !")
+        self.assertEqual(saved.sender_id, white.id)
+
+        await white_ws.disconnect()
+        await black_ws.disconnect()
+
+    def test_chat_rejected_vs_ai(self):
+        async_to_sync(self._test_chat_rejected_vs_ai)()
+
+    async def _test_chat_rejected_vs_ai(self):
+        user = await User.objects.acreate(username="chat_ai", password="x")
+        game = await Game.objects.acreate(
+            white_player=user,
+            status=Game.Status.ACTIVE,
+            is_vs_ai=True,
+        )
+        token = str(AccessToken.for_user(user))
+        communicator = WebsocketCommunicator(
+            application,
+            f"/ws/game/{game.id}/?token={token}",
+        )
+        self.assertTrue((await communicator.connect())[0])
+        await _drain_join_messages(communicator)
+
+        await communicator.send_json_to({"event": "chat", "message": "Hi"})
+        err = await communicator.receive_json_from()
+        self.assertEqual(err["event"], "error")
+
+        count = await ChatMessage.objects.filter(room_id=str(game.id)).acount()
+        self.assertEqual(count, 0)
         await communicator.disconnect()
 
     def test_unauthenticated_connection_rejected(self):

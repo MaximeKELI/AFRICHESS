@@ -22,11 +22,17 @@ from .serializers import (
 from .elo_adapt import resolve_final_ai_elo
 from .elo_config import elo_strength_label, get_user_elo, suggested_ai_elo_for_user
 from .game_actions import (
+    abort_game,
     accept_draw,
+    accept_takeback,
+    clear_conditional_moves,
     create_rematch,
     decline_draw,
+    decline_takeback,
     live_games_queryset,
     offer_draw,
+    offer_takeback,
+    set_conditional_move,
 )
 from .game_access import can_analyze_game, can_play_game, can_view_game, user_is_participant
 from .variant_utils import legal_moves_uci, parse_pockets
@@ -520,6 +526,85 @@ class RematchView(APIView):
         if not new_game:
             return Response({"error": "Impossible"}, status=400)
         return Response(GameSerializer(new_game).data, status=201)
+
+
+class AbortGameView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, game_id):
+        try:
+            game = Game.objects.get(id=game_id)
+        except Game.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        if not can_play_game(request.user, game):
+            return Response({"error": "Forbidden"}, status=403)
+        result = abort_game(game, request.user)
+        if "error" in result:
+            return Response(result, status=400)
+        game.refresh_from_db()
+        return Response(GameSerializer(game).data)
+
+
+class TakebackOfferView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, game_id):
+        try:
+            game = Game.objects.get(id=game_id)
+        except Game.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        if not can_play_game(request.user, game):
+            return Response({"error": "Forbidden"}, status=403)
+        result = offer_takeback(game, request.user)
+        if "error" in result:
+            return Response(result, status=400)
+        return Response(result)
+
+
+class TakebackRespondView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, game_id):
+        try:
+            game = Game.objects.get(id=game_id)
+        except Game.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        if not can_play_game(request.user, game):
+            return Response({"error": "Forbidden"}, status=403)
+        accept = request.data.get("accept", False)
+        if accept:
+            result = accept_takeback(game, request.user)
+        else:
+            result = decline_takeback(game, request.user)
+        if "error" in result:
+            return Response(result, status=400)
+        game.refresh_from_db()
+        return Response(GameSerializer(game).data)
+
+
+class ConditionalMoveView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, game_id):
+        try:
+            game = Game.objects.get(id=game_id)
+        except Game.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        if not can_play_game(request.user, game):
+            return Response({"error": "Forbidden"}, status=403)
+        if request.data.get("clear"):
+            result = clear_conditional_moves(game, request.user)
+        else:
+            result = set_conditional_move(
+                game,
+                request.user,
+                request.data.get("trigger_uci", ""),
+                request.data.get("response_uci", ""),
+            )
+        if "error" in result:
+            return Response(result, status=400)
+        game.refresh_from_db()
+        return Response(GameSerializer(game).data)
 
 
 class CorrespondenceListView(APIView):

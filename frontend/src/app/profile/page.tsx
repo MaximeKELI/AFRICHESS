@@ -15,6 +15,7 @@ import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { BackgroundPicker } from "@/components/chess/BackgroundPicker";
 import { OptionSection } from "@/components/ui/OptionSection";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
+import { FairPlayAppealPanel } from "@/components/fairplay/FairPlayAppealPanel";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { type ChessLevelId } from "@/lib/avatars";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -224,6 +225,12 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+      <FairPlayAppealPanel />
+      <p className="text-center">
+        <Link href="/settings/security" className="text-sm text-africhess-gold hover:underline">
+          {t("security.2fa.title")}
+        </Link>
+      </p>
     </div>
   );
 }

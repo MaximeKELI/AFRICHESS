@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import marketplace_views, views
+from . import marketplace_views, report_views, views
 
 urlpatterns = [
     path("friends/", views.FriendsListView.as_view(), name="friends-list"),
@@ -46,4 +46,6 @@ urlpatterns = [
     ),
     path("streamers/", marketplace_views.StreamerListView.as_view(), name="streamer-list"),
     path("coaches/", marketplace_views.CoachListView.as_view(), name="coach-list"),
+    path("report/", report_views.ReportPlayerView.as_view(), name="player-report"),
+    path("events/", report_views.PlatformEventListView.as_view(), name="platform-events"),
 ]

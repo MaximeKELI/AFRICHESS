@@ -134,6 +134,7 @@ class GameSerializer(serializers.ModelSerializer):
             "termination_reason",
             "created_at", "started_at", "ended_at",
             "days_per_move", "turn_deadline",
+            "draw_offered_by", "takeback_requested_by", "conditional_moves",
         ]
 
 

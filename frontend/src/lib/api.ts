@@ -133,6 +133,10 @@ export const usersApi = {
     api.post("/users/subscription/subscribe/", { plan }),
   setVacation: (days: number) => api.post("/users/vacation/", { days }),
   clearVacation: () => api.delete("/users/vacation/"),
+  totpStatus: () => api.get("/users/security/2fa/status/"),
+  totpSetup: () => api.post("/users/security/2fa/setup/"),
+  totpEnable: (code: string) => api.post("/users/security/2fa/enable/", { code }),
+  totpDisable: (code: string) => api.post("/users/security/2fa/disable/", { code }),
 };
 
 export const gamesApi = {
@@ -202,6 +206,14 @@ export const gamesApi = {
   offerDraw: (id: string) => api.post(`/games/${id}/draw/`),
   respondDraw: (id: string, accept: boolean) =>
     api.post(`/games/${id}/draw/respond/`, { accept }),
+  abort: (id: string) => api.post(`/games/${id}/abort/`),
+  offerTakeback: (id: string) => api.post(`/games/${id}/takeback/`),
+  respondTakeback: (id: string, accept: boolean) =>
+    api.post(`/games/${id}/takeback/respond/`, { accept }),
+  setConditionalMove: (id: string, trigger_uci: string, response_uci: string) =>
+    api.post(`/games/${id}/conditional/`, { trigger_uci, response_uci }),
+  clearConditionalMoves: (id: string) =>
+    api.post(`/games/${id}/conditional/`, { clear: true }),
   rematch: (id: string) => api.post(`/games/${id}/rematch/`),
   correspondence: () => api.get("/games/correspondence/"),
   correspondenceChallenge: (username: string, days_per_move = 3, color = "white") =>
@@ -293,6 +305,9 @@ export const puzzlesApi = {
   createCustom: (data: { fen: string; solution_moves: string[]; themes?: string[]; is_public?: boolean }) =>
     api.post("/puzzles/custom/", data),
   customMine: () => api.get("/puzzles/custom/"),
+  survivalStart: () => api.post("/puzzles/survival/start/"),
+  survivalSubmit: (sessionId: number, moves: string[], time_seconds: number) =>
+    api.post(`/puzzles/survival/${sessionId}/submit/`, { moves, time_seconds }),
   streak: () => api.get("/puzzles/streak/"),
 };
 
@@ -384,6 +399,13 @@ export const socialApi = {
   directMessages: (username: string) => api.get(`/social/messages/${username}/`),
   sendDirectMessage: (username: string, message: string) =>
     api.post(`/social/messages/${username}/`, { message }),
+  reportPlayer: (data: {
+    username: string;
+    category: string;
+    description?: string;
+    game_id?: string;
+  }) => api.post("/social/report/", data),
+  platformEvents: () => api.get("/social/events/"),
 };
 
 export const notificationsApi = {

@@ -39,13 +39,22 @@ class FairPlayStatusView(APIView):
                 FairPlayReviewCase.Status.CONFIRMED,
                 FairPlayReviewCase.Status.ESCALATED,
             ),
-        ).count()
+        ).select_related("report__game")[:10]
         return Response(
             {
                 "consent_given": user_has_fairplay_consent(user),
                 "consent_version": FairPlayUserConsent.CONSENT_VERSION,
                 "restrictions": restrictions,
-                "appealable_cases": pending_cases,
+                "appealable_cases": pending_cases.count(),
+                "review_cases": [
+                    {
+                        "id": c.id,
+                        "game_id": str(c.report.game_id) if c.report.game_id else None,
+                        "verdict": c.report.verdict,
+                        "status": c.status,
+                    }
+                    for c in pending_cases
+                ],
                 "recent_appeals": [
                     {
                         "id": a.id,

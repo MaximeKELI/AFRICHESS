@@ -36,6 +36,7 @@ class Game(models.Model):
         CRAZYHOUSE = "crazyhouse", "Crazyhouse"
         KING_OF_THE_HILL = "kingofthehill", "King of the Hill"
         THREE_CHECK = "threecheck", "Three-check"
+        ATOMIC = "atomic", "Atomic"
 
     class Status(models.TextChoices):
         WAITING = "waiting", "Waiting for opponent"
@@ -136,6 +137,14 @@ class Game(models.Model):
         blank=True,
         related_name="draw_offers_made",
     )
+    takeback_requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="takeback_requests_made",
+    )
+    conditional_moves = models.JSONField(default=list, blank=True)
     rematch_of = models.ForeignKey(
         "self",
         on_delete=models.SET_NULL,

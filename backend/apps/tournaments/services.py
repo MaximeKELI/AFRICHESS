@@ -39,6 +39,8 @@ class TournamentEngine:
         tournament.save(update_fields=["status", "current_round", "total_rounds"])
         if tournament.format in (Tournament.Format.ARENA, Tournament.Format.CLUB_ARENA):
             self._start_arena_round(tournament, 1)
+        elif tournament.format == Tournament.Format.KNOCKOUT:
+            self._start_knockout_round(tournament, 1)
         else:
             self._start_swiss_round(tournament, 1)
         return tournament
@@ -85,6 +87,64 @@ class TournamentEngine:
             TournamentParticipant.objects.filter(
                 tournament=tournament, user__in=[white, black]
             ).update(is_available=False)
+
+    def _knockout_winners(self, tournament: Tournament, round_no: int) -> list:
+        rnd = TournamentRound.objects.filter(
+            tournament=tournament, round_number=round_no
+        ).first()
+        if not rnd:
+            return []
+        winners = []
+        for game in rnd.games.select_related("white_player", "black_player"):
+            if game.status != Game.Status.COMPLETED:
+                continue
+            if game.result == Game.Result.WHITE_WIN:
+                winners.append(game.white_player)
+            elif game.result == Game.Result.BLACK_WIN:
+                winners.append(game.black_player)
+        return [w for w in winners if w]
+
+    def _start_knockout_round(self, tournament: Tournament, round_no: int):
+        if round_no == 1:
+            players = self.participant_users(tournament)
+            random.shuffle(players)
+        else:
+            players = self._knockout_winners(tournament, round_no - 1)
+        if len(players) < 2:
+            tournament.status = Tournament.Status.COMPLETED
+            tournament.save(update_fields=["status"])
+            return
+        rnd = TournamentRound.objects.create(
+            tournament=tournament, round_number=round_no
+        )
+        for i in range(0, len(players) - 1, 2):
+            white, black = players[i], players[i + 1]
+            game = self._create_tournament_game(tournament, white, black)
+            game.tournament = tournament
+            game.save(update_fields=["tournament"])
+            rnd.games.add(game)
+        if len(players) % 2 == 1:
+            bye_user = players[-1]
+            tp, _ = TournamentParticipant.objects.get_or_create(
+                tournament=tournament, user=bye_user
+            )
+            tp.score += 2
+            tp.wins += 1
+            tp.save()
+
+    def _maybe_advance_knockout(self, tournament: Tournament):
+        current = tournament.current_round or 1
+        if not self._round_complete(tournament, current):
+            return
+        winners = self._knockout_winners(tournament, current)
+        if len(winners) <= 1:
+            tournament.status = Tournament.Status.COMPLETED
+            tournament.save(update_fields=["status"])
+            return
+        tournament.current_round = current + 1
+        tournament.total_rounds = max(tournament.total_rounds or 1, current + 1)
+        tournament.save(update_fields=["current_round", "total_rounds"])
+        self._start_knockout_round(tournament, current + 1)
 
     def _start_swiss_round(self, tournament: Tournament, round_no: int):
         standings = list(
@@ -156,6 +216,8 @@ class TournamentEngine:
 
         if tournament.format == Tournament.Format.SWISS:
             self._maybe_advance_swiss(tournament)
+        if tournament.format == Tournament.Format.KNOCKOUT:
+            self._maybe_advance_knockout(tournament)
         if tournament.format in (Tournament.Format.ARENA, Tournament.Format.CLUB_ARENA):
             self._arena_repair(tournament, game)
 

@@ -24,6 +24,8 @@ def board_from_fen(fen: str, variant: str = "standard") -> chess.Board:
         return chess.variant.KingOfTheHillBoard(fen)
     if variant == "threecheck":
         return chess.variant.ThreeCheckBoard(fen)
+    if variant == "atomic":
+        return chess.variant.AtomicBoard(fen)
     return chess.Board(fen)
 
 
