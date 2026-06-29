@@ -261,7 +261,7 @@ export default function PuzzlesPage() {
     else if (tab === "survival") loadSurvival();
     else if (tab === "leaderboard") loadLeaderboard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, difficulty]);
+  }, [tab, difficulty, theme]);
 
   const display = useMemo(() => {
     if (!puzzle) return null;
@@ -272,12 +272,18 @@ export default function PuzzlesPage() {
     setUciMoves((prev) => [...prev, uci]);
   }, []);
 
-  const submit = async () => {
-    if (!puzzle || !user) return;
+  const submitWithMoves = async (moves: string[]) => {
+    if (!puzzle) return;
+    if (!user && tab !== "rush" && tab !== "survival" && tab !== "battle") {
+      setResult(t("puzzles.loginToSubmit"));
+      return;
+    }
+    if (!user) return;
+    setUciMoves(moves);
     const time = Math.floor((Date.now() - startTime) / 1000);
     try {
       if (tab === "rush" && rushSessionId) {
-        const { data } = await puzzlesApi.rushSubmit(rushSessionId, uciMoves, time);
+        const { data } = await puzzlesApi.rushSubmit(rushSessionId, moves, time);
         setRushScore(data.score ?? rushScore);
         setRushMisses(data.misses ?? rushMisses);
         if (data.time_left != null) {
