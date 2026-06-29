@@ -1042,8 +1042,20 @@ function PlayContent() {
                 />
               </div>
             )}
-            {gameId && !isVsAi && <GameChat gameId={gameId} />}
           </div>
+
+          {gameId && !isVsAi && (
+            <div className={mobileTab === "chat" ? "block" : "hidden lg:block"}>
+              <GameChat
+                gameId={gameId}
+                opponentName={opponentName}
+                wsConnected={wsConnected}
+                sendChat={wsSendChat}
+                subscribeChat={wsSubscribeChat}
+                compact={mobileTab === "chat"}
+              />
+            </div>
+          )}
 
           <div className={mobileTab === "setup" ? "block space-y-4" : "hidden lg:block lg:space-y-4"}>
           <hr className="border-white/10 hidden lg:block" />
