@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { CapturedBoardStack } from "@/components/chess/CapturedBoardStack";
+import { useEffect, useState, useCallback } from "react";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { PuzzleBoard } from "@/components/puzzles/PuzzleBoard";
 import { OptionSection } from "@/components/ui/OptionSection";
@@ -263,15 +262,6 @@ export default function PuzzlesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, difficulty, theme]);
 
-  const display = useMemo(() => {
-    if (!puzzle) return null;
-    return buildGameDisplayFromUciList(puzzle.fen, uciMoves);
-  }, [puzzle, uciMoves]);
-
-  const handleMove = useCallback((uci: string) => {
-    setUciMoves((prev) => [...prev, uci]);
-  }, []);
-
   const submitWithMoves = async (moves: string[]) => {
     if (!puzzle) return;
     if (!user && tab !== "rush" && tab !== "survival" && tab !== "battle") {
@@ -309,12 +299,13 @@ export default function PuzzlesPage() {
           setPuzzle(data.next_puzzle);
           setUciMoves([]);
           setStartTime(Date.now());
+          setBoardKey((k) => k + 1);
         }
         return;
       }
 
       if (tab === "survival" && survivalSessionId) {
-        const { data } = await puzzlesApi.survivalSubmit(survivalSessionId, uciMoves, time);
+        const { data } = await puzzlesApi.survivalSubmit(survivalSessionId, moves, time);
         setSurvivalScore(data.score ?? survivalScore);
         if (data.completed) {
           setResult(
@@ -331,12 +322,13 @@ export default function PuzzlesPage() {
           setPuzzle(data.next_puzzle);
           setUciMoves([]);
           setStartTime(Date.now());
+          setBoardKey((k) => k + 1);
         }
         return;
       }
 
       if (tab === "battle" && battleId) {
-        const { data } = await puzzlesApi.battleSubmit(battleId, uciMoves, time);
+        const { data } = await puzzlesApi.battleSubmit(battleId, moves, time);
         if (!data.solved) {
           setResult(t("puzzles.solved.wrong"));
           return;
@@ -363,15 +355,16 @@ export default function PuzzlesPage() {
             setPuzzle(detail.puzzle);
             setUciMoves([]);
             setStartTime(Date.now());
+            setBoardKey((k) => k + 1);
           }
         }
         return;
       }
 
-      const { data } = await puzzlesApi.submit(puzzle.id, uciMoves, time);
+      const { data } = await puzzlesApi.submit(puzzle.id, moves, time);
       if (data.puzzle_elo != null) setPuzzleElo(data.puzzle_elo);
       const solved = Boolean(data.solved);
-      let nextStreak = tab === "daily" && data.daily_streak != null
+      const nextStreak = tab === "daily" && data.daily_streak != null
         ? data.daily_streak
         : recordPuzzleSolved(solved);
       if (tab === "daily" && data.daily_streak != null) {
@@ -395,10 +388,29 @@ export default function PuzzlesPage() {
     }
   };
 
+  const handlePuzzleComplete = useCallback(
+    (moves: string[]) => {
+      void submitWithMoves(moves);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [puzzle, user, tab, rushSessionId, survivalSessionId, battleId, startTime]
+  );
+
+  const handlePuzzleWrong = useCallback(
+    (played: string[]) => {
+      if (tab === "rush" || tab === "survival") {
+        void submitWithMoves(played);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tab, puzzle]
+  );
+
   const reset = () => {
     setUciMoves([]);
     setResult(null);
     setStartTime(Date.now());
+    setBoardKey((k) => k + 1);
   };
 
   const nextRush = () => {
@@ -501,16 +513,30 @@ export default function PuzzlesPage() {
           {t("puzzles.tab.leaderboard")}
         </button>
         {tab === "training" && (
-          <select
-            value={difficulty}
-            onChange={(e) => setDifficulty(e.target.value)}
-            className="px-3 py-2 rounded-lg border bg-transparent text-sm"
-          >
-            <option value="beginner">{chessLevelLabel(t, "beginner")}</option>
-            <option value="intermediate">{chessLevelLabel(t, "intermediate")}</option>
-            <option value="advanced">{chessLevelLabel(t, "advanced")}</option>
-            <option value="expert">{chessLevelLabel(t, "expert")}</option>
-          </select>
+          <>
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+              className="px-3 py-2 rounded-lg border bg-transparent text-sm"
+            >
+              <option value="beginner">{chessLevelLabel(t, "beginner")}</option>
+              <option value="intermediate">{chessLevelLabel(t, "intermediate")}</option>
+              <option value="advanced">{chessLevelLabel(t, "advanced")}</option>
+              <option value="expert">{chessLevelLabel(t, "expert")}</option>
+            </select>
+            <select
+              value={theme}
+              onChange={(e) => setTheme(e.target.value)}
+              className="px-3 py-2 rounded-lg border bg-transparent text-sm"
+            >
+              <option value="">{t("puzzles.theme.all")}</option>
+              {themes.map((th) => (
+                <option key={th} value={th}>
+                  {t(`puzzles.theme.${th}`, th)}
+                </option>
+              ))}
+            </select>
+          </>
         )}
       </div>
 
@@ -563,14 +589,11 @@ export default function PuzzlesPage() {
         </div>
       )}
 
-      {tab !== "leaderboard" && puzzle && display ? (
-        <div key={puzzle.id}>
+      {tab !== "leaderboard" && puzzle && puzzle.solution_moves?.length ? (
+        <div key={`${puzzle.id}-${boardKey}`}>
           <div className="flex flex-wrap gap-2 mb-4">
             <span className="px-3 py-1 rounded-full bg-africhess-green/20 text-sm capitalize">
               {puzzle.difficulty}
-            </span>
-            <span className="px-3 py-1 rounded-full bg-africhess-gold/20 text-sm">
-              ELO {puzzle.rating}
             </span>
             {(tab === "training" || tab === "rush") &&
               (tab === "training" ? trainingQueue : rushQueue).length > 0 && (
@@ -584,31 +607,22 @@ export default function PuzzlesPage() {
                 vs {battleOpponent} · {t("puzzles.battle.score", { you: battleScoreYou, opp: battleScoreOpp })}
               </span>
             )}
-            {puzzle.themes?.map((t) => (
-              <span key={t} className="px-3 py-1 rounded-full bg-white/10 text-sm">
-                {t}
+            {tab === "survival" && survivalSessionId && (
+              <span className="px-3 py-1 rounded-full bg-africhess-gold/20 text-sm">
+                {t("puzzles.survival.score", { n: survivalScore })}
               </span>
-            ))}
+            )}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(200px,260px)] xl:grid-cols-[minmax(0,1fr)_minmax(200px,260px)_minmax(160px,200px)] gap-4 lg:gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(160px,200px)] gap-4 lg:gap-6 items-start">
             <div className="w-full min-w-0">
-            <CapturedBoardStack captured={display.captured} orientation="white">
-              <ChessBoard
-                fen={display.fen}
-                onMove={handleMove}
-                orientation="white"
-                playerColor="w"
-                lastMove={display.lastMove}
-                playSoundOnFenChange={false}
+              <PuzzleBoard
+                puzzle={puzzle}
+                onComplete={handlePuzzleComplete}
+                onWrong={handlePuzzleWrong}
+                disabled={Boolean(result?.startsWith("✓") && tab !== "rush" && tab !== "survival")}
               />
-            </CapturedBoardStack>
             </div>
-            <GameSidePanel
-              moves={display.moveRows}
-              isCheck={display.isCheck}
-              turn={display.turn}
-            />
             <OptionSection
               compact
               title={t("board.picker.title")}
@@ -619,14 +633,7 @@ export default function PuzzlesPage() {
             </OptionSection>
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-4">
-            <button
-              type="button"
-              onClick={submit}
-              className="px-6 py-2 african-gradient text-white rounded-lg font-medium"
-            >
-              {t("puzzles.validate")}
-            </button>
+          <div className="mt-6 flex flex-wrap gap-4 items-center">
             <button type="button" onClick={reset} className="px-6 py-2 border rounded-lg">
               {t("puzzles.reset")}
             </button>
@@ -639,18 +646,15 @@ export default function PuzzlesPage() {
                 {t("puzzles.next")}
               </button>
             )}
-            {tab === "rush" && result && puzzle && (
-              <button
-                type="button"
-                onClick={nextRush}
-                className="px-6 py-2 border border-africhess-green text-africhess-green rounded-lg"
-              >
-                {t("puzzles.nextRush")}
+            {tab === "daily" && result?.startsWith("✓") && (
+              <button type="button" onClick={loadDaily} className="px-6 py-2 border rounded-lg">
+                {t("puzzles.daily.reload")}
               </button>
             )}
             {tab === "rush" && puzzle && (
               <span className="text-sm font-mono text-africhess-gold ml-auto">
                 {Math.floor(rushTimeLeft / 60)}:{String(rushTimeLeft % 60).padStart(2, "0")}
+                {" · "}{t("puzzles.rush.score", { n: rushScore })}
                 {" · "}{t("puzzles.rush.misses", { n: rushMisses })}
               </span>
             )}
