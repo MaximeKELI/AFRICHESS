@@ -39,7 +39,7 @@ export default function TournamentsPage() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const [list, setList] = useState<Tournament[]>([]);
-  const [africanOnly, setAfricanOnly] = useState(true);
+  const [africanOnly, setAfricanOnly] = useState(false);
   const [status, setStatus] = useState("");
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const [standings, setStandings] = useState<StandingRow[]>([]);

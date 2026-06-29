@@ -18,7 +18,7 @@ interface Entry {
 
 export default function LeaderboardPage() {
   const { t, locale } = useTranslation();
-  const [tab, setTab] = useState<"global" | "african">("african");
+  const [tab, setTab] = useState<"global" | "african">("global");
   const [mode, setMode] = useState("blitz");
   const [entries, setEntries] = useState<Entry[]>([]);
   const [country, setCountry] = useState("");

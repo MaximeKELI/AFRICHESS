@@ -11,7 +11,7 @@
 
 <!-- Ligne animée typewriter -->
 <a href="https://git.io/typing-svg">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=4000&pause=1200&color=D4A017&center=true&vCenter=true&width=600&lines=La+maison+des+%C3%A9checs+d'Afrique+%E2%99%9F;Jouer.+Apprendre.+Progresser.;Temps+r%C3%A9el+%C2%B7+IA+Stockfish+%C2%B7+40+le%C3%A7ons" alt="Typing animation" />
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=4000&pause=1200&color=D4A017&center=true&vCenter=true&width=600&lines=La+maison+des+%C3%A9checs+%E2%99%9F;Jouer.+Apprendre.+Progresser.;Temps+r%C3%A9el+%C2%B7+IA+Stockfish+%C2%B7+40+le%C3%A7ons" alt="Typing animation" />
 </a>
 
 <br />
@@ -27,7 +27,7 @@
 
 <br />
 
-**Plateforme d'échecs en ligne** — identité africaine forte, ingénierie de niveau mondial, ouverte au monde.
+**Plateforme d'échecs en ligne** — thèmes et identité visuelle inspirés de l'Afrique, ingénierie de niveau mondial, ouverte à tous les joueurs.
 
 | | |
 |:---:|:---|
@@ -52,7 +52,7 @@
 
 ## 🌍 Vision
 
-**AFRICHESS** vise à devenir la référence des échecs en ligne pour l'Afrique et la diaspora : parties en direct, entraînement structuré, tournois communautaires, et mise en avant des talents du continent — avec une expérience comparable aux grandes plateformes internationales.
+**AFRICHESS** vise à devenir une référence mondiale des échecs en ligne : parties en direct, entrainement structuré, tournois communautaires, et mise en avant des talents de tous les continents — avec une expérience comparable aux grandes plateformes internationales.
 
 ---
 
@@ -418,7 +418,7 @@ Projet **propriétaire**. Tous droits réservés.
 
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:D4A017,50:1B7A3D,100:0D1117&height=100&section=footer&text=%E2%99%9F%20Elevating%20African%20chess%20on%20the%20global%20stage&fontSize=18&fontColor=ffffff&animation=scaleIn" alt="footer" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:D4A017,50:1B7A3D,100:0D1117&height=100&section=footer&text=%E2%99%9F%20Elevating%20chess%20on%20the%20global%20stage&fontSize=18&fontColor=ffffff&animation=scaleIn" alt="footer" />
 
 **♟ Jouez. Apprenez. Brillez. — AFRICHESS**
 

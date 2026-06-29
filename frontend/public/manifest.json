@@ -1,7 +1,7 @@
 {
   "name": "AFRICHESS",
   "short_name": "AFRICHESS",
-  "description": "Plateforme d'échecs africaine",
+  "description": "Plateforme d'échecs en ligne — jouer, apprendre, progresser",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0D1117",

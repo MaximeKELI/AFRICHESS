@@ -54,7 +54,7 @@ const NAV_GROUPS = [
       { href: "/tournaments", key: "nav.tournaments" },
       { href: "/events", key: "nav.events" },
       { href: "/leagues", key: "nav.leagues" },
-      { href: "/leaderboard", key: "leaderboard.african" },
+      { href: "/leaderboard", key: "leaderboard.title" },
       { href: "/achievements", key: "nav.achievements" },
       { href: "/premium", key: "nav.premium" },
     ],

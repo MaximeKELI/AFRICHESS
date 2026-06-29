@@ -20,7 +20,7 @@ export default function HomeScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>AFRICHESS</Text>
-      <Text style={styles.subtitle}>La maison des échecs d'Afrique — mobile</Text>
+      <Text style={styles.subtitle}>Jouez, apprenez, progressez — partout dans le monde</Text>
 
       {authLoading ? (
         <ActivityIndicator color="#D4A017" />

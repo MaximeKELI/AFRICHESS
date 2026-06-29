@@ -2,9 +2,8 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { CapturedBoardStack } from "@/components/chess/CapturedBoardStack";
-import { ChessBoard } from "@/components/chess/ChessBoard";
-import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
+import { PuzzleBoard } from "@/components/puzzles/PuzzleBoard";
 import { OptionSection } from "@/components/ui/OptionSection";
 import { puzzlesApi, ratingsApi } from "@/lib/api";
 import { InlineAlert } from "@/components/ui/InlineAlert";
@@ -12,13 +11,13 @@ import { formatApiError } from "@/lib/errors";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { chessLevelLabel } from "@/lib/i18n/labels";
-import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
 import { getPuzzleStreak, recordPuzzleSolved } from "@/lib/puzzleStreak";
 import Link from "next/link";
 
 interface Puzzle {
   id: number;
   fen: string;
+  solution_moves: string[];
   themes: string[];
   difficulty: string;
   rating: number;
@@ -41,7 +40,10 @@ export default function PuzzlesPage() {
   const [trainingQueue, setTrainingQueue] = useState<Puzzle[]>([]);
   const [trainingIndex, setTrainingIndex] = useState(0);
   const [difficulty, setDifficulty] = useState("intermediate");
+  const [theme, setTheme] = useState("");
+  const [themes, setThemes] = useState<string[]>([]);
   const [uciMoves, setUciMoves] = useState<string[]>([]);
+  const [boardKey, setBoardKey] = useState(0);
   const [result, setResult] = useState<string | null>(null);
   const [puzzleElo, setPuzzleElo] = useState<number | null>(null);
   const [streak, setStreak] = useState(0);
@@ -62,6 +64,12 @@ export default function PuzzlesPage() {
   const [battleScoreOpp, setBattleScoreOpp] = useState(0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    puzzlesApi.themes().then(({ data }) => {
+      setThemes(Array.isArray(data.themes) ? data.themes : []);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -232,7 +240,7 @@ export default function PuzzlesPage() {
     setStartTime(Date.now());
     setLoadError(null);
     puzzlesApi
-      .training(difficulty, 10)
+      .training(difficulty, 10, theme || undefined)
       .then(({ data }) => {
         const list: Puzzle[] = Array.isArray(data) ? data : data.results ?? [];
         setTrainingQueue(list);

@@ -5,8 +5,8 @@ import { Navbar } from "@/components/layout/Navbar";
 import { FooterGate } from "@/components/layout/FooterGate";
 
 export const metadata: Metadata = {
-  title: "AFRICHESS — Africa's Premier Chess Platform",
-  description: "Play chess online, train tactics, join African chess communities. Built for Africa, open to the world.",
+  title: "AFRICHESS — Global Chess Platform",
+  description: "Play chess online, train tactics, join clubs and communities worldwide.",
   icons: { icon: "/images/logo.png" },
   manifest: "/manifest.json",
   appleWebApp: { capable: true, title: "AFRICHESS" },

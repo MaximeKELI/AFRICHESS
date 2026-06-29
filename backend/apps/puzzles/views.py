@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Puzzle, PuzzleAttempt, PuzzleBattle, PuzzleBattleQueue, PuzzleRushSession
+from .puzzle_catalog import PUZZLE_THEMES
 from .random_sample import random_queryset
 from .serializers import PuzzleSerializer, SubmitPuzzleSerializer
 
@@ -119,6 +120,18 @@ class SubmitPuzzleView(APIView):
             "puzzle_elo": puzzle_elo,
             "puzzle_elo_change": puzzle_elo_change,
         })
+
+
+class PuzzleThemesView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        db_themes = set()
+        for row in Puzzle.objects.values_list("themes", flat=True):
+            if isinstance(row, list):
+                db_themes.update(row)
+        themes = sorted(db_themes or PUZZLE_THEMES)
+        return Response({"themes": themes})
 
 
 class TacticalTrainingView(APIView):

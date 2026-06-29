@@ -202,7 +202,7 @@ SIMPLE_JWT = {
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "AFRICHESS API",
-    "DESCRIPTION": "Africa's premier chess platform — REST API",
+    "DESCRIPTION": "Global chess platform — REST API",
     "VERSION": "1.0.0",
     "CONTACT": {"name": "Maxime Dzidula KELI", "email": "contact@africhess.com"},
 }

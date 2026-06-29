@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path("daily/", views.DailyPuzzleView.as_view(), name="daily-puzzle"),
+    path("themes/", views.PuzzleThemesView.as_view(), name="puzzle-themes"),
     path("training/", views.TacticalTrainingView.as_view(), name="tactical-training"),
     path("rush/", views.PuzzleRushView.as_view(), name="puzzle-rush"),
     path("rush/start/", views.PuzzleRushStartView.as_view(), name="puzzle-rush-start"),

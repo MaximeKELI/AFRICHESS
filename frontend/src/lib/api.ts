@@ -287,8 +287,11 @@ export const ratingsApi = {
 
 export const puzzlesApi = {
   daily: () => api.get("/puzzles/daily/"),
-  training: (difficulty: string, count = 10) =>
-    api.get("/puzzles/training/", { params: { difficulty, count } }),
+  themes: () => api.get("/puzzles/themes/"),
+  training: (difficulty: string, count = 10, theme?: string) =>
+    api.get("/puzzles/training/", {
+      params: { difficulty, count, ...(theme ? { theme } : {}) },
+    }),
   submit: (id: number, moves: string[], time_seconds: number) =>
     api.post(`/puzzles/${id}/submit/`, { moves, time_seconds }),
   leaderboard: () => api.get("/puzzles/leaderboard/"),

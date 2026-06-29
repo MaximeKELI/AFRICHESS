@@ -6,8 +6,17 @@ from .models import Puzzle, PuzzleAttempt
 class PuzzleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Puzzle
-        fields = ["id", "fen", "themes", "difficulty", "rating", "plays_count", "success_rate", "is_daily"]
-        # solution_moves hidden from client until solved
+        fields = [
+            "id",
+            "fen",
+            "solution_moves",
+            "themes",
+            "difficulty",
+            "rating",
+            "plays_count",
+            "success_rate",
+            "is_daily",
+        ]
 
 
 class PuzzleDetailSerializer(PuzzleSerializer):
