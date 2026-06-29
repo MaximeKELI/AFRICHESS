@@ -39,6 +39,21 @@ export interface WsGamePayload {
 
 type WsHandler = (payload: WsGamePayload) => void;
 
+export interface WsChatPayload {
+  id?: number;
+  user?: string;
+  message?: string;
+  content?: string;
+  created_at?: string;
+  sender?: {
+    username: string;
+    display_name?: string;
+    flair?: string;
+  };
+}
+
+type ChatListener = (msg: WsChatPayload) => void;
+
 const MAX_WS_RETRIES = 5;
 
 export function useGameWebSocket(
@@ -54,6 +69,7 @@ export function useGameWebSocket(
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onUpdateRef = useRef(onUpdate);
   const onGameOverRef = useRef(onGameOver);
+  const chatListenersRef = useRef<Set<ChatListener>>(new Set());
 
   useEffect(() => {
     onUpdateRef.current = onUpdate;
@@ -102,6 +118,9 @@ export function useGameWebSocket(
           if (event === "fin_partie" && data?.game) {
             onUpdateRef.current(data as WsGamePayload);
             onGameOverRef.current?.(data as WsGamePayload);
+          }
+          if (event === "chat" && data) {
+            chatListenersRef.current.forEach((fn) => fn(data as WsChatPayload));
           }
           if (event === "error") {
             const message =
@@ -174,7 +193,21 @@ export function useGameWebSocket(
     }
   }, []);
 
-  return { connected, wsError, sendMove, resign, startGame };
+  const sendChat = useCallback((message: string) => {
+    const trimmed = message.trim();
+    if (!trimmed || wsRef.current?.readyState !== WebSocket.OPEN) return false;
+    wsRef.current.send(JSON.stringify({ event: "chat", message: trimmed }));
+    return true;
+  }, []);
+
+  const subscribeChat = useCallback((listener: ChatListener) => {
+    chatListenersRef.current.add(listener);
+    return () => {
+      chatListenersRef.current.delete(listener);
+    };
+  }, []);
+
+  return { connected, wsError, sendMove, resign, startGame, sendChat, subscribeChat };
 }
 
 export function useMatchmakingWebSocket(

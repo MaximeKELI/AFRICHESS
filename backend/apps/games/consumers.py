@@ -78,12 +78,18 @@ class ChessConsumer(AsyncWebsocketConsumer):
         elif event in ("rejoindre_partie", "join"):
             await self._on_join()
         elif event == "chat":
+            message = (data.get("message") or "").strip()[:500]
+            if not message:
+                return
+            saved = await self._save_game_chat(message)
+            if saved.get("error"):
+                await self._send_event("error", saved)
+                return
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     "type": "relay_chat",
-                    "user": self.user.username,
-                    "message": data.get("message", ""),
+                    "payload": saved,
                 },
             )
         else:
@@ -145,7 +151,29 @@ class ChessConsumer(AsyncWebsocketConsumer):
         await self._send_event("partie_demarree", event["payload"])
 
     async def relay_chat(self, event):
-        await self._send_event("chat", {"user": event["user"], "message": event["message"]})
+        await self._send_event("chat", event["payload"])
+
+    @database_sync_to_async
+    def _save_game_chat(self, content: str) -> dict:
+        from apps.social.models import ChatMessage
+        from apps.social.serializers import ChatMessageSerializer
+
+        try:
+            game = Game.objects.get(id=self.game_id)
+        except Game.DoesNotExist:
+            return {"error": "Partie introuvable"}
+        if self.user.id not in (game.white_player_id, game.black_player_id):
+            return {"error": "Chat réservé aux joueurs"}
+        if game.is_vs_ai:
+            return {"error": "Chat indisponible contre l'IA"}
+        msg = ChatMessage.objects.create(
+            sender=self.user,
+            room_type=ChatMessage.RoomType.GAME,
+            room_id=str(self.game_id),
+            content=content,
+        )
+        msg = ChatMessage.objects.select_related("sender").get(pk=msg.pk)
+        return ChatMessageSerializer(msg).data
 
     async def _send_event(self, event: str, data: dict):
         await self.send(text_data=json.dumps({"event": event, "data": data}))
