@@ -191,7 +191,6 @@ function PlayContent() {
   const clockLabel = formatTimeControlLabel(gameIsTimed, gameIsTimed ? activePreset : null);
   const fallbackBaseMs = TIME_PRESETS[activePreset].baseMs;
   const headerAiElo = isVsAi ? (gameData.ai_target_elo ?? aiElo ?? aiEloChoice) : aiEloChoice;
-  const headerAi = pickAiAvatar(headerAiElo);
   const timeOpts = useMemo(
     () => ({ isTimed: useClock, timePreset, isRated }),
     [useClock, timePreset, isRated]
@@ -764,7 +763,7 @@ function PlayContent() {
           </span>
           <span className="text-sm min-w-0">
             <span className="block text-[10px] uppercase tracking-wide opacity-50">{t("play.ai")}</span>
-            <span className="font-medium truncate">{headerAi.name}</span>
+            <span className="font-medium truncate">{headerAiDisplay.name}</span>
           </span>
         </span>
       </div>
