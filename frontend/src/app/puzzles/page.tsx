@@ -618,7 +618,7 @@ export default function PuzzlesPage() {
             <div className="w-full min-w-0">
               <PuzzleBoard
                 puzzle={puzzle}
-                onComplete={handlePuzzleComplete}
+                onComplete={(moves) => handlePuzzleComplete(moves)}
                 onWrong={handlePuzzleWrong}
                 disabled={Boolean(result?.startsWith("✓") && tab !== "rush" && tab !== "survival")}
               />
