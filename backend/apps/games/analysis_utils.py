@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 ACCURACY_WEIGHTS: dict[str, int] = {
+    "brilliant": 100,
+    "great": 100,
     "best": 100,
     "good": 90,
     "inaccuracy": 75,

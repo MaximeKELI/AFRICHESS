@@ -12,6 +12,7 @@ import clsx from "clsx";
 import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
 import { ChessBoard } from "./ChessBoard";
 import { EvalGraph } from "./EvalGraph";
+import { MoveClassificationSummary } from "./MoveClassificationSummary";
 
 interface MoveAnalysis {
   uci?: string;
@@ -245,6 +246,8 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
               </p>
             </div>
           </div>
+
+          <MoveClassificationSummary moves={analysis.best_moves_json} colorColumns />
 
           {reviewDisplay && (
             <div className="max-w-[280px] mx-auto">

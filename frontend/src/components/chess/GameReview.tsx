@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CapturedBoardStack } from "@/components/chess/CapturedBoardStack";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { EvalGraph } from "@/components/chess/EvalGraph";
+import { MoveClassificationSummary } from "@/components/chess/MoveClassificationSummary";
 import { useGameAnalysis } from "@/hooks/useGameAnalysis";
 import {
   initAiSpeech,
@@ -359,6 +360,8 @@ export function GameReview({
                   </p>
                 </div>
               </div>
+
+              <MoveClassificationSummary moves={moves} playerIsWhite={playerIsWhite} />
 
               {analysis.summary_fr && (
                 <div className="rounded-xl bg-africhess-gold/10 border border-africhess-gold/20 p-3 text-sm space-y-2">
