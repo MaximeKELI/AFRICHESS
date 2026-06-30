@@ -2541,6 +2541,7 @@ const en: Record<string, string> = {
 
 const ar: Record<string, string> = {
   ...en,
+  ...arOverlay,
   "nav.play": "العب",
   "nav.puzzles": "ألغاز",
   "nav.learn": "تعلم",
