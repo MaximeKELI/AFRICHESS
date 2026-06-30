@@ -10,6 +10,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
+from apps.common.ws_connect import accept_websocket
 from apps.common.ws_ratelimit import allow_ws_event
 
 from .models import Game
@@ -42,7 +43,7 @@ class ChessConsumer(AsyncWebsocketConsumer):
                 return
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
-        await self.accept()
+        await accept_websocket(self)
         await self._on_join()
 
     async def disconnect(self, close_code):
@@ -415,7 +416,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
             return
         self.user_group = f"user_{self.user.id}"
         await self.channel_layer.group_add(self.user_group, self.channel_name)
-        await self.accept()
+        await accept_websocket(self)
         await self.send(
             text_data=json.dumps(
                 {"event": "connected", "data": {"user_id": self.user.id}}

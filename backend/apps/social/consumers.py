@@ -3,6 +3,7 @@ import json
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from apps.common.ws_connect import accept_websocket
 from apps.common.ws_ratelimit import allow_ws_event
 
 from .chat_access import user_can_access_chat_room
@@ -28,7 +29,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         await self.channel_layer.group_add(self.room_group, self.channel_name)
-        await self.accept()
+        await accept_websocket(self)
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group, self.channel_name)

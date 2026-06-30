@@ -1276,7 +1276,7 @@ function PlayContent() {
                     )}
                 </>
               )}
-              {gameData.move_count < 2 && (
+              {(gameData.move_count ?? 0) < 2 && (
                 <button
                   type="button"
                   onClick={() =>

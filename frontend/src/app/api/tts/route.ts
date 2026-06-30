@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
   if (!wav) {
     return NextResponse.json({ error: "TTS unavailable" }, { status: 503 });
   }
-  return new NextResponse(wav, {
+  return new NextResponse(new Uint8Array(wav), {
     status: 200,
     headers: { "Content-Type": "audio/wav", "Cache-Control": "no-store" },
   });

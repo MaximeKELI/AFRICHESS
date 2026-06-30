@@ -532,7 +532,7 @@ export default function PuzzlesPage() {
               <option value="">{t("puzzles.theme.all")}</option>
               {themes.map((th) => (
                 <option key={th} value={th}>
-                  {t(`puzzles.theme.${th}`, th)}
+                  {t(`puzzles.theme.${th}`)}
                 </option>
               ))}
             </select>

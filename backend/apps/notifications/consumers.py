@@ -3,6 +3,8 @@ import json
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from apps.common.ws_connect import accept_websocket
+
 from .models import Notification
 from .serializers import NotificationSerializer
 
@@ -15,7 +17,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             return
         self.group = f"user_{self.user.id}_notifications"
         await self.channel_layer.group_add(self.group, self.channel_name)
-        await self.accept()
+        await accept_websocket(self)
         items = await self._recent()
         await self.send(
             text_data=json.dumps({"event": "notifications", "data": items})

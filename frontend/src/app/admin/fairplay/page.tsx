@@ -143,7 +143,7 @@ export default function AdminFairPlayPage() {
         <p className="opacity-60">{t("admin.fairplay.noCases")}</p>
       ) : (
         <DataTable
-          title={t("admin.fairplay.queue")}
+          caption={t("admin.fairplay.queue")}
           columns={[
             { key: "player", label: t("admin.fairplay.col.player") },
             { key: "game", label: t("admin.fairplay.col.game") },
