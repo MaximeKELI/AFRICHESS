@@ -73,6 +73,7 @@ export interface GameMove {
   san: string;
   played_by_white: boolean;
   move_number: number;
+  comment?: string;
 }
 
 export type GameVariant =
@@ -141,14 +142,31 @@ export const gamesApi = {
     ai_elo?: number;
     bot_slug?: string;
     variant?: GameVariant;
+    include_comments?: boolean;
   }) => api.post<GameData>("/games/ai/", data),
   get: (id: string) => api.get<GameData>(`/games/${id}/`),
-  move: (id: string, uci: string, opts?: { spentMs?: number }) =>
-    api.post<GameData>(`/games/${id}/move/`, {
+  matchmaking: (
+    mode: string,
+    opts?: { is_timed?: boolean; is_rated?: boolean; time_control?: string }
+  ) =>
+    api.post<GameData & { comments_pending?: boolean }>("/games/matchmaking/", {
+      mode,
+      is_timed: opts?.is_timed ?? true,
+      is_rated: opts?.is_rated ?? true,
+      time_control: opts?.time_control ?? "3+2",
+    }),
+  move: (
+    id: string,
+    uci: string,
+    opts?: { spentMs?: number; includeComments?: boolean }
+  ) =>
+    api.post<GameData & { comments_pending?: boolean }>(`/games/${id}/move/`, {
       uci,
+      include_comments: opts?.includeComments ?? false,
       ...(opts?.spentMs != null ? { spent_ms: opts.spentMs } : {}),
     }),
   undo: (id: string) => api.post<GameData>(`/games/${id}/undo/`),
+  resign: (id: string) => api.post<GameData>(`/games/${id}/resign/`),
 };
 
 export interface FriendUser {
