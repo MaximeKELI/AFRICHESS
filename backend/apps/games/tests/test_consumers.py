@@ -144,13 +144,20 @@ class MatchmakingConsumerTests(TransactionTestCase):
         async_to_sync(self._test_disconnect_keeps_http_queue_entry)()
 
     async def _test_disconnect_keeps_http_queue_entry(self):
+        from channels.db import database_sync_to_async
+
         from apps.games.models import MatchmakingQueue
         from apps.games.services import MatchmakingService
 
         user = await User.objects.acreate(username="mm_ws", password="x")
-        await async_to_sync(MatchmakingService().join_queue)(
-            user, "blitz", 1200, is_rated=False, time_control="3+2"
-        )
+
+        @database_sync_to_async
+        def join_queue():
+            MatchmakingService().join_queue(
+                user, "blitz", 1200, is_rated=False, time_control="3+2"
+            )
+
+        await join_queue()
         token = str(AccessToken.for_user(user))
         ws = WebsocketCommunicator(
             application,
