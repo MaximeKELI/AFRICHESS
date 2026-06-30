@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.games.game_actions import abort_game, accept_takeback, offer_takeback, resign_game, resign_game
+from apps.games.game_actions import abort_game, accept_takeback, offer_takeback, resign_game
 from apps.games.models import Game, Move
 
 User = get_user_model()
