@@ -142,7 +142,6 @@ function PlayContent() {
   >("game");
   const [aiStarting, setAiStarting] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
-  const botAutoStartRef = useRef(false);
   const { aiCommentsEnabled } = usePreferencesStore();
   const turnStartRef = useRef(Date.now());
 
@@ -585,6 +584,22 @@ function PlayContent() {
     if (botFromUrl) setSelectedBot(botFromUrl);
   }, [botFromUrl]);
 
+  useEffect(() => {
+    if (!selectedBot) return;
+    setSetupCategory("ai");
+    gamesApi
+      .bot(selectedBot)
+      .then(({ data }) => setSelectedBotInfo(data))
+      .catch(() => setSelectedBotInfo(null));
+  }, [selectedBot]);
+
+  useEffect(() => {
+    if (botFromUrl && !gameId) {
+      setSetupCategory("ai");
+      setMobileTab("setup");
+    }
+  }, [botFromUrl, gameId]);
+
   const startAI = useCallback(async () => {
     if (aiStarting || gameId) return;
     unlockAiSpeech();
@@ -645,12 +660,6 @@ function PlayContent() {
     refreshPendingComments,
     t,
   ]);
-
-  useEffect(() => {
-    if (!user || !botFromUrl || gameId || botAutoStartRef.current) return;
-    botAutoStartRef.current = true;
-    void startAI();
-  }, [user, botFromUrl, gameId, startAI]);
 
   const handleUndo = async () => {
     if (!gameId || !isVsAi) return;
