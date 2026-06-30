@@ -10,11 +10,11 @@ from dj_rest_auth.views import (
 )
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.permissions import AllowAny, IsAdminUser
-from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
+from rest_framework_simplejwt.views import TokenVerifyView
 
 from config.auth_views import registration_deprecated
 from apps.common.health import health_check
-from apps.users.auth_views import SecureLoginView, SecureLogoutView
+from apps.users.auth_views import CookieTokenRefreshView, SecureLoginView, SecureLogoutView
 
 if settings.DEBUG and getattr(settings, "ALLOW_PUBLIC_API_DOCS", False):
     _doc_permissions = [AllowAny]

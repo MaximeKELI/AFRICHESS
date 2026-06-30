@@ -208,9 +208,10 @@ SPECTACULAR_SETTINGS = {
 }
 
 # dj-rest-auth / allauth
+JWT_REFRESH_HTTPONLY = config("JWT_REFRESH_HTTPONLY", default=False, cast=bool)
 REST_AUTH = {
     "USE_JWT": True,
-    "JWT_AUTH_HTTPONLY": False,
+    "JWT_AUTH_HTTPONLY": JWT_REFRESH_HTTPONLY,
     "JWT_AUTH_COOKIE": "access_token",
     "JWT_AUTH_REFRESH_COOKIE": "refresh_token",
     "JWT_AUTH_SAMESITE": "Lax",
