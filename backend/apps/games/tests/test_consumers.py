@@ -136,3 +136,29 @@ class ChessConsumerTests(TransactionTestCase):
         connected, _ = await communicator.connect()
         self.assertFalse(connected)
         await communicator.disconnect()
+
+
+@override_settings(CHANNEL_LAYERS=IN_MEMORY_CHANNEL, WS_ALLOW_QUERY_TOKEN=True)
+class MatchmakingConsumerTests(TransactionTestCase):
+    def test_disconnect_keeps_http_queue_entry(self):
+        async_to_sync(self._test_disconnect_keeps_http_queue_entry)()
+
+    async def _test_disconnect_keeps_http_queue_entry(self):
+        from apps.games.models import MatchmakingQueue
+        from apps.games.services import MatchmakingService
+
+        user = await User.objects.acreate(username="mm_ws", password="x")
+        await async_to_sync(MatchmakingService().join_queue)(
+            user, "blitz", 1200, is_rated=False, time_control="3+2"
+        )
+        token = str(AccessToken.for_user(user))
+        ws = WebsocketCommunicator(
+            application,
+            f"/ws/matchmaking/?token={token}",
+        )
+        self.assertTrue((await ws.connect())[0])
+        await ws.receive_json_from()
+        await ws.disconnect()
+        self.assertTrue(
+            await MatchmakingQueue.objects.filter(user=user).aexists()
+        )
