@@ -2484,6 +2484,7 @@ const en: Record<string, string> = {
   "premium.feature.deep_game_review": "Deep Game Review",
   "premium.feature.lessons_unlimited": "Unlimited lessons",
   "premium.feature.no_ads": "Ad-free",
+  "premium.analysisMoves": "Game analysis up to {count} moves / game",
   "play.variant.title": "Variant",
   "play.variant.standard": "Standard",
   "play.variant.chess960": "Chess960",
