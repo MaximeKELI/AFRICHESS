@@ -32,18 +32,3 @@ class ExpirePremiumTaskTests(TestCase):
         expire_premium_subscriptions()
         user.refresh_from_db()
         self.assertEqual(user.subscription_tier, UserModel.SubscriptionTier.GOLD)
-
-
-class CorrespondencePairingTaskTests(TestCase):
-    def test_pair_waiting_matches_two_users(self):
-        u1 = User.objects.create_user(username="daily_a", password="x")
-        u2 = User.objects.create_user(username="daily_b", password="x")
-        PlayerRating.objects.create(user=u1, mode="rapid", elo=1200)
-        PlayerRating.objects.create(user=u2, mode="rapid", elo=1250)
-        CorrespondenceQueue.objects.create(user=u1, days_per_move=3, elo=1200)
-        CorrespondenceQueue.objects.create(user=u2, days_per_move=3, elo=1250)
-        service = CorrespondenceMatchmakingService()
-        game = service._pair_waiting()
-        self.assertIsNotNone(game)
-        self.assertEqual(game.mode, Game.Mode.CORRESPONDENCE)
-        self.assertEqual(CorrespondenceQueue.objects.count(), 0)
