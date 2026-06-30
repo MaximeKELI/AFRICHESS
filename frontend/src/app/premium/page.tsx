@@ -48,6 +48,7 @@ export default function PremiumPage() {
   }, [user]);
 
   const subscribe = async (planId: "gold" | "diamond") => {
+    if (!user) return;
     setSubscribing(planId);
     setError(null);
     try {
@@ -65,16 +66,42 @@ export default function PremiumPage() {
     }
   };
 
+  const openBillingPortal = async () => {
+    if (!user) return;
+    setPortalLoading(true);
+    setError(null);
+    try {
+      const { data } = await usersApi.billingPortal();
+      if (data.portal_url) {
+        window.location.href = data.portal_url;
+      }
+    } catch (err) {
+      setError(formatApiError(err, t("premium.manageError")));
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold mb-2">{t("premium.title")}</h1>
       <p className="opacity-70 mb-6">{t("premium.subtitle")}</p>
 
       {status?.is_premium && (
-        <div className="glass-card p-4 mb-6 border border-africhess-gold/30">
+        <div className="glass-card p-4 mb-6 border border-africhess-gold/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p className="text-africhess-gold font-medium">
             {t("premium.active", { tier: status.tier })}
           </p>
+          {status.has_billing_portal && stripeEnabled && (
+            <button
+              type="button"
+              disabled={portalLoading}
+              onClick={() => void openBillingPortal()}
+              className="px-4 py-2 rounded-lg border border-africhess-gold/50 text-sm font-medium hover:bg-africhess-gold/10 disabled:opacity-50"
+            >
+              {portalLoading ? t("common.loading") : t("premium.manage")}
+            </button>
+          )}
         </div>
       )}
 
