@@ -1,13 +1,12 @@
 from rest_framework import serializers
 
-from apps.users.serializers import UserPublicSerializer
-
 from apps.common.text_validation import (
     FORUM_BODY_MAX,
     FORUM_COMMENT_MAX,
     FORUM_TITLE_MAX,
     validate_user_text,
 )
+from apps.users.serializers import UserPublicSerializer
 
 from .models import ChatMessage, Club, ClubEvent, ForumComment, ForumPost, Friendship
 
@@ -73,6 +72,9 @@ class ForumCommentSerializer(serializers.ModelSerializer):
         model = ForumComment
         fields = ["id", "author", "body", "created_at"]
 
+    def validate_body(self, value):
+        return validate_user_text(value, max_len=FORUM_COMMENT_MAX, field="body")
+
 
 class ForumPostSerializer(serializers.ModelSerializer):
     author = UserPublicSerializer(read_only=True)
@@ -102,15 +104,14 @@ class ForumPostSerializer(serializers.ModelSerializer):
         return validate_user_text(value, max_len=FORUM_BODY_MAX, field="body")
 
 
-class ForumCommentSerializer(serializers.ModelSerializer):
-    author = UserPublicSerializer(read_only=True)
+class ForumPostDetailSerializer(ForumPostSerializer):
+    comments = ForumCommentSerializer(many=True, read_only=True)
 
-    class Meta:
-        model = ForumComment
-        fields = ["id", "author", "body", "created_at"]
+    class Meta(ForumPostSerializer.Meta):
+        fields = ForumPostSerializer.Meta.fields + ["comments"]
 
-    def validate_body(self, value):
-        return validate_user_text(value, max_len=FORUM_COMMENT_MAX, field="body")
+
+class ChatMessageSerializer(serializers.ModelSerializer):
     sender = UserPublicSerializer(read_only=True)
 
     class Meta:

@@ -6,6 +6,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.common.text_validation import FORUM_COMMENT_MAX, validate_user_text
 from apps.games.serializers import GameSerializer
 from apps.games.services import GameService
 from apps.notifications.models import Notification
@@ -500,9 +501,11 @@ class ForumCommentCreateView(APIView):
             post = ForumPost.objects.get(pk=pk)
         except ForumPost.DoesNotExist:
             return Response({"error": "Not found"}, status=404)
-        body = (request.data.get("body") or "").strip()[:2000]
-        if not body:
-            return Response({"error": "Empty"}, status=400)
+        body = validate_user_text(
+            request.data.get("body") or "",
+            max_len=FORUM_COMMENT_MAX,
+            field="body",
+        )
         comment = ForumComment.objects.create(
             post=post, author=request.user, body=body
         )
