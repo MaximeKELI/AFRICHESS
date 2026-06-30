@@ -48,7 +48,6 @@ export default function PremiumPage() {
   }, [user]);
 
   const subscribe = async (planId: "gold" | "diamond") => {
-    if (!user) return;
     setSubscribing(planId);
     setError(null);
     try {
