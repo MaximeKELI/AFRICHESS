@@ -556,10 +556,11 @@ function PlayContent() {
         if (data.white_player?.id === user.id) setOrientation("white");
         else if (data.black_player?.id === user.id) setOrientation("black");
         applyGameResponse(data);
+        refreshPendingComments(data, data.id);
         setStatus(t("play.status.gameLoaded"));
       })
       .catch(() => setStatus(t("play.status.gameNotFound")));
-  }, [user, gameFromUrl, applyGameResponse, t]);
+  }, [user, gameFromUrl, applyGameResponse, refreshPendingComments, t]);
 
   const resumeGame = async () => {
     if (!resumeOffer) return;
