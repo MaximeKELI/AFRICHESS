@@ -3,7 +3,15 @@
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MoveComment } from "@/lib/chessDisplay";
-import { initAiSpeech, isAiSpeechSupported, speakComment, stopAiSpeech, unlockAiSpeech, testAiSpeech } from "@/lib/aiSpeech";
+import {
+  initAiSpeech,
+  isAiSpeechSupported,
+  speakComment,
+  stopAiSpeech,
+  unlockAiSpeech,
+  testAiSpeech,
+  waitForSpeechIdle,
+} from "@/lib/aiSpeech";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface AiCommentaryPanelProps {
@@ -22,7 +30,6 @@ export function AiCommentaryPanel({
 }: AiCommentaryPanelProps) {
   const { t } = useTranslation();
   const latest = comments.at(-1);
-  const latestAi = [...comments].reverse().find((c) => c.byAi);
   const voiceSupported = isAiSpeechSupported();
   const spokenCountRef = useRef(0);
 
@@ -56,14 +63,18 @@ export function AiCommentaryPanel({
     const newComments = comments.slice(spokenCountRef.current);
     spokenCountRef.current = comments.length;
 
-    newComments.forEach((comment, index) => {
-      void speakComment(comment.text, {
-        byAi: comment.byAi,
-        enabled: true,
-        forceUnlock: index === 0,
-        interrupt: index === 0,
-      });
-    });
+    void (async () => {
+      for (let index = 0; index < newComments.length; index += 1) {
+        const comment = newComments[index];
+        await speakComment(comment.text, {
+          byAi: comment.byAi,
+          enabled: true,
+          forceUnlock: index === 0,
+          interrupt: index === 0,
+        });
+        await waitForSpeechIdle();
+      }
+    })();
   }, [comments, enabled, autoSpeak]);
 
   if (!enabled) {
@@ -107,41 +118,35 @@ export function AiCommentaryPanel({
       )}
 
       <AnimatePresence mode="wait">
-        {(latestAi ?? latest) && (
+        {latest && (
           <motion.div
-            key={`${(latestAi ?? latest)!.moveNumber}-${(latestAi ?? latest)!.san}`}
+            key={`${latest.moveNumber}-${latest.san}-${comments.length}`}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             className={`rounded-lg p-3 border ${
-              (latestAi ?? latest)!.byAi
+              latest.byAi
                 ? "border-africhess-gold/40 bg-africhess-gold/10"
                 : "border-africhess-green/30 bg-africhess-green/10"
             }`}
           >
             <p className="text-[10px] uppercase tracking-wide opacity-60 mb-1">
-              {(latestAi ?? latest)!.byAi ? "🤖 IA" : "💡 Coach"} · {(latestAi ?? latest)!.san}
+              {latest.byAi ? "🤖 IA" : "💡 Coach"} · {latest.san}
             </p>
             <p className={compact ? "text-xs leading-relaxed" : "text-sm leading-relaxed"}>
-              {(latestAi ?? latest)!.text}
+              {latest.text}
             </p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {latest && latestAi && !latest.byAi && (
-        <p className={`${compact ? "text-[10px]" : "text-xs"} opacity-60 italic`}>
-          💡 Coach · {latest.san} — {latest.text}
-        </p>
-      )}
-
       {comments.length > 1 && (
         <div
-          className={`max-h-36 overflow-y-auto space-y-2 pr-1 ${
+          className={`max-h-48 overflow-y-auto space-y-2 pr-1 ${
             compact ? "text-[10px]" : "text-xs"
           } opacity-70`}
         >
-          {[...comments].reverse().slice(1, 6).map((c) => (
+          {[...comments].reverse().slice(1, 12).map((c) => (
             <p key={`${c.moveNumber}-${c.san}`}>
               <span className="font-mono text-africhess-gold">{c.san}</span>
               {" — "}
@@ -153,7 +158,7 @@ export function AiCommentaryPanel({
 
       {comments.length === 0 && (
         <p className="text-xs opacity-50">
-          L&apos;IA et le coach commenteront chaque coup à l&apos;oral et à l&apos;écrit…
+          L&apos;IA commentera chaque coup à l&apos;oral et à l&apos;écrit…
         </p>
       )}
     </div>

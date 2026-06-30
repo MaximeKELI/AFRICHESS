@@ -42,10 +42,24 @@ def generate_game_review(
         parts.append("Partie solide — continuez à affûter vos finales.")
 
     key_moments = []
-    for i, m in enumerate(moves):
+    priority = {
+        "blunder": 0,
+        "mistake": 1,
+        "brilliant": 2,
+        "great": 3,
+        "inaccuracy": 4,
+        "best": 5,
+        "good": 6,
+    }
+    indexed = [
+        (i, m)
+        for i, m in enumerate(moves)
+        if m.get("class") in priority
+    ]
+    indexed.sort(key=lambda pair: (priority.get(pair[1].get("class", ""), 9), pair[0]))
+
+    for i, m in indexed:
         cls = m.get("class", "")
-        if cls not in ("blunder", "mistake", "brilliant", "great"):
-            continue
         side = "Blancs" if m.get("played_by_white") else "Noirs"
         cp = m.get("cp_loss") or 0
         label = {
@@ -53,9 +67,12 @@ def generate_game_review(
             "mistake": "erreur importante",
             "brilliant": "coup brillant",
             "great": "excellent coup",
+            "inaccuracy": "imprécision",
+            "best": "meilleur coup",
+            "good": "bon coup",
         }.get(cls, cls)
         best = m.get("best_san")
-        hint = f" Mieux : {best}." if best and cls in ("blunder", "mistake") else ""
+        hint = f" Mieux : {best}." if best and cls in ("blunder", "mistake", "inaccuracy") else ""
         key_moments.append({
             "ply": i + 1,
             "san": m.get("san"),
@@ -63,7 +80,9 @@ def generate_game_review(
             "side": side,
             "text": f"Coup {i + 1} ({side}) — {m.get('san')} : {label} (~{cp} cp).{hint}",
         })
-        if len(key_moments) >= 8:
+        if len(key_moments) >= 24:
             break
+
+    key_moments.sort(key=lambda km: km["ply"])
 
     return " ".join(parts), key_moments
