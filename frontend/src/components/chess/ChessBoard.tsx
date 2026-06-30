@@ -495,6 +495,7 @@ function ChessBoardInner({
           autoPromoteToQueen={false}
           showBoardNotation={true}
           snapToCursor={!isCoarse}
+          {...(reviewSquareRenderer ? { customSquare: reviewSquareRenderer } : {})}
           {...(customPieces ? { customPieces } : {})}
         />
       </div>
