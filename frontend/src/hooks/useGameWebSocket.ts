@@ -25,6 +25,8 @@ export interface WsGamePayload {
     white_player?: { id: number; username: string };
     black_player?: { id: number; username: string };
     is_vs_ai?: boolean;
+    draw_offered_by?: number | null;
+    takeback_requested_by?: number | null;
   };
   last_move?: {
     san: string;
@@ -132,11 +134,30 @@ export function useGameWebSocket(
           if (event === "chat" && data) {
             chatListenersRef.current.forEach((fn) => fn(data as WsChatPayload));
           }
+          if (event === "proposition_nulle" && data) {
+            if (data.declined) {
+              onGamePatchRef.current?.({ draw_offered_by: null });
+            } else if (data.offered_by != null) {
+              onGamePatchRef.current?.({ draw_offered_by: data.offered_by as number });
+            }
+          }
+          if (event === "proposition_reprise" && data) {
+            if (data.declined) {
+              onGamePatchRef.current?.({ takeback_requested_by: null });
+            } else if (data.requested_by != null) {
+              onGamePatchRef.current?.({ takeback_requested_by: data.requested_by as number });
+            } else if (data.game) {
+              onUpdateRef.current(data as WsGamePayload);
+              const game = (data as WsGamePayload).game as Record<string, unknown>;
+              onGamePatchRef.current?.({
+                draw_offered_by: (game.draw_offered_by as number | null) ?? null,
+                takeback_requested_by: (game.takeback_requested_by as number | null) ?? null,
+              });
+            }
+          }
           if (event === "error") {
             const message =
-              typeof data?.message === "string"
-                ? data.message
-                : "Erreur WebSocket partie.";
+              typeof data?.message === "string" ? data.message : tr("ws.error.game");
             setWsError(message);
           }
         } catch {
