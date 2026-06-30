@@ -52,13 +52,9 @@ def adaptive_difficulty(user) -> str:
 
 
 def get_daily_puzzle():
-    today = timezone.now().date()
-    puzzle = Puzzle.objects.filter(is_daily=True, daily_date=today).first()
-    if not puzzle:
-        puzzle = Puzzle.objects.filter(is_daily=True).order_by("-daily_date").first()
-    if not puzzle:
-        puzzle = Puzzle.objects.first()
-    return puzzle
+    from apps.puzzles.daily import get_daily_puzzle as _get_daily_puzzle
+
+    return _get_daily_puzzle()
 
 
 def get_adaptive_puzzles(user, count: int = 10):

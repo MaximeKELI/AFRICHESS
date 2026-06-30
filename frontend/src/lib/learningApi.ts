@@ -36,11 +36,11 @@ export const learningApi = {
   submitQuiz: (id: number, answers: number[]) =>
     api.post(`/learning/quizzes/${id}/submit/`, { answers }),
   analyzePgn: (pgn: string) => api.post("/learning/analyze/", { pgn }),
-  dailyPuzzle: () => api.get("/learning/puzzles/daily/"),
+  dailyPuzzle: () => api.get("/puzzles/daily/"),
   adaptivePuzzles: (count = 10) =>
     api.get("/learning/puzzles/adaptive/", { params: { count } }),
   submitPuzzle: (id: number, moves: string[], timeSeconds: number) =>
-    api.post(`/learning/puzzles/${id}/attempt/`, {
+    api.post(`/puzzles/${id}/submit/`, {
       moves,
       time_seconds: timeSeconds,
     }),

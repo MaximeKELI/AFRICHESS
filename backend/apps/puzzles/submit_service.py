@@ -8,13 +8,17 @@ from django.utils import timezone
 
 from apps.learning.progression import record_puzzle_result
 from apps.ratings.services import RatingService
-from apps.users.setup import ensure_user_stats
+from apps.users.models import UserStats
 
 from .models import Puzzle, PuzzleAttempt
 
 
+def _ensure_user_stats(user):
+    UserStats.objects.get_or_create(user=user)
+
+
 def _update_daily_streak(user, puzzle: Puzzle, solved: bool) -> int:
-    ensure_user_stats(user)
+    _ensure_user_stats(user)
     stats = user.stats
     if not solved or not puzzle.is_daily:
         return stats.daily_puzzle_streak
@@ -48,7 +52,7 @@ def process_puzzle_submission(user, puzzle: Puzzle, moves: list[str], time_secon
     puzzle_elo_change = 0
 
     if solved:
-        ensure_user_stats(user)
+        _ensure_user_stats(user)
         user.stats.puzzles_solved += 1
         user.stats.save(update_fields=["puzzles_solved"])
         streak = _update_daily_streak(user, puzzle, solved)

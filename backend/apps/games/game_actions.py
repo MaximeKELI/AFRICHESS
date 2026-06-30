@@ -108,6 +108,17 @@ def accept_draw(game: Game, user) -> dict:
     if game.white_player and game.black_player:
         GameService().rating_service.update_ratings(game)
     on_game_completed(game)
+    _record_tournament_result(game)
+    return {"ok": True, "result": "1/2-1/2"}
+
+
+def decline_draw(game: Game, user) -> dict:
+    game.draw_offered_by = None
+    game.save(update_fields=["draw_offered_by"])
+    return {"ok": True}
+
+
+def _record_tournament_result(game: Game) -> None:
     try:
         from apps.tournaments.services import TournamentEngine
 
@@ -118,13 +129,33 @@ def accept_draw(game: Game, user) -> dict:
         logging.getLogger(__name__).warning(
             "Tournament result not recorded for game %s: %s", game.id, exc
         )
-    return {"ok": True, "result": "1/2-1/2"}
 
 
-def decline_draw(game: Game, user) -> dict:
+def resign_game(game: Game, user) -> dict:
+    if game.status != Game.Status.ACTIVE:
+        return {"error": "Partie terminée"}
+    if not _participant(game, user):
+        return {"error": "Non participant"}
+    if game.is_vs_ai:
+        return {"error": "Abandon IA via l'API de coup"}
+
+    if game.white_player_id == user.id:
+        game.result = Game.Result.BLACK_WIN
+        game.winner = game.black_player
+    else:
+        game.result = Game.Result.WHITE_WIN
+        game.winner = game.white_player
+    game.status = Game.Status.COMPLETED
+    game.ended_at = timezone.now()
+    game.termination_reason = "resignation"
     game.draw_offered_by = None
-    game.save(update_fields=["draw_offered_by"])
-    return {"ok": True}
+    game.takeback_requested_by = None
+    game.save()
+    if game.white_player and game.black_player:
+        GameService().rating_service.update_ratings(game)
+    on_game_completed(game)
+    _record_tournament_result(game)
+    return {"ok": True, "result": game.result}
 
 
 def set_conditional_move(game: Game, user, trigger_uci: str, response_uci: str) -> dict:

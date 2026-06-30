@@ -11,7 +11,7 @@ from apps.common.throttles import AnalyzeThrottle
 
 from .models import Badge, Course, LearningProfile, Lesson, Quiz, QuizAttempt, UserBadge, UserProgress
 from .pgn_analysis import analyze_pgn
-from .progression import add_xp, get_or_create_profile, record_puzzle_result, update_course_progress
+from .progression import add_xp, get_or_create_profile, update_course_progress
 from .puzzle_adaptive import get_adaptive_puzzles, get_daily_puzzle
 from .serializers import (
     AnalyzePgnSerializer,
@@ -244,7 +244,8 @@ class AdaptivePuzzlesView(APIView):
 
 
 class SubmitPuzzleAttemptView(APIView):
-    """Tentative puzzle + XP et stats learning."""
+    """Alias learning — délègue au pipeline puzzle unifié."""
+
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
@@ -255,30 +256,16 @@ class SubmitPuzzleAttemptView(APIView):
 
         ser = SubmitPuzzleSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
-        moves = ser.validated_data["moves"]
-        solved = moves == puzzle.solution_moves
+        from apps.puzzles.submit_service import process_puzzle_submission
 
-        PuzzleAttempt.objects.create(
-            user=request.user,
-            puzzle=puzzle,
-            solved=solved,
-            moves_played=moves,
-            time_seconds=ser.validated_data["time_seconds"],
+        return Response(
+            process_puzzle_submission(
+                request.user,
+                puzzle,
+                ser.validated_data["moves"],
+                ser.validated_data["time_seconds"],
+            )
         )
-        puzzle.plays_count += 1
-        puzzle.save(update_fields=["plays_count"])
-
-        if solved and hasattr(request.user, "stats") and request.user.stats:
-            request.user.stats.puzzles_solved += 1
-            request.user.stats.save(update_fields=["puzzles_solved"])
-
-        record_puzzle_result(request.user, solved)
-
-        return Response({
-            "solved": solved,
-            "xp_gained": 10 if solved else 0,
-            "correct_moves": puzzle.solution_moves if solved else None,
-        })
 
 
 class CoachTipsView(APIView):

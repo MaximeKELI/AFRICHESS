@@ -120,6 +120,9 @@ class ChessConsumer(AsyncWebsocketConsumer):
 
     async def _handle_resign(self):
         payload = await self._resign_game()
+        if payload.get("error"):
+            await self._send_event("error", payload)
+            return
         await self.channel_layer.group_send(
             self.room_group_name,
             {"type": "broadcast_game_over", "payload": payload},
@@ -375,23 +378,13 @@ class ChessConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def _resign_game(self):
-        game = Game.objects.get(id=self.game_id)
-        if game.status == Game.Status.ACTIVE:
-            if game.white_player_id == self.user.id:
-                game.result = Game.Result.BLACK_WIN
-                game.winner = game.black_player
-            else:
-                game.result = Game.Result.WHITE_WIN
-                game.winner = game.white_player
-            game.status = Game.Status.COMPLETED
-            game.ended_at = timezone.now()
-            game.termination_reason = "resignation"
-            game.save()
-            if game.white_player and game.black_player:
-                GameService().rating_service.update_ratings(game)
-            from .stats_service import on_game_completed
+        from .game_actions import resign_game
 
-            on_game_completed(game)
+        game = Game.objects.get(id=self.game_id)
+        result = resign_game(game, self.user)
+        if result.get("error"):
+            return result
+        game.refresh_from_db()
         return build_ws_payload(game, {"game_over": True, "reason": "resignation"})
 
     @database_sync_to_async
