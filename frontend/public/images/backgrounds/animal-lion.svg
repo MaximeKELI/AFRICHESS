@@ -1,32 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3840 2160" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <linearGradient id="sky" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1C1410"/>
-      <stop offset="35%" stop-color="#3D2E1F"/>
-      <stop offset="70%" stop-color="#8B6914"/>
-      <stop offset="100%" stop-color="#D4A017"/>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F0D0A"/>
+      <stop offset="45%" stop-color="#3D2A14"/>
+      <stop offset="100%" stop-color="#C9A227"/>
     </linearGradient>
-    <radialGradient id="glow" cx="75%" cy="55%" r="45%">
-      <stop offset="0%" stop-color="#FDE68A" stop-opacity="0.35"/>
-      <stop offset="100%" stop-color="#D4A017" stop-opacity="0"/>
+    <radialGradient id="v" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.55"/>
     </radialGradient>
-    <linearGradient id="lion" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1A1208"/>
-      <stop offset="100%" stop-color="#0A0806"/>
-    </linearGradient>
+    <radialGradient id="halo" cx="72%" cy="48%" r="30%">
+      <stop offset="0%" stop-color="#FDE68A" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#FDE68A" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect width="3840" height="2160" fill="url(#sky)"/>
-  <rect width="3840" height="2160" fill="url(#glow)"/>
-  <ellipse cx="1920" cy="2200" rx="2200" ry="380" fill="#0A0806" opacity="0.25"/>
-  <!-- Lion profile  silhouette épurée -->
-  <g transform="translate(2100,520) scale(2.2)" fill="url(#lion)" opacity="0.92">
-    <path d="M0 280 C-20 200 -10 120 40 80 C90 40 160 50 200 100 C240 60 310 55 360 100 C400 140 420 200 400 260 C430 300 450 360 420 400 C380 450 300 470 220 460 C140 450 60 420 20 360 C-10 310 -5 320 0 280 Z"/>
-    <circle cx="320" cy="130" r="95" fill="#0A0806"/>
-    <path d="M200 50 C160 10 100 0 60 30 C20 60 0 110 10 160 C-30 140 -60 100 -50 50 C-40 0 10 -30 60 -20 C90 -50 150 -40 180 0 C210 -20 250 -10 280 20 C300 0 340 10 360 40 C380 20 420 30 440 70 C460 50 500 60 510 100 C520 80 560 90 570 130 C580 110 620 120 620 160 C630 200 610 240 580 260 C600 300 590 350 550 380 C500 420 420 440 340 430 C260 420 180 390 130 330 C80 270 70 200 100 140 C70 120 50 80 60 40 C40 60 20 100 30 140 C10 120 -10 80 0 40 C10 10 40 -10 70 -5 C90 -30 130 -25 160 0 C180 -15 210 -5 230 15 Z" opacity="0.15" fill="#D4A017"/>
-    <ellipse cx="300" cy="125" rx="8" ry="12" fill="#D4A017" opacity="0.6"/>
+  <rect width="3840" height="2160" fill="url(#bg)"/>
+  <rect width="3840" height="2160" fill="url(#halo)"/>
+  <g transform="translate(2480,680) scale(3.5)" fill="#0A0806" opacity="0.88">
+    <path d="M40,0 C70,-8 95,15 100,45 C108,42 125,55 128,75 C135,70 150,82 148,100 C155,115 150,135 135,145 C145,165 140,190 115,200 C95,210 65,205 50,185 C35,200 10,195 0,170 C-5,150 5,130 20,120 C10,100 15,75 30,60 C25,40 30,15 40,0 Z"/>
+    <circle cx="88" cy="52" r="38"/>
+    <path d="M30,55 C5,45 -15,65 -10,90 C-20,110 -5,130 15,125 C10,105 20,75 30,55 Z" opacity="0.5"/>
+    <path d="M100,45 C125,35 145,55 140,80 C150,100 135,120 115,115 C120,95 110,65 100,45 Z" opacity="0.5"/>
   </g>
-  <rect x="0" y="0" width="3840" height="2160" fill="url(#sky)" opacity="0" style="mix-blend-mode:overlay"/>
-  <rect width="3840" height="2160" fill="radial-gradient(ellipse at center, transparent 40%, #0A0806 100%)" opacity="0.4"/>
-  <ellipse cx="1920" cy="1080" rx="2000" ry="1200" fill="none" stroke="#D4A017" stroke-width="1" opacity="0.08"/>
+  <rect width="3840" height="2160" fill="url(#v)"/>
 </svg>

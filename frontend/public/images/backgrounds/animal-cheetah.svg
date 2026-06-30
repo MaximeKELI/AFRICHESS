@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3840 2160" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A1008"/>
+      <stop offset="40%" stop-color="#4A3018"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <radialGradient id="v" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.5"/>
+    </radialGradient>
+  </defs>
+  <rect width="3840" height="2160" fill="url(#bg)"/>
+  <g transform="translate(2200,750) scale(5)" fill="#0D0906" opacity="0.9">
+    <ellipse cx="60" cy="55" rx="50" ry="28"/>
+    <path d="M15,55 C-5,50 -10,70 0,80 C5,90 15,85 15,75 Z"/>
+    <path d="M105,55 C125,50 130,70 120,80 C115,90 105,85 105,75 Z"/>
+    <circle cx="60" cy="40" r="22"/>
+    <path d="M10,60 C-15,65 -25,85 -20,100 C-10,110 5,100 10,85 Z"/>
+    <path d="M25,70 L20,95 L30,98 L35,72 Z" opacity="0.6"/>
+    <path d="M40,72 L38,98 L48,100 L50,74 Z" opacity="0.6"/>
+    <path d="M55,72 L53,100 L63,98 L65,74 Z" opacity="0.6"/>
+    <path d="M70,70 L68,98 L78,95 L80,72 Z" opacity="0.6"/>
+    <ellipse cx="48" cy="38" rx="4" ry="6" fill="#D97706" opacity="0.5"/>
+    <ellipse cx="72" cy="38" rx="4" ry="6" fill="#D97706" opacity="0.5"/>
+  </g>
+  <rect width="3840" height="2160" fill="url(#v)"/>
+</svg>

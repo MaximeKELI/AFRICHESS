@@ -35,9 +35,17 @@ export type BoardBackgroundId =
   | "cosmic-nebula"
   | "warm-cafe"
   | "royal-purple"
-  | "emerald-palace";
+  | "emerald-palace"
+  | "animal-lion"
+  | "animal-elephant"
+  | "animal-cheetah"
+  | "animal-panther"
+  | "animal-zebra"
+  | "animal-eagle"
+  | "animal-giraffe"
+  | "animal-whale";
 
-export type BoardBackgroundCategory = "africa" | "nature" | "classic" | "abstract";
+export type BoardBackgroundCategory = "africa" | "nature" | "classic" | "abstract" | "animals";
 
 export interface BoardBackground {
   id: BoardBackgroundId;

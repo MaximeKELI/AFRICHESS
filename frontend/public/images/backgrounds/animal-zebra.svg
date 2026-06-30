@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3840 2160" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FAFAF8"/>
+      <stop offset="55%" stop-color="#ECEAE6"/>
+      <stop offset="100%" stop-color="#D8D4CC"/>
+    </linearGradient>
+    <radialGradient id="v" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#FFF" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#9A9590" stop-opacity="0.3"/>
+    </radialGradient>
+  </defs>
+  <rect width="3840" height="2160" fill="url(#bg)"/>
+  <g transform="translate(350,480) scale(4.5)" opacity="0.75">
+    <path d="M20,80 Q40,20 80,30 Q120,10 160,40 Q200,30 240,60 Q280,50 300,90 Q320,130 300,170 Q280,200 240,190 Q200,210 160,180 Q120,200 80,170 Q40,190 20,150 Q0,110 20,80 Z" fill="#1A1815"/>
+    <path d="M30,90 Q50,50 80,55 Q110,40 140,60 Q170,50 200,75 Q230,65 260,95" fill="none" stroke="#FAFAF8" stroke-width="8" opacity="0.9"/>
+    <path d="M50,100 Q70,70 95,75 Q120,65 145,85 Q170,75 195,100" fill="none" stroke="#FAFAF8" stroke-width="7" opacity="0.85"/>
+    <path d="M70,110 Q88,88 110,92 Q132,85 155,105 Q178,98 200,118" fill="none" stroke="#FAFAF8" stroke-width="6" opacity="0.8"/>
+    <path d="M90,120 Q105,102 125,105 Q145,100 165,118 Q185,112 205,130" fill="none" stroke="#FAFAF8" stroke-width="5" opacity="0.75"/>
+  </g>
+  <rect width="3840" height="2160" fill="url(#v)"/>
+</svg>
