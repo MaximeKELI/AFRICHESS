@@ -42,6 +42,36 @@ export function isPlayerMove(move: CoachMoveInput, playerIsWhite: boolean): bool
   return move.played_by_white === playerIsWhite;
 }
 
+const OPPONENT_VARIANTS: Record<string, string[]> = {
+  brilliant: [
+    "chess.review.opponent.brilliant1",
+    "chess.review.opponent.brilliant2",
+    "chess.review.opponent.brilliant3",
+  ],
+  great: ["chess.review.opponent.great1", "chess.review.opponent.great2"],
+  best: ["chess.review.opponent.best1", "chess.review.opponent.best2"],
+  good: ["chess.review.opponent.good1", "chess.review.opponent.good2"],
+  inaccuracy: ["chess.review.opponent.inaccuracy1", "chess.review.opponent.inaccuracy2"],
+  mistake: ["chess.review.opponent.mistake1", "chess.review.opponent.mistake2"],
+  blunder: ["chess.review.opponent.blunder1", "chess.review.opponent.blunder2"],
+};
+
+function pickOpponentKey(move: CoachMoveInput): string {
+  const pool = OPPONENT_VARIANTS[move.class] ?? ["chess.review.opponent.neutral1", "chess.review.opponent.neutral2"];
+  const idx = (move.san.length + (move.cp_loss ?? 0)) % pool.length;
+  return pool[idx] ?? pool[0];
+}
+
+/** Commentaire sur un coup adverse (style revue Chess.com). */
+export function coachOpponentMoveComment(t: TranslateFn, move: CoachMoveInput): string {
+  const key = pickOpponentKey(move);
+  let text = t(key, { san: move.san, moveClass: move.class });
+  if (["mistake", "blunder"].includes(move.class) && move.best_san && move.best_san !== move.san) {
+    text += ` ${t("chess.review.bestWas", { move: move.best_san })}`;
+  }
+  return text;
+}
+
 /** Commentaire coach centré sur le joueur humain (style revue Chess.com). */
 export function coachUserMoveComment(
   t: TranslateFn,
@@ -50,7 +80,7 @@ export function coachUserMoveComment(
 ): string {
   const isUser = isPlayerMove(move, playerIsWhite);
   if (!isUser) {
-    return t("chess.review.opponentBrief", { san: move.san, moveClass: move.class });
+    return coachOpponentMoveComment(t, move);
   }
 
   let text = coachPhrase(t, move.class, move.cp_loss, move.played_by_white);

@@ -75,7 +75,7 @@ export function GameReview({
   });
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [voiceOn, setVoiceOn] = useState(true);
-  const [userMovesOnly, setUserMovesOnly] = useState(true);
+  const [userMovesOnly, setUserMovesOnly] = useState(false);
   const [autoTour, setAutoTour] = useState(false);
   const autoTourRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const voiceTourRef = useRef(false);
@@ -135,12 +135,6 @@ export function GameReview({
       if (!coachText || !voiceOn) return;
       const isUser = selectedMove?.played_by_white === playerIsWhite;
       if (userMovesOnly && !isUser) return;
-      if (
-        !isUser &&
-        !["blunder", "mistake", "brilliant", "great"].includes(selectedMove?.class ?? "")
-      ) {
-        return;
-      }
       speakText(coachText, force);
     },
     [coachText, voiceOn, selectedMove, playerIsWhite, userMovesOnly, speakText]
