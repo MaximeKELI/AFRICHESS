@@ -194,14 +194,69 @@ export interface Puzzle {
 
 export const puzzlesApi = {
   daily: () => api.get<Puzzle>("/puzzles/daily/"),
-  rush: (count = 15) =>
-    api.get<Puzzle[]>("/puzzles/rush/", { params: { count } }),
+  rushStart: () =>
+    api.post<{
+      session_id: number;
+      puzzle: Puzzle;
+      ends_at: string;
+      duration: number;
+    }>("/puzzles/rush/start/"),
+  rushSubmit: (sessionId: number, moves: string[], time_seconds: number) =>
+    api.post<{
+      solved: boolean;
+      score: number;
+      misses: number;
+      completed: boolean;
+      next_puzzle?: Puzzle;
+      time_left?: number;
+      reason?: string;
+    }>(`/puzzles/rush/${sessionId}/submit/`, { moves, time_seconds }),
   submit: (id: number, moves: string[], time_seconds: number) =>
     api.post<{ solved: boolean; daily_streak?: number }>(`/puzzles/${id}/submit/`, {
       moves,
       time_seconds,
     }),
   streak: () => api.get<{ daily_streak: number }>("/puzzles/streak/"),
+};
+
+export interface CourseSummary {
+  id: number;
+  slug: string;
+  title: string;
+  level: string;
+  description: string;
+  lesson_count: number;
+  xp_reward: number;
+}
+
+export interface VideoSummary {
+  id: number;
+  title: string;
+  slug: string;
+  duration_seconds?: number;
+  is_premium?: boolean;
+}
+
+export interface TournamentSummary {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  status: string;
+  format: string;
+  participant_count: number;
+  starts_at?: string;
+  is_african_cup?: boolean;
+}
+
+export const learningApi = {
+  courses: (lang = "fr") =>
+    api.get<CourseSummary[]>("/learning/courses/", { params: { lang } }),
+  videos: () => api.get<VideoSummary[]>("/learning/videos/"),
+};
+
+export const tournamentsApi = {
+  list: () => api.get<TournamentSummary[]>("/tournaments/"),
 };
 
 export const gamesApi = {
