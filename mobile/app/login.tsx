@@ -10,12 +10,14 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useAuth } from "../context/AuthContext";
+import { LoginError, useAuth } from "../context/AuthContext";
 
 export default function LoginScreen() {
   const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [totpCode, setTotpCode] = useState("");
+  const [needsTotp, setNeedsTotp] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -23,9 +25,14 @@ export default function LoginScreen() {
     setError("");
     setLoading(true);
     try {
-      await login(username.trim(), password);
+      await login(username.trim(), password, needsTotp ? totpCode : undefined);
       router.replace("/play");
-    } catch {
+    } catch (err) {
+      if (err instanceof LoginError && err.code === "TOTP_REQUIRED") {
+        setNeedsTotp(true);
+        setError("Code 2FA requis (application d'authentification).");
+        return;
+      }
       setError("Identifiants incorrects ou serveur indisponible.");
     } finally {
       setLoading(false);
@@ -54,6 +61,17 @@ export default function LoginScreen() {
         value={password}
         onChangeText={setPassword}
       />
+      {needsTotp && (
+        <TextInput
+          style={styles.input}
+          placeholder="Code 2FA (6 chiffres)"
+          placeholderTextColor="#666"
+          keyboardType="number-pad"
+          maxLength={6}
+          value={totpCode}
+          onChangeText={(v) => setTotpCode(v.replace(/\D/g, "").slice(0, 6))}
+        />
+      )}
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Pressable style={styles.btn} onPress={onSubmit} disabled={loading}>
         {loading ? (

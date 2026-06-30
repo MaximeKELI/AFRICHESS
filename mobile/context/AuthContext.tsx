@@ -7,7 +7,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { authApi } from "../lib/api";
+import axios from "axios";
+import { LoginError, authApi } from "../lib/api";
 import { clearTokens, getAccessToken, setTokens } from "../lib/storage";
 
 interface User {
@@ -20,7 +21,7 @@ interface User {
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string, totpCode?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -50,11 +51,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshProfile().finally(() => setLoading(false));
   }, [refreshProfile]);
 
-  const login = useCallback(async (username: string, password: string) => {
-    const { data } = await authApi.login(username, password);
-    await setTokens(data.access, data.refresh);
-    await refreshProfile();
-  }, [refreshProfile]);
+  const login = useCallback(
+    async (username: string, password: string, totpCode?: string) => {
+      try {
+        const { data } = await authApi.login(username, password, totpCode);
+        await setTokens(data.access, data.refresh);
+        await refreshProfile();
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          const body = err.response?.data as { non_field_errors?: string[] } | undefined;
+          const msg = body?.non_field_errors?.[0] ?? "";
+          if (msg.includes("TOTP_REQUIRED")) {
+            throw new LoginError("TOTP_REQUIRED", "TOTP_REQUIRED");
+          }
+        }
+        throw err;
+      }
+    },
+    [refreshProfile]
+  );
 
   const logout = useCallback(async () => {
     await clearTokens();
@@ -74,3 +89,5 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth outside AuthProvider");
   return ctx;
 }
+
+export { LoginError };
