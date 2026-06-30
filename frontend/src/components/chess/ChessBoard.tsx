@@ -43,6 +43,8 @@ interface ChessBoardProps {
     played?: { from: string; to: string };
     best?: { from: string; to: string };
   } | null;
+  /** Badge de classification sur la pièce du coup analysé (revue Chess.com). */
+  moveClassBadge?: { square: string; moveClass: string } | null;
 }
 
 function normalizeFenForDisplay(fen: string): string {
@@ -66,6 +68,7 @@ function ChessBoardInner({
   onDropAtSquare,
   extraBottom = 0,
   reviewHighlight = null,
+  moveClassBadge = null,
 }: ChessBoardProps) {
   const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
