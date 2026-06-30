@@ -39,6 +39,13 @@ export interface WsGamePayload {
 
 type WsHandler = (payload: WsGamePayload) => void;
 
+export interface WsGamePatch {
+  draw_offered_by?: number | null;
+  takeback_requested_by?: number | null;
+}
+
+type WsPatchHandler = (patch: WsGamePatch) => void;
+
 export interface WsChatPayload {
   id?: number;
   user?: string;
@@ -60,7 +67,8 @@ export function useGameWebSocket(
   gameId: string | null,
   enabled: boolean,
   onUpdate: WsHandler,
-  onGameOver?: WsHandler
+  onGameOver?: WsHandler,
+  onGamePatch?: WsPatchHandler
 ) {
   const [connected, setConnected] = useState(false);
   const [wsError, setWsError] = useState<string | null>(null);
@@ -69,12 +77,14 @@ export function useGameWebSocket(
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onUpdateRef = useRef(onUpdate);
   const onGameOverRef = useRef(onGameOver);
+  const onGamePatchRef = useRef(onGamePatch);
   const chatListenersRef = useRef<Set<ChatListener>>(new Set());
 
   useEffect(() => {
     onUpdateRef.current = onUpdate;
     onGameOverRef.current = onGameOver;
-  }, [onUpdate, onGameOver]);
+    onGamePatchRef.current = onGamePatch;
+  }, [onUpdate, onGameOver, onGamePatch]);
 
   useEffect(() => {
     if (!gameId || !enabled) {
