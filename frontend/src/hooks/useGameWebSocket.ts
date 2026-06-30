@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Cookies from "js-cookie";
-import { wsAuthProtocols, wsGameUrl, wsMatchmakingUrl } from "@/lib/gameWs";
-import { matchmakingTimeControl, type TimePresetId } from "@/lib/timeControl";
+import { wsAuthProtocols, wsGameUrl } from "@/lib/gameWs";
 import { tr } from "@/lib/i18n/labels";
 
 export interface WsGamePayload {
