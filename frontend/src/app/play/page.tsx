@@ -851,7 +851,7 @@ function PlayContent() {
         </div>
       )}
 
-      {!gameId && (
+      {!gameId && !selectedBot && (
         <div className="flex gap-2 mb-4">
           <button
             type="button"
@@ -868,6 +868,33 @@ function PlayContent() {
             className="flex-1 py-3 rounded-xl border-2 border-africhess-green text-africhess-green text-sm font-semibold disabled:opacity-50"
           >
             {searching || wsSearching ? t("play.online.searching") : t("play.online.find")}
+          </button>
+        </div>
+      )}
+
+      {!gameId && selectedBot && (
+        <div className="glass-card p-4 mb-4 border border-africhess-gold/25 space-y-4 lg:hidden">
+          <div>
+            <h2 className="font-semibold text-sm text-africhess-gold">
+              {t("play.botChallenge.title", {
+                name: selectedBotInfo?.name ?? selectedBot,
+              })}
+            </h2>
+            <p className="text-xs opacity-60 mt-1">{t("play.botChallenge.hint")}</p>
+          </div>
+          <TimeControlPicker
+            isTimed={useClock}
+            preset={timePreset}
+            onTimedChange={setUseClock}
+            onPresetChange={setTimePreset}
+          />
+          <button
+            type="button"
+            onClick={startAI}
+            disabled={aiStarting}
+            className="w-full py-3 rounded-xl african-gradient text-white text-sm font-semibold disabled:opacity-50"
+          >
+            {aiStarting ? t("common.loading") : t("play.botChallenge.start")}
           </button>
         </div>
       )}
