@@ -194,6 +194,7 @@ export const gamesApi = {
       time_minutes?: number | null;
       time_control?: string;
       is_rated?: boolean;
+      variant?: string;
     }
   ) => api.post("/games/matchmaking/", { mode, ...opts }),
   leaveQueue: () => api.delete("/games/matchmaking/"),

@@ -331,7 +331,7 @@ class AnalyzeGameView(APIView):
         ]
         from apps.learning.review_nlg import generate_game_review
 
-        summary_fr, key_moments = generate_game_review(
+        summary_fr, summary_en, key_moments = generate_game_review(
             best_moves_json,
             accuracy_white=acc_w,
             accuracy_black=acc_b,
@@ -349,6 +349,7 @@ class AnalyzeGameView(APIView):
                 "blunders_black": blunders_b,
                 "best_moves_json": best_moves_json,
                 "summary_fr": summary_fr,
+                "summary_en": summary_en,
                 "key_moments_json": key_moments,
             },
         )
@@ -368,6 +369,7 @@ class MatchmakingView(APIView):
         ser.is_valid(raise_exception=True)
         vd = ser.validated_data
         mode = vd["mode"]
+        variant = vd.get("variant", "standard")
         is_timed = vd.get("is_timed", True)
         is_rated = vd.get("is_rated", True)
         time_minutes = vd.get("time_minutes")
@@ -384,6 +386,7 @@ class MatchmakingView(APIView):
                 time_minutes=time_minutes,
                 time_control=time_control,
                 is_rated=is_rated,
+                variant=variant,
             )
         except ValueError as exc:
             return Response({"error": str(exc), "code": "fairplay_sanction"}, status=403)
@@ -399,6 +402,7 @@ class MatchmakingView(APIView):
                 time_minutes=time_minutes,
                 time_control=time_control,
                 is_rated=is_rated,
+                variant=variant,
             )
         except ValueError as exc:
             return Response({"error": str(exc), "code": "fairplay_sanction"}, status=403)

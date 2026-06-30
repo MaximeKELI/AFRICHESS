@@ -240,6 +240,7 @@ class GameAnalysis(models.Model):
     blunders_black = models.PositiveSmallIntegerField(default=0)
     best_moves_json = models.JSONField(default=list)
     summary_fr = models.TextField(blank=True)
+    summary_en = models.TextField(blank=True)
     key_moments_json = models.JSONField(default=list)
     evaluated_at = models.DateTimeField(auto_now=True)
 
@@ -276,6 +277,7 @@ class MatchmakingQueue(models.Model):
     is_rated = models.BooleanField(default=True)
     time_control_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
     time_control = models.CharField(max_length=16, blank=True, default="")
+    variant = models.CharField(max_length=20, choices=Game.Variant.choices, default=Game.Variant.STANDARD)
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

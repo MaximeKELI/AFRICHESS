@@ -436,6 +436,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
                 data.get("time_minutes"),
                 data.get("time_control"),
                 data.get("is_rated", True),
+                data.get("variant", "standard"),
             )
         elif event in ("quitter_file", "leave_queue"):
             await self._leave_queue()
@@ -461,10 +462,11 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
         time_minutes=None,
         time_control=None,
         is_rated: bool = True,
+        variant: str = "standard",
     ):
         try:
             result = await self._try_match(
-                mode, is_timed, time_minutes, time_control, is_rated
+                mode, is_timed, time_minutes, time_control, is_rated, variant
             )
         except ValueError as exc:
             await self.send(
@@ -504,6 +506,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
         time_minutes=None,
         time_control=None,
         is_rated: bool = True,
+        variant: str = "standard",
     ):
         from apps.ratings.models import PlayerRating
 
@@ -518,6 +521,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
             time_minutes=time_minutes,
             time_control=time_control,
             is_rated=is_rated,
+            variant=variant,
         )
         if not game:
             svc.join_queue(
@@ -528,6 +532,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
                 time_minutes=time_minutes,
                 time_control=time_control,
                 is_rated=is_rated,
+                variant=variant,
             )
             svc.pair_all_waiting()
             return None

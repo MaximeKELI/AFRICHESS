@@ -210,8 +210,8 @@ function PlayContent() {
   }, [gameData.bot, selectedBotInfo, selectedBot, headerAiElo]);
   const headerAiDisplay = headerAi;
   const timeOpts = useMemo(
-    () => ({ isTimed: useClock, timePreset, isRated }),
-    [useClock, timePreset, isRated]
+    () => ({ isTimed: useClock, timePreset, isRated, variant }),
+    [useClock, timePreset, isRated, variant]
   );
   const ratedClockLabel = MODE_CLOCK_LABEL[mode] ?? "10+0";
 
@@ -777,6 +777,7 @@ function PlayContent() {
         is_timed: useClock,
         is_rated: isRated,
         time_control: mmTimeControl,
+        variant,
       });
       if (status === 201 && data?.id) {
         handleMatchFound(data.id);

@@ -21,7 +21,8 @@ export interface GameAnalysisData {
   blunders_black: number;
   best_moves_json: AnalysisMove[];
   summary_fr?: string;
-  key_moments_json?: { ply: number; san: string; text: string }[];
+  summary_en?: string;
+  key_moments_json?: { ply: number; san: string; text: string; text_en?: string }[];
 }
 
 export function resolveMoveAccuracies(data: GameAnalysisData) {
@@ -48,6 +49,7 @@ export function parseAnalysisPayload(payload: unknown): GameAnalysisData | null 
     blunders_black: Number(p.blunders_black ?? 0),
     best_moves_json: moves as AnalysisMove[],
     summary_fr: typeof p.summary_fr === "string" ? p.summary_fr : undefined,
+    summary_en: typeof p.summary_en === "string" ? p.summary_en : undefined,
     key_moments_json: Array.isArray(p.key_moments_json)
       ? (p.key_moments_json as { ply: number; san: string; text: string }[])
       : undefined,

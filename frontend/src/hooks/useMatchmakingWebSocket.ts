@@ -10,7 +10,7 @@ export function useMatchmakingWebSocket(
   enabled: boolean,
   mode: string,
   onMatch: (gameId: string, roomId: string) => void,
-  timeOpts?: { isTimed: boolean; timePreset: string; isRated?: boolean }
+  timeOpts?: { isTimed: boolean; timePreset: string; isRated?: boolean; variant?: string }
 ) {
   const wsRef = useRef<WebSocket | null>(null);
   const onMatchRef = useRef(onMatch);
@@ -81,6 +81,7 @@ export function useMatchmakingWebSocket(
           is_timed: timeOpts?.isTimed ?? true,
           is_rated: timeOpts?.isRated ?? true,
           time_control: tc,
+          variant: timeOpts?.variant ?? "standard",
         })
       );
     };

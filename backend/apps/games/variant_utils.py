@@ -15,6 +15,22 @@ def generate_chess960_start(position_id: int | None = None) -> tuple[str, int]:
     return board.fen(), pos_id
 
 
+def starting_position_for_variant(variant: str = "standard") -> tuple[str, int | None]:
+    """Return (start_fen, chess960_position_id)."""
+    if variant == "chess960":
+        fen, pos_id = generate_chess960_start()
+        return fen, pos_id
+    if variant == "crazyhouse":
+        return chess.variant.CrazyhouseBoard().fen(), None
+    if variant == "kingofthehill":
+        return chess.variant.KingOfTheHillBoard().fen(), None
+    if variant == "threecheck":
+        return chess.variant.ThreeCheckBoard().fen(), None
+    if variant == "atomic":
+        return chess.variant.AtomicBoard().fen(), None
+    return "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", None
+
+
 def board_from_fen(fen: str, variant: str = "standard") -> chess.Board:
     if variant == "chess960":
         return chess.Board(fen, chess960=True)

@@ -71,7 +71,7 @@ export function GameReview({
   result,
   onClose,
 }: GameReviewProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { user } = useAuthStore();
   const { analysis, loading, error, runAnalysis } = useGameAnalysis({
     gameId,
@@ -96,6 +96,12 @@ export function GameReview({
     () => analysisLimitHint(t, getAnalysisLimits(plans), user),
     [t, plans, user]
   );
+
+  const reviewSummary = useMemo(() => {
+    if (!analysis) return null;
+    if (locale === "fr") return analysis.summary_fr;
+    return analysis.summary_en ?? analysis.summary_fr;
+  }, [analysis, locale]);
 
   useEffect(() => {
     initAiSpeech();
@@ -168,9 +174,9 @@ export function GameReview({
   const handleListen = () => speakCurrent(true);
 
   const handleListenSummary = () => {
-    if (!analysis?.summary_fr) return;
+    if (!reviewSummary) return;
     unlockAiSpeech();
-    speakComment(analysis.summary_fr, { byAi: false, enabled: voiceOn, forceUnlock: true });
+    speakComment(reviewSummary, { byAi: false, enabled: voiceOn, forceUnlock: true });
   };
 
   const handleTestVoice = () => {
@@ -361,7 +367,7 @@ export function GameReview({
                 playerIsWhite={playerIsWhite}
               />
 
-              {analysis.summary_fr && (
+              {reviewSummary && (
                 <div className="rounded-xl bg-gradient-to-br from-africhess-gold/10 to-transparent border border-africhess-gold/20 p-4 text-sm space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-semibold text-africhess-gold">
@@ -377,7 +383,7 @@ export function GameReview({
                       </button>
                     )}
                   </div>
-                  <p className="opacity-90">{analysis.summary_fr}</p>
+                  <p className="opacity-90">{reviewSummary}</p>
                   {analysis.key_moments_json && analysis.key_moments_json.length > 0 && (
                     <ul className="space-y-1 text-xs opacity-85 border-t border-white/10 pt-2">
                       {analysis.key_moments_json.map((m) => (
@@ -390,7 +396,7 @@ export function GameReview({
                               setSelectedIdx(Math.max(0, m.ply - 1));
                             }}
                           >
-                            • {m.text}
+                            • {locale === "fr" ? m.text : m.text_en ?? m.text}
                           </button>
                         </li>
                       ))}

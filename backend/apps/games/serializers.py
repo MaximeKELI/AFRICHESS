@@ -49,7 +49,7 @@ class GameAnalysisSerializer(serializers.ModelSerializer):
             "accuracy_white", "accuracy_black",
             "move_accuracy_white", "move_accuracy_black",
             "blunders_white", "blunders_black",
-            "best_moves_json", "summary_fr", "key_moments_json",
+            "best_moves_json", "summary_fr", "summary_en", "key_moments_json",
         ]
 
 
@@ -249,6 +249,11 @@ class MatchmakingJoinSerializer(serializers.Serializer):
     mode = serializers.ChoiceField(
         choices=["bullet", "blitz", "rapid", "classical"],
         default="blitz",
+    )
+    variant = serializers.ChoiceField(
+        choices=["standard", "chess960", "crazyhouse", "kingofthehill", "threecheck"],
+        default="standard",
+        required=False,
     )
     is_timed = serializers.BooleanField(default=True, required=False)
     is_rated = serializers.BooleanField(default=True, required=False)

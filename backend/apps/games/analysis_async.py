@@ -56,7 +56,7 @@ def run_analyze_game_job(game_id: str, job_id: int) -> None:
             }
             for i, e in enumerate(evaluations)
         ]
-        summary_fr, key_moments = generate_game_review(
+        summary_fr, summary_en, key_moments = generate_game_review(
             best_moves_json,
             accuracy_white=acc_w,
             accuracy_black=acc_b,
@@ -74,6 +74,7 @@ def run_analyze_game_job(game_id: str, job_id: int) -> None:
                 "blunders_black": blunders_b,
                 "best_moves_json": best_moves_json,
                 "summary_fr": summary_fr,
+                "summary_en": summary_en,
                 "key_moments_json": key_moments,
             },
         )

@@ -46,7 +46,7 @@ from .elo_config import elo_to_difficulty_label
 from .stats_service import on_game_completed
 from .engine import ChessEngineService
 from .models import ChessBot, CorrespondenceQueue, Game, MatchmakingQueue, Move
-from .variant_utils import generate_chess960_start
+from .variant_utils import generate_chess960_start, starting_position_for_variant
 from .room_utils import ensure_game_room, uci_to_squares
 
 def create_matchmaking_game(
@@ -58,6 +58,7 @@ def create_matchmaking_game(
     time_minutes: int | None = None,
     time_control: str | None = None,
     is_rated: bool = True,
+    variant: str = "standard",
 ) -> Game:
     """Crée une partie en ligne avec la cadence choisie."""
     tc = normalize_matchmaking_time_control(
@@ -75,6 +76,7 @@ def create_matchmaking_game(
         time_minutes=time_minutes,
         time_control=tc if is_timed else None,
         is_rated=is_rated,
+        variant=variant,
     )
 
 
@@ -200,15 +202,22 @@ class GameService:
         is_rated=True,
         starting_fen=None,
         odds_preset="",
+        variant=Game.Variant.STANDARD,
     ):
         timed, white_ms, black_ms, inc_ms, tcm = resolve_time_fields(
             is_timed, time_minutes, time_control=time_control
         )
-        fen = starting_fen or "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        chess960_pos = None
+        if starting_fen:
+            fen = starting_fen
+        else:
+            fen, chess960_pos = starting_position_for_variant(variant)
         game = Game.objects.create(
             white_player=white,
             black_player=black,
             mode=mode,
+            variant=variant,
+            chess960_position_id=chess960_pos,
             status=Game.Status.ACTIVE,
             fen=fen,
             is_timed=timed,
@@ -526,6 +535,7 @@ class MatchmakingService:
         time_minutes: int | None = None,
         time_control: str | None = None,
         is_rated: bool = True,
+        variant: str = "standard",
     ):
         from .fairplay_review import user_has_active_matchmaking_block
 
@@ -555,6 +565,7 @@ class MatchmakingService:
                 "is_rated": is_rated,
                 "time_control_minutes": tcm,
                 "time_control": tc_key or "",
+                "variant": variant,
             },
         )
 
@@ -570,6 +581,7 @@ class MatchmakingService:
         time_minutes: int | None = None,
         time_control: str | None = None,
         is_rated: bool = True,
+        variant: str = "standard",
     ):
         from .fairplay_review import user_has_active_matchmaking_block
 
@@ -594,6 +606,7 @@ class MatchmakingService:
             mode=mode,
             is_timed=is_timed,
             is_rated=is_rated,
+            variant=variant,
             time_control_minutes=tcm,
             time_control=tc_key or "",
             elo__gte=elo - self.ELO_RANGE,
@@ -612,6 +625,7 @@ class MatchmakingService:
                 time_minutes=time_minutes,
                 time_control=tc_key,
                 is_rated=is_rated,
+                variant=variant,
             )
         return None
 
@@ -646,6 +660,8 @@ class MatchmakingService:
                         continue
                     if (a.time_control or "") != (b.time_control or ""):
                         continue
+                    if a.variant != b.variant:
+                        continue
                     diff = abs(a.elo - b.elo)
                     if diff <= self.ELO_RANGE and diff < best_diff:
                         best = b
@@ -662,6 +678,7 @@ class MatchmakingService:
                         is_timed=a.is_timed,
                         time_control=a.time_control or None,
                         is_rated=a.is_rated,
+                        variant=a.variant,
                     )
                     self._notify_match(a.user_id, best.user_id, game)
 

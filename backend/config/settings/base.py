@@ -256,7 +256,7 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-DISCONNECT_FORFEIT_SECONDS = 90
+DISCONNECT_FORFEIT_SECONDS = config("DISCONNECT_FORFEIT_SECONDS", default=90, cast=int)
 
 # Low-bandwidth mode threshold (KB/s hint from client)
 LOW_BANDWIDTH_THRESHOLD = 500
