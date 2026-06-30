@@ -1378,10 +1378,22 @@ function PlayContent() {
               <button
                 type="button"
                 onClick={() => {
-                  if (window.confirm(t("play.resign.confirm"))) {
-                    wsResign();
-                    setStatus(t("play.resign.sent"));
-                  }
+                  if (!window.confirm(t("play.resign.confirm"))) return;
+                  if (!gameId) return;
+                  gamesApi
+                    .resign(gameId)
+                    .then(({ data }) => {
+                      applyGameResponse(data);
+                      setStatus(t("play.resign.sent"));
+                    })
+                    .catch((err) => {
+                      if (wsConnected) {
+                        wsResign();
+                        setStatus(t("play.resign.sent"));
+                      } else {
+                        setStatus(formatApiError(err, t("play.error.resign")));
+                      }
+                    });
                 }}
                 className="text-xs px-3 py-1 rounded border border-africhess-terracotta text-africhess-terracotta"
               >
