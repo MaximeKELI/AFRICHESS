@@ -83,51 +83,80 @@ function NavDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
   const { t } = useTranslation();
+
+  const close = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    close();
+  }, [pathname, close]);
 
   useEffect(() => {
     if (!open) return;
-    const close = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) close();
     };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [open]);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, close]);
 
   return (
     <div ref={ref} className="relative">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1 hover:text-africhess-gold transition-colors"
+        className={clsx(
+          "flex items-center gap-1 transition-colors",
+          open ? "text-africhess-gold" : "hover:text-africhess-gold"
+        )}
         aria-expanded={open}
       >
         {label}
         <ChevronDown size={14} className={clsx("transition-transform", open && "rotate-180")} />
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-2 w-[min(90vw,520px)] rounded-xl border border-white/10 bg-[var(--card)] shadow-2xl p-4 grid grid-cols-2 gap-4 z-50">
-          {groups.map((group) => (
-            <div key={group.key}>
-              <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 px-2">{t(group.key)}</p>
-              <div className="flex flex-col gap-0.5">
-                {group.links.map(({ href, key }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    onClick={() => {
-                      setOpen(false);
-                      onNavigate?.();
-                    }}
-                    className="px-2 py-2 rounded-lg text-sm hover:bg-white/10 hover:text-africhess-gold"
-                  >
-                    {t(key)}
-                  </Link>
-                ))}
-              </div>
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 top-14 md:top-16 z-40 bg-black/40"
+            aria-label={t("nav.menu.close")}
+            onClick={close}
+          />
+          <div className="fixed left-0 right-0 top-14 md:top-16 z-50 border-b border-white/10 bg-[var(--card)]/98 backdrop-blur-lg shadow-2xl">
+            <div className="max-w-7xl mx-auto p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+              {groups.map((group) => (
+                <div key={group.key}>
+                  <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 px-2">
+                    {t(group.key)}
+                  </p>
+                  <div className="flex flex-col gap-0.5">
+                    {group.links.map(({ href, key }) => (
+                      <Link
+                        key={href}
+                        href={href}
+                        onClick={() => {
+                          close();
+                          onNavigate?.();
+                        }}
+                        className="px-2 py-2 rounded-lg text-sm hover:bg-white/10 hover:text-africhess-gold"
+                      >
+                        {t(key)}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
