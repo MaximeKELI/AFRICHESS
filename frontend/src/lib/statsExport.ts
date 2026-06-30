@@ -1,6 +1,11 @@
 /** Export des statistiques en CSV ou JSON. */
 
+/** Données stats exportables (structure API / page stats). */
 export type StatsExportData = Record<string, unknown>;
+
+function asExportData(data: object): StatsExportData {
+  return data as StatsExportData;
+}
 
 function escapeCsv(value: unknown): string {
   const s = String(value ?? "");
@@ -18,7 +23,8 @@ function rowsToCsv(headers: string[], rows: unknown[][]): string {
   return lines.join("\n");
 }
 
-export function buildStatsCsv(data: StatsExportData, username: string): string {
+export function buildStatsCsv(raw: object, username: string): string {
+  const data = asExportData(raw);
   const sections: string[] = [];
   const exportedAt = new Date().toISOString();
 
@@ -174,9 +180,9 @@ export function downloadStatsJson(data: StatsExportData, username: string) {
   );
 }
 
-export function downloadStatsCsv(data: StatsExportData, username: string) {
+export function downloadStatsCsv(raw: object, username: string) {
   downloadFile(
-    buildStatsCsv(data, username),
+    buildStatsCsv(raw, username),
     `africhess-stats-${username}-${Date.now()}.csv`,
     "text/csv;charset=utf-8"
   );
