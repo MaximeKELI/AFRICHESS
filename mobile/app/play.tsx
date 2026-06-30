@@ -511,6 +511,14 @@ const styles = StyleSheet.create({
   startText: { color: "#fff", fontWeight: "700", fontSize: 16 },
   status: { color: "#aaa", textAlign: "center", marginBottom: 4, fontSize: 14 },
   wsStatus: { color: "#666", textAlign: "center", marginBottom: 12, fontSize: 11 },
+  commentBox: {
+    color: "#ddd",
+    fontSize: 13,
+    textAlign: "center",
+    marginBottom: 10,
+    paddingHorizontal: 12,
+    fontStyle: "italic",
+  },
   gameActions: { marginTop: 20, width: "100%", gap: 10 },
   secondaryBtn: {
     borderWidth: 1,
