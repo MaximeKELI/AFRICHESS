@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import clsx from "clsx";
 import { MOVE_CLASS_CHART_COLORS } from "@/lib/moveClassVisuals";
 import { useTranslation } from "@/hooks/useTranslation";
 
