@@ -649,12 +649,17 @@ function PlayContent() {
           : t("play.status.gameStarted")
       );
     } catch (err) {
-      const msg = formatApiError(err);
-      setStatus(
-        msg.includes("joindre le serveur")
-          ? msg
-          : msg || t("play.status.startFailed")
-      );
+      const ax = err as { response?: { status?: number } };
+      if (ax.response?.status === 403) {
+        setStatus(t("premium.botLocked"));
+      } else {
+        const msg = formatApiError(err);
+        setStatus(
+          msg.includes("joindre le serveur")
+            ? msg
+            : msg || t("play.status.startFailed")
+        );
+      }
     } finally {
       setAiStarting(false);
     }

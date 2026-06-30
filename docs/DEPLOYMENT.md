@@ -125,5 +125,5 @@ Cron suggéré (quotidien 3h) : `0 3 * * * /chemin/AFRICHESS/scripts/backup_db.s
 ## Monitoring recommandé
 
 - Sentry (erreurs Django + Next)
-- Healthcheck `GET /api/schema/`
+- Healthcheck public `GET /api/health/` → `{"status":"ok","database":true}` (503 si DB down)
 - `pg_isready` sur le conteneur `db`

@@ -114,20 +114,31 @@ export default function CoursePage() {
         {activeLesson && (
           <article className="glass-card p-6">
             <h2 className="font-semibold text-xl mb-4">{activeLesson.title}</h2>
-            {activeLesson.video_url && (
-              <div className="mb-6">
-                <VideoEmbed url={activeLesson.video_url} title={activeLesson.title} />
+            {activeLesson.locked || (activeLesson.premium_required && !activeLesson.content) ? (
+              <div className="text-sm opacity-80 space-y-3">
+                <p>{t("premium.subtitle")}</p>
+                <Link href="/premium" className="text-africhess-gold hover:underline">
+                  {t("premium.subscribe")}
+                </Link>
               </div>
-            )}
-            <LessonReader content={activeLesson.content} title={activeLesson.title} />
-            {user && (
-              <button
-                type="button"
-                onClick={() => completeLesson(activeLesson.id)}
-                className="mt-6 px-5 py-2 rounded-lg african-gradient text-white text-sm"
-              >
-                {t("learning.lesson.complete")}
-              </button>
+            ) : (
+              <>
+                {activeLesson.video_url && (
+                  <div className="mb-6">
+                    <VideoEmbed url={activeLesson.video_url} title={activeLesson.title} />
+                  </div>
+                )}
+                <LessonReader content={activeLesson.content} title={activeLesson.title} />
+                {user && (
+                  <button
+                    type="button"
+                    onClick={() => completeLesson(activeLesson.id)}
+                    className="mt-6 px-5 py-2 rounded-lg african-gradient text-white text-sm"
+                  >
+                    {t("learning.lesson.complete")}
+                  </button>
+                )}
+              </>
             )}
             {msg && <p className="mt-2 text-sm text-africhess-gold">{msg}</p>}
           </article>

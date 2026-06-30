@@ -24,7 +24,7 @@ Requirements: CMake, C++17 compiler, Stockfish on PATH (or set when running).
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `FAIRPLAY_BIN` | `/usr/local/bin/africhess-fairplay` | Path to binary |
-| `FAIRPLAY_DEPTH` | `12` | Stockfish depth for post-game analysis |
+| `FAIRPLAY_DEPTH` | `14` | Stockfish depth for post-game analysis |
 | `FAIRPLAY_TIMEOUT` | `120` | Subprocess timeout (seconds) |
 
 ## Protocol

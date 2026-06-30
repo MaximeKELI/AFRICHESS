@@ -2,6 +2,8 @@
 
 Interactive docs: `GET /api/docs/` (Swagger UI — admin only in Docker unless `ALLOW_PUBLIC_API_DOCS=true`)
 
+Public health: `GET /api/health/` — no auth, for load balancers.
+
 ## Auth
 
 | Method | Endpoint | Description |

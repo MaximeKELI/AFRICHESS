@@ -243,8 +243,13 @@ export default function PlayScreen() {
       refreshComments(data);
       const opponent = data.bot?.name ?? selectedBot?.name ?? `IA ${data.ai_target_elo}`;
       setStatus(`Partie vs ${opponent}`);
-    } catch {
-      setStatus("Impossible de lancer la partie. Vérifiez la connexion API.");
+    } catch (err: unknown) {
+      const ax = err as { response?: { status?: number } };
+      if (ax.response?.status === 403) {
+        setStatus("Bot premium — abonnement Gold requis.");
+      } else {
+        setStatus("Impossible de lancer la partie. Vérifiez la connexion API.");
+      }
     } finally {
       setBusy(false);
     }
