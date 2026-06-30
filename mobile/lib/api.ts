@@ -7,19 +7,46 @@ export const API_URL =
 
 const API_ORIGIN = API_URL.replace(/\/api\/?$/, "");
 
+const NO_AUTH_PATHS = ["/auth/login/", "/auth/register/", "/auth/token/refresh/"];
+
 export const api = axios.create({
   baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
   timeout: 30000,
 });
 
+let refreshInFlight: Promise<string | null> | null = null;
+
 api.interceptors.request.use(async (config) => {
+  const path = config.url ?? "";
+  if (NO_AUTH_PATHS.some((p) => path.includes(p))) {
+    return config;
+  }
   const token = await getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
+
+async function refreshAccessToken(): Promise<string | null> {
+  const refresh = await getRefreshToken();
+  if (!refresh) {
+    await clearTokens();
+    return null;
+  }
+  try {
+    const { data } = await axios.post<{ access: string; refresh?: string }>(
+      `${API_URL}/auth/token/refresh/`,
+      { refresh }
+    );
+    await setTokens(data.access, data.refresh ?? refresh);
+    return data.access;
+  } catch {
+    await clearTokens();
+    return null;
+  }
+}
 
 api.interceptors.response.use(
   (res) => res,
@@ -29,28 +56,37 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
     original._retry = true;
-    const refresh = await getRefreshToken();
-    if (!refresh) {
-      await clearTokens();
-      return Promise.reject(error);
-    }
-    try {
-      const { data } = await axios.post<{ access: string }>(`${API_URL}/auth/token/refresh/`, {
-        refresh,
+    if (!refreshInFlight) {
+      refreshInFlight = refreshAccessToken().finally(() => {
+        refreshInFlight = null;
       });
-      await setTokens(data.access, refresh);
-      original.headers.Authorization = `Bearer ${data.access}`;
-      return api(original);
-    } catch {
-      await clearTokens();
+    }
+    const access = await refreshInFlight;
+    if (!access) {
       return Promise.reject(error);
     }
+    original.headers.Authorization = `Bearer ${access}`;
+    return api(original);
   }
 );
 
+export class LoginError extends Error {
+  constructor(
+    message: string,
+    readonly code?: string
+  ) {
+    super(message);
+    this.name = "LoginError";
+  }
+}
+
 export const authApi = {
-  login: (username: string, password: string) =>
-    api.post<{ access: string; refresh: string }>("/auth/login/", { username, password }),
+  login: (username: string, password: string, totpCode?: string) =>
+    api.post<{ access: string; refresh: string }>("/auth/login/", {
+      username,
+      password,
+      ...(totpCode ? { totp_code: totpCode } : {}),
+    }),
   profile: () => api.get("/users/profile/"),
 };
 
@@ -95,6 +131,10 @@ export interface GameData {
   status: string;
   result?: string;
   is_vs_ai: boolean;
+  is_rated?: boolean;
+  move_count?: number;
+  draw_offered_by?: number | null;
+  takeback_requested_by?: number | null;
   white_player?: PublicUser | null;
   black_player?: PublicUser | null;
   ai_target_elo?: number;
@@ -168,6 +208,16 @@ export const gamesApi = {
     }),
   undo: (id: string) => api.post<GameData>(`/games/${id}/undo/`),
   resign: (id: string) => api.post<GameData>(`/games/${id}/resign/`),
+  abort: (id: string) => api.post<GameData>(`/games/${id}/abort/`),
+  offerDraw: (id: string) => api.post<{ offered_by?: number }>(`/games/${id}/draw/`),
+  respondDraw: (id: string, accept: boolean) =>
+    api.post(`/games/${id}/draw/respond/`, { accept }),
+  offerTakeback: (id: string) => api.post<{ requested_by?: number }>(`/games/${id}/takeback/`),
+  respondTakeback: (id: string, accept: boolean) =>
+    api.post(`/games/${id}/takeback/respond/`, { accept }),
+  fairplayStatus: () =>
+    api.get<{ consent_given: boolean; blocked?: boolean }>("/games/fairplay/status/"),
+  fairplayConsent: () => api.post("/games/fairplay/consent/"),
 };
 
 export interface FriendUser {
