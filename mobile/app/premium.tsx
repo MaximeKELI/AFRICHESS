@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "../context/LocaleContext";
 import { usersApi } from "../lib/api";
 
 interface Plan {
@@ -20,12 +21,18 @@ interface Plan {
 
 export default function PremiumScreen() {
   const { user, loading: authLoading, refreshProfile } = useAuth();
+  const { t } = useTranslation();
   const [plans, setPlans] = useState<Plan[]>([]);
-  const [status, setStatus] = useState<{ tier: string; is_premium: boolean } | null>(null);
+  const [status, setStatus] = useState<{
+    tier: string;
+    is_premium: boolean;
+    has_billing_portal?: boolean;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
   const [subscribing, setSubscribing] = useState<string | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -37,9 +44,9 @@ export default function PremiumScreen() {
     usersApi
       .subscriptionPlans()
       .then(({ data }) => setPlans(data.plans ?? []))
-      .catch(() => setError("Impossible de charger les offres."))
+      .catch(() => setError(t("premium.error.load")))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!user) return;
@@ -57,12 +64,25 @@ export default function PremiumScreen() {
         return;
       }
       setStatus({ tier: data.tier ?? planId, is_premium: Boolean(data.is_premium) });
-      setMsg(data.message ?? "Abonnement activé.");
+      setMsg(data.message ?? t("premium.active", { tier: planId }));
       await refreshProfile();
     } catch {
-      setError("Abonnement impossible.");
+      setError(t("premium.error.subscribe"));
     } finally {
       setSubscribing(null);
+    }
+  };
+
+  const openPortal = async () => {
+    setPortalLoading(true);
+    setError("");
+    try {
+      const { data } = await usersApi.billingPortal();
+      if (data.portal_url) await Linking.openURL(data.portal_url);
+    } catch {
+      setError(t("premium.error.portal"));
+    } finally {
+      setPortalLoading(false);
     }
   };
 
@@ -76,11 +96,22 @@ export default function PremiumScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>AFRICHESS Premium</Text>
-      <Text style={styles.subtitle}>Bots premium, analyse approfondie, Puzzle Rush illimité.</Text>
+      <Text style={styles.title}>{t("premium.title")}</Text>
+      <Text style={styles.subtitle}>{t("premium.subtitle")}</Text>
 
       {status?.is_premium && (
-        <Text style={styles.active}>Actif — {status.tier}</Text>
+        <View style={styles.activeRow}>
+          <Text style={styles.active}>{t("premium.active", { tier: status.tier })}</Text>
+          {status.has_billing_portal && (
+            <Pressable style={styles.portalBtn} onPress={() => void openPortal()} disabled={portalLoading}>
+              {portalLoading ? (
+                <ActivityIndicator color="#D4A017" />
+              ) : (
+                <Text style={styles.portalText}>{t("premium.manage")}</Text>
+              )}
+            </Pressable>
+          )}
+        </View>
       )}
       {msg ? <Text style={styles.msg}>{msg}</Text> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -101,13 +132,15 @@ export default function PremiumScreen() {
               ))}
               <Pressable
                 style={styles.btn}
-                disabled={Boolean(subscribing)}
+                disabled={Boolean(subscribing) || status?.tier === plan.id}
                 onPress={() => void subscribe(plan.id as "gold" | "diamond")}
               >
                 {subscribing === plan.id ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.btnText}>S'abonner</Text>
+                  <Text style={styles.btnText}>
+                    {status?.tier === plan.id ? t("premium.current") : t("premium.subscribe")}
+                  </Text>
                 )}
               </Pressable>
             </View>
@@ -115,7 +148,7 @@ export default function PremiumScreen() {
       )}
 
       <Link href="/" style={styles.link}>
-        <Text style={styles.linkText}>Retour</Text>
+        <Text style={styles.linkText}>←</Text>
       </Link>
     </ScrollView>
   );
@@ -126,7 +159,17 @@ const styles = StyleSheet.create({
   container: { padding: 24, backgroundColor: "#0D1117", gap: 16 },
   title: { fontSize: 28, fontWeight: "800", color: "#D4A017" },
   subtitle: { color: "#aaa", marginBottom: 8 },
+  activeRow: { gap: 8 },
   active: { color: "#1B7A3D", fontWeight: "600" },
+  portalBtn: {
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "#D4A017",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  portalText: { color: "#D4A017", fontWeight: "600" },
   msg: { color: "#1B7A3D" },
   error: { color: "#E07A5F" },
   card: {

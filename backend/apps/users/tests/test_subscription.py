@@ -106,8 +106,49 @@ class StripeWebhookTests(TestCase):
         kwargs = mock_stripe.checkout.Session.create.call_args.kwargs
         self.assertEqual(kwargs["subscription_data"]["metadata"]["user_id"], str(self.user.id))
         self.assertEqual(kwargs["subscription_data"]["metadata"]["plan"], "gold")
+        self.assertEqual(kwargs["customer"], "cus_existing")
 
-    @patch("apps.users.stripe_service.deactivate_plan")
+    @patch("apps.users.stripe_service.stripe_enabled", return_value=True)
+    @patch("apps.users.stripe_service._client")
+    def test_billing_portal_returns_url(self, mock_client, _enabled):
+        self.user.stripe_customer_id = "cus_123"
+        self.user.save(update_fields=["stripe_customer_id"])
+        mock_stripe = MagicMock()
+        mock_client.return_value = mock_stripe
+        mock_stripe.billing_portal.Session.create.return_value = MagicMock(
+            url="https://billing.stripe.test/session"
+        )
+        from apps.users.stripe_service import create_billing_portal_session
+
+        result = create_billing_portal_session(self.user)
+        self.assertEqual(result["portal_url"], "https://billing.stripe.test/session")
+
+    @patch("apps.users.stripe_service.stripe_enabled", return_value=True)
+    def test_billing_portal_api(self, _enabled):
+        self.user.stripe_customer_id = "cus_api"
+        self.user.save(update_fields=["stripe_customer_id"])
+        with patch(
+            "apps.users.views.create_billing_portal_session",
+            return_value={"portal_url": "https://billing.stripe.test/p"},
+        ):
+            resp = self.client.post("/api/users/subscription/billing-portal/", {}, format="json")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("portal_url", resp.data)
+
+    @patch("apps.users.stripe_service.stripe_enabled", return_value=True)
+    @patch("apps.users.stripe_service._client")
+    def test_checkout_uses_existing_customer(self, mock_client, _enabled):
+        self.user.stripe_customer_id = "cus_existing"
+        self.user.save(update_fields=["stripe_customer_id"])
+        mock_stripe = MagicMock()
+        mock_client.return_value = mock_stripe
+        mock_stripe.checkout.Session.create.return_value = MagicMock(url="https://x", id="s1")
+        from apps.users.stripe_service import create_checkout_session
+
+        with patch.dict("apps.users.stripe_service.PLAN_PRICES", {"gold": "price_gold"}):
+            create_checkout_session(self.user, "gold")
+        kwargs = mock_stripe.checkout.Session.create.call_args.kwargs
+        self.assertEqual(kwargs["customer"], "cus_existing")
     @patch("apps.users.stripe_service._client")
     def test_handle_webhook_subscription_deleted(self, mock_client, mock_deactivate):
         mock_client.return_value = MagicMock()

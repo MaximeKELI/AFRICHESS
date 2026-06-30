@@ -13,9 +13,11 @@ import {
 import { usersApi } from "../lib/api";
 import { setTokens } from "../lib/storage";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "../context/LocaleContext";
 
 export default function RegisterScreen() {
   const { refreshProfile } = useAuth();
+  const { t } = useTranslation();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +28,7 @@ export default function RegisterScreen() {
   const onSubmit = async () => {
     setError("");
     if (password !== confirm) {
-      setError("Les mots de passe ne correspondent pas.");
+      setError(t("register.error"));
       return;
     }
     setLoading(true);
@@ -42,7 +44,7 @@ export default function RegisterScreen() {
       await refreshProfile();
       router.replace("/play");
     } catch {
-      setError("Inscription impossible — vérifiez les champs.");
+      setError(t("register.error"));
     } finally {
       setLoading(false);
     }
@@ -53,10 +55,10 @@ export default function RegisterScreen() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <Text style={styles.title}>Créer un compte</Text>
+      <Text style={styles.title}>{t("register.title")}</Text>
       <TextInput
         style={styles.input}
-        placeholder="Nom d'utilisateur"
+        placeholder={t("register.username")}
         placeholderTextColor="#666"
         autoCapitalize="none"
         value={username}
@@ -64,7 +66,7 @@ export default function RegisterScreen() {
       />
       <TextInput
         style={styles.input}
-        placeholder="E-mail"
+        placeholder={t("register.email")}
         placeholderTextColor="#666"
         autoCapitalize="none"
         keyboardType="email-address"
@@ -73,7 +75,7 @@ export default function RegisterScreen() {
       />
       <TextInput
         style={styles.input}
-        placeholder="Mot de passe"
+        placeholder={t("register.password")}
         placeholderTextColor="#666"
         secureTextEntry
         value={password}
@@ -81,7 +83,7 @@ export default function RegisterScreen() {
       />
       <TextInput
         style={styles.input}
-        placeholder="Confirmer le mot de passe"
+        placeholder={t("register.confirm")}
         placeholderTextColor="#666"
         secureTextEntry
         value={confirm}
@@ -89,10 +91,14 @@ export default function RegisterScreen() {
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Pressable style={styles.btn} onPress={() => void onSubmit()} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>S'inscrire</Text>}
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.btnText}>{t("register.submit")}</Text>
+        )}
       </Pressable>
       <Link href="/login" style={styles.link}>
-        <Text style={styles.linkText}>Déjà un compte ? Connexion</Text>
+        <Text style={styles.linkText}>{t("register.login")}</Text>
       </Link>
     </KeyboardAvoidingView>
   );
