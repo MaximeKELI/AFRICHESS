@@ -11,6 +11,9 @@ import {
   View,
 } from "react-native";
 import { LoginError, useAuth } from "../context/AuthContext";
+
+export default function LoginScreen() {
+  const { login, loginWithOAuth } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [totpCode, setTotpCode] = useState("");
