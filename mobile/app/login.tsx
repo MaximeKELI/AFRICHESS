@@ -28,8 +28,8 @@ export default function LoginScreen() {
       await loginWithOAuth(provider);
       router.replace("/play");
     } catch (err) {
-      if (err instanceof LoginError && err.code === "TOTP_REQUIRED") {
-        router.push("/auth/callback");
+      if (err instanceof LoginError && err.code === "TOTP_REQUIRED" && err.oauthCode) {
+        router.push({ pathname: "/auth/callback", params: { code: err.oauthCode } });
         return;
       }
       setError("Connexion OAuth annulée ou indisponible.");
