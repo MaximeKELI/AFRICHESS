@@ -417,15 +417,31 @@ export default function PlayScreen() {
 
         {playMode === "human" && (
           <>
+            <Text style={styles.label}>Type de partie</Text>
+            <View style={styles.row}>
+              {([false, true] as const).map((rated) => (
+                <Pressable
+                  key={rated ? "rated" : "casual"}
+                  onPress={() => setIsRated(rated)}
+                  style={[styles.chip, isRated === rated && styles.chipActive]}
+                >
+                  <Text style={isRated === rated ? styles.chipTextActive : styles.chipText}>
+                    {rated ? "Classée" : "Amicale"}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
             <Pressable
               style={styles.startBtn}
-              onPress={startMatchmaking}
+              onPress={promptFairplayThenSearch}
               disabled={busy || searching}
             >
               {searching ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.startText}>Chercher un adversaire (blitz)</Text>
+                <Text style={styles.startText}>
+                  Chercher un adversaire (blitz {isRated ? "classé" : "amicale"})
+                </Text>
               )}
             </Pressable>
             {mmError ? <Text style={styles.status}>{mmError}</Text> : null}
@@ -542,9 +558,27 @@ export default function PlayScreen() {
 
   const showClock = Boolean(game.is_timed && game.white_time_ms != null && game.black_time_ms != null);
 
+  const opponentName =
+    game.white_player?.id === user?.id
+      ? game.black_player?.display_name || game.black_player?.username
+      : game.white_player?.display_name || game.white_player?.username;
+  const opponentOfferedDraw =
+    !game.is_vs_ai &&
+    game.draw_offered_by != null &&
+    game.draw_offered_by !== user?.id;
+  const opponentRequestedTakeback =
+    !game.is_vs_ai &&
+    game.takeback_requested_by != null &&
+    game.takeback_requested_by !== user?.id;
+  const canAbort =
+    !game.is_vs_ai && game.status === "active" && (game.move_count ?? 0) <= 2;
+
   return (
     <ScrollView contentContainerStyle={styles.game}>
       <Text style={styles.status}>{status}</Text>
+      {!game.is_vs_ai && opponentName ? (
+        <Text style={styles.opponent}>vs {opponentName}</Text>
+      ) : null}
       <Text style={styles.wsStatus}>
         {wsConnected ? "● Temps réel connecté" : wsError ?? "Connexion temps réel…"}
       </Text>
