@@ -156,6 +156,88 @@ NEUTRAL_PLAYER = [
     "Rien de catastrophique — continuez.",
 ]
 
+# L'IA réagit aux coups du joueur humain (style Chess.com)
+AI_REACT_PLAYER_OPENING = [
+    "Tu ouvres avec {san} ? Classique… on verra si ça tient.",
+    "{san} — début prudent. Tu te caches ou tu prépares quelque chose ?",
+    "Intéressant, {san}. Je note ton style.",
+    "Ah, {san}. Tu veux me tester dès le départ ?",
+    "{san} — ok, la partie commence vraiment.",
+]
+
+AI_REACT_PLAYER_CAPTURE = [
+    "Tu captures avec {san} ? Vérifie bien ce que tu laisses en prise.",
+    "{san} — échange accepté. J'espère que tu as calculé.",
+    "Tu prends du matériel avec {san}. Osé.",
+    "Capture avec {san}… je vais te le faire regretter peut-être.",
+]
+
+AI_REACT_PLAYER_CHECK = [
+    "Échec avec {san} ! Mon roi n'a pas peur… enfin, presque.",
+    "Tu me mets échec ? {san} — je vais me défendre.",
+    "{san} et échec ! Tu veux me bousculer, c'est noté.",
+    "Échec ! {san} — tu prends l'initiative, bravo… pour l'instant.",
+]
+
+AI_REACT_PLAYER_STRONG = [
+    "Hmm, {san}… solide. Je n'aime pas ce coup.",
+    "Pas mal, {san}. Tu me mets la pression.",
+    "{san} — tu joues bien là. Ça m'inquiète un peu.",
+    "Bon coup, {san}. Je dois réfléchir sérieusement.",
+    "{san} — tu me surprends. Continue comme ça et tu vas m'inquiéter.",
+]
+
+AI_REACT_PLAYER_WEAK = [
+    "Tu joues {san} ? Merci pour le cadeau.",
+    "{san}… intéressant choix. Tu me facilites la vie.",
+    "Aïe, {san} — tu aurais dû réfléchir encore un peu.",
+    "{san} ? Je ne m'y attendais pas… dans le bon sens pour moi.",
+    "Tu laisses des faiblesses avec {san}. J'en profite.",
+]
+
+AI_REACT_PLAYER_NEUTRAL = [
+    "Tu joues {san}. Voyons où ça mène.",
+    "{san} — coup logique. Rien d'extraordinaire.",
+    "Ok, {san}. La partie continue.",
+    "{san}… je continue mon plan.",
+    "Tu choisis {san}. Pas folle, pas mauvaise.",
+    "{san} — on avance. Tu tiens le choc ?",
+    "Hmm, {san}. Je réfléchis à ma réponse.",
+]
+
+AI_REACT_PLAYER_NEAR_MATE = [
+    "Tu es proche du mat avec {san} ! Je suis en danger…",
+    "{san} — tu me mets au bord du gouffre. Impressionnant.",
+    "Attention, {san} me met en sursis. Tu vas me mater ?",
+]
+
+AI_REACT_PLAYER_CASTLE = [
+    "Tu roques avec {san} — ton roi est en sécurité, pour l'instant.",
+    "{san}, roque solide. Je vais devoir creuser.",
+]
+
+AI_REACT_PLAYER_PROMOTION = [
+    "Promotion avec {san} ! Une dame en plus pour toi…",
+    "{san} — dame ! Tu veux finir la partie en beauté ?",
+]
+
+
+def _pick(pool: list[str], move_number: int = 0, san: str = "") -> str:
+    """Choisit une phrase en variant selon le numéro de coup."""
+    if not pool:
+        return ""
+    if len(pool) == 1:
+        return pool[0]
+    idx = (move_number * 17 + sum(ord(c) for c in san)) % len(pool)
+    if random.random() < 0.3:
+        idx = random.randrange(len(pool))
+    return pool[idx]
+
+
+def _fmt(pool: list[str], san: str, move_number: int) -> str:
+    template = _pick(pool, move_number, san)
+    return template.format(san=san) if "{san}" in template else template
+
 
 def _is_castling(san: str) -> bool:
     return "O-O" in san
