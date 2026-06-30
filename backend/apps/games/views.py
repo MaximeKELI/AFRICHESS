@@ -492,6 +492,9 @@ class DrawOfferView(APIView):
         result = offer_draw(game, request.user)
         if "error" in result:
             return Response(result, status=400)
+        from .ws_notify import notify_game_room
+
+        notify_game_room(game.id, "broadcast_draw", result)
         return Response(result)
 
 
@@ -508,10 +511,20 @@ class DrawRespondView(APIView):
         accept = request.data.get("accept", False)
         if accept:
             result = accept_draw(game, request.user)
-        else:
-            result = decline_draw(game, request.user)
+            if "error" in result:
+                return Response(result, status=400)
+            game.refresh_from_db()
+            from .realtime_services import build_ws_payload
+            from .ws_notify import notify_game_room
+
+            notify_game_room(game.id, "broadcast_game_over", build_ws_payload(game, {"game_over": True}))
+            return Response(GameSerializer(game).data)
+        result = decline_draw(game, request.user)
         if "error" in result:
             return Response(result, status=400)
+        from .ws_notify import notify_game_room
+
+        notify_game_room(game.id, "broadcast_draw", {"declined": True})
         game.refresh_from_db()
         return Response(GameSerializer(game).data)
 
@@ -562,6 +575,9 @@ class TakebackOfferView(APIView):
         result = offer_takeback(game, request.user)
         if "error" in result:
             return Response(result, status=400)
+        from .ws_notify import notify_game_room
+
+        notify_game_room(game.id, "broadcast_takeback", result)
         return Response(result)
 
 
@@ -576,12 +592,21 @@ class TakebackRespondView(APIView):
         if not can_play_game(request.user, game):
             return Response({"error": "Forbidden"}, status=403)
         accept = request.data.get("accept", False)
+        from .ws_notify import notify_game_room
+
         if accept:
             result = accept_takeback(game, request.user)
-        else:
-            result = decline_takeback(game, request.user)
+            if "error" in result:
+                return Response(result, status=400)
+            game.refresh_from_db()
+            from .realtime_services import build_ws_payload
+
+            notify_game_room(game.id, "broadcast_takeback", build_ws_payload(game, {"takeback": True}))
+            return Response(GameSerializer(game).data)
+        result = decline_takeback(game, request.user)
         if "error" in result:
             return Response(result, status=400)
+        notify_game_room(game.id, "broadcast_takeback", {"declined": True})
         game.refresh_from_db()
         return Response(GameSerializer(game).data)
 
