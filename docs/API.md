@@ -12,7 +12,7 @@ Public health: `GET /api/health/` — no auth, for load balancers.
 | POST | `/api/auth/logout/` | Logout + denylist access token |
 | POST | `/api/auth/token/refresh/` | Refresh JWT |
 | POST | `/api/users/register/` | Register account |
-| POST | `/api/users/auth/oauth/exchange/` | Exchange OAuth `code` → `{access, refresh}` (`totp_code` if 2FA enabled) |
+| POST | `/api/users/auth/oauth/exchange/` | Exchange OAuth `code` → `{access, refresh}` (`totp_code` if 2FA). Mobile: `?next=africhess://auth/callback` |
 
 OAuth flow: social login redirects to `/auth/callback?code=…`, frontend POSTs code (and TOTP if needed) to exchange endpoint.
 
