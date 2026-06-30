@@ -38,6 +38,38 @@ ALLOWED_TIME_CONTROLS = tuple(TIME_PRESETS.keys())
 ALLOWED_TIME_MINUTES = (5, 10, 15, 20, 25, 30)
 DEFAULT_TIME_CONTROL = "3+2"
 
+MODE_DEFAULT_TIME_CONTROL: dict[str, str] = {
+    "bullet": "1+0",
+    "blitz": "3+2",
+    "rapid": "10+0",
+    "classical": "30+0",
+}
+
+
+def default_time_control_for_mode(mode: str) -> str:
+    return MODE_DEFAULT_TIME_CONTROL.get(mode, DEFAULT_TIME_CONTROL)
+
+
+def normalize_matchmaking_time_control(
+    mode: str,
+    *,
+    is_timed: bool,
+    is_rated: bool,
+    time_minutes: int | None = None,
+    time_control: str | None = None,
+) -> str | None:
+    """Cadence effective pour la file (ex. blitz classé → 3+2)."""
+    if not is_timed:
+        return None
+    key = (time_control or "").strip()
+    if key in TIME_PRESETS:
+        return key
+    if is_rated:
+        return default_time_control_for_mode(mode)
+    if time_minutes is not None:
+        return minutes_to_preset(time_minutes)
+    return DEFAULT_TIME_CONTROL
+
 
 def normalize_time_minutes(minutes: int | None) -> int:
     if minutes in ALLOWED_TIME_MINUTES:

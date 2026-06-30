@@ -275,6 +275,7 @@ class MatchmakingQueue(models.Model):
     is_timed = models.BooleanField(default=True)
     is_rated = models.BooleanField(default=True)
     time_control_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
+    time_control = models.CharField(max_length=16, blank=True, default="")
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
