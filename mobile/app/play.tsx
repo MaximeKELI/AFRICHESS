@@ -159,7 +159,7 @@ export default function PlayScreen() {
       Boolean(user && playMode === "human"),
       "blitz",
       handleMatchFound,
-      { isTimed: true, timeControl: "3+2", isRated }
+      { isTimed: true, timeControl: "3+2", isRated, variant }
     );
 
   const promptFairplayThenSearch = () => {

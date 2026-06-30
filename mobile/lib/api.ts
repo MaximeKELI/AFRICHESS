@@ -187,13 +187,19 @@ export const gamesApi = {
   get: (id: string) => api.get<GameData>(`/games/${id}/`),
   matchmaking: (
     mode: string,
-    opts?: { is_timed?: boolean; is_rated?: boolean; time_control?: string }
+    opts?: {
+      is_timed?: boolean;
+      is_rated?: boolean;
+      time_control?: string;
+      variant?: GameVariant;
+    }
   ) =>
     api.post<GameData & { comments_pending?: boolean }>("/games/matchmaking/", {
       mode,
       is_timed: opts?.is_timed ?? true,
       is_rated: opts?.is_rated ?? true,
       time_control: opts?.time_control ?? "3+2",
+      variant: opts?.variant ?? "standard",
     }),
   leaveQueue: () => api.delete("/games/matchmaking/"),
   move: (
@@ -218,6 +224,10 @@ export const gamesApi = {
   fairplayStatus: () =>
     api.get<{ consent_given: boolean; blocked?: boolean }>("/games/fairplay/status/"),
   fairplayConsent: () => api.post("/games/fairplay/consent/"),
+  correspondence: () => api.get<GameData[]>("/games/correspondence/"),
+  correspondenceSeek: (days_per_move = 3) =>
+    api.post<GameData>("/games/correspondence/seek/", { days_per_move }),
+  leaveCorrespondenceQueue: () => api.delete("/games/correspondence/seek/"),
 };
 
 export interface FriendUser {
