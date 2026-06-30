@@ -67,7 +67,10 @@ class RegisterView(APIView):
         payload = UserSerializer(user).data
         payload["access"] = str(refresh.access_token)
         payload["refresh"] = str(refresh)
-        return Response(payload, status=status.HTTP_201_CREATED)
+        response = Response(payload, status=status.HTTP_201_CREATED)
+        from .jwt_cookies import apply_httponly_refresh_response
+
+        return apply_httponly_refresh_response(response)
 
 
 @extend_schema(summary="Profil du joueur connecté (lecture / mise à jour)")
@@ -247,7 +250,10 @@ def oauth_exchange(request):
         if not verify_totp(user.totp_secret, totp_code):
             return Response({"error": "Code 2FA invalide."}, status=400)
     refresh = RefreshToken.for_user(user)
-    return Response({"access": str(refresh.access_token), "refresh": str(refresh)})
+    response = Response({"access": str(refresh.access_token), "refresh": str(refresh)})
+    from .jwt_cookies import apply_httponly_refresh_response
+
+    return apply_httponly_refresh_response(response)
 
 
 @api_view(["POST", "DELETE"])

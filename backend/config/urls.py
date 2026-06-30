@@ -39,7 +39,7 @@ urlpatterns = [
     ),
     path("api/auth/login/", SecureLoginView.as_view(), name="rest_login"),
     path("api/auth/logout/", SecureLogoutView.as_view(), name="rest_logout"),
-    path("api/auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/auth/token/refresh/", CookieTokenRefreshView.as_view(), name="token_refresh"),
     path("api/auth/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("api/auth/user/", UserDetailsView.as_view(), name="rest_user_details"),
     path("api/auth/password/reset/", PasswordResetView.as_view(), name="rest_password_reset"),
