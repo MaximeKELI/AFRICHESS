@@ -6,7 +6,13 @@ import { OptionCategoryNav } from "@/components/ui/OptionCategoryNav";
 import { OptionSection } from "@/components/ui/OptionSection";
 import { useTranslation } from "@/hooks/useTranslation";
 
-export type PlaySetupCategory = "game" | "ai" | "online" | "appearance";
+export type PlaySetupCategory =
+  | "game"
+  | "ai"
+  | "online"
+  | "board"
+  | "pieces"
+  | "background";
 
 interface PlaySetupOptionsProps {
   setupCategory: PlaySetupCategory;
@@ -31,7 +37,9 @@ export function PlaySetupOptions({
     { id: "game", label: t("play.options.game") },
     { id: "ai", label: t("play.vsAi.title") },
     { id: "online", label: t("play.online.title") },
-    { id: "appearance", label: t("play.options.appearance") },
+    { id: "board", label: t("board.picker.title") },
+    { id: "pieces", label: t("board.picker.pieces") },
+    { id: "background", label: t("background.picker.title") },
   ];
 
   return (
@@ -47,30 +55,22 @@ export function PlaySetupOptions({
       {setupCategory === "ai" && aiSection}
       {setupCategory === "online" && onlineSection}
 
-      {setupCategory === "appearance" && (
-        <div className="space-y-4">
-          <OptionSection
-            compact
-            title={t("background.picker.title")}
-            description={t("background.picker.hint")}
-          >
-            <BackgroundPicker compact showHeader={false} />
-          </OptionSection>
-          <OptionSection
-            compact
-            title={t("board.picker.title")}
-            description={t("board.picker.hint")}
-          >
-            <BoardThemePicker compact showHeader={false} showPieces={false} />
-          </OptionSection>
-          <OptionSection
-            compact
-            title={t("board.picker.pieces")}
-            description={t("board.picker.piecesHint")}
-          >
-            <BoardThemePicker compact showHeader={false} showColors={false} />
-          </OptionSection>
-        </div>
+      {setupCategory === "board" && (
+        <OptionSection compact title={t("board.picker.title")} description={t("board.picker.hint")}>
+          <BoardThemePicker compact showHeader={false} showPieces={false} />
+        </OptionSection>
+      )}
+
+      {setupCategory === "pieces" && (
+        <OptionSection compact title={t("board.picker.pieces")} description={t("board.picker.piecesHint")}>
+          <BoardThemePicker compact showHeader={false} showColors={false} />
+        </OptionSection>
+      )}
+
+      {setupCategory === "background" && (
+        <OptionSection compact title={t("background.picker.title")} description={t("background.picker.hint")}>
+          <BackgroundPicker compact showHeader={false} />
+        </OptionSection>
       )}
 
       {status}

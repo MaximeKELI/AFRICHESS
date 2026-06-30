@@ -220,8 +220,8 @@ function PlayContent() {
 
   useEffect(() => {
     if (!setupFromUrl) return;
-    if (setupFromUrl === "appearance" || setupFromUrl === "background") {
-      setSetupCategory("appearance");
+    if (setupFromUrl === "background") {
+      setSetupCategory("background");
       setMobileTab("setup");
     } else if (setupFromUrl === "ai") {
       setSetupCategory("ai");
