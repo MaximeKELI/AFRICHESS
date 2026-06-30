@@ -442,6 +442,8 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
                 data.get("time_control"),
                 data.get("is_rated", True),
             )
+        elif event in ("quitter_file", "leave_queue"):
+            await self._leave_queue()
 
     async def match_found(self, event):
         await self.send(
@@ -465,18 +467,28 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
         time_control=None,
         is_rated: bool = True,
     ):
-        result = await self._try_match(
-            mode, is_timed, time_minutes, time_control, is_rated
-        )
-        if result is None:
+        try:
+            result = await self._try_match(
+                mode, is_timed, time_minutes, time_control, is_rated
+            )
+        except ValueError as exc:
             await self.send(
                 text_data=json.dumps(
-                    {
-                        "event": "en_attente",
-                        "data": {"message": "Recherche adversaire…", "mode": mode},
-                    }
+                    {"event": "error", "data": {"message": str(exc)}}
                 )
             )
+            return
+        if result is None:
+            still_waiting = await self._is_in_queue()
+            if still_waiting:
+                await self.send(
+                    text_data=json.dumps(
+                        {
+                            "event": "en_attente",
+                            "data": {"message": "Recherche adversaire…", "mode": mode},
+                        }
+                    )
+                )
             return
         game_id, room_id, mode, opponent_id = result
         payload = {
@@ -522,6 +534,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
                 time_control=time_control,
                 is_rated=is_rated,
             )
+            svc.pair_all_waiting()
             return None
         room = ensure_game_room(game)
         opponent_id = (
@@ -534,3 +547,9 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def _leave_queue(self):
         MatchmakingService().leave_queue(self.user)
+
+    @database_sync_to_async
+    def _is_in_queue(self):
+        from .models import MatchmakingQueue
+
+        return MatchmakingQueue.objects.filter(user=self.user).exists()
