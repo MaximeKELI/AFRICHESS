@@ -6,10 +6,12 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .daily import get_daily_puzzle
 from .models import Puzzle, PuzzleAttempt, PuzzleBattle, PuzzleBattleQueue, PuzzleRushSession
 from .puzzle_catalog import PUZZLE_THEMES
 from .random_sample import random_queryset
 from .serializers import PuzzleSerializer, SubmitPuzzleSerializer
+from .submit_service import process_puzzle_submission
 
 DIFFICULTY_ALIASES = {
     "beginner": "easy",
