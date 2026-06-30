@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.games.game_actions import abort_game, accept_takeback, offer_takeback, resign_game
+from apps.games.game_actions import abort_game, accept_takeback, offer_takeback, resign_game, resign_game
 from apps.games.models import Game, Move
 
 User = get_user_model()
@@ -44,3 +44,11 @@ class GameActionsTests(TestCase):
         self.assertTrue(result.get("ok"))
         self.game.refresh_from_db()
         self.assertEqual(self.game.move_count, 0)
+
+    def test_resign_black_wins(self):
+        result = resign_game(self.game, self.white)
+        self.assertTrue(result.get("ok"))
+        self.game.refresh_from_db()
+        self.assertEqual(self.game.status, Game.Status.COMPLETED)
+        self.assertEqual(self.game.result, Game.Result.BLACK_WIN)
+        self.assertEqual(self.game.termination_reason, "resignation")
