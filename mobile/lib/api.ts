@@ -118,7 +118,11 @@ export const usersApi = {
       "/users/subscription/plans/"
     ),
   subscriptionStatus: () =>
-    api.get<{ tier: string; is_premium: boolean }>("/users/subscription/status/"),
+    api.get<{ tier: string; is_premium: boolean; has_billing_portal?: boolean }>(
+      "/users/subscription/status/"
+    ),
+  billingPortal: () =>
+    api.post<{ portal_url: string }>("/users/subscription/billing-portal/"),
   subscribe: (plan: "gold" | "diamond") =>
     api.post<{ mode: string; checkout_url?: string; tier?: string; is_premium?: boolean; message?: string }>(
       "/users/subscription/subscribe/",

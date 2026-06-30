@@ -70,6 +70,25 @@ const fr: Dict = {
   "tournaments.registered": "Inscrit",
   "tournaments.open": "Inscriptions ouvertes",
   "tournaments.live": "En cours",
+
+  "premium.title": "AFRICHESS Premium",
+  "premium.subtitle": "Bots premium, analyse approfondie, Puzzle Rush illimité.",
+  "premium.active": "Abonnement {tier} actif",
+  "premium.manage": "Gérer l'abonnement",
+  "premium.subscribe": "S'abonner",
+  "premium.current": "Plan actuel",
+  "premium.error.load": "Impossible de charger les offres.",
+  "premium.error.subscribe": "Abonnement impossible.",
+  "premium.error.portal": "Portail de facturation indisponible.",
+
+  "register.title": "Inscription",
+  "register.username": "Nom d'utilisateur",
+  "register.email": "Email",
+  "register.password": "Mot de passe",
+  "register.confirm": "Confirmer le mot de passe",
+  "register.submit": "Créer le compte",
+  "register.login": "Déjà un compte ? Se connecter",
+  "register.error": "Inscription impossible.",
 };
 
 const en: Dict = {
@@ -140,6 +159,25 @@ const en: Dict = {
   "tournaments.registered": "Registered",
   "tournaments.open": "Registration open",
   "tournaments.live": "Live",
+
+  "premium.title": "AFRICHESS Premium",
+  "premium.subtitle": "Premium bots, deep analysis, unlimited Puzzle Rush.",
+  "premium.active": "{tier} subscription active",
+  "premium.manage": "Manage subscription",
+  "premium.subscribe": "Subscribe",
+  "premium.current": "Current plan",
+  "premium.error.load": "Could not load plans.",
+  "premium.error.subscribe": "Could not subscribe.",
+  "premium.error.portal": "Billing portal unavailable.",
+
+  "register.title": "Sign up",
+  "register.username": "Username",
+  "register.email": "Email",
+  "register.password": "Password",
+  "register.confirm": "Confirm password",
+  "register.submit": "Create account",
+  "register.login": "Already have an account? Sign in",
+  "register.error": "Sign up failed.",
 };
 
 const catalogs: Record<MobileLocale, Dict> = { fr, en };

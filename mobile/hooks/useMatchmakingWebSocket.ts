@@ -100,9 +100,12 @@ export function useMatchmakingWebSocket(
   }, [mode]);
 
   useEffect(() => {
-    if (!enabled) void cancel();
+    if (!enabled) {
+      void cancel();
+      return;
+    }
     return () => {
-      wsRef.current?.close();
+      void cancel();
     };
   }, [enabled, cancel]);
 
