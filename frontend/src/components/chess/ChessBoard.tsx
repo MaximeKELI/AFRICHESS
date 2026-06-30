@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useState, useRef, forwardRef, type ComponentType } from "react";
+import { memo, useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Chessboard } from "react-chessboard";
 import type { CustomSquareProps } from "react-chessboard/dist/chessboard/types";
 import { Chess, Square } from "chess.js";
@@ -432,17 +432,14 @@ function ChessBoardInner({
     if (!moveClassBadge) return undefined;
     const badgeSquare = moveClassBadge.square;
     const moveClass = moveClassBadge.moveClass;
-    return forwardRef<HTMLDivElement, CustomSquareProps>(function ReviewSquare(
-      { children, square, style },
-      ref
-    ) {
+    return function ReviewSquare({ children, square, style }: CustomSquareProps) {
       return (
-        <div ref={ref} style={{ ...style, position: "relative" }}>
+        <div style={{ ...style, position: "relative" }}>
           {children}
           {square === badgeSquare && <MoveClassPieceBadge moveClass={moveClass} />}
         </div>
       );
-    });
+    };
   }, [moveClassBadge]);
 
   return (
@@ -495,9 +492,7 @@ function ChessBoardInner({
           autoPromoteToQueen={false}
           showBoardNotation={true}
           snapToCursor={!isCoarse}
-          {...(reviewSquareRenderer
-            ? { customSquare: reviewSquareRenderer as ComponentType<CustomSquareProps> }
-            : {})}
+          {...(reviewSquareRenderer ? { customSquare: reviewSquareRenderer } : {})}
           {...(customPieces ? { customPieces } : {})}
         />
       </div>
