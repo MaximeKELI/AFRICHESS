@@ -327,7 +327,7 @@ def generate_move_comment(
     fen_after = board.fen()
     board.pop()
 
-    pick = random.choice
+    pick = _pick
     if eval_after is None:
         eval_after = _material_eval(chess.Board(fen_after))
     if eval_before is None:
@@ -337,59 +337,69 @@ def generate_move_comment(
     eval_gain = _eval_gain_for_mover(eval_before, eval_after, mover_is_white)
 
     if is_mate:
-        return pick(MATE_AI if played_by_ai else MATE_PLAYER)
+        return pick(MATE_AI if played_by_ai else MATE_PLAYER, move_number, san)
 
     if played_by_ai and was_in_check and not is_mate:
-        return pick(TAUNT_AI_UNDER_MATE_THREAT)
+        return pick(TAUNT_AI_UNDER_MATE_THREAT, move_number, san)
 
     # --- Taquineries selon menace de mat / avantage écrasant ---
     if played_by_ai:
         if eval_mover >= 2.5 and (opponent_pressured or is_check or eval_mover >= 4.0):
-            return pick(TAUNT_AI_NEAR_MATE)
+            return pick(TAUNT_AI_NEAR_MATE, move_number, san)
         if eval_mover <= -2.5 and opponent_pressured:
-            return pick(TAUNT_AI_UNDER_MATE_THREAT)
-        if eval_gain >= 1.5 and eval_mover >= 1.0 and random.random() < 0.55:
-            return pick(TAUNT_AI_AFTER_BLUNDER)
+            return pick(TAUNT_AI_UNDER_MATE_THREAT, move_number, san)
+        if eval_gain >= 1.5 and eval_mover >= 1.0 and random.random() < 0.65:
+            return pick(TAUNT_AI_AFTER_BLUNDER, move_number, san)
     else:
         if eval_mover >= 2.5 and (is_check or opponent_pressured or eval_mover >= 4.0):
-            return pick(PLAYER_NEAR_MATE)
+            return _fmt(AI_REACT_PLAYER_NEAR_MATE, san, move_number)
 
     if is_check:
-        return pick(CHECK_AI if played_by_ai else CHECK_PLAYER)
+        if played_by_ai:
+            return pick(CHECK_AI, move_number, san)
+        return _fmt(AI_REACT_PLAYER_CHECK, san, move_number)
 
     if _is_castling(san):
-        return pick(CASTLE_AI if played_by_ai else CASTLE_PLAYER)
+        if played_by_ai:
+            return pick(CASTLE_AI, move_number, san)
+        return _fmt(AI_REACT_PLAYER_CASTLE, san, move_number)
 
     if _is_promotion(san):
-        return pick(PROMOTION_AI if played_by_ai else PROMOTION_PLAYER)
+        if played_by_ai:
+            return pick(PROMOTION_AI, move_number, san)
+        return _fmt(AI_REACT_PLAYER_PROMOTION, san, move_number)
 
     if is_capture:
-        return pick(CAPTURE_AI if played_by_ai else CAPTURE_PLAYER)
+        if played_by_ai:
+            return pick(CAPTURE_AI, move_number, san)
+        return _fmt(AI_REACT_PLAYER_CAPTURE, san, move_number)
 
     if move_number <= 2:
-        return pick(OPENING_AI if played_by_ai else OPENING_PLAYER)
+        if played_by_ai:
+            return pick(OPENING_AI, move_number, san)
+        return _fmt(AI_REACT_PLAYER_OPENING, san, move_number)
 
     gain = eval_gain
     if not played_by_ai:
         if gain >= 0.8:
-            return pick(STRONG_PLAYER)
+            return _fmt(AI_REACT_PLAYER_STRONG, san, move_number)
         if gain <= -1.2:
-            hint = f" Mieux valait {best_san}." if best_san else ""
-            return (
-                f"{pick(WEAK_PLAYER)} La position s'est dégradée d'environ "
-                f"{abs(gain):.1f} pions.{hint}"
-            )
+            hint = f" Mieux valait {best_san}." if best_san and best_san != san else ""
+            return _fmt(AI_REACT_PLAYER_WEAK, san, move_number) + hint
+        return _fmt(AI_REACT_PLAYER_NEUTRAL, san, move_number)
     else:
         if gain >= 0.8:
-            if gain >= 1.5 and random.random() < 0.5:
-                return pick(TAUNT_AI_AFTER_BLUNDER)
-            return pick(STRONG_AI)
+            if gain >= 1.5 and random.random() < 0.55:
+                return pick(TAUNT_AI_AFTER_BLUNDER, move_number, san)
+            return pick(STRONG_AI, move_number, san)
         if gain <= -1.2:
             if eval_mover <= -2.0:
-                return pick(TAUNT_AI_UNDER_MATE_THREAT)
+                return pick(TAUNT_AI_UNDER_MATE_THREAT, move_number, san)
             return "Je subis une petite pression, mais je tiens… pour l'instant."
 
-    if played_by_ai and random.random() < 0.55:
-        return pick(TAUNT_AI_GENERAL)
+    if played_by_ai and random.random() < 0.72:
+        return pick(TAUNT_AI_GENERAL, move_number, san)
 
-    return pick(NEUTRAL_AI if played_by_ai else NEUTRAL_PLAYER)
+    if played_by_ai:
+        return pick(NEUTRAL_AI, move_number, san)
+    return _fmt(AI_REACT_PLAYER_NEUTRAL, san, move_number)
