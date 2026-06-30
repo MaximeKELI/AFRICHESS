@@ -27,7 +27,7 @@ export function mergeApiMoves(existing: ApiMove[], incoming: ApiMove[]): ApiMove
   for (const move of incoming) {
     map.set(moveKey(move), move);
   }
-  return [...map.values()].sort(
+  return Array.from(map.values()).sort(
     (a, b) => a.move_number - b.move_number || Number(a.played_by_white) - Number(b.played_by_white)
   );
 }

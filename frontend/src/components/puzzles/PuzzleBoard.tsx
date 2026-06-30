@@ -86,7 +86,11 @@ export function PuzzleBoard({ puzzle, onComplete, onWrong, disabled }: PuzzleBoa
         )}
         {puzzle.themes?.map((th) => (
           <span key={th} className="px-2 py-0.5 rounded-full border border-africhess-gold/30 text-africhess-gold">
-            {t(`puzzles.theme.${th}`, th)}
+            {(() => {
+              const key = `puzzles.theme.${th}`;
+              const label = t(key);
+              return label !== key ? label : th;
+            })()}
           </span>
         ))}
         <span className="ml-auto opacity-50">{progress}%</span>

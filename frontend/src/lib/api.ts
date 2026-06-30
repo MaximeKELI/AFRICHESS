@@ -1,4 +1,4 @@
-import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
 import { API_URL } from "@/lib/apiConfig";
 import { setAccessToken, setRefreshToken } from "@/lib/cookies";

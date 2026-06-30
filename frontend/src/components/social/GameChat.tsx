@@ -145,7 +145,7 @@ export function GameChat({
       sender: {
         username: user.username,
         display_name: user.display_name || user.username,
-        flair: user.flair,
+        flair: user.flair ?? undefined,
       },
       content: msg,
       created_at: new Date().toISOString(),

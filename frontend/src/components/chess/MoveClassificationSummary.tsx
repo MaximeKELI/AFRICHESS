@@ -82,7 +82,11 @@ export function MoveClassificationSummary({
 }: MoveClassificationSummaryProps) {
   const { t } = useTranslation();
 
-  const labelForClass = (key: string) => t(`chess.review.class.${key}`, key);
+  const labelForClass = (key: string) => {
+    const k = `chess.review.class.${key}`;
+    const label = t(k);
+    return label !== k ? label : key;
+  };
 
   if (!moves.length) return null;
 

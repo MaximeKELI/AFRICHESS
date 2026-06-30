@@ -48,7 +48,9 @@ export function ClassificationCompareChart({
           const left = leftCounts[key];
           const right = rightCounts[key];
           const hasData = left > 0 || right > 0;
-          const label = t(`chess.review.class.${key}`, key);
+          const classKey = `chess.review.class.${key}`;
+          const rawLabel = t(classKey);
+          const label = rawLabel !== classKey ? rawLabel : key;
 
           return (
             <li key={key} className={clsx(!hasData && "opacity-35")}>

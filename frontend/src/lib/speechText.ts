@@ -4,11 +4,18 @@ export function splitSpeechChunks(text: string, maxLen = 240): string[] {
   if (!cleaned) return [];
   if (cleaned.length <= maxLen) return [cleaned];
 
-  const parts = cleaned.match(/[^.!?…]+[.!?…]?/gu) ?? [cleaned];
+  const parts = cleaned.split(/(?<=[.!?…])\s+/u).filter(Boolean);
+  if (parts.length <= 1 && cleaned.length > maxLen) {
+    const chunks: string[] = [];
+    for (let i = 0; i < cleaned.length; i += maxLen) {
+      chunks.push(cleaned.slice(i, i + maxLen).trim());
+    }
+    return chunks.filter(Boolean);
+  }
   const chunks: string[] = [];
   let current = "";
 
-  for (const raw of parts) {
+  for (const raw of parts.length ? parts : [cleaned]) {
     const part = raw.trim();
     if (!part) continue;
     const candidate = current ? `${current} ${part}` : part;

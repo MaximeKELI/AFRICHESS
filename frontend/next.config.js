@@ -4,8 +4,7 @@ const nextConfig = {
   output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
   allowedDevOrigins: ['localhost', '127.0.0.1'],
   typescript: {
-    // Erreurs TS legacy hors chemin critique — évite le badge « 1 error » en dev.
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   webpack: (config, { dev }) => {
     if (dev) {

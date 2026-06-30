@@ -40,6 +40,8 @@
   "exclude": [
     "node_modules",
     "e2e",
-    "tmp"
+    "tmp",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ]
 }
