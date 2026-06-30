@@ -40,7 +40,9 @@ GITHUB_OAUTH_CLIENT_SECRET=...
 
 Redirect OAuth (Google Cloud / GitHub) : `https://api.africhess.com/accounts/google/login/callback/` (idem GitHub).
 
-Après login social, redirection vers `https://africhess.com/auth/callback?access=...&refresh=...`.
+Après login social, redirection vers `https://africhess.com/auth/callback?code=<one-time>`.
+
+Le frontend échange le code via `POST /api/users/auth/oauth/exchange/` `{ "code": "…" }` → `{ "access", "refresh" }`.
 
 ## Services Docker
 
