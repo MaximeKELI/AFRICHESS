@@ -121,6 +121,7 @@ function PlayContent() {
   const [status, setStatus] = useState<string>("");
   const [searching, setSearching] = useState(false);
   const [aiEloChoice, setAiEloChoice] = useState<AiLevelElo>(1250);
+  const [selectedBot, setSelectedBot] = useState<string | null>(botFromUrl);
   const [selectedBotInfo, setSelectedBotInfo] = useState<GameBotPublic | null>(null);
   const [variant, setVariant] = useState<GameVariant>("standard");
   const [aiDefaultSet, setAiDefaultSet] = useState(false);
@@ -196,6 +197,25 @@ function PlayContent() {
   const clockLabel = formatTimeControlLabel(gameIsTimed, gameIsTimed ? activePreset : null);
   const fallbackBaseMs = TIME_PRESETS[activePreset].baseMs;
   const headerAiElo = isVsAi ? (gameData.ai_target_elo ?? aiElo ?? aiEloChoice) : aiEloChoice;
+  const headerAi = useMemo(() => {
+    const bot = gameData.bot ?? selectedBotInfo;
+    const fallback = pickAiAvatar(headerAiElo);
+    if (bot) {
+      const slug = "slug" in bot ? bot.slug : selectedBot;
+      return {
+        src: getAiAvatarSrc(bot.avatar_id ?? slug),
+        name: bot.name,
+      };
+    }
+    if (selectedBot) {
+      return {
+        src: getAiAvatarSrc(selectedBotInfo?.avatar_id ?? selectedBot),
+        name: selectedBotInfo?.name ?? selectedBot,
+      };
+    }
+    return fallback;
+  }, [gameData.bot, selectedBotInfo, selectedBot, headerAiElo]);
+  const headerAiDisplay = headerAi;
   const timeOpts = useMemo(
     () => ({ isTimed: useClock, timePreset, isRated }),
     [useClock, timePreset, isRated]
