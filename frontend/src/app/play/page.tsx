@@ -67,11 +67,8 @@ import {
 } from "@/lib/gamePlayers";
 import { parseAnalysisPayload, type GameAnalysisData } from "@/lib/gameAnalysis";
 
-import {
-  useGameWebSocket,
-  useMatchmakingWebSocket,
-  type WsGamePayload,
-} from "@/hooks/useGameWebSocket";
+import { useGameWebSocket, type WsGamePayload } from "@/hooks/useGameWebSocket";
+import { useMatchmakingWebSocket } from "@/hooks/useMatchmakingWebSocket";
 
 interface GameState {
   fen: string;

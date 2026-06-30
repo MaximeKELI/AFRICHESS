@@ -1127,6 +1127,7 @@ const fr: Record<string, string> = {
   "ws.error.session": "Connexion WebSocket impossible (session manquante).",
   "ws.error.lost": "Connexion temps réel perdue. Rechargez la page.",
   "ws.error.matchmaking": "Connexion matchmaking impossible.",
+  "ws.error.matchmakingAuth": "Session expirée — reconnectez-vous pour jouer en ligne.",
   "ws.error.game": "Erreur WebSocket partie.",
   "ws.error.invalidMessage": "Message WebSocket invalide.",
   "ws.error.reconnect": "Reconnexion… ({n}/{max})",
