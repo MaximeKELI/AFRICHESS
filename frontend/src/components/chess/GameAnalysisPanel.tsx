@@ -9,7 +9,6 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useAuthStore } from "@/store/auth";
 import Link from "next/link";
 import clsx from "clsx";
-import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
 import { reviewBoardState } from "@/lib/reviewDisplay";
 import { ChessBoard } from "./ChessBoard";
 import { EvalGraph } from "./EvalGraph";
@@ -46,8 +45,6 @@ const CLASS_COLORS: Record<string, string> = {
   mistake: "text-orange-400",
   blunder: "text-africhess-terracotta",
 };
-
-const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 interface GameAnalysisPanelProps {
   gameId: string;
