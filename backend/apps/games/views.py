@@ -32,6 +32,7 @@ from .game_actions import (
     live_games_queryset,
     offer_draw,
     offer_takeback,
+    resign_game,
     set_conditional_move,
 )
 from .game_access import can_analyze_game, can_play_game, can_view_game, user_is_participant
