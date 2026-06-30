@@ -28,33 +28,16 @@ def _normalize_difficulty(raw: str) -> str:
     return DIFFICULTY_ALIASES.get((raw or "medium").lower(), "medium")
 
 
-def _update_daily_streak(user, puzzle: Puzzle, solved: bool) -> int:
-    if not solved or not puzzle.is_daily:
-        return getattr(user.stats, "daily_puzzle_streak", 0) if hasattr(user, "stats") else 0
-    stats = user.stats
-    today = timezone.now().date()
-    if stats.daily_puzzle_last_date == today:
-        return stats.daily_puzzle_streak
-    if stats.daily_puzzle_last_date == today - timedelta(days=1):
-        stats.daily_puzzle_streak += 1
-    else:
-        stats.daily_puzzle_streak = 1
-    stats.daily_puzzle_last_date = today
-    stats.save(update_fields=["daily_puzzle_streak", "daily_puzzle_last_date"])
-    return stats.daily_puzzle_streak
-
-
 class DailyPuzzleView(generics.RetrieveAPIView):
     serializer_class = PuzzleSerializer
     permission_classes = [permissions.AllowAny]
 
     def get_object(self):
-        today = timezone.now().date()
-        puzzle = Puzzle.objects.filter(is_daily=True, daily_date=today).first()
+        puzzle = get_daily_puzzle()
         if not puzzle:
-            puzzle = Puzzle.objects.filter(is_daily=True).order_by("-daily_date").first()
-        if not puzzle:
-            puzzle = Puzzle.objects.first()
+            from rest_framework.exceptions import NotFound
+
+            raise NotFound("Aucun puzzle")
         return puzzle
 
 
@@ -85,43 +68,13 @@ class SubmitPuzzleView(APIView):
 
         ser = SubmitPuzzleSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
-        moves = ser.validated_data["moves"]
-        solved = moves == puzzle.solution_moves
-
-        PuzzleAttempt.objects.create(
-            user=request.user,
-            puzzle=puzzle,
-            solved=solved,
-            moves_played=moves,
-            time_seconds=ser.validated_data["time_seconds"],
+        result = process_puzzle_submission(
+            request.user,
+            puzzle,
+            ser.validated_data["moves"],
+            ser.validated_data["time_seconds"],
         )
-        puzzle.plays_count += 1
-        streak = 0
-        puzzle_elo = None
-        puzzle_elo_change = 0
-        if solved:
-            if request.user.stats:
-                request.user.stats.puzzles_solved += 1
-                request.user.stats.save(update_fields=["puzzles_solved"])
-            streak = _update_daily_streak(request.user, puzzle, solved)
-
-        from apps.ratings.services import RatingService
-
-        svc = RatingService()
-        before = svc.get_or_create_rating(request.user, "puzzle").elo
-        after_rating = svc.update_puzzle_rating(request.user, puzzle.rating, solved)
-        puzzle_elo = after_rating.elo
-        puzzle_elo_change = puzzle_elo - before
-
-        puzzle.save()
-
-        return Response({
-            "solved": solved,
-            "correct_moves": puzzle.solution_moves if solved else None,
-            "daily_streak": streak,
-            "puzzle_elo": puzzle_elo,
-            "puzzle_elo_change": puzzle_elo_change,
-        })
+        return Response(result)
 
 
 class PuzzleThemesView(APIView):
