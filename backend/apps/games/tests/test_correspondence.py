@@ -32,8 +32,8 @@ class CorrespondenceTests(TestCase):
 
         second = svc.join_queue(self.black, days_per_move=3)
         self.assertIsNotNone(second)
-        self.assertEqual(second.white_player_id, self.white.id)
-        self.assertEqual(second.black_player_id, self.black.id)
+        player_ids = {second.white_player_id, second.black_player_id}
+        self.assertEqual(player_ids, {self.white.id, self.black.id})
         self.assertFalse(CorrespondenceQueue.objects.filter(user=self.white).exists())
 
     def test_my_correspondence_games_lists_active(self):

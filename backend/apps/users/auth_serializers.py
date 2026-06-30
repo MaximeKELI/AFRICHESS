@@ -45,7 +45,7 @@ class AfrichessLoginSerializer(LoginSerializer):
         except ValidationError:
             raise ValidationError({"non_field_errors": [_GENERIC_LOGIN_ERROR]}) from None
 
-        user = getattr(self, "user", None)
+        user = attrs.get("user") or getattr(self, "user", None)
         if user and user.totp_enabled:
             totp_code = (attrs.get("totp_code") or "").strip()
             if not totp_code:
