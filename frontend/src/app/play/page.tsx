@@ -1245,6 +1245,16 @@ function PlayContent() {
 
           {setupCategory === "ai" && (
             <OptionSection compact title={t("play.vsAi.title")} description={t("play.vsAi.hint", { mode: modeLabelText })}>
+              {selectedBot && !gameId && (
+                <div className="mb-3 p-3 rounded-xl border border-africhess-gold/30 bg-africhess-gold/5">
+                  <p className="text-xs font-medium text-africhess-gold">
+                    {t("play.botChallenge.title", {
+                      name: selectedBotInfo?.name ?? selectedBot,
+                    })}
+                  </p>
+                  <p className="text-[11px] opacity-60 mt-1">{t("play.botChallenge.hint")}</p>
+                </div>
+              )}
               {levelLabel && (
                 <p className="text-xs opacity-60 mb-1">{t("play.vsAi.profile", { level: levelLabel })}</p>
               )}
