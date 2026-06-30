@@ -416,6 +416,7 @@ export function GameReview({
                     lastMove={boardState.lastMove}
                     playSoundOnFenChange={false}
                     reviewHighlight={boardState.reviewHighlight}
+                    moveClassBadge={boardState.moveClassBadge}
                   />
                 </CapturedBoardStack>
               </div>

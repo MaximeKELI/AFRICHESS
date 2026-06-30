@@ -10,6 +10,7 @@ import { useAuthStore } from "@/store/auth";
 import Link from "next/link";
 import clsx from "clsx";
 import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
+import { reviewBoardState } from "@/lib/reviewDisplay";
 import { ChessBoard } from "./ChessBoard";
 import { EvalGraph } from "./EvalGraph";
 import { MoveClassificationSummary } from "./MoveClassificationSummary";
@@ -153,11 +154,7 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
 
   const reviewDisplay = useMemo(() => {
     if (!analysis || selectedIdx == null) return null;
-    const uciList = analysis.best_moves_json
-      .slice(0, selectedIdx + 1)
-      .map((m) => m.uci)
-      .filter((u): u is string => Boolean(u));
-    return buildGameDisplayFromUciList(START_FEN, uciList);
+    return reviewBoardState(analysis.best_moves_json, selectedIdx);
   }, [analysis, selectedIdx]);
 
   if (!completed) return null;
@@ -256,6 +253,8 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
                 disabled
                 orientation="white"
                 lastMove={reviewDisplay.lastMove}
+                reviewHighlight={reviewDisplay.reviewHighlight}
+                moveClassBadge={reviewDisplay.moveClassBadge}
                 playSoundOnFenChange={false}
               />
             </div>

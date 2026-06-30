@@ -33,6 +33,12 @@ describe("reviewBoardState", () => {
     const state = reviewBoardState(moves, 2, true);
     expect(state.reviewHighlight?.best).toEqual({ from: "f1", to: "c4" });
     expect(state.reviewHighlight?.played).toEqual({ from: "g1", to: "f3" });
+    expect(state.moveClassBadge).toEqual({ square: "g1", moveClass: "blunder" });
+  });
+
+  it("shows badge on destination after a normal move", () => {
+    const state = reviewBoardState(moves, 0, true);
+    expect(state.moveClassBadge).toEqual({ square: "e4", moveClass: "best" });
   });
 
   it("finds first user mistake", () => {
