@@ -45,22 +45,28 @@ class VideoListView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
+        from .premium_access import can_access_premium_video, user_has_learning_premium
+
         qs = Video.objects.all()
         cat = request.query_params.get("category")
         if cat:
             qs = qs.filter(category=cat)
         lang = (request.query_params.get("lang") or "fr")[:2]
-        data = [
-            {
-                "id": v.id,
-                "title": v.title_en if lang == "en" and v.title_en else v.title,
-                "url": v.url,
-                "description": v.description,
-                "category": v.category,
-                "is_premium": v.is_premium,
-            }
-            for v in qs[:50]
-        ]
+        premium = user_has_learning_premium(request.user)
+        data = []
+        for v in qs[:50]:
+            locked = v.is_premium and not can_access_premium_video(request.user, v)
+            data.append(
+                {
+                    "id": v.id,
+                    "title": v.title_en if lang == "en" and v.title_en else v.title,
+                    "url": "" if locked else v.url,
+                    "description": v.description if not locked else "",
+                    "category": v.category,
+                    "is_premium": v.is_premium,
+                    "locked": locked,
+                }
+            )
         return Response(data)
 
 

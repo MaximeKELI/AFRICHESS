@@ -90,6 +90,17 @@ class LessonDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
     queryset = Lesson.objects.filter(course__is_published=True)
 
+    def retrieve(self, request, *args, **kwargs):
+        lesson = self.get_object()
+        from .premium_access import can_access_lesson
+
+        if not can_access_lesson(request.user, lesson):
+            return Response(
+                {"error": "Contenu Premium — abonnement Gold ou Diamond requis.", "code": "premium_required"},
+                status=403,
+            )
+        return super().retrieve(request, *args, **kwargs)
+
 
 class CompleteLessonView(APIView):
     permission_classes = [permissions.IsAuthenticated]

@@ -1,4 +1,5 @@
 import type { Locale, MessageParams } from "./types";
+import { arOverlay, ptOverlay, swOverlay } from "./localeOverlays";
 
 export type { Locale, MessageParams } from "./types";
 
@@ -465,7 +466,6 @@ const fr: Record<string, string> = {
   "puzzles.error.survival": "Mode survival indisponible",
   "nav.events": "Événements",
   "nav.endgames": "Finales",
-  "nav.puzzleBuild": "Créer un puzzle",
   "report.title": "Signaler un joueur",
   "report.category.harassment": "Harcèlement",
   "report.category.cheating": "Triche",
@@ -1733,7 +1733,6 @@ const en: Record<string, string> = {
   "puzzles.error.survival": "Survival mode unavailable",
   "nav.events": "Events",
   "nav.endgames": "Endgames",
-  "nav.puzzleBuild": "Build puzzle",
   "report.title": "Report player",
   "report.category.harassment": "Harassment",
   "report.category.cheating": "Cheating",
