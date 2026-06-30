@@ -78,6 +78,18 @@ export function defaultPresetForMode(mode: string): TimePresetId {
   }
 }
 
+/** Cadence envoyée au serveur pour le matchmaking en ligne. */
+export function matchmakingTimeControl(
+  mode: string,
+  isTimed: boolean,
+  isRated: boolean,
+  preset: TimePresetId
+): string | undefined {
+  if (!isTimed) return undefined;
+  if (isRated) return defaultPresetForMode(mode);
+  return preset;
+}
+
 export function presetLabel(preset: TimePresetId): string {
   return preset;
 }

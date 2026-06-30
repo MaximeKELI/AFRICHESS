@@ -384,6 +384,7 @@ class MatchmakingView(APIView):
         except ValueError as exc:
             return Response({"error": str(exc), "code": "fairplay_sanction"}, status=403)
         if game:
+            svc._notify_match(game.white_player_id, game.black_player_id, game)
             return Response(GameSerializer(game).data, status=201)
         try:
             svc.join_queue(

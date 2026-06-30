@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from apps.games.time_control import resolve_time_fields
+from apps.games.time_control import normalize_matchmaking_time_control, resolve_time_fields
 
 
 class ResolveTimeFieldsTests(SimpleTestCase):
@@ -25,3 +25,21 @@ class ResolveTimeFieldsTests(SimpleTestCase):
         self.assertEqual(w, 900_000)
         self.assertEqual(inc, 0)
         self.assertEqual(tcm, 15)
+
+
+class MatchmakingTimeControlTests(SimpleTestCase):
+    def test_rated_blitz_defaults_to_3_2(self):
+        self.assertEqual(
+            normalize_matchmaking_time_control(
+                "blitz", is_timed=True, is_rated=True
+            ),
+            "3+2",
+        )
+
+    def test_unrated_uses_preset(self):
+        self.assertEqual(
+            normalize_matchmaking_time_control(
+                "blitz", is_timed=True, is_rated=False, time_control="5+0"
+            ),
+            "5+0",
+        )

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Cookies from "js-cookie";
 import { wsAuthProtocols, wsGameUrl, wsMatchmakingUrl } from "@/lib/gameWs";
+import { matchmakingTimeControl, type TimePresetId } from "@/lib/timeControl";
 import { tr } from "@/lib/i18n/labels";
 
 export interface WsGamePayload {
@@ -234,18 +235,22 @@ export function useMatchmakingWebSocket(
     setMmError(null);
 
     ws.onopen = () => {
+      const tc =
+        timeOpts?.isTimed === false
+          ? null
+          : matchmakingTimeControl(
+              mode,
+              timeOpts?.isTimed ?? true,
+              timeOpts?.isRated ?? true,
+              (timeOpts?.timePreset ?? "3+2") as TimePresetId
+            ) ?? null;
       ws.send(
         JSON.stringify({
           event: "rejoindre_file",
           mode,
           is_timed: timeOpts?.isTimed ?? true,
           is_rated: timeOpts?.isRated ?? true,
-          time_control:
-            timeOpts?.isRated && timeOpts?.isTimed
-              ? null
-              : timeOpts?.isTimed
-                ? timeOpts.timePreset
-                : null,
+          time_control: tc,
         })
       );
     };
@@ -276,7 +281,7 @@ export function useMatchmakingWebSocket(
       setMmError(tr("ws.error.matchmaking"));
       setSearching(false);
     };
-  }, [mode, onMatch, timeOpts?.isTimed, timeOpts?.timePreset]);
+  }, [mode, onMatch, timeOpts?.isTimed, timeOpts?.timePreset, timeOpts?.isRated]);
 
   const cancel = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

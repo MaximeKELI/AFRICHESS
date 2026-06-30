@@ -31,7 +31,7 @@ import {
 import { mergeApiMoves } from "@/lib/gameMerge";
 import { gamesApi, ratingsApi } from "@/lib/api";
 import { usePreferencesStore } from "@/store/preferences";
-import { formatTimeControlLabel, defaultPresetForMode, playModeFromPreset, TIME_PRESETS, inferPresetFromMs, type TimePresetId } from "@/lib/timeControl";
+import { formatTimeControlLabel, defaultPresetForMode, matchmakingTimeControl, playModeFromPreset, TIME_PRESETS, inferPresetFromMs, type TimePresetId } from "@/lib/timeControl";
 import { MODE_CLOCK_LABEL } from "@/lib/clock";
 import { turnFromFen } from "@/lib/gameDisplayFast";
 import { TimeControlPicker } from "@/components/chess/TimeControlPicker";
@@ -756,14 +756,36 @@ function PlayContent() {
         ? t("play.status.searchTimed", { minutes: TIME_PRESETS[timePreset].statMinutes })
         : t("play.status.searchUnlimited")
     );
+    const mmTimeControl = matchmakingTimeControl(mode, useClock, isRated, timePreset);
     try {
-      await gamesApi.matchmaking(mode, {
+      const { data, status } = await gamesApi.matchmaking(mode, {
         is_timed: useClock,
         is_rated: isRated,
-        time_control: isRated && useClock ? undefined : useClock ? timePreset : undefined,
+        time_control: mmTimeControl,
       });
-    } catch {
-      /* file HTTP optionnelle ; WS principal */
+      if (status === 201 && data?.id) {
+        handleMatchFound(data.id);
+        return;
+      }
+    } catch (err: unknown) {
+      const msg =
+        err &&
+        typeof err === "object" &&
+        "response" in err &&
+        err.response &&
+        typeof err.response === "object" &&
+        "data" in err.response &&
+        err.response.data &&
+        typeof err.response.data === "object" &&
+        "error" in err.response.data &&
+        typeof err.response.data.error === "string"
+          ? err.response.data.error
+          : null;
+      if (msg) {
+        setStatus(msg);
+        setSearching(false);
+        return;
+      }
     }
     wsSearch();
   };
