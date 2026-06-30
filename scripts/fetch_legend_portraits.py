@@ -4,7 +4,7 @@ Télécharge des portraits réels (Wikimedia Commons, CC) pour les 30 légendes 
 
 Usage:
   python3 scripts/fetch_legend_portraits.py
-  python3 scripts/fetch_legend_portraits.py --slug magnus-carlsen
+  python3 scripts/fetch_legend_portraits.py --slug nelson-mandela --force
 """
 
 from __future__ import annotations
@@ -23,62 +23,85 @@ sys.path.insert(0, str(REPO / "backend"))
 from apps.games.bot_catalog import LEGENDS  # noqa: E402
 
 OUT = REPO / "frontend" / "public" / "avatars" / "bots"
-SIZE = 512
+SIZE = 440
 COMMONS_API = "https://commons.wikimedia.org/w/api.php"
-UA = "AFRICHESS/1.0 (educational chess app; contact: dev@africhess.local)"
+UA = "AFRICHESS/1.0 (educational chess app)"
+MIN_REAL_BYTES = 80_000
 
-# URLs directes (évite le rate-limit de l'API de recherche)
-DIRECT_URLS: dict[str, str] = {
-    "magnus-carlsen": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Magnus_Carlsen_2019.jpg/512px-Magnus_Carlsen_2019.jpg",
-    "hikaru-nakamura": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Hikaru_Nakamura_%282024%29.jpg/512px-Hikaru_Nakamura_%282024%29.jpg",
-    "julien-song": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Julien_Song_%282023%29.jpg/512px-Julien_Song_%282023%29.jpg",
-    "bassem-amin": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Bassem_Amin_2013.jpg/512px-Bassem_Amin_2013.jpg",
-    "kenny-solomon": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Kenny_Solomon_2014.jpg/512px-Kenny_Solomon_2014.jpg",
-    "ahmed-adly": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Ahmed_Adly_2013.jpg/512px-Ahmed_Adly_2013.jpg",
-    "amon-simutowe": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Amon_Simutowe_2007.jpg/512px-Amon_Simutowe_2007.jpg",
-    "thomas-sankara": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Thomas_Sankara.jpg/512px-Thomas_Sankara.jpg",
-    "nelson-mandela": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Nelson_Mandela_1994.jpg/512px-Nelson_Mandela_1994.jpg",
-    "malcolm-x": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Malcolm_X_1964_press_photo.jpg/512px-Malcolm_X_1964_press_photo.jpg",
-    "patrice-lumumba": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Patrice_Lumumba_%281960%29.jpg/512px-Patrice_Lumumba_%281960%29.jpg",
-    "kwame-nkrumah": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Kwame_Nkrumah_%281961%29.jpg/512px-Kwame_Nkrumah_%281961%29.jpg",
-    "albert-einstein": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Albert_Einstein_Head.jpg/512px-Albert_Einstein_Head.jpg",
-    "robert-oppenheimer": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/J._Robert_Oppenheimer_%281944%29.jpg/512px-J._Robert_Oppenheimer_%281944%29.jpg",
-    "desmond-tutu": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Archbishop-Tutu-medium.jpg/512px-Archbishop-Tutu-medium.jpg",
-    "miriam-makeba": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Miriam_Makeba_1969.jpg/512px-Miriam_Makeba_1969.jpg",
-    "chinua-achebe": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Chinua_Achebe%2C_2008.jpg/512px-Chinua_Achebe%2C_2008.jpg",
-    "wole-soyinka": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Wole_Soyinka_%282015%29.jpg/512px-Wole_Soyinka_%282015%29.jpg",
-    "cheikh-anta-diop": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Cheikh_Anta_Diop.jpg/512px-Cheikh_Anta_Diop.jpg",
-    "leopold-senghor": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Leopold_Sedar_Senghor_1988.jpg/512px-Leopold_Sedar_Senghor_1988.jpg",
-    "haile-selassie": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Haile_Selassie_in_full_dress_1965.jpg/512px-Haile_Selassie_in_full_dress_1965.jpg",
-    "ahmed-sekou-toure": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Ahmed_S%C3%A9kou_Tour%C3%A9_1962.jpg/512px-Ahmed_S%C3%A9kou_Tour%C3%A9_1962.jpg",
-    "marie-curie": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Marie_Curie_c._1920s.jpg/512px-Marie_Curie_c._1920s.jpg",
-    "ada-lovelace": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Ada_Lovelace_portrait.jpg/512px-Ada_Lovelace_portrait.jpg",
-    "frida-kahlo": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Frida_Kahlo%2C_by_Guillermo_Kahlo.jpg/512px-Frida_Kahlo%2C_by_Guillermo_Kahlo.jpg",
-    "mansa-musa": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Mansa_Musa_on_the_Catalan_Atlas.jpg/512px-Mansa_Musa_on_the_Catalan_Atlas.jpg",
-    "queen-nzinga": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Queen_Nzinga_1657.jpg/512px-Queen_Nzinga_1657.jpg",
+# Fichiers Commons vérifiés ou recherchés
+COMMONS_FILES: dict[str, str] = {
+    "magnus-carlsen": "Magnus_Carlsen_2019.jpg",
+    "hikaru-nakamura": "Hikaru_Nakamura_(2024).jpg",
+    "julien-song": "Julien_Song_(2023).jpg",
+    "bassem-amin": "Bassem_Amin_2013.jpg",
+    "kenny-solomon": "Kenny_Solomon_2014.jpg",
+    "ahmed-adly": "Ahmed_Adly_2013.jpg",
+    "amon-simutowe": "Amon_Simutowe_2007.jpg",
+    "thomas-sankara": "Thomas_Sankara.jpg",
+    "nelson-mandela": "Nelson_Mandela_1994.jpg",
+    "malcolm-x": "Malcolm_X_1964_press_photo.jpg",
+    "patrice-lumumba": "Patrice_Lumumba_(1960).jpg",
+    "kwame-nkrumah": "Kwame_Nkrumah_(1961).jpg",
+    "albert-einstein": "Albert_Einstein_Head.jpg",
+    "robert-oppenheimer": "J._Robert_Oppenheimer_(1944).jpg",
+    "desmond-tutu": "Archbishop-Tutu-medium.jpg",
+    "miriam-makeba": "Miriam_Makeba_1969.jpg",
+    "chinua-achebe": "Chinua_Achebe,_2008.jpg",
+    "wole-soyinka": "Wole_Soyinka_(2015).jpg",
+    "cheikh-anta-diop": "Cheikh_Anta_Diop.jpg",
+    "leopold-senghor": "Leopold_Sedar_Senghor_1988.jpg",
+    "haile-selassie": "Haile_Selassie_in_full_dress_1965.jpg",
+    "ahmed-sekou-toure": "Ahmed_Sékou_Touré_1962.jpg",
+    "marie-curie": "Marie_Curie_c._1920s.jpg",
+    "ada-lovelace": "Ada_Lovelace_portrait.jpg",
+    "frida-kahlo": "Frida_Kahlo,_by_Guillermo_Kahlo.jpg",
+    "mansa-musa": "Mansa_Musa_on_the_Catalan_Atlas.jpg",
+    "queen-nzinga": "Queen_Nzinga_1657.jpg",
 }
 
 SEARCH_QUERIES: dict[str, str] = {
     "maxime-keli": "Maxime Keli",
-    "joachim-mouhamad": "Joachim Mouhamad chess",
+    "joachim-mouhamad": "Joachim Mouhamad chess Cameroon",
 }
 
 
-def _api(params: dict, retries: int = 4) -> dict:
+def _api(params: dict, retries: int = 5) -> dict:
     import json
 
     url = COMMONS_API + "?" + urllib.parse.urlencode({**params, "format": "json"})
     for attempt in range(retries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": UA})
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with urllib.request.urlopen(req, timeout=40) as resp:
                 return json.loads(resp.read().decode())
         except urllib.error.HTTPError as exc:
             if exc.code == 429 and attempt < retries - 1:
-                time.sleep(5 * (attempt + 1))
+                time.sleep(6 * (attempt + 1))
                 continue
             raise
     return {}
+
+
+def _thumb_from_file(filename: str) -> str | None:
+    data = _api(
+        {
+            "action": "query",
+            "titles": f"File:{filename}",
+            "prop": "imageinfo",
+            "iiprop": "url|thumburl|mime",
+            "iiurlwidth": SIZE,
+        }
+    )
+    pages = data.get("query", {}).get("pages", {})
+    for page in pages.values():
+        if page.get("missing"):
+            return None
+        for info in page.get("imageinfo") or []:
+            mime = info.get("mime", "")
+            if "svg" in mime:
+                continue
+            return info.get("thumburl") or info.get("url")
+    return None
 
 
 def _search_image(query: str) -> str | None:
@@ -88,9 +111,9 @@ def _search_image(query: str) -> str | None:
             "generator": "search",
             "gsrsearch": f"filetype:bitmap {query}",
             "gsrnamespace": 6,
-            "gsrlimit": 5,
+            "gsrlimit": 8,
             "prop": "imageinfo",
-            "iiprop": "url|mime",
+            "iiprop": "url|mime|thumburl",
             "iiurlwidth": SIZE,
         }
     )
@@ -103,15 +126,15 @@ def _search_image(query: str) -> str | None:
     return None
 
 
-def _download(url: str, retries: int = 4) -> bytes:
+def _download(url: str, retries: int = 5) -> bytes:
     for attempt in range(retries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": UA})
-            with urllib.request.urlopen(req, timeout=60) as resp:
+            with urllib.request.urlopen(req, timeout=90) as resp:
                 return resp.read()
         except urllib.error.HTTPError as exc:
             if exc.code in (429, 503) and attempt < retries - 1:
-                time.sleep(4 * (attempt + 1))
+                time.sleep(5 * (attempt + 1))
                 continue
             raise
     return b""
@@ -126,26 +149,35 @@ def _to_square_png(data: bytes, dest: Path) -> None:
     left = (w - side) // 2
     top = (h - side) // 2
     img = img.crop((left, top, left + side, top + side))
-    img = img.resize((SIZE, SIZE), Image.Resampling.LANCZOS)
+    img = img.resize((512, 512), Image.Resampling.LANCZOS)
     dest.parent.mkdir(parents=True, exist_ok=True)
     img.save(dest, "PNG", optimize=True)
 
 
-def fetch_one(slug: str, name: str) -> bool:
-    url = DIRECT_URLS.get(slug)
+def fetch_one(slug: str, name: str, force: bool) -> bool:
+    dest = OUT / f"{slug}.png"
+    if not force and dest.exists() and dest.stat().st_size >= MIN_REAL_BYTES:
+        print(f"  · {slug}: déjà OK ({dest.stat().st_size // 1024} Ko)")
+        return True
+
+    url = None
+    filename = COMMONS_FILES.get(slug)
+    if filename:
+        time.sleep(2.5)
+        url = _thumb_from_file(filename)
     if not url:
         query = SEARCH_QUERIES.get(slug, name)
-        time.sleep(2)
+        time.sleep(2.5)
         url = _search_image(query)
     if not url:
         print(f"  ✗ {slug}: aucune image")
         return False
+
     try:
         raw = _download(url)
-        dest = OUT / f"{slug}.png"
         _to_square_png(raw, dest)
         print(f"  ✓ {slug} → {dest.name} ({len(raw) // 1024} Ko)")
-        time.sleep(1)
+        time.sleep(1.5)
         return True
     except Exception as exc:
         print(f"  ✗ {slug}: {exc}")
@@ -154,22 +186,13 @@ def fetch_one(slug: str, name: str) -> bool:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--slug", help="Une seule légende")
+    parser.add_argument("--slug")
+    parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
 
     legends = [b for b in LEGENDS if not args.slug or b["slug"] == args.slug]
-    if not legends:
-        print("Aucune légende trouvée.")
-        sys.exit(1)
-
-    ok = 0
-    for bot in legends:
-        if fetch_one(bot["slug"], bot["name"]):
-            ok += 1
-
+    ok = sum(1 for b in legends if fetch_one(b["slug"], b["name"], args.force))
     print(f"\n{ok}/{len(legends)} portraits → {OUT}")
-    if ok < len(legends):
-        sys.exit(1)
 
 
 if __name__ == "__main__":
