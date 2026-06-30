@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { ChessBoard } from "../components/ChessBoard";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "../context/LocaleContext";
 import { type Puzzle, puzzlesApi } from "../lib/api";
 import { buildFenFromUciMoves, lastMoveFromUci } from "../lib/puzzleDisplay";
 
@@ -17,11 +18,14 @@ type Tab = "daily" | "rush";
 
 export default function PuzzlesScreen() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>("daily");
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
-  const [rushQueue, setRushQueue] = useState<Puzzle[]>([]);
-  const [rushIndex, setRushIndex] = useState(0);
+  const [rushSessionId, setRushSessionId] = useState<number | null>(null);
   const [rushScore, setRushScore] = useState(0);
+  const [rushMisses, setRushMisses] = useState(0);
+  const [rushTimeLeft, setRushTimeLeft] = useState(180);
+  const [rushIndex, setRushIndex] = useState(0);
   const [uciMoves, setUciMoves] = useState<string[]>([]);
   const [streak, setStreak] = useState(0);
   const [result, setResult] = useState<string | null>(null);
@@ -45,34 +49,38 @@ export default function PuzzlesScreen() {
       .then(({ data }) => setPuzzle(data))
       .catch(() => {
         setPuzzle(null);
-        setError("Impossible de charger le puzzle.");
+        setError(t("puzzles.error.load"));
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   const loadRush = useCallback(() => {
     if (!user) {
-      setError("Connexion requise pour le Puzzle Rush.");
+      setError(t("puzzles.error.rushLogin"));
       return;
     }
     setLoading(true);
     setError(null);
     reset();
     setRushScore(0);
+    setRushMisses(0);
     setRushIndex(0);
+    setRushSessionId(null);
+    setRushTimeLeft(180);
     puzzlesApi
-      .rush(10)
+      .rushStart()
       .then(({ data }) => {
-        const list = Array.isArray(data) ? data : [];
-        setRushQueue(list);
-        setPuzzle(list[0] ?? null);
+        setRushSessionId(data.session_id);
+        setRushTimeLeft(data.duration ?? 180);
+        setPuzzle(data.puzzle);
+        setRushIndex(1);
       })
       .catch(() => {
         setPuzzle(null);
-        setError("Puzzle Rush indisponible (limite premium ?).");
+        setError(t("puzzles.error.rushLimit"));
       })
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [user, t]);
 
   useEffect(() => {
     if (tab === "daily") loadDaily();
@@ -86,6 +94,14 @@ export default function PuzzlesScreen() {
       .then(({ data }) => setStreak(data.daily_streak ?? 0))
       .catch(() => setStreak(0));
   }, [user]);
+
+  useEffect(() => {
+    if (tab !== "rush" || !rushSessionId || rushTimeLeft <= 0) return;
+    const id = setInterval(() => {
+      setRushTimeLeft((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [tab, rushSessionId, rushTimeLeft]);
 
   const displayFen = useMemo(() => {
     if (!puzzle) return "";
@@ -104,31 +120,45 @@ export default function PuzzlesScreen() {
     setSubmitting(true);
     const time = Math.floor((Date.now() - startTime) / 1000);
     try {
-      const { data } = await puzzlesApi.submit(puzzle.id, uciMoves, time);
-      if (tab === "daily" && data.daily_streak != null) setStreak(data.daily_streak);
-      const solved = data.solved;
-      if (tab === "rush") {
-        if (solved) setRushScore((s) => s + 1);
-        setResult(solved ? "Correct !" : "Raté.");
-        const next = rushIndex + 1;
-        if (next < rushQueue.length) {
+      if (tab === "rush" && rushSessionId) {
+        const { data } = await puzzlesApi.rushSubmit(rushSessionId, uciMoves, time);
+        setRushScore(data.score ?? rushScore);
+        setRushMisses(data.misses ?? rushMisses);
+        if (data.time_left != null) setRushTimeLeft(data.time_left);
+        const solved = Boolean(data.solved);
+        if (data.completed) {
+          const score = data.score ?? rushScore;
+          const msg =
+            data.reason === "timeout"
+              ? t("puzzles.rush.timeout", { score })
+              : (data.misses ?? rushMisses) >= 3
+                ? t("puzzles.rush.threeMisses", { score })
+                : t("puzzles.rush.done", { score });
+          setResult(msg);
+          setPuzzle(null);
+          setRushSessionId(null);
+          return;
+        }
+        setResult(solved ? t("puzzles.correct") : t("puzzles.wrong"));
+        if (data.next_puzzle) {
+          setRushIndex((i) => i + 1);
           setTimeout(() => {
-            setRushIndex(next);
-            setPuzzle(rushQueue[next]);
+            setPuzzle(data.next_puzzle!);
             reset();
           }, 600);
-        } else {
-          setResult(`Rush terminé — score : ${rushScore + (solved ? 1 : 0)}`);
         }
       } else {
+        const { data } = await puzzlesApi.submit(puzzle.id, uciMoves, time);
+        if (data.daily_streak != null) setStreak(data.daily_streak);
+        const solved = data.solved;
         setResult(
           solved
-            ? `Bravo !${data.daily_streak ? ` Série : ${data.daily_streak}j` : ""}`
-            : "Ce n'est pas la bonne ligne."
+            ? t("puzzles.bravo", { streak: data.daily_streak ?? streak })
+            : t("puzzles.wrongLine")
         );
       }
     } catch {
-      setResult("Validation impossible.");
+      setResult(t("puzzles.submitError"));
     } finally {
       setSubmitting(false);
     }
@@ -137,35 +167,42 @@ export default function PuzzlesScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.tabs}>
-        {(["daily", "rush"] as const).map((t) => (
+        {(["daily", "rush"] as const).map((tabKey) => (
           <Pressable
-            key={t}
-            onPress={() => setTab(t)}
-            style={[styles.tab, tab === t && styles.tabActive]}
+            key={tabKey}
+            onPress={() => setTab(tabKey)}
+            style={[styles.tab, tab === tabKey && styles.tabActive]}
           >
-            <Text style={tab === t ? styles.tabTextActive : styles.tabText}>
-              {t === "daily" ? "Du jour" : "Rush"}
+            <Text style={tab === tabKey ? styles.tabTextActive : styles.tabText}>
+              {t(`puzzles.tab.${tabKey}`)}
             </Text>
           </Pressable>
         ))}
       </View>
 
       {streak > 0 && tab === "daily" && (
-        <Text style={styles.streak}>Série : {streak} jour{streak > 1 ? "s" : ""}</Text>
+        <Text style={styles.streak}>{t("puzzles.streak", { count: streak })}</Text>
       )}
-      {tab === "rush" && rushQueue.length > 0 && (
-        <Text style={styles.streak}>
-          {rushIndex + 1}/{rushQueue.length} · Score {rushScore}
-        </Text>
+      {tab === "rush" && rushSessionId && (
+        <>
+          <Text style={styles.streak}>
+            {t("puzzles.rush.progress", {
+              current: `#${rushIndex}`,
+              score: rushScore,
+              time: rushTimeLeft,
+            })}
+          </Text>
+          <Text style={styles.streak}>{t("puzzles.rush.misses", { count: rushMisses })}</Text>
+        </>
       )}
 
       {loading ? (
         <ActivityIndicator color="#D4A017" style={{ marginTop: 40 }} />
       ) : !puzzle ? (
         <View style={styles.centerBlock}>
-          <Text style={styles.error}>{error ?? "Aucun puzzle."}</Text>
+          <Text style={styles.error}>{error ?? t("puzzles.none")}</Text>
           <Pressable style={styles.btn} onPress={tab === "daily" ? loadDaily : loadRush}>
-            <Text style={styles.btnText}>Réessayer</Text>
+            <Text style={styles.btnText}>{t("puzzles.retry")}</Text>
           </Pressable>
         </View>
       ) : (
@@ -190,11 +227,11 @@ export default function PuzzlesScreen() {
               {submitting ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.btnText}>{user ? "Valider" : "Connexion"}</Text>
+                <Text style={styles.btnText}>{user ? t("puzzles.validate") : t("app.login")}</Text>
               )}
             </Pressable>
             <Pressable style={[styles.btn, styles.btnOutline]} onPress={reset}>
-              <Text style={styles.btnTextOutline}>Reset</Text>
+              <Text style={styles.btnTextOutline}>{t("puzzles.reset")}</Text>
             </Pressable>
           </View>
         </>
@@ -203,7 +240,7 @@ export default function PuzzlesScreen() {
       {!user && (
         <Link href="/login" asChild>
           <Pressable style={styles.linkBtn}>
-            <Text style={styles.linkText}>Se connecter</Text>
+            <Text style={styles.linkText}>{t("puzzles.loginLink")}</Text>
           </Pressable>
         </Link>
       )}
