@@ -176,4 +176,7 @@ class ApplyVoteMoveView(APIView):
             return Response(result, status=400)
         GameVote.objects.filter(game=game, ply=ply).delete()
         game.refresh_from_db()
+        from .ws_notify import notify_move_made
+
+        notify_move_made(game, result)
         return Response(GameSerializer(game).data)

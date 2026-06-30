@@ -22,3 +22,29 @@ def notify_game_room(game_id, handler: str, payload: dict) -> None:
         )
     except Exception as exc:
         logger.warning("WS notify game=%s handler=%s failed: %s", game_id, handler, exc)
+
+
+def notify_move_made(game, result: dict) -> None:
+    """Broadcast coup joué via HTTP aux clients WebSocket de la partie."""
+    from .models import Game
+    from .realtime_services import build_ws_payload
+
+    last_move = None
+    m = game.moves.order_by("-move_number").first()
+    if m:
+        last_move = {
+            "san": m.san,
+            "uci": m.uci,
+            "from_square": m.from_square,
+            "to_square": m.to_square,
+            "played_by_white": m.played_by_white,
+        }
+    payload = build_ws_payload(
+        game,
+        {
+            "last_move": last_move,
+            "game_over": bool(result.get("game_over"))
+            or game.status == Game.Status.COMPLETED,
+        },
+    )
+    notify_game_room(game.id, "broadcast_move", payload)
