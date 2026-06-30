@@ -17,6 +17,7 @@ import { useAuth } from "../context/AuthContext";
 import { useGameWebSocket } from "../hooks/useGameWebSocket";
 import { useMatchmakingWebSocket } from "../hooks/useMatchmakingWebSocket";
 import { parsePocketsFromFen, pocketForPlayer } from "../lib/crazyhouse";
+import { latestComment, pollPendingMoveComments } from "../lib/pollComments";
 import { wsPayloadToGameData } from "../lib/gameState";
 import { type Bot, type GameData, type GameVariant, gamesApi } from "../lib/api";
 
@@ -43,7 +44,7 @@ export default function PlayScreen() {
   const [game, setGame] = useState<GameData | null>(null);
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
-  const [loadingBots, setLoadingBots] = useState(true);
+  const [aiCommentsEnabled, setAiCommentsEnabled] = useState(true);
   const turnStartRef = useRef(Date.now());
 
   useEffect(() => {
