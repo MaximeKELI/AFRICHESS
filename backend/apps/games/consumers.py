@@ -404,6 +404,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
         self.user = self.scope.get("user")
+        self._leave_queue_on_disconnect = False
         if not self.user or not self.user.is_authenticated:
             await self.close(code=4001)
             return
@@ -418,7 +419,8 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         if getattr(self, "user_group", None) and self.user.is_authenticated:
-            # L'inscription file se fait via HTTP ; quitter_file explicite seulement.
+            if getattr(self, "_leave_queue_on_disconnect", False):
+                await self._leave_queue()
             await self.channel_layer.group_discard(self.user_group, self.channel_name)
 
     async def receive(self, text_data):
