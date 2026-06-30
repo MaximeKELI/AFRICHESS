@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 
 CommentSpec = dict[str, Any]
 
+COMMENTARY_DEPTH = 8
+
 
 def generate_move_comments_for_specs(specs: list[CommentSpec]) -> int:
     """Analyse Stockfish + enregistre les commentaires pour chaque coup."""
@@ -36,10 +38,16 @@ def generate_move_comments_for_specs(specs: list[CommentSpec]) -> int:
         if move.comment.strip():
             continue
 
-        eval_before = engine.analyze_position(spec["fen_before"], depth=10)
-        eval_after = engine.analyze_position(spec["fen_after"], depth=10)
+        fen_before = spec["fen_before"]
+        fen_after = spec["fen_after"]
+        eval_before = engine.analyze_position(fen_before, depth=COMMENTARY_DEPTH)
+        eval_after = engine.analyze_position(fen_after, depth=COMMENTARY_DEPTH)
+        best_san = None
+        if not spec.get("played_by_ai"):
+            best_san = engine.best_move_san(fen_before, depth=COMMENTARY_DEPTH)
+
         text = generate_move_comment(
-            spec["fen_before"],
+            fen_before,
             spec["uci"],
             spec["san"],
             played_by_ai=spec["played_by_ai"],
@@ -47,6 +55,7 @@ def generate_move_comments_for_specs(specs: list[CommentSpec]) -> int:
             move_number=spec["move_number"],
             eval_before=eval_before,
             eval_after=eval_after,
+            best_san=best_san,
         )
         Move.objects.filter(pk=move_id).update(comment=text)
         updated += 1

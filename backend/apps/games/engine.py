@@ -285,6 +285,19 @@ class ChessEngineService:
             logger.error("Analysis error: %s", e)
         return None
 
+    def best_move_san(self, fen: str, depth: int = 8) -> str | None:
+        """Meilleur coup SAN sur la position (pour commentaires coaching)."""
+        board = chess.Board(fen)
+        try:
+            with self._use_engine() as engine:
+                info = engine.analyse(board, chess.engine.Limit(depth=depth))
+                pv = info.get("pv") or []
+                if pv and pv[0] in board.legal_moves:
+                    return board.san(pv[0])
+        except Exception as e:
+            logger.error("Best move lookup error: %s", e)
+        return None
+
     @staticmethod
     def _moves_from_pgn(pgn: str) -> list[tuple[str, bool]]:
         game = chess.pgn.read_game(io.StringIO(pgn))
