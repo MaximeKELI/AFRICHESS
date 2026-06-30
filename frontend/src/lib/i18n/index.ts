@@ -1530,6 +1530,8 @@ const en: Record<string, string> = {
   "auth.login.password": "Password",
   "auth.login.submit": "Sign In",
   "auth.login.submitting": "Signing in…",
+  "auth.login.totpLabel": "2FA code (6 digits)",
+  "auth.login.totpHint": "Enter the code from your authenticator app.",
   "auth.login.noAccount": "Don't have an account?",
   "auth.login.signup": "Sign Up",
   "auth.login.hint": "Username or email. If your email is shared across accounts, use your username (e.g. DKELI).",

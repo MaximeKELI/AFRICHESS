@@ -80,13 +80,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ lowBandwidth: v });
   },
 
-  login: async (username, password) => {
+  login: async (username, password, totpCode) => {
     const loginId = username.trim();
     Cookies.remove("access_token");
     Cookies.remove("refresh_token");
     set({ isLoading: true });
     try {
-      const { data } = await authApi.login(loginId, password);
+      const { data } = await authApi.login(loginId, password, totpCode);
       if (!data.access) {
         throw new Error(translate(get().locale, "auth.login.invalidResponse"));
       }
