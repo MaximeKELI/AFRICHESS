@@ -6,8 +6,9 @@ Style : portrait illustré avec initiales, palettes par légende.
 Usage:
   python3 scripts/generate_bot_avatars.py
 
-Pour remplacer un avatar par une image IA :
-  copier votre PNG vers frontend/public/avatars/bots/{slug}.png
+Pour remplacer un avatar par une photo réelle :
+  python3 scripts/fetch_legend_portraits.py
+  # ou copier manuellement vers frontend/public/avatars/bots/{slug}.png
 """
 
 from __future__ import annotations
