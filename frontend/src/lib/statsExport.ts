@@ -1,10 +1,22 @@
 /** Export des statistiques en CSV ou JSON. */
 
-/** Données stats exportables (structure API / page stats). */
-export type StatsExportData = Record<string, unknown>;
-
-function asExportData(data: object): StatsExportData {
-  return data as StatsExportData;
+export interface StatsExportData {
+  summary: Record<string, unknown>;
+  by_mode: Record<string, unknown>[];
+  vs_opponent: {
+    human: Record<string, unknown>;
+    ai: Record<string, unknown>;
+  };
+  by_color: {
+    white: Record<string, unknown>;
+    black: Record<string, unknown>;
+  };
+  by_termination: Record<string, number>;
+  openings: Record<string, unknown>[];
+  ratings: Record<string, unknown>[];
+  rating_history: Record<string, unknown>[];
+  recent_form: Record<string, unknown>[];
+  activity: { date: string; games: number }[];
 }
 
 function escapeCsv(value: unknown): string {
@@ -23,8 +35,7 @@ function rowsToCsv(headers: string[], rows: unknown[][]): string {
   return lines.join("\n");
 }
 
-export function buildStatsCsv(raw: object, username: string): string {
-  const data = asExportData(raw);
+export function buildStatsCsv(data: StatsExportData, username: string): string {
   const sections: string[] = [];
   const exportedAt = new Date().toISOString();
 
@@ -47,7 +58,7 @@ export function buildStatsCsv(raw: object, username: string): string {
     sections.push(
       rowsToCsv(
         keys,
-        data.by_mode.map((r: Record<string, unknown>) => keys.map((k) => r[k]))
+        data.by_mode.map((r) => keys.map((k) => r[k]))
       )
     );
     sections.push("");
@@ -66,8 +77,8 @@ export function buildStatsCsv(raw: object, username: string): string {
     rowsToCsv(
       ["type", "jouées", "victoires", "nulles", "défaites", "win_rate"],
       [
-        ["humain", ...bucketRow(data.vs_opponent.human as Record<string, unknown>)],
-        ["ia", ...bucketRow(data.vs_opponent.ai as Record<string, unknown>)],
+        ["humain", ...bucketRow(data.vs_opponent.human)],
+        ["ia", ...bucketRow(data.vs_opponent.ai)],
       ]
     )
   );
@@ -78,8 +89,8 @@ export function buildStatsCsv(raw: object, username: string): string {
     rowsToCsv(
       ["couleur", "jouées", "victoires", "nulles", "défaites", "win_rate"],
       [
-        ["blancs", ...bucketRow(data.by_color.white as Record<string, unknown>)],
-        ["noirs", ...bucketRow(data.by_color.black as Record<string, unknown>)],
+        ["blancs", ...bucketRow(data.by_color.white)],
+        ["noirs", ...bucketRow(data.by_color.black)],
       ]
     )
   );
@@ -102,7 +113,7 @@ export function buildStatsCsv(raw: object, username: string): string {
     sections.push(
       rowsToCsv(
         keys,
-        data.openings.map((r: Record<string, unknown>) => keys.map((k) => r[k]))
+        data.openings.map((r) => keys.map((k) => r[k]))
       )
     );
     sections.push("");
@@ -114,7 +125,7 @@ export function buildStatsCsv(raw: object, username: string): string {
     sections.push(
       rowsToCsv(
         keys,
-        data.ratings.map((r: Record<string, unknown>) => keys.map((k) => r[k]))
+        data.ratings.map((r) => keys.map((k) => r[k]))
       )
     );
     sections.push("");
@@ -126,7 +137,7 @@ export function buildStatsCsv(raw: object, username: string): string {
     sections.push(
       rowsToCsv(
         keys,
-        data.rating_history.map((r: Record<string, unknown>) => keys.map((k) => r[k]))
+        data.rating_history.map((r) => keys.map((k) => r[k]))
       )
     );
     sections.push("");
@@ -138,7 +149,7 @@ export function buildStatsCsv(raw: object, username: string): string {
     sections.push(
       rowsToCsv(
         keys,
-        data.recent_form.map((r: Record<string, unknown>) => keys.map((k) => r[k]))
+        data.recent_form.map((r) => keys.map((k) => r[k]))
       )
     );
     sections.push("");
@@ -149,7 +160,7 @@ export function buildStatsCsv(raw: object, username: string): string {
     sections.push(
       rowsToCsv(
         ["date", "parties"],
-        data.activity.map((a: { date: string; games: number }) => [a.date, a.games])
+        data.activity.map((a) => [a.date, a.games])
       )
     );
   }
@@ -167,8 +178,7 @@ export function downloadFile(content: string, filename: string, mimeType: string
   URL.revokeObjectURL(url);
 }
 
-export function downloadStatsJson(raw: object, username: string) {
-  const data = asExportData(raw);
+export function downloadStatsJson(data: StatsExportData, username: string) {
   const payload = {
     exported_at: new Date().toISOString(),
     username,
@@ -181,9 +191,9 @@ export function downloadStatsJson(raw: object, username: string) {
   );
 }
 
-export function downloadStatsCsv(raw: object, username: string) {
+export function downloadStatsCsv(data: StatsExportData, username: string) {
   downloadFile(
-    buildStatsCsv(raw, username),
+    buildStatsCsv(data, username),
     `africhess-stats-${username}-${Date.now()}.csv`,
     "text/csv;charset=utf-8"
   );

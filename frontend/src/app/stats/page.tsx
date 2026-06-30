@@ -16,7 +16,7 @@ import {
   LineChart,
 } from "@/components/stats/StatsCharts";
 import { DataTable } from "@/components/stats/StatsTables";
-import { downloadStatsCsv, downloadStatsJson } from "@/lib/statsExport";
+import { downloadStatsCsv, downloadStatsJson, type StatsExportData } from "@/lib/statsExport";
 import { useTranslation } from "@/hooks/useTranslation";
 import { formatLocaleDate, terminationLabel } from "@/lib/i18n/labels";
 
@@ -83,6 +83,10 @@ interface StatsPayload {
     avg_ai_elo_beaten: number | null;
     best_ai_elo_beaten: number | null;
   };
+}
+
+function toExportData(data: StatsPayload): StatsExportData {
+  return data as unknown as StatsExportData;
 }
 
 const MODE_COLORS: Record<string, string> = {
@@ -169,7 +173,7 @@ export default function StatsPage() {
             <>
               <button
                 type="button"
-                onClick={() => downloadStatsCsv(data, username)}
+                onClick={() => downloadStatsCsv(toExportData(data), username)}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-africhess-gold/50 text-africhess-gold text-sm hover:bg-africhess-gold/10"
               >
                 <Download size={14} />
@@ -177,7 +181,7 @@ export default function StatsPage() {
               </button>
               <button
                 type="button"
-                onClick={() => downloadStatsJson(data, username)}
+                onClick={() => downloadStatsJson(toExportData(data), username)}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/20 text-sm hover:bg-white/5"
               >
                 <FileJson size={14} />
@@ -620,7 +624,7 @@ export default function StatsPage() {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => downloadStatsCsv(data, username)}
+                onClick={() => downloadStatsCsv(toExportData(data), username)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg african-gradient text-white text-sm"
               >
                 <Download size={14} />
@@ -628,7 +632,7 @@ export default function StatsPage() {
               </button>
               <button
                 type="button"
-                onClick={() => downloadStatsJson(data, username)}
+                onClick={() => downloadStatsJson(toExportData(data), username)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm hover:bg-white/5"
               >
                 <FileJson size={14} />
