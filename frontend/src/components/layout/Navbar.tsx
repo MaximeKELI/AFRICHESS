@@ -94,6 +94,8 @@ function NavDropdown({
 
   useEffect(() => {
     if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const onDoc = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) close();
     };
@@ -103,6 +105,7 @@ function NavDropdown({
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
     return () => {
+      document.body.style.overflow = prev;
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
     };
