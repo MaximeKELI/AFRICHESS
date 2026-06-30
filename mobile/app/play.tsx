@@ -44,6 +44,7 @@ export default function PlayScreen() {
   const [game, setGame] = useState<GameData | null>(null);
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loadingBots, setLoadingBots] = useState(true);
   const [aiCommentsEnabled, setAiCommentsEnabled] = useState(true);
   const turnStartRef = useRef(Date.now());
 
