@@ -10,6 +10,13 @@ DIAMOND_ANALYSIS_MOVES = 120
 FREE_RUSH_PER_DAY = 3
 
 
+def _user_stats(user):
+    from .models import UserStats
+
+    stats, _ = UserStats.objects.get_or_create(user=user)
+    return stats
+
+
 def max_analysis_moves(user) -> int:
     if user and user.is_authenticated:
         if getattr(user, "is_diamond", False):
@@ -32,7 +39,7 @@ def can_start_puzzle_rush(user) -> tuple[bool, str | None]:
         return True, None
     if user.is_premium:
         return True, None
-    stats = user.stats
+    stats = _user_stats(user)
     today = timezone.now().date()
     if stats.puzzle_rush_last_date != today:
         return True, None
@@ -44,7 +51,7 @@ def can_start_puzzle_rush(user) -> tuple[bool, str | None]:
 def record_puzzle_rush_start(user) -> None:
     if not user or not user.is_authenticated or user.is_premium:
         return
-    stats = user.stats
+    stats = _user_stats(user)
     today = timezone.now().date()
     if stats.puzzle_rush_last_date != today:
         stats.puzzle_rush_daily_count = 0
