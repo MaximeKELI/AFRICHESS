@@ -433,6 +433,12 @@ function PlayContent() {
             : prev.black_elo_provisional,
         bot: data.bot !== undefined ? data.bot : prev.bot,
         variant: (data.variant as GameVariant) ?? prev.variant ?? "standard",
+        draw_offered_by:
+          data.draw_offered_by !== undefined ? data.draw_offered_by : prev.draw_offered_by,
+        takeback_requested_by:
+          data.takeback_requested_by !== undefined
+            ? data.takeback_requested_by
+            : prev.takeback_requested_by,
         analysis:
           data.analysis !== undefined
             ? parseAnalysisPayload(data.analysis) ?? prev.analysis ?? null
