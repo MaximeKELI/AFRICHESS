@@ -49,14 +49,6 @@ from .models import ChessBot, CorrespondenceQueue, Game, MatchmakingQueue, Move
 from .variant_utils import generate_chess960_start
 from .room_utils import ensure_game_room, uci_to_squares
 
-MODE_TIME_CONFIG = {
-    "bullet": {"initial_ms": 60000, "increment_ms": 0},
-    "blitz": {"initial_ms": 180000, "increment_ms": 2000},
-    "rapid": {"initial_ms": 600000, "increment_ms": 0},
-    "classical": {"initial_ms": 1800000, "increment_ms": 0},
-}
-
-
 def create_matchmaking_game(
     white,
     black,
