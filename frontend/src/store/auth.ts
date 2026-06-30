@@ -116,6 +116,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw error;
       }
       const msg = formatApiError(error);
+      if (msg.includes("TOTP_REQUIRED")) {
+        throw new Error("TOTP_REQUIRED");
+      }
       if (loginId.includes("@") && msg.includes("Identifiants")) {
         throw new Error(translate(get().locale, "auth.login.useUsername"));
       }

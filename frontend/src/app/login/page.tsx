@@ -11,6 +11,8 @@ import { OAuthButtons } from "@/components/auth/OAuthButtons";
 function LoginContent() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [totpCode, setTotpCode] = useState("");
+  const [needsTotp, setNeedsTotp] = useState(false);
   const [error, setError] = useState("");
   const { login, isLoading } = useAuthStore();
   const { t } = useTranslation();
@@ -27,10 +29,16 @@ function LoginContent() {
     e.preventDefault();
     setError("");
     try {
-      await login(username, password);
+      await login(username, password, needsTotp ? totpCode : undefined);
       router.push(consumeReturnAfterLogin() ?? "/play");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("common.error"));
+      const message = err instanceof Error ? err.message : t("common.error");
+      if (message === "TOTP_REQUIRED") {
+        setNeedsTotp(true);
+        setError(t("auth.login.totpHint"));
+        return;
+      }
+      setError(message);
     }
   };
 
@@ -56,6 +64,19 @@ function LoginContent() {
           className="w-full px-4 py-3 rounded-lg border bg-transparent"
           required
         />
+        {needsTotp && (
+          <input
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder={t("auth.login.totpLabel")}
+            value={totpCode}
+            onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            className="w-full px-4 py-3 rounded-lg border bg-transparent tracking-widest"
+            required
+            maxLength={6}
+          />
+        )}
         {username.includes("@") && (
           <p className="text-xs text-africhess-gold/90 -mt-2">{t("auth.login.emailWarning")}</p>
         )}
