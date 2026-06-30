@@ -67,7 +67,7 @@ Le frontend échange le code via `POST /api/users/auth/oauth/exchange/` `{ "code
 
 - `backend` — Daphne ASGI (HTTP + WebSocket)
 - `celery` — worker (matchmaking, forfeits)
-- `celery-beat` — tâches périodiques
+- `celery-beat` — tâches périodiques (matchmaking, forfeits, **pairing daily**, **expiration premium**)
 - `frontend` — Next.js
 - `db`, `redis`
 
