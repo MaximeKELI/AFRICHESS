@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { gamesApi } from "../lib/api";
 import { getAccessToken } from "../lib/storage";
 import { wsAuthProtocols, wsMatchmakingPath } from "../lib/ws";
 
@@ -6,7 +7,7 @@ export function useMatchmakingWebSocket(
   enabled: boolean,
   mode: string,
   onMatch: (gameId: string) => void,
-  timeOpts?: { isTimed: boolean; timeMinutes: number }
+  timeOpts?: { isTimed: boolean; timeControl: string; isRated?: boolean }
 ) {
   const wsRef = useRef<WebSocket | null>(null);
   const [searching, setSearching] = useState(false);
@@ -24,11 +25,27 @@ export function useMatchmakingWebSocket(
       return;
     }
 
+    setSearching(true);
+    setMmError(null);
+
+    try {
+      const { data, status } = await gamesApi.matchmaking(mode, {
+        is_timed: timeOpts?.isTimed ?? true,
+        is_rated: timeOpts?.isRated ?? true,
+        time_control: timeOpts?.timeControl ?? "3+2",
+      });
+      if (status === 201 && data.id) {
+        setSearching(false);
+        onMatchRef.current(data.id);
+        return;
+      }
+    } catch {
+      /* repli WS ci-dessous */
+    }
+
     wsRef.current?.close();
     const ws = new WebSocket(wsMatchmakingPath(), wsAuthProtocols(token));
     wsRef.current = ws;
-    setSearching(true);
-    setMmError(null);
 
     ws.onopen = () => {
       ws.send(
@@ -36,7 +53,8 @@ export function useMatchmakingWebSocket(
           event: "rejoindre_file",
           mode,
           is_timed: timeOpts?.isTimed ?? true,
-          time_minutes: timeOpts?.isTimed ? timeOpts.timeMinutes : null,
+          is_rated: timeOpts?.isRated ?? true,
+          time_control: timeOpts?.timeControl ?? "3+2",
         })
       );
     };
@@ -64,18 +82,23 @@ export function useMatchmakingWebSocket(
       setMmError("WebSocket matchmaking indisponible");
       setSearching(false);
     };
-  }, [mode, timeOpts?.isTimed, timeOpts?.timeMinutes]);
+  }, [mode, timeOpts?.isTimed, timeOpts?.timeControl, timeOpts?.isRated]);
 
-  const cancel = useCallback(() => {
+  const cancel = useCallback(async () => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ event: "quitter_file" }));
       wsRef.current.close();
     }
+    try {
+      await gamesApi.matchmaking(mode, { is_timed: false });
+    } catch {
+      /* ignore */
+    }
     setSearching(false);
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
-    if (!enabled) cancel();
+    if (!enabled) void cancel();
     return () => {
       wsRef.current?.close();
     };
