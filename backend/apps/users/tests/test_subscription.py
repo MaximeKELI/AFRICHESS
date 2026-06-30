@@ -26,12 +26,10 @@ class SubscriptionDemoTests(TestCase):
         self.user = User.objects.create_user(username="sub_demo", password="x")
         self.client.force_authenticate(user=self.user)
 
-    def test_demo_subscribe_gold(self):
+    def test_subscribe_requires_stripe(self):
         resp = self.client.post("/api/users/subscription/subscribe/", {"plan": "gold"}, format="json")
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.data["mode"], "demo")
-        self.user.refresh_from_db()
-        self.assertTrue(self.user.is_premium)
+        self.assertEqual(resp.status_code, 503)
+        self.assertIn("error", resp.data)
 
     @patch("apps.users.views.create_checkout_session")
     def test_stripe_checkout_when_configured(self, mock_checkout):

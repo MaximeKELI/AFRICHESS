@@ -215,7 +215,7 @@ def subscription_billing_portal(request):
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
 def subscription_subscribe(request):
-    """Stripe Checkout si configuré, sinon mode démo (30 jours)."""
+    """Stripe Checkout — pas de mode démo via API (sécurité)."""
     plan_id = (request.data.get("plan") or "").lower()
     if plan_id not in PLANS:
         return Response({"error": "Plan invalide."}, status=400)
@@ -223,22 +223,9 @@ def subscription_subscribe(request):
     checkout = create_checkout_session(user, plan_id)
     if checkout.get("mode") == "stripe" and checkout.get("checkout_url"):
         return Response(checkout)
-    if not (settings.DEBUG and getattr(settings, "PREMIUM_DEMO_ALLOWED", False)):
-        return Response(
-            {"error": "Paiement non configuré. Contactez le support."},
-            status=503,
-        )
-    user.subscription_tier = PLANS[plan_id]["tier"]
-    user.premium_until = timezone.now() + timedelta(days=30)
-    user.save(update_fields=["subscription_tier", "premium_until"])
     return Response(
-        {
-            "mode": "demo",
-            "tier": user.subscription_tier,
-            "is_premium": user.is_premium,
-            "premium_until": user.premium_until,
-            "message": "Abonnement activé (mode démo, DEBUG uniquement).",
-        }
+        {"error": "Paiement non configuré. Contactez le support."},
+        status=503,
     )
 
 
