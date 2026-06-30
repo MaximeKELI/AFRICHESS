@@ -54,13 +54,17 @@ export interface MoveComment {
   moveNumber: number;
 }
 
-export function commentsFromMoves(moves: ApiMove[], playerIsWhite: boolean): MoveComment[] {
+export function commentsFromMoves(
+  moves: ApiMove[],
+  playerIsWhite: boolean,
+  vsAi = true
+): MoveComment[] {
   return moves
     .filter((m) => m.comment?.trim())
     .map((m) => ({
       san: m.san,
       text: m.comment!.trim(),
-      byAi: m.played_by_white !== playerIsWhite,
+      byAi: vsAi ? true : m.played_by_white !== playerIsWhite,
       moveNumber: m.move_number,
     }));
 }
