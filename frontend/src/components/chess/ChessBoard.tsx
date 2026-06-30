@@ -428,6 +428,23 @@ function ChessBoardInner({
     [isCoarse]
   );
 
+  const reviewSquareRenderer = useMemo(() => {
+    if (!moveClassBadge) return undefined;
+    const badgeSquare = moveClassBadge.square;
+    const moveClass = moveClassBadge.moveClass;
+    return forwardRef<HTMLDivElement, CustomSquareProps>(function ReviewSquare(
+      { children, square, style },
+      ref
+    ) {
+      return (
+        <div ref={ref} style={{ ...style, position: "relative" }}>
+          {children}
+          {square === badgeSquare && <MoveClassPieceBadge moveClass={moveClass} />}
+        </div>
+      );
+    });
+  }, [moveClassBadge]);
+
   return (
     <div
       ref={containerRef}
