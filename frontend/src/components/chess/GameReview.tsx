@@ -346,9 +346,9 @@ export function GameReview({
 
           {analysis && (
             <>
-              {!user?.is_diamond && (
+              {limitHint && (
                 <p className="text-[10px] opacity-50 text-center">
-                  {user?.is_premium ? t("chess.analysis.goldLimit") : t("chess.analysis.freeLimit")}{" "}
+                  {limitHint}{" "}
                   <Link href="/premium" className="text-africhess-gold hover:underline">
                     {t("premium.title")}
                   </Link>
