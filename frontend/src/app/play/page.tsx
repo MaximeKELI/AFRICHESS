@@ -571,6 +571,7 @@ function PlayContent() {
       setAiEloChoice(resumeOffer.aiElo as AiLevelElo);
       setIsVsAi(true);
       applyGameResponse(data);
+      refreshPendingComments(data, data.id);
       setResumeOffer(null);
       setStatus(t("play.status.gameResumed"));
     } catch {
