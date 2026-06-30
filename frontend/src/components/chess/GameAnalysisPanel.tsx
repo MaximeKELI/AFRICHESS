@@ -228,9 +228,12 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
             onSelect={setSelectedIdx}
           />
 
-          <AccuracySummary analysis={analysis} compact />
-
-          <MoveClassificationSummary moves={analysis.best_moves_json} colorColumns />
+          <GameReviewStatsDashboard
+            analysis={analysis}
+            moves={analysis.best_moves_json}
+            colorColumns
+            compact
+          />
 
           {reviewDisplay && (
             <div className="max-w-[280px] mx-auto">

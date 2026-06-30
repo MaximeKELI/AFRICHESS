@@ -401,7 +401,7 @@ export function GameReview({
               </div>
 
               {selectedMove && (
-                <div className="rounded-xl border border-africhess-green/30 bg-africhess-green/5 p-4 space-y-2">
+                <div className="rounded-xl border border-africhess-green/25 bg-gradient-to-br from-africhess-green/8 to-transparent p-4 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs uppercase tracking-wide opacity-50">
                       {selectedMove.played_by_white === playerIsWhite
@@ -535,7 +535,7 @@ export function GameReview({
                 {autoTour ? t("chess.review.stopTour") : t("chess.review.startTour")}
               </button>
 
-              <ul className="max-h-36 overflow-y-auto text-xs space-y-0.5 scrollbar-thin border-t border-white/10 pt-2">
+              <ul className="max-h-40 overflow-y-auto text-xs space-y-0.5 scrollbar-thin rounded-xl border border-white/8 bg-black/15 p-2">
                 {moves.map((m, i) => (
                   <li key={i}>
                     <button
