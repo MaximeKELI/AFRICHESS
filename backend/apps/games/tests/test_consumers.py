@@ -137,6 +137,49 @@ class ChessConsumerTests(TransactionTestCase):
         self.assertFalse(connected)
         await communicator.disconnect()
 
+    def test_resign_via_websocket_completes_game(self):
+        async_to_sync(self._test_resign_via_websocket_completes_game)()
+
+    async def _test_resign_via_websocket_completes_game(self):
+        white = await User.objects.acreate(username="resign_w", password="x")
+        black = await User.objects.acreate(username="resign_b", password="x")
+        game = await Game.objects.acreate(
+            white_player=white,
+            black_player=black,
+            status=Game.Status.ACTIVE,
+            is_vs_ai=False,
+        )
+        white_token = str(AccessToken.for_user(white))
+        black_token = str(AccessToken.for_user(black))
+
+        white_ws = WebsocketCommunicator(
+            application,
+            f"/ws/game/{game.id}/?token={white_token}",
+        )
+        black_ws = WebsocketCommunicator(
+            application,
+            f"/ws/game/{game.id}/?token={black_token}",
+        )
+        self.assertTrue((await white_ws.connect())[0])
+        self.assertTrue((await black_ws.connect())[0])
+        await _drain_join_messages(white_ws)
+        await _drain_join_messages(black_ws)
+
+        await white_ws.send_json_to({"event": "resign"})
+        white_msg = await white_ws.receive_json_from()
+        black_msg = await black_ws.receive_json_from()
+
+        self.assertEqual(white_msg["event"], "fin_partie")
+        self.assertEqual(black_msg["event"], "fin_partie")
+        self.assertTrue(white_msg["data"].get("game_over"))
+
+        await game.arefresh_from_db()
+        self.assertEqual(game.status, Game.Status.COMPLETED)
+        self.assertEqual(game.result, Game.Result.BLACK_WIN)
+
+        await white_ws.disconnect()
+        await black_ws.disconnect()
+
 
 @override_settings(CHANNEL_LAYERS=IN_MEMORY_CHANNEL, WS_ALLOW_QUERY_TOKEN=True)
 class MatchmakingConsumerTests(TransactionTestCase):

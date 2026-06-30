@@ -12,6 +12,7 @@ interface Plan {
   name?: string;
   price_eur: number;
   features: string[];
+  analysis_moves?: number;
 }
 
 export default function PremiumPage() {
