@@ -33,7 +33,7 @@ from apps.ratings.services import RatingService
 
 from .anticheat import validate_move_fairplay
 from .draw_rules import can_claim_threefold_from_game, finalize_repetition_draw
-from .time_control import resolve_time_fields
+from .time_control import normalize_matchmaking_time_control, resolve_time_fields
 from .clock_service import (
     apply_increment_after_move,
     apply_server_clock_before_move,
@@ -64,35 +64,26 @@ def create_matchmaking_game(
     *,
     is_timed: bool = True,
     time_minutes: int | None = None,
+    time_control: str | None = None,
     is_rated: bool = True,
 ) -> Game:
-    """Crée une partie classée avec horloges prédéfinies par cadence."""
-    if is_timed and time_minutes is None and mode in MODE_TIME_CONFIG:
-        config = MODE_TIME_CONFIG[mode]
-        game = Game.objects.create(
-            white_player=white,
-            black_player=black,
-            mode=mode,
-            status=Game.Status.ACTIVE,
-            is_timed=True,
-            white_time_ms=config["initial_ms"],
-            black_time_ms=config["initial_ms"],
-            increment_ms=config["increment_ms"],
-            is_rated=is_rated,
-            started_at=timezone.now(),
-            turn_started_at=timezone.now(),
-        )
-    else:
-        game = GameService().create_friend_game(
-            white=white,
-            black=black,
-            mode=mode,
-            is_timed=is_timed,
-            time_minutes=time_minutes,
-            is_rated=is_rated,
-        )
-    ensure_game_room(game)
-    return game
+    """Crée une partie en ligne avec la cadence choisie."""
+    tc = normalize_matchmaking_time_control(
+        mode,
+        is_timed=is_timed,
+        is_rated=is_rated,
+        time_minutes=time_minutes,
+        time_control=time_control,
+    )
+    return GameService().create_friend_game(
+        white=white,
+        black=black,
+        mode=mode,
+        is_timed=is_timed,
+        time_minutes=time_minutes,
+        time_control=tc if is_timed else None,
+        is_rated=is_rated,
+    )
 
 
 class GameService:
