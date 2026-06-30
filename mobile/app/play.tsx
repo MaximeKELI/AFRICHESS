@@ -79,20 +79,6 @@ export default function PlayScreen() {
   }, [botSlug, bots]);
 
   useEffect(() => {
-    if (!gameParam || typeof gameParam !== "string" || !user) return;
-    gamesApi
-      .get(gameParam)
-      .then(({ data }) => {
-        applyGame(data);
-        if (data.white_player?.id === user.id) setColor("white");
-        else if (data.black_player?.id === user.id) setColor("black");
-        setPlayMode("human");
-        setStatus("Partie reprise");
-      })
-      .catch(() => setStatus("Partie introuvable"));
-  }, [gameParam, user, applyGame]);
-
-  useEffect(() => {
     turnStartRef.current = Date.now();
   }, [game?.fen, game?.status]);
 
@@ -123,6 +109,20 @@ export default function PlayScreen() {
       setStatus(`Partie terminée : ${data.result ?? "fin"}`);
     }
   }, []);
+
+  useEffect(() => {
+    if (!gameParam || typeof gameParam !== "string" || !user) return;
+    gamesApi
+      .get(gameParam)
+      .then(({ data }) => {
+        applyGame(data);
+        if (data.white_player?.id === user.id) setColor("white");
+        else if (data.black_player?.id === user.id) setColor("black");
+        setPlayMode("human");
+        setStatus("Partie reprise");
+      })
+      .catch(() => setStatus("Partie introuvable"));
+  }, [gameParam, user, applyGame]);
 
   const refreshComments = useCallback(
     (data: GameData & { comments_pending?: boolean }) => {
