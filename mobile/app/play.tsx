@@ -14,7 +14,7 @@ import { ChessBoard } from "../components/ChessBoard";
 import { GameClock } from "../components/GameClock";
 import { PocketBar } from "../components/PocketBar";
 import { useAuth } from "../context/AuthContext";
-import { useGameWebSocket } from "../hooks/useGameWebSocket";
+import { useGameWebSocket, type WsGamePatch } from "../hooks/useGameWebSocket";
 import { useMatchmakingWebSocket } from "../hooks/useMatchmakingWebSocket";
 import { parsePocketsFromFen, pocketForPlayer } from "../lib/crazyhouse";
 import { latestComment, pollPendingMoveComments } from "../lib/pollComments";
@@ -46,7 +46,17 @@ export default function PlayScreen() {
   const [busy, setBusy] = useState(false);
   const [loadingBots, setLoadingBots] = useState(true);
   const [aiCommentsEnabled, setAiCommentsEnabled] = useState(true);
+  const [isRated, setIsRated] = useState(false);
+  const [fairplayConsent, setFairplayConsent] = useState<boolean | null>(null);
   const turnStartRef = useRef(Date.now());
+
+  useEffect(() => {
+    if (!user || playMode !== "human") return;
+    gamesApi
+      .fairplayStatus()
+      .then(({ data }) => setFairplayConsent(Boolean(data.consent_given)))
+      .catch(() => setFairplayConsent(false));
+  }, [user, playMode]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -115,6 +125,10 @@ export default function PlayScreen() {
     return pocketForPlayer(parsePocketsFromFen(game.fen), playerColor);
   }, [game, activeVariant, playerColor]);
 
+  const handleGamePatch = useCallback((patch: WsGamePatch) => {
+    setGame((prev) => (prev ? { ...prev, ...patch } : prev));
+  }, []);
+
   const handleWsUpdate = useCallback(
     (payload: Parameters<typeof wsPayloadToGameData>[0]) => {
       applyGame(wsPayloadToGameData(payload));
@@ -145,8 +159,43 @@ export default function PlayScreen() {
       Boolean(user && playMode === "human"),
       "blitz",
       handleMatchFound,
-      { isTimed: true, timeControl: "3+2", isRated: true }
+      { isTimed: true, timeControl: "3+2", isRated }
     );
+
+  const promptFairplayThenSearch = () => {
+    if (isRated && fairplayConsent !== true) {
+      Alert.alert(
+        "Fair Play",
+        "Les parties classées nécessitent votre consentement au programme Fair Play (télémétrie anti-triche).",
+        [
+          { text: "Annuler", style: "cancel" },
+          {
+            text: "Partie amicale",
+            onPress: () => {
+              setIsRated(false);
+              void startMatchmaking();
+            },
+          },
+          {
+            text: "Accepter",
+            onPress: () => {
+              void (async () => {
+                try {
+                  await gamesApi.fairplayConsent();
+                  setFairplayConsent(true);
+                  void startMatchmaking();
+                } catch {
+                  setStatus("Impossible d'enregistrer le consentement Fair Play.");
+                }
+              })();
+            },
+          },
+        ]
+      );
+      return;
+    }
+    void startMatchmaking();
+  };
 
   const { connected: wsConnected, wsError, resign: wsResign } = useGameWebSocket(
     game?.id ?? null,
@@ -156,7 +205,8 @@ export default function PlayScreen() {
       const data = wsPayloadToGameData(payload);
       setStatus(`Partie terminée : ${data.result ?? payload.reason ?? "fin"}`);
       applyGame(data);
-    }
+    },
+    handleGamePatch
   );
 
   const startGame = async () => {
@@ -246,6 +296,88 @@ export default function PlayScreen() {
                 setStatus("Impossible d'abandonner");
               }
             });
+        },
+      },
+    ]);
+  };
+
+  const handleOfferDraw = async () => {
+    if (!game || busy) return;
+    setBusy(true);
+    try {
+      const { data } = await gamesApi.offerDraw(game.id);
+      setGame((prev) =>
+        prev ? { ...prev, draw_offered_by: data.offered_by ?? user?.id ?? null } : prev
+      );
+      setStatus("Proposition de nulle envoyée");
+    } catch {
+      setStatus("Impossible de proposer la nulle");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleRespondDraw = (accept: boolean) => {
+    if (!game) return;
+    setBusy(true);
+    gamesApi
+      .respondDraw(game.id, accept)
+      .then(({ data }) => {
+        applyGame(data);
+        setStatus(accept ? "Partie nulle" : "Nulle refusée");
+      })
+      .catch(() => setStatus("Réponse à la nulle impossible"))
+      .finally(() => setBusy(false));
+  };
+
+  const handleOfferTakeback = async () => {
+    if (!game || busy) return;
+    setBusy(true);
+    try {
+      const { data } = await gamesApi.offerTakeback(game.id);
+      setGame((prev) =>
+        prev
+          ? { ...prev, takeback_requested_by: data.requested_by ?? user?.id ?? null }
+          : prev
+      );
+      setStatus("Demande de reprise envoyée");
+    } catch {
+      setStatus("Reprise impossible (parties amicales uniquement)");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleRespondTakeback = (accept: boolean) => {
+    if (!game) return;
+    setBusy(true);
+    gamesApi
+      .respondTakeback(game.id, accept)
+      .then(({ data }) => {
+        applyGame(data);
+        setStatus(accept ? "Coup repris" : "Reprise refusée");
+      })
+      .catch(() => setStatus("Réponse à la reprise impossible"))
+      .finally(() => setBusy(false));
+  };
+
+  const handleAbort = () => {
+    if (!game) return;
+    Alert.alert("Annuler la partie", "Annuler la partie (2 premiers coups) ?", [
+      { text: "Non", style: "cancel" },
+      {
+        text: "Annuler la partie",
+        style: "destructive",
+        onPress: () => {
+          setBusy(true);
+          gamesApi
+            .abort(game.id)
+            .then(({ data }) => {
+              applyGame(data);
+              setStatus("Partie annulée");
+            })
+            .catch(() => setStatus("Annulation impossible"))
+            .finally(() => setBusy(false));
         },
       },
     ]);
