@@ -20,10 +20,16 @@ export interface ReviewHighlight {
   best?: { from: string; to: string };
 }
 
+export interface MoveClassBadge {
+  square: string;
+  moveClass: string;
+}
+
 export interface ReviewBoardState {
   fen: string;
   lastMove: { from: string; to: string } | null;
   reviewHighlight: ReviewHighlight | null;
+  moveClassBadge: MoveClassBadge | null;
 }
 
 function uciSquares(uci: string): { from: string; to: string } | null {
@@ -34,10 +40,10 @@ function uciSquares(uci: string): { from: string; to: string } | null {
 export function reviewBoardState(
   moves: ReviewMove[],
   selectedIdx: number | null,
-  playerIsWhite: boolean
+  playerIsWhite?: boolean
 ): ReviewBoardState {
   if (selectedIdx == null || selectedIdx < 0 || !moves[selectedIdx]) {
-    return { fen: REVIEW_START_FEN, lastMove: null, reviewHighlight: null };
+    return { fen: REVIEW_START_FEN, lastMove: null, reviewHighlight: null, moveClassBadge: null };
   }
 
   const move = moves[selectedIdx];
@@ -47,10 +53,10 @@ export function reviewBoardState(
     .filter((u): u is string => Boolean(u));
 
   const fenBefore = buildGameDisplayFromUciList(REVIEW_START_FEN, uciBefore).fen;
-  const isUser = move.played_by_white === playerIsWhite;
-  const isSuboptimal = ["inaccuracy", "mistake", "blunder"].includes(move.class);
   const played = move.uci ? uciSquares(move.uci) : null;
   const best = move.best_uci ? uciSquares(move.best_uci) : null;
+  const isUser = playerIsWhite !== undefined && move.played_by_white === playerIsWhite;
+  const isSuboptimal = ["inaccuracy", "mistake", "blunder"].includes(move.class);
   const showBestHint =
     isUser &&
     isSuboptimal &&
@@ -63,6 +69,9 @@ export function reviewBoardState(
       fen: fenBefore,
       lastMove: null,
       reviewHighlight: { played, best },
+      moveClassBadge: played
+        ? { square: played.from, moveClass: move.class }
+        : null,
     };
   }
 
@@ -72,6 +81,9 @@ export function reviewBoardState(
     fen: after.fen,
     lastMove: after.lastMove,
     reviewHighlight: null,
+    moveClassBadge: played
+      ? { square: played.to, moveClass: move.class }
+      : null,
   };
 }
 
