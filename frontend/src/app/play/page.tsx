@@ -218,17 +218,19 @@ function PlayContent() {
   );
   const ratedClockLabel = MODE_CLOCK_LABEL[mode] ?? "10+0";
 
-  const setupCategories = useMemo(
-    () => [
-      { id: "game", label: t("play.options.game") },
-      { id: "ai", label: t("play.vsAi.title") },
-      { id: "online", label: t("play.online.title") },
-      { id: "board", label: t("board.picker.title") },
-      { id: "pieces", label: t("board.picker.pieces") },
-      { id: "background", label: t("background.picker.title") },
-    ],
-    [t]
-  );
+  useEffect(() => {
+    if (!setupFromUrl) return;
+    if (setupFromUrl === "appearance" || setupFromUrl === "background") {
+      setSetupCategory("appearance");
+      setMobileTab("setup");
+    } else if (setupFromUrl === "ai") {
+      setSetupCategory("ai");
+      setMobileTab("setup");
+    } else if (setupFromUrl === "game" || setupFromUrl === "online") {
+      setSetupCategory(setupFromUrl);
+      setMobileTab("setup");
+    }
+  }, [setupFromUrl]);
 
   const displayCacheRef = useRef<GameDisplayState>(buildGameDisplayFromFen("start"));
   const movesLenRef = useRef(0);
@@ -903,13 +905,31 @@ function PlayContent() {
             type="button"
             role="tab"
             aria-selected={mobileTab === tab}
-            onClick={() => setMobileTab(tab)}
+            onClick={() => {
+              setMobileTab(tab);
+              if (tab === "setup" && setupFromUrl === "appearance") {
+                setSetupCategory("appearance");
+              }
+            }}
             className={`play-mobile-tab ${mobileTab === tab ? "play-mobile-tab-active" : "opacity-70"}`}
           >
             {t(`play.mobileTab.${tab}`)}
           </button>
         ))}
       </div>
+
+      {mobileTab === "setup" && (
+        <div className="lg:hidden glass-card p-4 mb-4">
+          <PlaySetupOptions
+            setupCategory={setupCategory}
+            onSetupCategoryChange={setSetupCategory}
+            gameSection={playGameSection}
+            aiSection={playAiSection}
+            onlineSection={playOnlineSection}
+            status={status ? <p className="text-sm text-africhess-gold">{status}</p> : null}
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(240px,300px)] gap-4 lg:gap-5 items-start">
         <div className={`w-full min-w-0 max-w-full space-y-3 ${mobileTab !== "board" ? "hidden lg:block" : ""}`}>
