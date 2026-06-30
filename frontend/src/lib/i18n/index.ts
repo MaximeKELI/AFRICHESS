@@ -2571,6 +2571,7 @@ const ar: Record<string, string> = {
 
 const pt: Record<string, string> = {
   ...en,
+  ...ptOverlay,
   "nav.play": "Jogar",
   "nav.puzzles": "Problemas",
   "nav.learn": "Aprender",
@@ -2599,6 +2600,7 @@ const pt: Record<string, string> = {
 
 const sw: Record<string, string> = {
   ...en,
+  ...swOverlay,
   "nav.play": "Cheza",
   "nav.puzzles": "Fumbo",
   "nav.learn": "Jifunze",
