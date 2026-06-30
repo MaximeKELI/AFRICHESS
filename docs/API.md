@@ -25,8 +25,9 @@ OAuth flow: social login redirects to `/auth/callback?code=…`, frontend POSTs 
 | GET/PATCH | `/api/users/profile/` | Current user profile |
 | GET | `/api/users/<username>/` | Public profile |
 | GET | `/api/users/subscription/plans/` | Plans + `analysis_limits` |
-| GET | `/api/users/subscription/status/` | Premium tier status |
+| GET | `/api/users/subscription/status/` | Premium tier status (`has_billing_portal` si Stripe actif) |
 | POST | `/api/users/subscription/subscribe/` | Stripe checkout or demo |
+| POST | `/api/users/subscription/billing-portal/` | Stripe Customer Portal URL (gérer abonnement) |
 | POST | `/api/users/subscription/webhook/` | Stripe webhook |
 | GET | `/api/users/security/2fa/status/` | 2FA status |
 | POST | `/api/users/security/2fa/setup/` | Generate TOTP secret |
