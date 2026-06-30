@@ -265,13 +265,17 @@ Voir le guide complet : [docs/SETUP.md](docs/SETUP.md)
 
 Référence complète : [docs/API.md](docs/API.md)
 
-### WebSocket (JWT dans `?token=`)
+### WebSocket (JWT via `Sec-WebSocket-Protocol`)
 
-| Canal | URL | Usage |
-|-------|-----|--------|
-| **Partie** | `ws://host/ws/game/<uuid>/?token=JWT` | Coups, chrono, fin de partie |
-| **Matchmaking** | `ws://host/ws/matchmaking/?token=JWT` | File → `match_found` |
-| **Notifications** | `ws://host/ws/notifications/?token=JWT` | Snapshot + `new_notification` |
+| Canal | URL | Auth |
+|-------|-----|------|
+| **Partie** | `ws://host/ws/game/<uuid>/` | `Sec-WebSocket-Protocol: bearer,<JWT>` |
+| **Matchmaking** | `ws://host/ws/matchmaking/` | idem |
+| **Notifications** | `ws://host/ws/notifications/` | idem |
+
+Repli dev optionnel : `?token=JWT` si `WS_ALLOW_QUERY_TOKEN=true` (désactivé par défaut).
+
+Abandon HTTP : `POST /api/games/<uuid>/resign/`
 
 ```mermaid
 sequenceDiagram
