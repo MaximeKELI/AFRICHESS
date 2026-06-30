@@ -7,11 +7,19 @@ const MAX_WS_RETRIES = 5;
 
 type WsHandler = (payload: WsGamePayload) => void;
 
+export interface WsGamePatch {
+  draw_offered_by?: number | null;
+  takeback_requested_by?: number | null;
+}
+
+type WsPatchHandler = (patch: WsGamePatch) => void;
+
 export function useGameWebSocket(
   gameId: string | null,
   enabled: boolean,
   onUpdate: WsHandler,
-  onGameOver?: WsHandler
+  onGameOver?: WsHandler,
+  onGamePatch?: WsPatchHandler
 ) {
   const [connected, setConnected] = useState(false);
   const [wsError, setWsError] = useState<string | null>(null);
@@ -20,11 +28,13 @@ export function useGameWebSocket(
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onUpdateRef = useRef(onUpdate);
   const onGameOverRef = useRef(onGameOver);
+  const onGamePatchRef = useRef(onGamePatch);
 
   useEffect(() => {
     onUpdateRef.current = onUpdate;
     onGameOverRef.current = onGameOver;
-  }, [onUpdate, onGameOver]);
+    onGamePatchRef.current = onGamePatch;
+  }, [onUpdate, onGameOver, onGamePatch]);
 
   useEffect(() => {
     if (!gameId || !enabled) {
@@ -69,6 +79,27 @@ export function useGameWebSocket(
           if (event === "fin_partie" && data?.game) {
             onUpdateRef.current(data as WsGamePayload);
             onGameOverRef.current?.(data as WsGamePayload);
+          }
+          if (event === "proposition_nulle" && data) {
+            if (data.declined) {
+              onGamePatchRef.current?.({ draw_offered_by: null });
+            } else if (data.offered_by != null) {
+              onGamePatchRef.current?.({ draw_offered_by: data.offered_by as number });
+            }
+          }
+          if (event === "proposition_reprise" && data) {
+            if (data.declined) {
+              onGamePatchRef.current?.({ takeback_requested_by: null });
+            } else if (data.requested_by != null) {
+              onGamePatchRef.current?.({ takeback_requested_by: data.requested_by as number });
+            } else if (data.game) {
+              onUpdateRef.current(data as WsGamePayload);
+              const game = (data as WsGamePayload).game as Record<string, unknown>;
+              onGamePatchRef.current?.({
+                draw_offered_by: (game.draw_offered_by as number | null) ?? null,
+                takeback_requested_by: (game.takeback_requested_by as number | null) ?? null,
+              });
+            }
           }
           if (event === "error") {
             const message =

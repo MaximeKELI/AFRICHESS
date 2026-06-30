@@ -19,6 +19,10 @@ export function wsPayloadToGameData(payload: WsGamePayload): GameData {
     status: game.status,
     result: game.result,
     is_vs_ai: game.is_vs_ai,
+    is_rated: game.is_rated,
+    move_count: game.move_count,
+    draw_offered_by: game.draw_offered_by,
+    takeback_requested_by: game.takeback_requested_by,
     ai_target_elo: game.ai_target_elo,
     moves: game.moves,
     variant: game.variant,
@@ -27,5 +31,7 @@ export function wsPayloadToGameData(payload: WsGamePayload): GameData {
     black_time_ms: game.black_time_ms,
     increment_ms: game.increment_ms,
     bot: game.bot,
+    white_player: game.white_player,
+    black_player: game.black_player,
   };
 }
