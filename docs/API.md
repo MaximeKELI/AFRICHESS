@@ -9,12 +9,14 @@ Public health: `GET /api/health/` — no auth, for load balancers.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/auth/login/` | Login `{username, password, totp_code?}` |
-| POST | `/api/auth/logout/` | Logout + denylist access token |
-| POST | `/api/auth/token/refresh/` | Refresh JWT |
+| POST | `/api/auth/logout/` | Logout + denylist access/refresh (body `{refresh}` or cookie HttpOnly) |
+| POST | `/api/auth/token/refresh/` | Refresh JWT — body `{refresh}` or cookie `refresh_token` if `JWT_REFRESH_HTTPONLY=true` |
 | POST | `/api/users/register/` | Register account |
 | POST | `/api/users/auth/oauth/exchange/` | Exchange OAuth `code` → `{access, refresh}` (`totp_code` if 2FA). Mobile: `?next=africhess://auth/callback` |
 
 OAuth flow: social login redirects to `/auth/callback?code=…`, frontend POSTs code (and TOTP if needed) to exchange endpoint.
+
+**HttpOnly refresh (Phase 10, optional):** set `JWT_REFRESH_HTTPONLY=true` (backend) and `NEXT_PUBLIC_JWT_REFRESH_HTTPONLY=true` (frontend). Login/register/oauth responses omit `refresh` in JSON; the token is set as `Set-Cookie: refresh_token` (HttpOnly). Frontend must use `withCredentials` on refresh/logout. Mobile apps keep body-based refresh.
 
 ## Users
 

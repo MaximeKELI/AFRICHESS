@@ -25,8 +25,8 @@ vi.mock("@/lib/cookies", () => ({
   setRefreshToken: vi.fn(),
 }));
 
-vi.mock("@/lib/session", () => ({
-  handleSessionExpired: vi.fn(),
+vi.mock("@/lib/authConfig", () => ({
+  JWT_REFRESH_HTTPONLY: false,
 }));
 
 describe("refreshAuthTokens", () => {
