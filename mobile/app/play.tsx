@@ -31,7 +31,7 @@ const VARIANTS: { id: GameVariant; label: string }[] = [
 ];
 
 export default function PlayScreen() {
-  const { bot: botSlug } = useLocalSearchParams<{ bot?: string }>();
+  const { bot: botSlug, game: gameParam } = useLocalSearchParams<{ bot?: string; game?: string }>();
   const { user, loading: authLoading } = useAuth();
   const [bots, setBots] = useState<Bot[]>([]);
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
@@ -77,6 +77,20 @@ export default function PlayScreen() {
     const match = bots.find((b) => b.slug === botSlug);
     if (match) setSelectedBot(match);
   }, [botSlug, bots]);
+
+  useEffect(() => {
+    if (!gameParam || typeof gameParam !== "string" || !user) return;
+    gamesApi
+      .get(gameParam)
+      .then(({ data }) => {
+        applyGame(data);
+        if (data.white_player?.id === user.id) setColor("white");
+        else if (data.black_player?.id === user.id) setColor("black");
+        setPlayMode("human");
+        setStatus("Partie reprise");
+      })
+      .catch(() => setStatus("Partie introuvable"));
+  }, [gameParam, user, applyGame]);
 
   useEffect(() => {
     turnStartRef.current = Date.now();
