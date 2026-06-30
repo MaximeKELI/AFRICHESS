@@ -105,6 +105,14 @@ export default function PremiumPage() {
               {plan.features.map((f) => (
                 <li key={f}>✓ {t(`premium.feature.${f}`, { defaultValue: f })}</li>
               ))}
+              {typeof plan.analysis_moves === "number" && (
+                <li>
+                  ✓{" "}
+                  {t("premium.analysisMoves", {
+                    count: plan.analysis_moves,
+                  })}
+                </li>
+              )}
             </ul>
             {plan.id !== "free" && user && (
               <button

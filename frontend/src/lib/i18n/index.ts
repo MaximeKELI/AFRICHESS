@@ -1226,6 +1226,7 @@ const fr: Record<string, string> = {
   "premium.feature.deep_game_review": "Game Review approfondi",
   "premium.feature.lessons_unlimited": "Leçons illimitées",
   "premium.feature.no_ads": "Sans publicité",
+  "premium.analysisMoves": "Analyse jusqu'à {count} coups / partie",
   "play.variant.title": "Variante",
   "play.variant.standard": "Classique",
   "play.variant.chess960": "Chess960",
