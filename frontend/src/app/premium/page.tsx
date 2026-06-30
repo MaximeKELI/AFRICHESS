@@ -20,11 +20,16 @@ export default function PremiumPage() {
   const { user } = useAuthStore();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [stripeEnabled, setStripeEnabled] = useState(false);
-  const [status, setStatus] = useState<{ tier: string; is_premium: boolean } | null>(null);
+  const [status, setStatus] = useState<{
+    tier: string;
+    is_premium: boolean;
+    has_billing_portal?: boolean;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [subscribing, setSubscribing] = useState<string | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
 
   useEffect(() => {
     usersApi

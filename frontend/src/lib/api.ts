@@ -136,6 +136,7 @@ export const usersApi = {
   get: (username: string) => api.get(`/users/${username}/`),
   subscriptionPlans: () => api.get("/users/subscription/plans/"),
   subscriptionStatus: () => api.get("/users/subscription/status/"),
+  billingPortal: () => api.post<{ portal_url: string }>("/users/subscription/billing-portal/"),
   subscribe: (plan: "gold" | "diamond") =>
     api.post("/users/subscription/subscribe/", { plan }),
   setVacation: (days: number) => api.post("/users/vacation/", { days }),

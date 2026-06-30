@@ -19,7 +19,7 @@ from .oauth_exchange import consume_oauth_code
 from .totp_service import verify_totp
 from .serializers import RegisterSerializer, UserPublicSerializer, UserSerializer, UserUpdateSerializer
 from .premium_utils import DIAMOND_ANALYSIS_MOVES, FREE_ANALYSIS_MOVES, GOLD_ANALYSIS_MOVES
-from .stripe_service import create_checkout_session, handle_webhook, stripe_enabled
+from .stripe_service import create_billing_portal_session, create_checkout_session, handle_webhook, stripe_enabled
 
 User = get_user_model()
 
