@@ -517,6 +517,9 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
 
         rating = PlayerRating.objects.filter(user=self.user, mode=mode).first()
         elo = rating.elo if rating else getattr(self.user, "initial_elo", 1200)
+        from .models import MatchmakingQueue
+
+        was_in_queue = MatchmakingQueue.objects.filter(user=self.user).exists()
         svc = MatchmakingService()
         game = svc.find_match(
             self.user,
@@ -540,14 +543,14 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
                 variant=variant,
             )
             svc.pair_all_waiting()
-            return None
+            return None, not was_in_queue
         room = ensure_game_room(game)
         opponent_id = (
             game.black_player_id
             if game.white_player_id == self.user.id
             else game.white_player_id
         )
-        return str(game.id), str(room.room_id), mode, opponent_id
+        return (str(game.id), str(room.room_id), mode, opponent_id), False
 
     @database_sync_to_async
     def _leave_queue(self):
