@@ -6,6 +6,7 @@ import axios, { isAxiosError } from "axios";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { setAccessToken, setRefreshToken } from "@/lib/cookies";
+import { JWT_REFRESH_HTTPONLY } from "@/lib/authConfig";
 import { API_URL } from "@/lib/apiConfig";
 
 export default function AuthCallbackPage() {
@@ -32,15 +33,16 @@ export default function AuthCallbackPage() {
     setLoading(true);
     setError("");
     try {
-      const { data } = await axios.post<{ access: string; refresh: string }>(
+      const { data } = await axios.post<{ access: string; refresh?: string }>(
         `${API_URL}/users/auth/oauth/exchange/`,
-        { code: oauthCode, ...(totp ? { totp_code: totp } : {}) }
+        { code: oauthCode, ...(totp ? { totp_code: totp } : {}) },
+        { withCredentials: JWT_REFRESH_HTTPONLY }
       );
-      if (!data.access || !data.refresh) {
+      if (!data.access) {
         throw new Error("invalid");
       }
       setAccessToken(data.access);
-      setRefreshToken(data.refresh);
+      if (data.refresh) setRefreshToken(data.refresh);
       window.history.replaceState({}, "", "/auth/callback");
       await fetchProfile();
       router.replace("/play");
