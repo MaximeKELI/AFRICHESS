@@ -5,10 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { Chess } from "chess.js";
 import { MessageCircle } from "lucide-react";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
-import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
-import { BackgroundPicker } from "@/components/chess/BackgroundPicker";
+import { PlaySetupOptions, type PlaySetupCategory } from "@/components/chess/PlaySetupOptions";
 import { OptionSection } from "@/components/ui/OptionSection";
-import { OptionCategoryNav } from "@/components/ui/OptionCategoryNav";
 import { AiCommentaryPanel } from "@/components/chess/AiCommentaryPanel";
 import { AiTauntBubble } from "@/components/chess/AiTauntBubble";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
@@ -113,6 +111,7 @@ function PlayContent() {
   const mode = params.get("mode") || "blitz";
   const gameFromUrl = params.get("game");
   const botFromUrl = params.get("bot");
+  const setupFromUrl = params.get("setup");
   const { user } = useAuthStore();
   const { t } = useTranslation();
   const [gameId, setGameId] = useState<string | null>(null);
@@ -137,9 +136,7 @@ function PlayContent() {
   const [dropPiece, setDropPiece] = useState<string | null>(null);
   const [activeVariant, setActiveVariant] = useState<GameVariant>("standard");
   const [mobileTab, setMobileTab] = useState<"board" | "moves" | "chat" | "setup">("setup");
-  const [setupCategory, setSetupCategory] = useState<
-    "game" | "ai" | "online" | "board" | "pieces" | "background"
-  >("game");
+  const [setupCategory, setSetupCategory] = useState<PlaySetupCategory>("game");
   const [aiStarting, setAiStarting] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const { aiCommentsEnabled } = usePreferencesStore();
