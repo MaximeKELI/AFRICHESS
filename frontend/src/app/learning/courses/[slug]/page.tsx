@@ -15,6 +15,8 @@ interface Lesson {
   content: string;
   video_url: string;
   order: number;
+  locked?: boolean;
+  premium_required?: boolean;
 }
 
 interface QuizQ {
@@ -53,7 +55,12 @@ export default function CoursePage() {
       setMsg(data.xp_gained ? `+${data.xp_gained} XP` : t("learning.lesson.alreadyDone"));
       const { data: refreshed } = await learningApi.course(slug);
       setCourse(refreshed);
-    } catch {
+    } catch (err: unknown) {
+      const ax = err as { response?: { status?: number; data?: { code?: string } } };
+      if (ax.response?.status === 403 && ax.response?.data?.code === "premium_required") {
+        setMsg(t("premium.subtitle"));
+        return;
+      }
       setMsg(t("learning.progress.saveLogin"));
     }
   };

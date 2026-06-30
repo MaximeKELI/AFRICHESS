@@ -40,7 +40,16 @@ export default function VideosPage() {
           {selected ? (
             <>
               <h2 className="font-semibold mb-3">{selected.title}</h2>
-              <VideoEmbed url={selected.url} />
+              {selected.locked || !selected.url ? (
+                <div className="text-sm opacity-70 space-y-3">
+                  <p>{t("premium.subtitle")}</p>
+                  <Link href="/premium" className="inline-block text-africhess-gold hover:underline">
+                    {t("premium.subscribe")}
+                  </Link>
+                </div>
+              ) : (
+                <VideoEmbed url={selected.url} />
+              )}
             </>
           ) : (
             <p className="text-sm opacity-60">{t("videos.empty")}</p>
@@ -51,12 +60,16 @@ export default function VideosPage() {
             <li key={v.id}>
               <button
                 type="button"
-                onClick={() => setSelected(v)}
+                onClick={() => !v.locked && setSelected(v)}
+                disabled={Boolean(v.locked)}
                 className={`w-full text-left text-sm p-3 rounded-lg border ${
                   selected?.id === v.id ? "border-africhess-gold bg-africhess-gold/10" : "border-white/10"
-                }`}
+                } ${v.locked ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 {v.title}
+                {v.locked && (
+                  <span className="ml-1 text-[10px] text-africhess-gold uppercase">{t("bots.premium")}</span>
+                )}
                 <span className="block text-xs opacity-50 capitalize">{v.category}</span>
               </button>
             </li>
