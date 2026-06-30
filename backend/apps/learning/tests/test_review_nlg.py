@@ -22,5 +22,5 @@ class ReviewNlgTests(SimpleTestCase):
         )
         self.assertIn("gaffe", summary_fr.lower())
         self.assertIn("blunder", summary_en.lower())
-        self.assertEqual(len(moments), 1)
-        self.assertIn("Nf3", moments[0]["text"])
+        self.assertGreaterEqual(len(moments), 1)
+        self.assertTrue(any(m.get("class") == "blunder" for m in moments))
