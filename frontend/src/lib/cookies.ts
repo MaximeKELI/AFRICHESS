@@ -19,5 +19,5 @@ export function setRefreshToken(token: string | undefined) {
 }
 
 export function hasRefreshCredential(): boolean {
-  return JWT_REFRESH_HTTPONLY || Boolean(Cookies.get("refresh_token"));
+  return Boolean(Cookies.get("refresh_token"));
 }

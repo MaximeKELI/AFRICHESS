@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import Cookies from "js-cookie";
 import { AxiosError } from "axios";
-import { authApi } from "@/lib/api";
-import { setAccessToken, setRefreshToken, hasRefreshCredential } from "@/lib/cookies";
+import { authApi, refreshAuthTokens } from "@/lib/api";
+import { JWT_REFRESH_HTTPONLY } from "@/lib/authConfig";
+import { setAccessToken, setRefreshToken } from "@/lib/cookies";
 import { formatApiError } from "@/lib/errors";
 import { translate } from "@/lib/i18n";
 import { clearAuthCookies } from "@/lib/session";
@@ -174,10 +175,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   fetchProfile: async () => {
-    if (!Cookies.get("access_token") && !hasRefreshCredential()) {
-      syncPreferencesForUser(null);
-      set({ user: null });
-      return;
+    if (!Cookies.get("access_token") && !Cookies.get("refresh_token")) {
+      if (JWT_REFRESH_HTTPONLY) {
+        await refreshAuthTokens();
+      }
+      if (!Cookies.get("access_token")) {
+        syncPreferencesForUser(null);
+        set({ user: null });
+        return;
+      }
     }
     try {
       const { data } = await authApi.profile();

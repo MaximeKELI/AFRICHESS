@@ -1,0 +1,159 @@
+export type MobileLocale = "fr" | "en";
+
+type Dict = Record<string, string>;
+
+const fr: Dict = {
+  "app.title": "AFRICHESS",
+  "app.subtitle": "Jouez, apprenez, progressez — partout dans le monde",
+  "app.hello": "Bonjour, {name}",
+  "app.premium": "Premium",
+  "app.loginPrompt": "Connectez-vous pour jouer en ligne",
+  "app.botsAvailable": "{count} bots IA disponibles",
+  "app.playAi": "Jouer vs IA",
+  "app.login": "Connexion",
+  "app.botCatalog": "Catalogue bots",
+  "app.dailyChess": "Daily chess",
+  "app.friends": "Amis",
+  "app.puzzles": "Puzzles",
+  "app.learning": "Apprentissage",
+  "app.tournaments": "Tournois",
+  "app.logout": "Déconnexion",
+  "app.language": "Langue",
+  "app.apiHint": "API : {url}\nAndroid émulateur : 10.0.2.2 · iOS : localhost ou IP LAN",
+
+  "login.title": "Connexion",
+  "login.username": "Nom d'utilisateur",
+  "login.password": "Mot de passe",
+  "login.totp": "Code 2FA",
+  "login.submit": "Se connecter",
+  "login.oauthGoogle": "Google",
+  "login.oauthGithub": "GitHub",
+  "login.register": "Créer un compte",
+  "login.error.credentials": "Identifiants incorrects ou serveur indisponible.",
+  "login.error.totp": "Code 2FA requis (application d'authentification).",
+  "login.error.oauth": "Connexion OAuth annulée ou indisponible.",
+
+  "puzzles.tab.daily": "Du jour",
+  "puzzles.tab.rush": "Rush",
+  "puzzles.streak": "Série : {count} jour(s)",
+  "puzzles.rush.progress": "{current} · Score {score} · {time}s",
+  "puzzles.rush.misses": "Erreurs : {count}/3",
+  "puzzles.error.load": "Impossible de charger le puzzle.",
+  "puzzles.error.rushLogin": "Connexion requise pour le Puzzle Rush.",
+  "puzzles.error.rushLimit": "Puzzle Rush indisponible (limite premium ?).",
+  "puzzles.none": "Aucun puzzle.",
+  "puzzles.retry": "Réessayer",
+  "puzzles.validate": "Valider",
+  "puzzles.reset": "Reset",
+  "puzzles.loginLink": "Se connecter",
+  "puzzles.correct": "Correct !",
+  "puzzles.wrong": "Raté.",
+  "puzzles.bravo": "Bravo ! Série : {streak}j",
+  "puzzles.wrongLine": "Ce n'est pas la bonne ligne.",
+  "puzzles.submitError": "Validation impossible.",
+  "puzzles.rush.done": "Rush terminé — score : {score}",
+  "puzzles.rush.timeout": "Temps écoulé — score : {score}",
+  "puzzles.rush.threeMisses": "3 erreurs — score : {score}",
+
+  "learning.title": "Apprentissage",
+  "learning.subtitle": "Cours, vidéos et progression",
+  "learning.courses": "Cours",
+  "learning.videos": "Vidéos",
+  "learning.empty": "Aucun contenu disponible.",
+  "learning.error": "Impossible de charger l'apprentissage.",
+  "learning.premium": "Contenu premium",
+
+  "tournaments.title": "Tournois",
+  "tournaments.subtitle": "Compétitions en ligne",
+  "tournaments.empty": "Aucun tournoi ouvert.",
+  "tournaments.error": "Impossible de charger les tournois.",
+  "tournaments.registered": "Inscrit",
+  "tournaments.open": "Inscriptions ouvertes",
+  "tournaments.live": "En cours",
+};
+
+const en: Dict = {
+  "app.title": "AFRICHESS",
+  "app.subtitle": "Play, learn, improve — worldwide",
+  "app.hello": "Hello, {name}",
+  "app.premium": "Premium",
+  "app.loginPrompt": "Sign in to play online",
+  "app.botsAvailable": "{count} AI bots available",
+  "app.playAi": "Play vs AI",
+  "app.login": "Sign in",
+  "app.botCatalog": "Bot catalog",
+  "app.dailyChess": "Daily chess",
+  "app.friends": "Friends",
+  "app.puzzles": "Puzzles",
+  "app.learning": "Learning",
+  "app.tournaments": "Tournaments",
+  "app.logout": "Sign out",
+  "app.language": "Language",
+  "app.apiHint": "API: {url}\nAndroid emulator: 10.0.2.2 · iOS: localhost or LAN IP",
+
+  "login.title": "Sign in",
+  "login.username": "Username",
+  "login.password": "Password",
+  "login.totp": "2FA code",
+  "login.submit": "Sign in",
+  "login.oauthGoogle": "Google",
+  "login.oauthGithub": "GitHub",
+  "login.register": "Create account",
+  "login.error.credentials": "Invalid credentials or server unavailable.",
+  "login.error.totp": "2FA code required (authenticator app).",
+  "login.error.oauth": "OAuth sign-in cancelled or unavailable.",
+
+  "puzzles.tab.daily": "Daily",
+  "puzzles.tab.rush": "Rush",
+  "puzzles.streak": "Streak: {count} day(s)",
+  "puzzles.rush.progress": "{current} · Score {score} · {time}s",
+  "puzzles.rush.misses": "Misses: {count}/3",
+  "puzzles.error.load": "Could not load puzzle.",
+  "puzzles.error.rushLogin": "Sign in required for Puzzle Rush.",
+  "puzzles.error.rushLimit": "Puzzle Rush unavailable (premium limit?).",
+  "puzzles.none": "No puzzle.",
+  "puzzles.retry": "Retry",
+  "puzzles.validate": "Submit",
+  "puzzles.reset": "Reset",
+  "puzzles.loginLink": "Sign in",
+  "puzzles.correct": "Correct!",
+  "puzzles.wrong": "Miss.",
+  "puzzles.bravo": "Well done! Streak: {streak}d",
+  "puzzles.wrongLine": "Not the right line.",
+  "puzzles.submitError": "Could not validate.",
+  "puzzles.rush.done": "Rush over — score: {score}",
+  "puzzles.rush.timeout": "Time's up — score: {score}",
+  "puzzles.rush.threeMisses": "3 misses — score: {score}",
+
+  "learning.title": "Learning",
+  "learning.subtitle": "Courses, videos and progress",
+  "learning.courses": "Courses",
+  "learning.videos": "Videos",
+  "learning.empty": "No content available.",
+  "learning.error": "Could not load learning hub.",
+  "learning.premium": "Premium content",
+
+  "tournaments.title": "Tournaments",
+  "tournaments.subtitle": "Online competitions",
+  "tournaments.empty": "No open tournaments.",
+  "tournaments.error": "Could not load tournaments.",
+  "tournaments.registered": "Registered",
+  "tournaments.open": "Registration open",
+  "tournaments.live": "Live",
+};
+
+const catalogs: Record<MobileLocale, Dict> = { fr, en };
+
+export function translate(
+  locale: MobileLocale,
+  key: string,
+  params?: Record<string, string | number>
+): string {
+  let text = catalogs[locale][key] ?? catalogs.fr[key] ?? key;
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      text = text.replace(`{${k}}`, String(v));
+    }
+  }
+  return text;
+}

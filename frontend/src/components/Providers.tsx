@@ -15,10 +15,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const init = async () => {
-      if (JWT_REFRESH_HTTPONLY && !Cookies.get("access_token") && !Cookies.get("refresh_token")) {
+      if (!Cookies.get("access_token") && !Cookies.get("refresh_token") && JWT_REFRESH_HTTPONLY) {
         await refreshAuthTokens();
       }
-      if (Cookies.get("access_token") || Cookies.get("refresh_token") || JWT_REFRESH_HTTPONLY) {
+      if (Cookies.get("access_token") || Cookies.get("refresh_token")) {
         fetchProfile();
       }
     };
