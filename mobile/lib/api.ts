@@ -81,7 +81,8 @@ api.interceptors.response.use(
 export class LoginError extends Error {
   constructor(
     message: string,
-    readonly code?: string
+    readonly code?: string,
+    readonly oauthCode?: string
   ) {
     super(message);
     this.name = "LoginError";

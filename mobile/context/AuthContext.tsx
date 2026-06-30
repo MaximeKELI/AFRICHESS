@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (axios.isAxiosError(err)) {
           const body = err.response?.data as { code?: string; error?: string } | undefined;
           if (body?.code === "TOTP_REQUIRED" || body?.error === "TOTP_REQUIRED") {
-            throw new LoginError("TOTP_REQUIRED", "TOTP_REQUIRED");
+            throw new LoginError("TOTP_REQUIRED", "TOTP_REQUIRED", code);
           }
         }
         throw err;
