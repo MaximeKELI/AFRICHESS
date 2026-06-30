@@ -768,6 +768,173 @@ function PlayContent() {
     wsSearch();
   };
 
+  const playGameSection = (
+    <>
+      <OptionSection compact title={t("play.options.game")} description={t("play.rated.label")}>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-medium">{t("play.rated.label")}</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isRated}
+              onClick={() => setIsRated((r) => !r)}
+              className={`px-3 py-1 rounded-lg text-xs font-medium ${isRated ? "african-gradient text-white" : "border border-white/20"}`}
+            >
+              {isRated ? t("play.rated.on") : t("play.rated.off")}
+            </button>
+          </div>
+          {isRated && useClock ? (
+            <p className="text-xs opacity-60">
+              {t("play.rated.clock", { clock: ratedClockLabel, mode: modeLabelText })}
+            </p>
+          ) : (
+            <TimeControlPicker
+              isTimed={useClock}
+              preset={timePreset}
+              onTimedChange={setUseClock}
+              onPresetChange={setTimePreset}
+            />
+          )}
+        </div>
+      </OptionSection>
+      {!gameId && <RecentGamesList limit={8} showTitle />}
+    </>
+  );
+
+  const playAiSection = (
+    <OptionSection compact title={t("play.vsAi.title")} description={t("play.vsAi.hint", { mode: modeLabelText })}>
+      {selectedBot && !gameId && (
+        <div className="mb-3 p-3 rounded-xl border border-africhess-gold/30 bg-africhess-gold/5">
+          <p className="text-xs font-medium text-africhess-gold">
+            {t("play.botChallenge.title", {
+              name: selectedBotInfo?.name ?? selectedBot,
+            })}
+          </p>
+          <p className="text-[11px] opacity-60 mt-1">{t("play.botChallenge.hint")}</p>
+        </div>
+      )}
+      {levelLabel && (
+        <p className="text-xs opacity-60 mb-1">{t("play.vsAi.profile", { level: levelLabel })}</p>
+      )}
+      <div className="flex justify-between text-xs mb-3 gap-2 hide-in-zen">
+        <span className="opacity-70">
+          {t("play.vsAi.yourElo", { mode: modeLabelText })} :{" "}
+          <strong className="text-africhess-green">
+            {formatElo(userElo, userEloProvisional)}
+          </strong>
+        </span>
+        <span className="opacity-70">
+          {t("play.vsAi.aiStrength")} :{" "}
+          <strong className="text-africhess-gold">{aiElo ?? "—"}</strong>
+        </span>
+      </div>
+      <div className="mb-3 border-t border-white/10 pt-3">
+        <VariantPicker value={variant} onChange={setVariant} />
+      </div>
+      {selectedBot ? (
+        <div className="mb-3 p-2 rounded-lg border border-africhess-gold/30 text-sm flex items-center gap-3">
+          {selectedBotInfo && (
+            <span className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0 ring-1 ring-africhess-gold/40">
+              <Image
+                src={getAiAvatarSrc(selectedBotInfo.avatar_id ?? selectedBot)}
+                alt={selectedBotInfo.name}
+                fill
+                className="object-cover"
+                sizes="40px"
+              />
+            </span>
+          )}
+          <div className="min-w-0">
+            <p className="font-medium truncate">
+              {selectedBotInfo?.name ?? selectedBot}
+              {selectedBotInfo?.elo ? (
+                <span className="text-africhess-gold font-mono text-xs ml-2">
+                  {selectedBotInfo.elo}
+                </span>
+              ) : null}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedBot(null);
+                setSelectedBotInfo(null);
+              }}
+              className="text-xs text-africhess-gold hover:underline mt-1"
+            >
+              {t("play.botClear")}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="mb-3 border-t border-white/10 pt-3">
+          <AiStrengthPicker value={aiEloChoice} onChange={setAiEloChoice} />
+        </div>
+      )}
+      <Link href="/bots" className="text-xs text-africhess-gold hover:underline block mb-3">
+        {t("play.browseBots")}
+      </Link>
+      <select
+        value={orientation}
+        onChange={(e) => setOrientation(e.target.value as "white" | "black")}
+        className="w-full mb-3 border rounded-lg px-3 py-2 bg-transparent"
+      >
+        <option value="white">{t("play.color.white")}</option>
+        <option value="black">{t("play.color.black")}</option>
+      </select>
+      <div className="mb-3 py-2 border-t border-white/10">
+        <CommentsToggle />
+      </div>
+      <div className="mb-3 py-2 border-t border-white/10">
+        <TimeControlPicker
+          isTimed={useClock}
+          preset={timePreset}
+          onTimedChange={setUseClock}
+          onPresetChange={setTimePreset}
+        />
+      </div>
+      <button
+        type="button"
+        onClick={startAI}
+        disabled={aiStarting}
+        className="w-full py-2 rounded-lg african-gradient text-white font-medium disabled:opacity-50"
+      >
+        {aiStarting
+          ? t("common.loading")
+          : selectedBot
+            ? t("play.botChallenge.start")
+            : t("play.vsAi.start")}
+      </button>
+    </OptionSection>
+  );
+
+  const playOnlineSection = (
+    <OptionSection compact title={t("play.online.title")}>
+      {mmError && <InlineAlert className="mb-3 text-xs">{mmError}</InlineAlert>}
+      <button
+        onClick={findMatch}
+        disabled={searching || wsSearching}
+        className="w-full py-2 rounded-lg border-2 border-africhess-green text-africhess-green font-medium hover:bg-africhess-green/10 disabled:opacity-50"
+      >
+        {searching || wsSearching ? t("play.online.searching") : t("play.online.find")}
+      </button>
+      {(searching || wsSearching) && (
+        <button
+          type="button"
+          onClick={() => {
+            wsCancel();
+            gamesApi.leaveQueue().catch(() => {});
+            setSearching(false);
+            setStatus(t("play.status.searchCancelled"));
+          }}
+          className="w-full mt-2 py-1 text-xs opacity-60 hover:opacity-100"
+        >
+          {t("play.online.cancel")}
+        </button>
+      )}
+    </OptionSection>
+  );
+
   if (!user) {
     return (
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
@@ -907,8 +1074,13 @@ function PlayContent() {
             aria-selected={mobileTab === tab}
             onClick={() => {
               setMobileTab(tab);
-              if (tab === "setup" && setupFromUrl === "appearance") {
-                setSetupCategory("appearance");
+              if (tab === "setup") {
+                requestAnimationFrame(() => {
+                  document.getElementById("play-options")?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                });
               }
             }}
             className={`play-mobile-tab ${mobileTab === tab ? "play-mobile-tab-active" : "opacity-70"}`}
@@ -1169,7 +1341,7 @@ function PlayContent() {
 
         <div
           className={`w-full space-y-4 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:pr-1 scrollbar-thin ${
-            mobileTab === "board" ? "hidden lg:block" : ""
+            mobileTab === "board" || mobileTab === "setup" ? "hidden lg:block" : ""
           }`}
         >
           <div className={mobileTab === "moves" ? "block space-y-4" : "hidden lg:block lg:space-y-4"}>
@@ -1212,222 +1384,17 @@ function PlayContent() {
             </div>
           )}
 
-          <div className={mobileTab === "setup" ? "block space-y-4" : "hidden lg:block lg:space-y-4"}>
+          <div className={mobileTab === "setup" ? "hidden lg:block space-y-4" : "hidden lg:block lg:space-y-4"}>
           <hr className="border-white/10 hidden lg:block" />
 
-          <OptionCategoryNav
-            categories={setupCategories}
-            active={setupCategory}
-            onChange={(id) =>
-              setSetupCategory(
-                id as "game" | "ai" | "online" | "board" | "pieces" | "background"
-              )
-            }
-            ariaLabel={t("play.options.sectionNav")}
+          <PlaySetupOptions
+            setupCategory={setupCategory}
+            onSetupCategoryChange={setSetupCategory}
+            gameSection={playGameSection}
+            aiSection={playAiSection}
+            onlineSection={playOnlineSection}
+            status={status ? <p className="text-sm text-africhess-gold">{status}</p> : null}
           />
-
-          {setupCategory === "game" && (
-            <>
-              <OptionSection compact title={t("play.options.game")} description={t("play.rated.label")}>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium">{t("play.rated.label")}</span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={isRated}
-                      onClick={() => setIsRated((r) => !r)}
-                      className={`px-3 py-1 rounded-lg text-xs font-medium ${isRated ? "african-gradient text-white" : "border border-white/20"}`}
-                    >
-                      {isRated ? t("play.rated.on") : t("play.rated.off")}
-                    </button>
-                  </div>
-                  {isRated && useClock ? (
-                    <p className="text-xs opacity-60">
-                      {t("play.rated.clock", { clock: ratedClockLabel, mode: modeLabelText })}
-                    </p>
-                  ) : (
-                    <TimeControlPicker
-                      isTimed={useClock}
-                      preset={timePreset}
-                      onTimedChange={setUseClock}
-                      onPresetChange={setTimePreset}
-                    />
-                  )}
-                </div>
-              </OptionSection>
-              {!gameId && <RecentGamesList limit={8} showTitle />}
-            </>
-          )}
-
-          {setupCategory === "ai" && (
-            <OptionSection compact title={t("play.vsAi.title")} description={t("play.vsAi.hint", { mode: modeLabelText })}>
-              {selectedBot && !gameId && (
-                <div className="mb-3 p-3 rounded-xl border border-africhess-gold/30 bg-africhess-gold/5">
-                  <p className="text-xs font-medium text-africhess-gold">
-                    {t("play.botChallenge.title", {
-                      name: selectedBotInfo?.name ?? selectedBot,
-                    })}
-                  </p>
-                  <p className="text-[11px] opacity-60 mt-1">{t("play.botChallenge.hint")}</p>
-                </div>
-              )}
-              {levelLabel && (
-                <p className="text-xs opacity-60 mb-1">{t("play.vsAi.profile", { level: levelLabel })}</p>
-              )}
-              <div className="flex justify-between text-xs mb-3 gap-2 hide-in-zen">
-                <span className="opacity-70">
-                  {t("play.vsAi.yourElo", { mode: modeLabelText })} :{" "}
-                  <strong className="text-africhess-green">
-                    {formatElo(userElo, userEloProvisional)}
-                  </strong>
-                </span>
-                <span className="opacity-70">
-                  {t("play.vsAi.aiStrength")} :{" "}
-                  <strong className="text-africhess-gold">{aiElo ?? "—"}</strong>
-                </span>
-              </div>
-              <div className="mb-3 border-t border-white/10 pt-3">
-                <VariantPicker value={variant} onChange={setVariant} />
-              </div>
-              {selectedBot ? (
-                <div className="mb-3 p-2 rounded-lg border border-africhess-gold/30 text-sm flex items-center gap-3">
-                  {selectedBotInfo && (
-                    <span className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0 ring-1 ring-africhess-gold/40">
-                      <Image
-                        src={getAiAvatarSrc(selectedBotInfo.avatar_id ?? selectedBot)}
-                        alt={selectedBotInfo.name}
-                        fill
-                        className="object-cover"
-                        sizes="40px"
-                      />
-                    </span>
-                  )}
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">
-                      {selectedBotInfo?.name ?? selectedBot}
-                      {selectedBotInfo?.elo ? (
-                        <span className="text-africhess-gold font-mono text-xs ml-2">
-                          {selectedBotInfo.elo}
-                        </span>
-                      ) : null}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedBot(null);
-                        setSelectedBotInfo(null);
-                      }}
-                      className="text-xs text-africhess-gold hover:underline mt-1"
-                    >
-                      {t("play.botClear")}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="mb-3 border-t border-white/10 pt-3">
-                  <AiStrengthPicker value={aiEloChoice} onChange={setAiEloChoice} />
-                </div>
-              )}
-              <Link href="/bots" className="text-xs text-africhess-gold hover:underline block mb-3">
-                {t("play.browseBots")}
-              </Link>
-              <select
-                value={orientation}
-                onChange={(e) =>
-                  setOrientation(e.target.value as "white" | "black")
-                }
-                className="w-full mb-3 border rounded-lg px-3 py-2 bg-transparent"
-              >
-                <option value="white">{t("play.color.white")}</option>
-                <option value="black">{t("play.color.black")}</option>
-              </select>
-              <div className="mb-3 py-2 border-t border-white/10">
-                <CommentsToggle />
-              </div>
-              <div className="mb-3 py-2 border-t border-white/10">
-                <TimeControlPicker
-                  isTimed={useClock}
-                  preset={timePreset}
-                  onTimedChange={setUseClock}
-                  onPresetChange={setTimePreset}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={startAI}
-                disabled={aiStarting}
-                className="w-full py-2 rounded-lg african-gradient text-white font-medium disabled:opacity-50"
-              >
-                {aiStarting
-                  ? t("common.loading")
-                  : selectedBot
-                    ? t("play.botChallenge.start")
-                    : t("play.vsAi.start")}
-              </button>
-            </OptionSection>
-          )}
-
-          {setupCategory === "online" && (
-            <OptionSection compact title={t("play.online.title")}>
-              {mmError && <InlineAlert className="mb-3 text-xs">{mmError}</InlineAlert>}
-              <button
-                onClick={findMatch}
-                disabled={searching || wsSearching}
-                className="w-full py-2 rounded-lg border-2 border-africhess-green text-africhess-green font-medium hover:bg-africhess-green/10 disabled:opacity-50"
-              >
-                {searching || wsSearching ? t("play.online.searching") : t("play.online.find")}
-              </button>
-              {(searching || wsSearching) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    wsCancel();
-                    gamesApi.leaveQueue().catch(() => {});
-                    setSearching(false);
-                    setStatus(t("play.status.searchCancelled"));
-                  }}
-                  className="w-full mt-2 py-1 text-xs opacity-60 hover:opacity-100"
-                >
-                  {t("play.online.cancel")}
-                </button>
-              )}
-            </OptionSection>
-          )}
-
-          {setupCategory === "board" && (
-            <OptionSection
-              compact
-              title={t("board.picker.title")}
-              description={t("board.picker.hint")}
-            >
-              <BoardThemePicker compact showHeader={false} showPieces={false} />
-            </OptionSection>
-          )}
-
-          {setupCategory === "pieces" && (
-            <OptionSection
-              compact
-              title={t("board.picker.pieces")}
-              description={t("board.picker.piecesHint")}
-            >
-              <BoardThemePicker compact showHeader={false} showColors={false} />
-            </OptionSection>
-          )}
-
-          {setupCategory === "background" && (
-            <OptionSection
-              compact
-              title={t("background.picker.title")}
-              description={t("background.picker.hint")}
-            >
-              <BackgroundPicker compact showHeader={false} />
-            </OptionSection>
-          )}
-
-          {status && (
-            <p className="text-sm text-africhess-gold">{status}</p>
-          )}
           </div>
         </div>
       </div>

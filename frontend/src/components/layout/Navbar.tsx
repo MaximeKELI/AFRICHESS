@@ -13,6 +13,7 @@ import { ChevronDown, Menu, Moon, Shield, Sun, Wifi, WifiOff, X, Leaf } from "lu
 import { NotificationBell } from "./NotificationBell";
 import { UserSearchBar } from "@/components/social/UserSearchBar";
 import { MobileBottomNav } from "./MobileBottomNav";
+import { AppearanceMenuSection } from "./AppearanceMenuSection";
 import clsx from "clsx";
 
 const PRIMARY_LINKS = [
@@ -106,6 +107,18 @@ function NavDropdown({
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-2 w-[min(90vw,520px)] rounded-xl border border-white/10 bg-[var(--card)] shadow-2xl p-4 grid grid-cols-2 gap-4 z-50">
+          <div className="col-span-2 pb-2 border-b border-white/10">
+            <Link
+              href="/play?setup=appearance"
+              onClick={() => {
+                setOpen(false);
+                onNavigate?.();
+              }}
+              className="text-sm font-medium text-africhess-gold hover:underline"
+            >
+              {t("play.options.appearance")} — {t("background.picker.title")}
+            </Link>
+          </div>
           {groups.map((group) => (
             <div key={group.key}>
               <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 px-2">{t(group.key)}</p>
@@ -295,6 +308,7 @@ export function Navbar() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-6">
+              <AppearanceMenuSection onNavigate={closeDrawer} />
               {NAV_GROUPS.map((group) => (
                 <div key={group.key}>
                   <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2">{t(group.key)}</p>
