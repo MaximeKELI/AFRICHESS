@@ -8,8 +8,7 @@ export type GameVariant =
   | "chess960"
   | "crazyhouse"
   | "kingofthehill"
-  | "threecheck"
-  | "atomic";
+  | "threecheck";
 
 interface VariantPickerProps {
   value: GameVariant;
@@ -22,7 +21,6 @@ const VARIANTS: GameVariant[] = [
   "crazyhouse",
   "kingofthehill",
   "threecheck",
-  "atomic",
 ];
 
 export function VariantPicker({ value, onChange }: VariantPickerProps) {

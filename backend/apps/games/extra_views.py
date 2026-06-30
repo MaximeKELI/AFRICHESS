@@ -95,8 +95,6 @@ class VoteGameCreateView(APIView):
 
         white_rep = club_white.owner
         black_rep = club_black.owner
-        if white_rep_id := white_rep.id == black_rep.id:
-            pass
         if white_rep.id == black_rep.id:
             alt = club_black.members.exclude(pk=white_rep.pk).order_by("id").first()
             if not alt:
