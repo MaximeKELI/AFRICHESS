@@ -1391,7 +1391,7 @@ function PlayContent() {
                         wsResign();
                         setStatus(t("play.resign.sent"));
                       } else {
-                        setStatus(formatApiError(err, t("play.error.resign")));
+                        setStatus(formatApiError(err));
                       }
                     });
                 }}
