@@ -213,3 +213,32 @@ class MatchmakingConsumerTests(TransactionTestCase):
         self.assertTrue(
             await MatchmakingQueue.objects.filter(user=user).aexists()
         )
+
+    def test_disconnect_clears_ws_initiated_queue(self):
+        async_to_sync(self._test_disconnect_clears_ws_initiated_queue)()
+
+    async def _test_disconnect_clears_ws_initiated_queue(self):
+        from apps.games.models import MatchmakingQueue
+
+        user = await User.objects.acreate(username="mm_ws_only", password="x")
+        token = str(AccessToken.for_user(user))
+        ws = WebsocketCommunicator(
+            application,
+            f"/ws/matchmaking/?token={token}",
+        )
+        self.assertTrue((await ws.connect())[0])
+        await ws.receive_json_from()
+        await ws.send_json_to(
+            {
+                "event": "rejoindre_file",
+                "mode": "blitz",
+                "is_timed": True,
+                "is_rated": False,
+                "time_control": "3+2",
+                "variant": "standard",
+            }
+        )
+        await ws.receive_json_from()
+        self.assertTrue(await MatchmakingQueue.objects.filter(user=user).aexists())
+        await ws.disconnect()
+        self.assertFalse(await MatchmakingQueue.objects.filter(user=user).aexists())

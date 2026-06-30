@@ -90,6 +90,7 @@ class User(AbstractUser):
         default=SubscriptionTier.FREE,
     )
     premium_until = models.DateTimeField(null=True, blank=True)
+    stripe_customer_id = models.CharField(max_length=64, blank=True, default="")
 
     title = models.CharField(max_length=20, blank=True)  # GM, IM, FM, etc.
     fide_id = models.CharField(max_length=20, blank=True)
