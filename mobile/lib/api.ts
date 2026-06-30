@@ -96,6 +96,33 @@ export const authApi = {
       ...(totpCode ? { totp_code: totpCode } : {}),
     }),
   profile: () => api.get("/users/profile/"),
+  oauthExchange: (code: string, totpCode?: string) =>
+    api.post<{ access: string; refresh: string }>("/users/auth/oauth/exchange/", {
+      code,
+      ...(totpCode ? { totp_code: totpCode } : {}),
+    }),
+};
+
+export const usersApi = {
+  register: (data: {
+    username: string;
+    email: string;
+    password: string;
+    password_confirm: string;
+    country?: string;
+  }) =>
+    api.post<{ username: string; access: string; refresh: string }>("/users/register/", data),
+  subscriptionPlans: () =>
+    api.get<{ plans: { id: string; price_eur: number; features: string[] }[]; stripe_enabled: boolean }>(
+      "/users/subscription/plans/"
+    ),
+  subscriptionStatus: () =>
+    api.get<{ tier: string; is_premium: boolean }>("/users/subscription/status/"),
+  subscribe: (plan: "gold" | "diamond") =>
+    api.post<{ mode: string; checkout_url?: string; tier?: string; is_premium?: boolean; message?: string }>(
+      "/users/subscription/subscribe/",
+      { plan }
+    ),
 };
 
 export interface Bot {
