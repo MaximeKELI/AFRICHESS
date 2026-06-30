@@ -1334,7 +1334,6 @@ function PlayContent() {
                   preset={timePreset}
                   onTimedChange={setUseClock}
                   onPresetChange={setTimePreset}
-                  compact
                 />
               </div>
               <button
@@ -1343,7 +1342,11 @@ function PlayContent() {
                 disabled={aiStarting}
                 className="w-full py-2 rounded-lg african-gradient text-white font-medium disabled:opacity-50"
               >
-                {aiStarting ? t("common.loading") : t("play.vsAi.start")}
+                {aiStarting
+                  ? t("common.loading")
+                  : selectedBot
+                    ? t("play.botChallenge.start")
+                    : t("play.vsAi.start")}
               </button>
             </OptionSection>
           )}
