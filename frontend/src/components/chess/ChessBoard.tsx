@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useState, useRef, forwardRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useState, useRef, forwardRef, type ComponentType } from "react";
 import { Chessboard } from "react-chessboard";
 import type { CustomSquareProps } from "react-chessboard/dist/chessboard/types";
 import { Chess, Square } from "chess.js";
@@ -495,7 +495,9 @@ function ChessBoardInner({
           autoPromoteToQueen={false}
           showBoardNotation={true}
           snapToCursor={!isCoarse}
-          {...(reviewSquareRenderer ? { customSquare: reviewSquareRenderer } : {})}
+          {...(reviewSquareRenderer
+            ? { customSquare: reviewSquareRenderer as ComponentType<CustomSquareProps> }
+            : {})}
           {...(customPieces ? { customPieces } : {})}
         />
       </div>
