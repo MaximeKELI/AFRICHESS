@@ -105,7 +105,7 @@ export default function PlayScreen() {
   const applyGame = useCallback((data: GameData) => {
     setGame(data);
     if (data.variant) setActiveVariant(data.variant);
-    if (data.status === "completed") {
+    if (data.status === "completed" || data.status === "aborted") {
       setStatus(`Partie terminée : ${data.result ?? "fin"}`);
     }
   }, []);
