@@ -33,6 +33,7 @@ urlpatterns = [
     path("<uuid:game_id>/draw/", views.DrawOfferView.as_view(), name="game-draw-offer"),
     path("<uuid:game_id>/draw/respond/", views.DrawRespondView.as_view(), name="game-draw-respond"),
     path("<uuid:game_id>/abort/", views.AbortGameView.as_view(), name="game-abort"),
+    path("<uuid:game_id>/resign/", views.ResignGameView.as_view(), name="game-resign"),
     path("<uuid:game_id>/takeback/", views.TakebackOfferView.as_view(), name="game-takeback-offer"),
     path("<uuid:game_id>/takeback/respond/", views.TakebackRespondView.as_view(), name="game-takeback-respond"),
     path("<uuid:game_id>/conditional/", views.ConditionalMoveView.as_view(), name="game-conditional"),

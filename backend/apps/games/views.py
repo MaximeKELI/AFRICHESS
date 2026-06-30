@@ -563,6 +563,27 @@ class AbortGameView(APIView):
         return Response(GameSerializer(game).data)
 
 
+class ResignGameView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, game_id):
+        try:
+            game = Game.objects.get(id=game_id)
+        except Game.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        if not can_play_game(request.user, game):
+            return Response({"error": "Forbidden"}, status=403)
+        result = resign_game(game, request.user)
+        if "error" in result:
+            return Response(result, status=400)
+        game.refresh_from_db()
+        from .realtime_services import build_ws_payload
+        from .ws_notify import notify_game_room
+
+        notify_game_room(game.id, "broadcast_game_over", build_ws_payload(game, {"game_over": True, "reason": "resignation"}))
+        return Response(GameSerializer(game).data)
+
+
 class TakebackOfferView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
