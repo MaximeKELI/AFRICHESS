@@ -1,6 +1,5 @@
 """Vues auth durcies — throttle + révocation access token + cookies HttpOnly."""
 
-from django.conf import settings
 from dj_rest_auth.views import LoginView
 from rest_framework.response import Response
 from rest_framework.views import APIView
