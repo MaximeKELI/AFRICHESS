@@ -767,9 +767,9 @@ class AnalyzeGameAsyncView(APIView):
 
         depth = min(analysis_engine_depth(request.user) + 4, 22)
         job = AnalysisJob.objects.create(game=game, user=request.user, depth=depth)
-        from .tasks import analyze_game_async
+        from .analysis_async import schedule_analyze_game
 
-        analyze_game_async.delay(str(game.id), job.id)
+        schedule_analyze_game(str(game.id), job.id)
         return Response({"job_id": job.id, "status": job.status, "depth": depth}, status=202)
 
 
