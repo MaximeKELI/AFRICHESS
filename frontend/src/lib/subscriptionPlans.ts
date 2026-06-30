@@ -20,17 +20,15 @@ let fetchPromise: Promise<SubscriptionPlansPayload> | null = null;
 
 export async function fetchSubscriptionPlans(): Promise<SubscriptionPlansPayload> {
   if (cachedPlans) return cachedPlans;
-  if (fetchPromise) return fetchPromise;
-  fetchPromise = usersApi
-    .subscriptionPlans()
-    .then(({ data }) => {
-      cachedPlans = data as SubscriptionPlansPayload;
-      return cachedPlans;
-    })
-    .catch(() => ({ analysis_limits: DEFAULT_LIMITS }))
-    .finally(() => {
-      fetchPromise = null;
-    });
+  if (!fetchPromise) {
+    fetchPromise = usersApi
+      .subscriptionPlans()
+      .then(({ data }) => {
+        cachedPlans = data as SubscriptionPlansPayload;
+        return cachedPlans;
+      })
+      .catch(() => ({ analysis_limits: DEFAULT_LIMITS }));
+  }
   return fetchPromise;
 }
 
