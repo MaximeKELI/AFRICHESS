@@ -14,6 +14,7 @@ export function useMatchmakingWebSocket(
 ) {
   const wsRef = useRef<WebSocket | null>(null);
   const onMatchRef = useRef(onMatch);
+  const listenOnlyRef = useRef(false);
   const [searching, setSearching] = useState(false);
   const [active, setActive] = useState(false);
   const [mmError, setMmError] = useState<string | null>(null);
@@ -22,12 +23,14 @@ export function useMatchmakingWebSocket(
     onMatchRef.current = onMatch;
   }, [onMatch]);
 
-  const search = useCallback(() => {
+  const search = useCallback((opts?: { listenOnly?: boolean }) => {
+    listenOnlyRef.current = opts?.listenOnly ?? false;
     setMmError(null);
     setActive(true);
   }, []);
 
   const cancel = useCallback(() => {
+    listenOnlyRef.current = false;
     setActive(false);
     setSearching(false);
   }, []);
@@ -37,9 +40,6 @@ export function useMatchmakingWebSocket(
       if (wsRef.current) {
         const ws = wsRef.current;
         wsRef.current = null;
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ event: "quitter_file" }));
-        }
         ws.close();
       }
       return;
@@ -54,13 +54,17 @@ export function useMatchmakingWebSocket(
     }
 
     let closed = false;
+    let opened = false;
+    const listenOnly = listenOnlyRef.current;
     const ws = new WebSocket(wsMatchmakingUrl(), wsAuthProtocols(token));
     wsRef.current = ws;
     setSearching(true);
     setMmError(null);
 
     ws.onopen = () => {
+      opened = true;
       if (closed) return;
+      if (listenOnly) return;
       const tc =
         timeOpts?.isTimed === false
           ? null
@@ -110,6 +114,9 @@ export function useMatchmakingWebSocket(
       setActive(false);
       if (ev.code === 4001) {
         setMmError(tr("ws.error.matchmakingAuth"));
+      } else if (ev.code === 1006 && !opened) {
+        // Connexion interrompue avant établissement (ex. React Strict Mode).
+        return;
       } else if (ev.code !== 1000) {
         setMmError(tr("ws.error.matchmaking"));
       }
@@ -123,7 +130,7 @@ export function useMatchmakingWebSocket(
       closed = true;
       wsRef.current = null;
       if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-        if (ws.readyState === WebSocket.OPEN) {
+        if (ws.readyState === WebSocket.OPEN && !listenOnly) {
           ws.send(JSON.stringify({ event: "quitter_file" }));
         }
         ws.close();

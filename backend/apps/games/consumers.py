@@ -424,7 +424,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         if getattr(self, "user_group", None) and self.user.is_authenticated:
-            await self._leave_queue()
+            # L'inscription file se fait via HTTP ; quitter_file explicite seulement.
             await self.channel_layer.group_discard(self.user_group, self.channel_name)
 
     async def receive(self, text_data):

@@ -754,6 +754,7 @@ function PlayContent() {
         : t("play.status.searchUnlimited")
     );
     const mmTimeControl = matchmakingTimeControl(mode, useClock, isRated, timePreset);
+    let httpJoined = false;
     try {
       const { data, status } = await gamesApi.matchmaking(mode, {
         is_timed: useClock,
@@ -764,6 +765,7 @@ function PlayContent() {
         handleMatchFound(data.id);
         return;
       }
+      httpJoined = status === 200;
     } catch (err: unknown) {
       const msg =
         err &&
@@ -784,7 +786,7 @@ function PlayContent() {
         return;
       }
     }
-    wsSearch();
+    wsSearch({ listenOnly: httpJoined });
   };
 
   const playGameSection = (
