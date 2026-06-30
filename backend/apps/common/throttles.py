@@ -9,5 +9,11 @@ class AuthUserThrottle(UserRateThrottle):
     scope = "auth"
 
 
+class LoginBurstThrottle(AnonRateThrottle):
+    """Limite les rafales de tentatives login (anti brute-force)."""
+
+    scope = "login_burst"
+
+
 class AnalyzeThrottle(UserRateThrottle):
     scope = "analyze"

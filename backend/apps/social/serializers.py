@@ -2,6 +2,13 @@ from rest_framework import serializers
 
 from apps.users.serializers import UserPublicSerializer
 
+from apps.common.text_validation import (
+    FORUM_BODY_MAX,
+    FORUM_COMMENT_MAX,
+    FORUM_TITLE_MAX,
+    validate_user_text,
+)
+
 from .models import ChatMessage, Club, ClubEvent, ForumComment, ForumPost, Friendship
 
 

@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from apps.common.throttles import AuthAnonThrottle, AuthUserThrottle
+from apps.common.throttles import AuthAnonThrottle, AuthUserThrottle, LoginBurstThrottle
 
 from .authentication import denylist_access_token
 from .jwt_cookies import (
@@ -20,7 +20,7 @@ from .jwt_cookies import (
 
 
 class SecureLoginView(LoginView):
-    throttle_classes = [] if settings.DEBUG else [AuthAnonThrottle]
+    throttle_classes = [LoginBurstThrottle, AuthAnonThrottle]
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)

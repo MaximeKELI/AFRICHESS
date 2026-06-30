@@ -179,6 +179,7 @@ REST_FRAMEWORK = {
         "user": "5000/hour",
         "engine_eval": "120/hour",
         "auth": "20/hour",
+        "login_burst": "10/minute",
         "analyze": "30/hour",
     },
     "DEFAULT_FILTER_BACKENDS": [

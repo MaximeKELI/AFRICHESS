@@ -11,10 +11,9 @@ REST_FRAMEWORK["DEFAULT_PERMISSION_CLASSES"] = [  # noqa: F405
     "rest_framework.permissions.IsAuthenticated",
 ]
 
-# Démo premium + docs uniquement si explicitement activé en local
-PREMIUM_DEMO_ALLOWED = config("PREMIUM_DEMO_ALLOWED", default=True, cast=bool)
+# Démo premium désactivée par défaut (activer via PREMIUM_DEMO_ALLOWED=true en local)
+PREMIUM_DEMO_ALLOWED = config("PREMIUM_DEMO_ALLOWED", default=False, cast=bool)
 ALLOW_PUBLIC_API_DOCS = config("ALLOW_PUBLIC_API_DOCS", default=False, cast=bool)
 WS_ALLOW_QUERY_TOKEN = config("WS_ALLOW_QUERY_TOKEN", default=False, cast=bool)
 
-# Inscription / connexion : limite plus souple en local (évite blocage après tests)
-REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["auth"] = "200/hour"  # noqa: F405
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["login_burst"] = "10/minute"  # noqa: F405
