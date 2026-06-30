@@ -30,7 +30,7 @@ export default function EndgameTrainerPage() {
   const { t } = useTranslation();
   const [idx, setIdx] = useState(0);
   const drill = DRILLS[idx];
-  const [fen, setFen] = useState(drill.fen);
+  const [fen, setFen] = useState<string>(drill.fen);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const onMove = useCallback(
