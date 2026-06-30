@@ -588,16 +588,22 @@ class MatchmakingService:
 
             if not user_has_fairplay_consent(user):
                 raise ValueError("Consentement Fair Play requis pour les parties classées")
+        tc_key = normalize_matchmaking_time_control(
+            mode,
+            is_timed=is_timed,
+            is_rated=is_rated,
+            time_minutes=time_minutes,
+            time_control=time_control,
+        )
         _, _, _, _, tcm = resolve_time_fields(
-            is_timed, time_minutes, time_control=time_control
+            is_timed, time_minutes, time_control=tc_key
         )
         candidates = MatchmakingQueue.objects.filter(
             mode=mode,
             is_timed=is_timed,
             is_rated=is_rated,
             time_control_minutes=tcm,
-            elo__gte=elo - self.ELO_RANGE,
-            elo__lte=elo + self.ELO_RANGE,
+            time_control=tc_key or "",
         ).exclude(user=user).order_by("joined_at")
 
         for candidate in candidates[:5]:
@@ -610,6 +616,7 @@ class MatchmakingService:
                 mode=mode,
                 is_timed=is_timed,
                 time_minutes=time_minutes,
+                time_control=tc_key,
                 is_rated=is_rated,
             )
         return None
