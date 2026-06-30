@@ -68,7 +68,7 @@ DRF throttling activé (`anon` 200/h, `user` 3000/h).
 
 ## Anti-triche (basique)
 
-- Max 45 coups/minute en partie humaine
+- Max 50 coups/minute en partie humaine
 - Intervalle minimum entre coups identiques
 
 ## Base de données (production)

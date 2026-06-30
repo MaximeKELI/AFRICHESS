@@ -33,9 +33,8 @@ class SubscriptionDemoTests(TestCase):
         self.user.refresh_from_db()
         self.assertTrue(self.user.is_premium)
 
-    @patch("apps.users.stripe_service.stripe_enabled", return_value=True)
-    @patch("apps.users.stripe_service.create_checkout_session")
-    def test_stripe_checkout_when_configured(self, mock_checkout, _enabled):
+    @patch("apps.users.views.create_checkout_session")
+    def test_stripe_checkout_when_configured(self, mock_checkout):
         mock_checkout.return_value = {
             "mode": "stripe",
             "checkout_url": "https://checkout.stripe.test/session",
