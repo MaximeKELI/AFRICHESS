@@ -182,7 +182,7 @@ class MatchmakingApiTests(TestCase):
         MatchmakingService().join_queue(
             opponent,
             "blitz",
-            1500,
+            1200,
             is_rated=False,
             is_timed=True,
             time_control="3+2",
