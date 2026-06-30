@@ -71,7 +71,12 @@ Install Stockfish and set `STOCKFISH_PATH`:
 
 ## WebSockets
 
-- Game: `ws://localhost:8000/ws/game/<uuid>/`
-- Chat: `ws://localhost:8000/ws/chat/<room_type>/<room_id>/`
+- Game: `ws://127.0.0.1:8000/ws/game/<uuid>/`
+- Matchmaking: `ws://127.0.0.1:8000/ws/matchmaking/`
+- Notifications: `ws://127.0.0.1:8000/ws/notifications/`
 
-Pass JWT via query string or session auth (Channels session).
+Authentification : **`Sec-WebSocket-Protocol: bearer,<access_token>`** (voir `frontend/src/lib/gameWs.ts`).
+
+Le paramètre `?token=` n'est accepté que si `WS_ALLOW_QUERY_TOKEN=true` (déconseillé en production).
+
+Chat in-game : événement `{ "event": "chat", "message": "..." }` sur le canal partie (pas `ws/chat/`).
