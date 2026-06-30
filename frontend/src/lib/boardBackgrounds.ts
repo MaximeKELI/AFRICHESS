@@ -296,6 +296,62 @@ export const BOARD_BACKGROUNDS: BoardBackground[] = [
     category: "abstract",
     src: "/images/backgrounds/emerald-palace.svg",
   },
+  {
+    id: "animal-lion",
+    labelFr: "Lion — or royal",
+    labelEn: "Lion — royal gold",
+    category: "animals",
+    src: "/images/backgrounds/animal-lion.svg",
+  },
+  {
+    id: "animal-elephant",
+    labelFr: "Éléphant — ivoire",
+    labelEn: "Elephant — ivory",
+    category: "animals",
+    src: "/images/backgrounds/animal-elephant.svg",
+  },
+  {
+    id: "animal-cheetah",
+    labelFr: "Guépard — ambre",
+    labelEn: "Cheetah — amber",
+    category: "animals",
+    src: "/images/backgrounds/animal-cheetah.svg",
+  },
+  {
+    id: "animal-panther",
+    labelFr: "Panthère — noir",
+    labelEn: "Panther — onyx",
+    category: "animals",
+    src: "/images/backgrounds/animal-panther.svg",
+  },
+  {
+    id: "animal-zebra",
+    labelFr: "Zèbre — perle",
+    labelEn: "Zebra — pearl",
+    category: "animals",
+    src: "/images/backgrounds/animal-zebra.svg",
+  },
+  {
+    id: "animal-eagle",
+    labelFr: "Aigle — azur",
+    labelEn: "Eagle — azure",
+    category: "animals",
+    src: "/images/backgrounds/animal-eagle.svg",
+  },
+  {
+    id: "animal-giraffe",
+    labelFr: "Girafe — coucher",
+    labelEn: "Giraffe — dusk",
+    category: "animals",
+    src: "/images/backgrounds/animal-giraffe.svg",
+  },
+  {
+    id: "animal-whale",
+    labelFr: "Baleine — soie",
+    labelEn: "Whale — silk",
+    category: "animals",
+    src: "/images/backgrounds/animal-whale.svg",
+  },
 ];
 
 export const DEFAULT_BOARD_BACKGROUND: BoardBackgroundId = "none";

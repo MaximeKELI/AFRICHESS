@@ -72,7 +72,7 @@ function BackgroundButton({
   );
 }
 
-const CATEGORY_ORDER: BoardBackgroundCategory[] = ["africa", "nature", "classic", "abstract"];
+const CATEGORY_ORDER: BoardBackgroundCategory[] = ["animals", "africa", "nature", "classic", "abstract"];
 
 export function BackgroundPicker({ compact = false, className, showHeader = true }: BackgroundPickerProps) {
   const { boardBackground, setBoardBackground } = usePreferencesStore();
