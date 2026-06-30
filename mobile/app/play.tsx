@@ -417,6 +417,20 @@ export default function PlayScreen() {
 
         {playMode === "human" && (
           <>
+            <Text style={styles.label}>Variante</Text>
+            <View style={styles.row}>
+              {VARIANTS.map((v) => (
+                <Pressable
+                  key={v.id}
+                  onPress={() => setVariant(v.id)}
+                  style={[styles.chip, variant === v.id && styles.chipActive]}
+                >
+                  <Text style={variant === v.id ? styles.chipTextActive : styles.chipText}>
+                    {v.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
             <Text style={styles.label}>Type de partie</Text>
             <View style={styles.row}>
               {([false, true] as const).map((rated) => (

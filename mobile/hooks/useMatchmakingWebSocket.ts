@@ -56,6 +56,7 @@ export function useMatchmakingWebSocket(
           is_timed: timeOpts?.isTimed ?? true,
           is_rated: timeOpts?.isRated ?? true,
           time_control: timeOpts?.timeControl ?? "3+2",
+          variant: timeOpts?.variant ?? "standard",
         })
       );
     };
@@ -83,7 +84,7 @@ export function useMatchmakingWebSocket(
       setMmError("WebSocket matchmaking indisponible");
       setSearching(false);
     };
-  }, [mode, timeOpts?.isTimed, timeOpts?.timeControl, timeOpts?.isRated]);
+  }, [mode, timeOpts?.isTimed, timeOpts?.timeControl, timeOpts?.isRated, timeOpts?.variant]);
 
   const cancel = useCallback(async () => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
