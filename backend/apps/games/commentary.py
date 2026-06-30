@@ -138,6 +138,10 @@ NEUTRAL_AI = [
     "Coup joué. À toi… si tu oses.",
     "Développement en cours. Ne t'endors pas.",
     "On avance. Tu tiens le choc, champion ?",
+    "Position solide de mon côté. Et chez toi ?",
+    "Je consolide. Tu devrais faire pareil.",
+    "Un coup de plus vers la victoire.",
+    "Rien ne m'arrête pour l'instant.",
 ]
 
 TAUNT_AI_GENERAL = [
@@ -148,6 +152,11 @@ TAUNT_AI_GENERAL = [
     "J'adore quand tu te débats inutilement.",
     "Calme-toi, la partie est loin d'être finie — pour toi.",
     "Tu voulais du niveau ? Le voilà.",
+    "Chaque coup te rapproche un peu plus de la défaite.",
+    "Tu tiens bon ? Moi j'ai tout mon temps.",
+    "Intéressant… mais pas assez pour m'inquiéter.",
+    "Tu crois contrôler la position ? Regarde mieux.",
+    "Je sens que tu hésites. Normal.",
 ]
 
 NEUTRAL_PLAYER = [
