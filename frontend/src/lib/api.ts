@@ -1,6 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
 import { API_URL } from "@/lib/apiConfig";
+import { JWT_REFRESH_HTTPONLY } from "@/lib/authConfig";
 import { setAccessToken, setRefreshToken } from "@/lib/cookies";
 import { handleSessionExpired } from "@/lib/session";
 
@@ -9,6 +10,7 @@ const API_URL_BASE = API_URL;
 export const api = axios.create({
   baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
+  withCredentials: JWT_REFRESH_HTTPONLY,
 });
 
 /** Ne pas envoyer un vieux JWT sur login/inscription (sinon 401 « token not valid »). */
@@ -35,15 +37,15 @@ function flushRefreshWaiters(err: unknown, token?: string) {
 }
 
 async function refreshAccessToken(): Promise<string> {
-  const refresh = Cookies.get("refresh_token");
-  if (!refresh) throw new Error("No refresh token");
+  const refresh = JWT_REFRESH_HTTPONLY ? undefined : Cookies.get("refresh_token");
+  if (!JWT_REFRESH_HTTPONLY && !refresh) throw new Error("No refresh token");
   const { data } = await axios.post<{ access: string; refresh?: string }>(
     `${API_URL_BASE}/auth/token/refresh/`,
-    { refresh }
+    refresh ? { refresh } : {},
+    { withCredentials: JWT_REFRESH_HTTPONLY }
   );
   if (!data.access) throw new Error("Invalid refresh response");
   setAccessToken(data.access);
-  // ROTATE_REFRESH_TOKENS + BLACKLIST_AFTER_ROTATION côté backend
   if (data.refresh) {
     setRefreshToken(data.refresh);
   }
@@ -52,7 +54,7 @@ async function refreshAccessToken(): Promise<string> {
 
 /** Renouvelle les tokens avant expiration (parties longues). */
 export async function refreshAuthTokens(): Promise<boolean> {
-  if (!Cookies.get("refresh_token")) return false;
+  if (!JWT_REFRESH_HTTPONLY && !Cookies.get("refresh_token")) return false;
   try {
     await refreshAccessToken();
     return true;
@@ -121,7 +123,8 @@ export const authApi = {
       password,
       ...(totpCode ? { totp_code: totpCode } : {}),
     }),
-  logout: (refresh: string) => api.post("/auth/logout/", { refresh }),
+  logout: (refresh?: string) =>
+    api.post("/auth/logout/", refresh ? { refresh } : {}),
   register: (data: Record<string, string | number>) =>
     api.post("/users/register/", data),
   profile: () => api.get("/users/profile/"),

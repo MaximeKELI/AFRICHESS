@@ -260,3 +260,17 @@ html.has-site-background nav {
 .zen-mode .hide-in-zen {
   display: none !important;
 }
+
+/* RTL — arabe (dir défini côté client dans Providers) */
+[dir="rtl"] {
+  direction: rtl;
+}
+
+[dir="rtl"] .rtl-flip-row {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] textarea {
+  text-align: right;
+}

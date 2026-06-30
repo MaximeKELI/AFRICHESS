@@ -2,7 +2,7 @@ import { create } from "zustand";
 import Cookies from "js-cookie";
 import { AxiosError } from "axios";
 import { authApi } from "@/lib/api";
-import { setAccessToken, setRefreshToken } from "@/lib/cookies";
+import { setAccessToken, setRefreshToken, hasRefreshCredential } from "@/lib/cookies";
 import { formatApiError } from "@/lib/errors";
 import { translate } from "@/lib/i18n";
 import { clearAuthCookies } from "@/lib/session";
@@ -91,7 +91,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw new Error(translate(get().locale, "auth.login.invalidResponse"));
       }
       setAccessToken(data.access);
-      setRefreshToken(data.refresh);
+      if (data.refresh) setRefreshToken(data.refresh);
 
       // Réponse dj-rest-auth inclut souvent user — secours si /profile échoue
       const loginUser = data.user as { pk?: number; username?: string } | undefined;
@@ -167,16 +167,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: () => {
     const refresh = Cookies.get("refresh_token");
-    if (refresh) {
-      authApi.logout(refresh).catch(() => undefined);
-    }
+    authApi.logout(refresh ?? undefined).catch(() => undefined);
     clearAuthCookies();
     syncPreferencesForUser(null);
     set({ user: null });
   },
 
   fetchProfile: async () => {
-    if (!Cookies.get("access_token") && !Cookies.get("refresh_token")) {
+    if (!Cookies.get("access_token") && !hasRefreshCredential()) {
       syncPreferencesForUser(null);
       set({ user: null });
       return;

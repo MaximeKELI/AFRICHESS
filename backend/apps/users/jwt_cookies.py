@@ -13,10 +13,17 @@ def refresh_cookie_name() -> str:
     return getattr(settings, "REST_AUTH", {}).get("JWT_AUTH_REFRESH_COOKIE", "refresh_token")
 
 
+def _refresh_max_age() -> int:
+    lifetime = getattr(settings, "SIMPLE_JWT", {}).get("REFRESH_TOKEN_LIFETIME")
+    if lifetime is not None and hasattr(lifetime, "total_seconds"):
+        return int(lifetime.total_seconds())
+    return 30 * 24 * 3600
+
+
 def set_refresh_cookie(response, refresh_token: str) -> None:
     if not refresh_httponly_enabled():
         return
-    max_age = int(getattr(settings, "SIMPLE_JWT", {}).get("REFRESH_TOKEN_LIFETIME").total_seconds())
+    max_age = _refresh_max_age()
     response.set_cookie(
         refresh_cookie_name(),
         refresh_token,

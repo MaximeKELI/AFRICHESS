@@ -7,15 +7,22 @@ import { SiteBackground } from "@/components/layout/SiteBackground";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { initAiSpeech } from "@/lib/aiSpeech";
 import { refreshAuthTokens } from "@/lib/api";
+import { JWT_REFRESH_HTTPONLY } from "@/lib/authConfig";
 import Cookies from "js-cookie";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const { fetchProfile, darkMode, lowBandwidth, locale, logout } = useAuthStore();
 
   useEffect(() => {
-    if (Cookies.get("access_token") || Cookies.get("refresh_token")) {
-      fetchProfile();
-    }
+    const init = async () => {
+      if (JWT_REFRESH_HTTPONLY && !Cookies.get("access_token") && !Cookies.get("refresh_token")) {
+        await refreshAuthTokens();
+      }
+      if (Cookies.get("access_token") || Cookies.get("refresh_token") || JWT_REFRESH_HTTPONLY) {
+        fetchProfile();
+      }
+    };
+    void init();
   }, [fetchProfile]);
 
   useEffect(() => {
@@ -27,7 +34,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   /** Renouvellement proactif — évite la déconnexion en pleine partie (~15 min). */
   useEffect(() => {
     const tick = () => {
-      if (Cookies.get("refresh_token")) void refreshAuthTokens();
+      if (JWT_REFRESH_HTTPONLY || Cookies.get("refresh_token")) void refreshAuthTokens();
     };
     tick();
     const interval = window.setInterval(tick, 10 * 60 * 1000);
