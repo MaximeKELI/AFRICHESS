@@ -604,6 +604,8 @@ class MatchmakingService:
             is_rated=is_rated,
             time_control_minutes=tcm,
             time_control=tc_key or "",
+            elo__gte=elo - self.ELO_RANGE,
+            elo__lte=elo + self.ELO_RANGE,
         ).exclude(user=user).order_by("joined_at")
 
         for candidate in candidates[:5]:
