@@ -15,6 +15,7 @@ import { GameClock } from "../components/GameClock";
 import { PocketBar } from "../components/PocketBar";
 import { useAuth } from "../context/AuthContext";
 import { useGameWebSocket, type WsGamePatch } from "../hooks/useGameWebSocket";
+import { useFairPlayTelemetry } from "../hooks/useFairPlayTelemetry";
 import { useMatchmakingWebSocket } from "../hooks/useMatchmakingWebSocket";
 import { parsePocketsFromFen, pocketForPlayer } from "../lib/crazyhouse";
 import { latestComment, pollPendingMoveComments } from "../lib/pollComments";
@@ -211,7 +212,11 @@ export default function PlayScreen() {
     void startMatchmaking();
   };
 
-  const { connected: wsConnected, wsError, resign: wsResign } = useGameWebSocket(
+  const isLiveHuman = Boolean(game && !game.is_vs_ai && game.status === "active");
+  const telemetryEnabled = isLiveHuman && isRated && fairplayConsent === true;
+  const { consumePatch: consumeFairPlayPatch } = useFairPlayTelemetry(telemetryEnabled);
+
+  const { connected: wsConnected, wsError, sendMove: wsSendMove, resign: wsResign } = useGameWebSocket(
     game?.id ?? null,
     Boolean(game && game.status === "active"),
     handleWsUpdate,
@@ -257,9 +262,17 @@ export default function PlayScreen() {
           : undefined;
       turnStartRef.current = Date.now();
       try {
+        const telemetry = consumeFairPlayPatch();
+        const sentWs =
+          !game.is_vs_ai &&
+          wsSendMove(uci, spentMs, telemetry ?? undefined);
+        if (sentWs) {
+          return;
+        }
         const { data } = await gamesApi.move(game.id, uci, {
           spentMs,
           includeComments: game.is_vs_ai && aiCommentsEnabled,
+          telemetry: telemetry ?? undefined,
         });
         applyGame(data);
         refreshComments(data);
@@ -271,7 +284,7 @@ export default function PlayScreen() {
         setBusy(false);
       }
     },
-    [game, busy, playerColor, applyGame, aiCommentsEnabled, refreshComments]
+    [game, busy, playerColor, applyGame, aiCommentsEnabled, refreshComments, consumeFairPlayPatch, wsSendMove]
   );
 
   const handleUndo = async () => {

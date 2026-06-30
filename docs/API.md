@@ -10,9 +10,9 @@ Interactive docs: `GET /api/docs/` (Swagger UI — admin only in Docker unless `
 | POST | `/api/auth/logout/` | Logout + denylist access token |
 | POST | `/api/auth/token/refresh/` | Refresh JWT |
 | POST | `/api/users/register/` | Register account |
-| POST | `/api/users/auth/oauth/exchange/` | Exchange OAuth `code` → `{access, refresh}` |
+| POST | `/api/users/auth/oauth/exchange/` | Exchange OAuth `code` → `{access, refresh}` (`totp_code` if 2FA enabled) |
 
-OAuth flow: social login redirects to `/auth/callback?code=…`, frontend POSTs code to exchange endpoint.
+OAuth flow: social login redirects to `/auth/callback?code=…`, frontend POSTs code (and TOTP if needed) to exchange endpoint.
 
 ## Users
 
@@ -24,7 +24,10 @@ OAuth flow: social login redirects to `/auth/callback?code=…`, frontend POSTs 
 | GET | `/api/users/subscription/status/` | Premium tier status |
 | POST | `/api/users/subscription/subscribe/` | Stripe checkout or demo |
 | POST | `/api/users/subscription/webhook/` | Stripe webhook |
-| GET/POST | `/api/users/totp/*` | 2FA setup / enable / disable |
+| GET | `/api/users/security/2fa/status/` | 2FA status |
+| POST | `/api/users/security/2fa/setup/` | Generate TOTP secret |
+| POST | `/api/users/security/2fa/enable/` | Enable 2FA `{code}` |
+| POST | `/api/users/security/2fa/disable/` | Disable 2FA `{code}` |
 
 ## Games
 
@@ -35,26 +38,32 @@ OAuth flow: social login redirects to `/auth/callback?code=…`, frontend POSTs 
 | POST | `/api/games/matchmaking/` | Join queue `{mode, variant?, is_rated, time_control}` |
 | DELETE | `/api/games/matchmaking/` | Leave queue |
 | GET | `/api/games/<uuid>/` | Game detail |
-| POST | `/api/games/<uuid>/move/` | Make move `{uci}` |
+| POST | `/api/games/<uuid>/move/` | Make move `{uci, spent_ms?, telemetry?}` |
 | POST | `/api/games/<uuid>/resign/` | Resign |
 | POST | `/api/games/<uuid>/abort/` | Abort (≤2 moves) |
 | POST | `/api/games/<uuid>/draw/` | Offer draw |
 | POST | `/api/games/<uuid>/draw/respond/` | Accept/decline draw |
 | POST | `/api/games/<uuid>/takeback/` | Offer takeback (unrated) |
-| POST | `/api/games/<uuid>/analyze/` | Sync Stockfish analysis |
-| POST | `/api/games/<uuid>/analyze/async/` | Async cloud analysis |
+| POST | `/api/games/<uuid>/analyze/` | Sync Stockfish analysis (tier move limit) |
+| POST | `/api/games/<uuid>/analyze/async/` | Async cloud analysis (same tier limits) |
 | GET | `/api/games/<uuid>/analyze/status/` | Async job status |
 | GET | `/api/games/correspondence/` | Daily chess games |
 | POST | `/api/games/correspondence/seek/` | Join daily pool |
+| POST | `/api/games/correspondence/challenge/` | Challenge friend (daily) |
 | POST | `/api/games/vote/create/` | Vote chess between clubs |
-| GET/POST | `/api/games/fairplay/*` | Fair Play consent & appeals |
+| GET | `/api/games/fairplay/status/` | Fair Play consent status |
+| POST | `/api/games/fairplay/consent/` | Accept Fair Play |
+| DELETE | `/api/games/fairplay/consent/` | Revoke consent |
+| POST | `/api/games/fairplay/appeals/` | Submit appeal |
 
 ## WebSocket
 
 | Path | Events |
 |------|--------|
-| `ws/game/<id>/` | `recevoir_coup`, `proposition_nulle`, `proposition_reprise`, `fin_partie`, `chat` |
-| `ws/matchmaking/` | `match_found`, `en_attente` |
+| `ws/game/<id>/` | In: `jouer_coup`, `abandonner_partie`, `proposer_nulle`, `chat` — Out: `recevoir_coup`, `proposition_nulle`, `proposition_reprise`, `fin_partie`, `game_state`, `chat` |
+| `ws/matchmaking/` | `rejoindre_file`, `match_found`, `en_attente` |
+| `ws/notifications/` | Push notifications |
+| `ws/chat/<room_type>/<room_id>/` | Room chat |
 
 Auth: `Sec-WebSocket-Protocol: bearer,<JWT>` (or `?token=` if `WS_ALLOW_QUERY_TOKEN=true`)
 
@@ -65,7 +74,7 @@ Auth: `Sec-WebSocket-Protocol: bearer,<JWT>` (or `?token=` if `WS_ALLOW_QUERY_TO
 | GET | `/api/puzzles/daily/` | Daily puzzle |
 | GET | `/api/puzzles/training/` | Training set |
 | POST | `/api/puzzles/rush/start/` | Puzzle Rush session |
-| POST | `/api/puzzles/custom/` | Create custom puzzle |
+| GET/POST | `/api/puzzles/custom/` | List/create custom puzzles |
 | POST | `/api/puzzles/<id>/submit/` | Submit solution |
 
 ## Learning
@@ -73,9 +82,11 @@ Auth: `Sec-WebSocket-Protocol: bearer,<JWT>` (or `?token=` if `WS_ALLOW_QUERY_TO
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/learning/courses/` | Course list |
-| GET | `/api/learning/lessons/<id>/` | Lesson (Premium after lesson 2) |
+| GET | `/api/learning/courses/<slug>/` | Course detail (premium lessons redacted) |
+| GET | `/api/learning/lessons/<id>/` | Lesson detail (403 if premium locked) |
+| POST | `/api/learning/courses/<slug>/complete-lesson/` | Mark lesson complete |
 | GET | `/api/learning/videos/` | Videos (`locked` if premium) |
 
 ## Ratings / Social / Tournaments
 
-See existing endpoints in Swagger UI.
+See Swagger at `/api/docs/` for full surface (`/api/ratings/`, `/api/social/`, `/api/tournaments/`, `/api/analytics/`, `/api/stats/`).

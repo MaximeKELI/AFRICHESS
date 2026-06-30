@@ -37,3 +37,33 @@ class OAuthExchangeTests(TestCase):
         code = create_oauth_code(self.user)
         self.assertIsNotNone(consume_oauth_code(code))
         self.assertIsNone(consume_oauth_code(code))
+
+    def test_oauth_requires_totp_when_enabled(self):
+        from apps.users.totp_service import generate_totp_secret, totp_code
+
+        self.user.totp_secret = generate_totp_secret()
+        self.user.totp_enabled = True
+        self.user.save(update_fields=["totp_secret", "totp_enabled"])
+        oauth_code = create_oauth_code(self.user)
+        resp = self.client.post(
+            "/api/users/auth/oauth/exchange/",
+            {"code": oauth_code},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.data.get("code"), "TOTP_REQUIRED")
+
+    def test_oauth_with_valid_totp(self):
+        from apps.users.totp_service import generate_totp_secret, totp_code
+
+        self.user.totp_secret = generate_totp_secret()
+        self.user.totp_enabled = True
+        self.user.save(update_fields=["totp_secret", "totp_enabled"])
+        oauth_code = create_oauth_code(self.user)
+        resp = self.client.post(
+            "/api/users/auth/oauth/exchange/",
+            {"code": oauth_code, "totp_code": totp_code(self.user.totp_secret)},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("access", resp.data)

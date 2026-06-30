@@ -170,6 +170,8 @@ AFRICHESS/
 │       ├── tournaments/          # Arène, suisse, standings
 │       ├── notifications/        # REST + push WS (signals)
 │       └── learning/             # Cours, 40 docs, coach, PGN
+├── anticheat-cpp/                # Moteur Fair Play C++ (post-partie)
+├── mobile/                       # App Expo (play, puzzles, daily)
 ├── frontend/                     # Next.js 14, TypeScript, Tailwind
 │   ├── src/app/                  # Routes App Router
 │   ├── src/components/           # Échiquier, layout, learning…

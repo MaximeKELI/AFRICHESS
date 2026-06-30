@@ -92,3 +92,23 @@ class StripeWebhookTests(TestCase):
         self.assertIsNone(err)
         self.assertEqual(event["type"], "checkout.session.completed")
         mock_activate.assert_called_once()
+
+    @patch("apps.users.stripe_service.deactivate_plan")
+    @patch("apps.users.stripe_service._client")
+    def test_handle_webhook_subscription_deleted(self, mock_client, mock_deactivate):
+        mock_client.return_value = MagicMock()
+        mock_client.return_value.Webhook.construct_event.return_value = {
+            "type": "customer.subscription.deleted",
+            "data": {
+                "object": {
+                    "status": "canceled",
+                    "metadata": {"user_id": str(self.user.id), "plan": "gold"},
+                }
+            },
+        }
+        from apps.users.stripe_service import handle_webhook
+
+        with patch("apps.users.stripe_service.STRIPE_WEBHOOK_SECRET", "whsec_test"):
+            event, err = handle_webhook(b"{}", "sig")
+        self.assertIsNone(err)
+        mock_deactivate.assert_called_once()

@@ -57,3 +57,23 @@ class LearningPremiumAccessTests(TestCase):
         by_id = {v["id"]: v for v in resp.data}
         self.assertEqual(by_id[self.video_premium.id]["url"], "https://v.example/premium")
         self.assertFalse(by_id[self.video_premium.id]["locked"])
+
+    def test_course_detail_redacts_premium_lessons(self):
+        self.client.force_authenticate(user=self.free_user)
+        resp = self.client.get(f"/api/learning/courses/{self.course.slug}/")
+        self.assertEqual(resp.status_code, 200)
+        by_id = {l["id"]: l for l in resp.data["lessons"]}
+        self.assertEqual(by_id[self.lesson_free.id]["content"], "intro")
+        self.assertFalse(by_id[self.lesson_free.id]["locked"])
+        self.assertEqual(by_id[self.lesson_premium.id]["content"], "")
+        self.assertTrue(by_id[self.lesson_premium.id]["locked"])
+
+    def test_complete_lesson_blocks_premium(self):
+        self.client.force_authenticate(user=self.free_user)
+        resp = self.client.post(
+            f"/api/learning/courses/{self.course.slug}/complete-lesson/",
+            {"lesson_id": self.lesson_premium.id},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.data.get("code"), "premium_required")
