@@ -63,6 +63,7 @@ class AnalysisRedactionApiTests(TestCase):
                 uci="e2e4" if i % 2 == 0 else "e7e5",
                 from_square="e2" if i % 2 == 0 else "e7",
                 to_square="e4" if i % 2 == 0 else "e5",
+                fen_after="rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
                 played_by_white=i % 2 == 0,
             )
         moves_json = [{"uci": "e2e4", "san": "e4", "class": "good"} for _ in range(50)]

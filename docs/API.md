@@ -76,7 +76,7 @@ Auth: `Sec-WebSocket-Protocol: bearer,<JWT>` (or `?token=` if `WS_ALLOW_QUERY_TO
 | GET | `/api/puzzles/daily/` | Daily puzzle |
 | GET | `/api/puzzles/training/` | Training set |
 | POST | `/api/puzzles/rush/start/` | Puzzle Rush session |
-| GET/POST | `/api/puzzles/custom/` | List/create custom puzzles |
+| GET/POST | `/api/puzzles/custom/` | List (GET) / create (POST) custom puzzles |
 | POST | `/api/puzzles/<id>/submit/` | Submit solution |
 
 ## Learning
