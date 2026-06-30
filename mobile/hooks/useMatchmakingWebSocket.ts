@@ -33,6 +33,7 @@ export function useMatchmakingWebSocket(
         is_timed: timeOpts?.isTimed ?? true,
         is_rated: timeOpts?.isRated ?? true,
         time_control: timeOpts?.timeControl ?? "3+2",
+        variant: (timeOpts?.variant as "standard") ?? "standard",
       });
       if (status === 201 && data.id) {
         setSearching(false);
