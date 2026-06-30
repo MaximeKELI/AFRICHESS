@@ -18,6 +18,23 @@ import { LoginError, useAuth } from "../context/AuthContext";
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const onOAuth = async (provider: "google" | "github") => {
+    setError("");
+    setLoading(true);
+    try {
+      await loginWithOAuth(provider);
+      router.replace("/play");
+    } catch (err) {
+      if (err instanceof LoginError && err.code === "TOTP_REQUIRED") {
+        router.push("/auth/callback");
+        return;
+      }
+      setError("Connexion OAuth annulée ou indisponible.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const onSubmit = async () => {
     setError("");
     setLoading(true);
