@@ -94,6 +94,17 @@ import { LoginError, useAuth } from "../context/AuthContext";
           <Text style={styles.btnText}>Se connecter</Text>
         )}
       </Pressable>
+      <View style={styles.oauthRow}>
+        <Pressable style={styles.oauthBtn} onPress={() => void onOAuth("google")} disabled={loading}>
+          <Text style={styles.oauthText}>Google</Text>
+        </Pressable>
+        <Pressable style={styles.oauthBtn} onPress={() => void onOAuth("github")} disabled={loading}>
+          <Text style={styles.oauthText}>GitHub</Text>
+        </Pressable>
+      </View>
+      <Link href="/register" style={styles.link}>
+        <Text style={styles.linkText}>Créer un compte</Text>
+      </Link>
       <Link href="/" style={styles.link}>
         <Text style={styles.linkText}>Retour</Text>
       </Link>
@@ -132,6 +143,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   btnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  oauthRow: { flexDirection: "row", gap: 12, marginTop: 16 },
+  oauthBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#D4A017",
+    padding: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  oauthText: { color: "#D4A017", fontWeight: "600" },
   error: { color: "#E07A5F", marginBottom: 8, textAlign: "center" },
   link: { marginTop: 20, alignSelf: "center" },
   linkText: { color: "#D4A017" },

@@ -19,6 +19,10 @@ export default function RootLayout() {
         <Stack.Screen name="puzzles" options={{ title: "Puzzles" }} />
         <Stack.Screen name="friends" options={{ title: "Amis" }} />
         <Stack.Screen name="login" options={{ title: "Connexion" }} />
+        <Stack.Screen name="register" options={{ title: "Inscription" }} />
+        <Stack.Screen name="premium" options={{ title: "Premium" }} />
+        <Stack.Screen name="daily" options={{ title: "Daily chess" }} />
+        <Stack.Screen name="auth/callback" options={{ title: "OAuth", headerShown: false }} />
       </Stack>
     </AuthProvider>
   );
