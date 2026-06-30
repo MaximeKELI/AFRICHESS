@@ -33,24 +33,60 @@ def _client():
     return stripe
 
 
+def get_or_create_customer(user) -> str | None:
+    """Retourne l'ID client Stripe (création si absent)."""
+    if not stripe_enabled():
+        return None
+    if user.stripe_customer_id:
+        return user.stripe_customer_id
+    stripe = _client()
+    customer = stripe.Customer.create(
+        email=user.email or None,
+        name=user.display_name or user.username,
+        metadata={"user_id": str(user.id)},
+    )
+    user.stripe_customer_id = customer.id
+    user.save(update_fields=["stripe_customer_id"])
+    return customer.id
+
+
 def create_checkout_session(user, plan_id: str) -> dict:
     price_id = PLAN_PRICES.get(plan_id)
     if not stripe_enabled() or not price_id:
         return {"mode": "demo"}
     stripe = _client()
-    session = stripe.checkout.Session.create(
-        mode="subscription",
-        customer_email=user.email or None,
-        client_reference_id=str(user.id),
-        metadata={"plan": plan_id, "user_id": str(user.id)},
-        subscription_data={
+    customer_id = get_or_create_customer(user)
+    session_kwargs = {
+        "mode": "subscription",
+        "client_reference_id": str(user.id),
+        "metadata": {"plan": plan_id, "user_id": str(user.id)},
+        "subscription_data": {
             "metadata": {"plan": plan_id, "user_id": str(user.id)},
         },
-        line_items=[{"price": price_id, "quantity": 1}],
-        success_url=f"{FRONTEND_URL}/premium?success=1&plan={plan_id}",
-        cancel_url=f"{FRONTEND_URL}/premium?canceled=1",
-    )
+        "line_items": [{"price": price_id, "quantity": 1}],
+        "success_url": f"{FRONTEND_URL}/premium?success=1&plan={plan_id}",
+        "cancel_url": f"{FRONTEND_URL}/premium?canceled=1",
+    }
+    if customer_id:
+        session_kwargs["customer"] = customer_id
+    else:
+        session_kwargs["customer_email"] = user.email or None
+    session = stripe.checkout.Session.create(**session_kwargs)
     return {"mode": "stripe", "checkout_url": session.url, "session_id": session.id}
+
+
+def create_billing_portal_session(user) -> dict:
+    if not stripe_enabled():
+        return {"error": "Stripe non configuré"}
+    customer_id = get_or_create_customer(user)
+    if not customer_id:
+        return {"error": "Client Stripe introuvable"}
+    stripe = _client()
+    session = stripe.billing_portal.Session.create(
+        customer=customer_id,
+        return_url=f"{FRONTEND_URL}/premium",
+    )
+    return {"portal_url": session.url}
 
 
 def _premium_until_from_period_end(period_end: int | None, fallback_days: int = 30):
