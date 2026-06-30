@@ -90,7 +90,7 @@ export function useMatchmakingWebSocket(
       wsRef.current.close();
     }
     try {
-      await gamesApi.matchmaking(mode, { is_timed: false });
+      await gamesApi.leaveQueue();
     } catch {
       /* ignore */
     }

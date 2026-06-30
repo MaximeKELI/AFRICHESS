@@ -155,6 +155,7 @@ export const gamesApi = {
       is_rated: opts?.is_rated ?? true,
       time_control: opts?.time_control ?? "3+2",
     }),
+  leaveQueue: () => api.delete("/games/matchmaking/"),
   move: (
     id: string,
     uci: string,
