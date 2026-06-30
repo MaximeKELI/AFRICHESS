@@ -1,7 +1,8 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useState, useRef, forwardRef } from "react";
 import { Chessboard } from "react-chessboard";
+import type { CustomSquareProps } from "react-chessboard/dist/chessboard/types";
 import { Chess, Square } from "chess.js";
 import { playChessSound, preloadChessSounds, soundForMove } from "@/lib/chessSounds";
 import { accentRgba, getBoardTheme, getThemedSquareStyles, themeHasTexturedSquares } from "@/lib/boardThemes";
@@ -9,6 +10,7 @@ import { useAuthStore } from "@/store/auth";
 import { customPiecesForSet } from "@/lib/pieceSets";
 import { usePreferencesStore } from "@/store/preferences";
 import { PromotionDialog } from "./PromotionDialog";
+import { MoveClassPieceBadge } from "./MoveClassPieceBadge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useBoardSize, useCoarsePointer } from "@/hooks/useBoardSize";
 
