@@ -41,3 +41,18 @@ class CorrespondenceTests(TestCase):
         qs = my_correspondence_games(self.white)
         self.assertEqual(qs.count(), 1)
         self.assertEqual(qs.first().id, game.id)
+
+    def test_celery_pair_task_matches_queue(self):
+        from apps.games.tasks import pair_correspondence_queues
+        from apps.ratings.models import PlayerRating
+
+        u1 = User.objects.create_user(username="daily_a", password="x")
+        u2 = User.objects.create_user(username="daily_b", password="x")
+        PlayerRating.objects.create(user=u1, mode="rapid", elo=1200)
+        PlayerRating.objects.create(user=u2, mode="rapid", elo=1250)
+        CorrespondenceQueue.objects.create(user=u1, days_per_move=3, elo=1200)
+        CorrespondenceQueue.objects.create(user=u2, days_per_move=3, elo=1250)
+        paired = pair_correspondence_queues()
+        self.assertEqual(paired, 1)
+        self.assertEqual(CorrespondenceQueue.objects.count(), 0)
+        self.assertEqual(Game.objects.filter(mode=Game.Mode.CORRESPONDENCE).count(), 1)

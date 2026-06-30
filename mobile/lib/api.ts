@@ -7,7 +7,15 @@ export const API_URL =
 
 const API_ORIGIN = API_URL.replace(/\/api\/?$/, "");
 
-const NO_AUTH_PATHS = ["/auth/login/", "/auth/register/", "/auth/token/refresh/"];
+export { API_ORIGIN };
+
+const NO_AUTH_PATHS = [
+  "/auth/login/",
+  "/auth/register/",
+  "/auth/token/refresh/",
+  "/users/register/",
+  "/users/auth/oauth/exchange/",
+];
 
 export const api = axios.create({
   baseURL: API_URL,
