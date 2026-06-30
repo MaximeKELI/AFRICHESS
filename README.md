@@ -226,10 +226,11 @@ NEXT_PUBLIC_API_ORIGIN=http://localhost:8000
 ### Tests
 
 ```bash
-# Backend (38 tests)
+# Backend (CI : 10 apps Django)
 docker compose exec backend python manage.py test \
-  apps.games.tests apps.notifications.tests apps.social.tests \
-  apps.tournaments.tests apps.learning.tests
+  apps.analytics.tests apps.games.tests apps.notifications.tests \
+  apps.social.tests apps.tournaments.tests apps.learning.tests \
+  apps.users.tests apps.ratings.tests apps.puzzles.tests
 
 # E2E (backend + frontend requis)
 cd frontend && npm ci && npx playwright install chromium
@@ -299,7 +300,7 @@ Détails protocole : [docs/WEBSOCKET_MULTIPLAYER.md](docs/WEBSOCKET_MULTIPLAYER.
 
 1. Configurer `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GITHUB_*`, `FRONTEND_URL`
 2. Redirect URI : `https://api.votredomaine.com/accounts/google/login/callback/`
-3. Boutons login → redirection → `/auth/callback?access=…&refresh=…`
+3. Boutons login → redirection → `/auth/callback?code=…` → POST `/api/users/auth/oauth/exchange/` → JWT (TOTP si 2FA activée)
 
 Guide : [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
@@ -332,6 +333,7 @@ Guide : [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 | `/live` | Liste parties en direct |
 | `/watch/[id]` | Mode observateur |
 | `/puzzles` | Daily, training, rush, classement |
+| `/puzzles/build` | Créateur de puzzles custom |
 | `/learning` | Dashboard, cours, leçons markdown + FEN |
 | `/learning/analyze` | Import PGN |
 | `/friends` | Amis, défis, **messages privés** |
@@ -380,7 +382,7 @@ Guide : [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
 - [ ] Pièces SVG illustrées (style africain)
 - [ ] i18n complet de toutes les pages
-- [ ] Apps mobiles (React Native)
+- [x] App mobile Expo (`mobile/`) — play, puzzles, daily, fairplay
 - [ ] Intégration rating FIDE
 - [ ] Push notifications natives (APNs / FCM)
 - [ ] Streaming live avancé
