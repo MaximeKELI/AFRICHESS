@@ -60,6 +60,18 @@ def _award_forfeit(game: Game, winner_white: bool, reason: str):
 
 
 @shared_task
+def pair_correspondence_queues():
+    """Apparie les joueurs en file daily chess sans nouveau join."""
+    from .correspondence import CorrespondenceMatchmakingService
+
+    service = CorrespondenceMatchmakingService()
+    paired = 0
+    while service._pair_waiting():
+        paired += 1
+    return paired
+
+
+@shared_task
 def forfeit_overdue_correspondence_games():
     """Forfait daily chess si échéance dépassée (hors vacances)."""
     import chess

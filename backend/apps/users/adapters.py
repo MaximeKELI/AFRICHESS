@@ -13,5 +13,14 @@ class AfrichessSocialAccountAdapter(DefaultSocialAccountAdapter):
         if not user.is_authenticated:
             return settings.FRONTEND_URL
         code = create_oauth_code(user)
+        next_url = (
+            request.GET.get("next")
+            or request.session.get("socialaccount_login_redirect_url")
+            or request.session.get("next")
+        )
+        if next_url and str(next_url).startswith("africhess://"):
+            base = str(next_url).rstrip("/")
+            sep = "&" if "?" in base else "?"
+            return f"{base}{sep}code={code}"
         base = settings.FRONTEND_URL.rstrip("/")
         return f"{base}/auth/callback?code={code}"

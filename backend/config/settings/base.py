@@ -250,6 +250,14 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.games.tasks.forfeit_overdue_correspondence_games",
         "schedule": 900.0,
     },
+    "pair-correspondence": {
+        "task": "apps.games.tasks.pair_correspondence_queues",
+        "schedule": 120.0,
+    },
+    "expire-premium": {
+        "task": "apps.users.tasks.expire_premium_subscriptions",
+        "schedule": 3600.0,
+    },
     "expire-fairplay-sanctions": {
         "task": "apps.games.tasks.expire_fairplay_sanctions_task",
         "schedule": 3600.0,
