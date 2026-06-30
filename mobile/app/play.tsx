@@ -167,8 +167,10 @@ export default function PlayScreen() {
         color,
         ...(selectedBot ? { bot_slug: selectedBot.slug } : { ai_elo: aiElo }),
         variant,
+        include_comments: aiCommentsEnabled,
       });
       applyGame(data);
+      refreshComments(data);
       const opponent = data.bot?.name ?? selectedBot?.name ?? `IA ${data.ai_target_elo}`;
       setStatus(`Partie vs ${opponent}`);
     } catch {
@@ -190,8 +192,12 @@ export default function PlayScreen() {
           : undefined;
       turnStartRef.current = Date.now();
       try {
-        const { data } = await gamesApi.move(game.id, uci, { spentMs });
+        const { data } = await gamesApi.move(game.id, uci, {
+          spentMs,
+          includeComments: game.is_vs_ai && aiCommentsEnabled,
+        });
         applyGame(data);
+        refreshComments(data);
       } catch {
         setStatus("Coup refusé — rechargement…");
         const { data } = await gamesApi.get(game.id);
