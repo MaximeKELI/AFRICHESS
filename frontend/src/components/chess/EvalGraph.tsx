@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import clsx from "clsx";
+import { MOVE_CLASS_CHART_COLORS } from "@/lib/moveClassVisuals";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface EvalPoint {
@@ -15,21 +16,30 @@ interface EvalGraphProps {
   selectedIndex?: number | null;
   onSelect?: (index: number) => void;
   height?: number;
+  /** Affiche le conteneur carte avec titre */
+  framed?: boolean;
 }
 
 function clampEval(cp: number): number {
   return Math.max(-800, Math.min(800, cp));
 }
 
+function pointColor(moveClass?: string): string {
+  if (!moveClass) return "#34d399";
+  return MOVE_CLASS_CHART_COLORS[moveClass] ?? "#34d399";
+}
+
 export function EvalGraph({
   points,
   selectedIndex = null,
   onSelect,
-  height = 120,
+  height = 140,
+  framed = true,
 }: EvalGraphProps) {
   const { t } = useTranslation();
-  const width = 320;
-  const pad = 8;
+  const width = 400;
+  const padX = 12;
+  const padY = 14;
 
   const coords = useMemo(() => {
     if (!points.length) return [];
@@ -38,8 +48,8 @@ export function EvalGraph({
       const evalCp = typeof p.eval === "number" ? p.eval * 100 : 0;
       const yNorm = 0.5 - clampEval(evalCp) / 1600;
       return {
-        x: pad + (i / maxX) * (width - pad * 2),
-        y: pad + yNorm * (height - pad * 2),
+        x: padX + (i / maxX) * (width - padX * 2),
+        y: padY + yNorm * (height - padY * 2),
         ...p,
         index: i,
       };
@@ -47,54 +57,120 @@ export function EvalGraph({
   }, [points, height]);
 
   const linePath = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c.x},${c.y}`).join(" ");
-  const zeroY = pad + 0.5 * (height - pad * 2);
+  const areaPath =
+    coords.length > 0
+      ? `${linePath} L${coords[coords.length - 1].x},${height - padY} L${coords[0].x},${height - padY} Z`
+      : "";
+  const zeroY = padY + 0.5 * (height - padY * 2);
 
-  if (!points.length) {
-    return (
-      <p className="text-xs opacity-50 text-center py-4">{t("chess.analysis.graphEmpty")}</p>
-    );
-  }
-
-  return (
-    <div className="w-full overflow-x-auto">
+  const chart = !points.length ? (
+    <p className="text-xs opacity-50 text-center py-8">{t("chess.analysis.graphEmpty")}</p>
+  ) : (
+    <div className="w-full">
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="w-full max-w-full h-auto"
+        className="w-full h-auto"
         role="img"
         aria-label={t("chess.analysis.graphLabel")}
+        preserveAspectRatio="xMidYMid meet"
       >
-        <rect x={0} y={0} width={width} height={height} fill="rgba(0,0,0,0.15)" rx={8} />
-        <line
-          x1={pad}
-          y1={zeroY}
-          x2={width - pad}
-          y2={zeroY}
-          stroke="rgba(255,255,255,0.15)"
-          strokeDasharray="4 4"
+        <defs>
+          <linearGradient id="eval-area-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#D4A017" stopOpacity="0.35" />
+            <stop offset="50%" stopColor="#D4A017" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="#D4A017" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="eval-line-grad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#34d399" />
+            <stop offset="50%" stopColor="#D4A017" />
+            <stop offset="100%" stopColor="#f87171" />
+          </linearGradient>
+        </defs>
+
+        {/* Zones blancs / noirs */}
+        <rect
+          x={padX}
+          y={padY}
+          width={width - padX * 2}
+          height={(height - padY * 2) / 2}
+          fill="rgba(255,255,255,0.02)"
+          rx={4}
         />
-        <path d={linePath} fill="none" stroke="#D4A017" strokeWidth={2} strokeLinejoin="round" />
-        {coords.map((c) => (
-          <circle
-            key={c.index}
-            cx={c.x}
-            cy={c.y}
-            r={selectedIndex === c.index ? 5 : 3}
-            className={clsx(
-              "cursor-pointer transition-all",
-              c.class === "blunder"
-                ? "fill-africhess-terracotta"
-                : c.class === "mistake"
-                  ? "fill-orange-400"
-                  : "fill-africhess-green"
-            )}
-            onClick={() => onSelect?.(c.index)}
-          />
-        ))}
+        <rect
+          x={padX}
+          y={zeroY}
+          width={width - padX * 2}
+          height={(height - padY * 2) / 2}
+          fill="rgba(0,0,0,0.12)"
+          rx={4}
+        />
+
+        <line
+          x1={padX}
+          y1={zeroY}
+          x2={width - padX}
+          y2={zeroY}
+          stroke="rgba(255,255,255,0.12)"
+          strokeWidth={1}
+        />
+
+        {areaPath && (
+          <path d={areaPath} fill="url(#eval-area-grad)" stroke="none" />
+        )}
+        <path
+          d={linePath}
+          fill="none"
+          stroke="url(#eval-line-grad)"
+          strokeWidth={2.5}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+
+        {coords.map((c) => {
+          const isSelected = selectedIndex === c.index;
+          const color = pointColor(c.class);
+          return (
+            <g key={c.index}>
+              {isSelected && (
+                <circle
+                  cx={c.x}
+                  cy={c.y}
+                  r={9}
+                  fill={color}
+                  opacity={0.2}
+                />
+              )}
+              <circle
+                cx={c.x}
+                cy={c.y}
+                r={isSelected ? 5 : 3.5}
+                fill={color}
+                stroke={isSelected ? "#fff" : "rgba(0,0,0,0.4)"}
+                strokeWidth={isSelected ? 1.5 : 0.5}
+                className="cursor-pointer transition-all hover:opacity-100"
+                opacity={isSelected ? 1 : 0.85}
+                onClick={() => onSelect?.(c.index)}
+              />
+            </g>
+          );
+        })}
       </svg>
-      <div className="flex justify-between text-[10px] opacity-40 px-1 mt-1">
+      <div className="flex justify-between items-center text-[10px] opacity-40 px-1 mt-1.5">
         <span>{t("chess.analysis.graphStart")}</span>
+        <span className="opacity-60">0.0</span>
         <span>{t("chess.analysis.graphEnd")}</span>
       </div>
+    </div>
+  );
+
+  if (!framed) return chart;
+
+  return (
+    <div className="rounded-xl bg-black/20 border border-white/8 p-4 space-y-2">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-africhess-gold/90">
+        {t("chess.analysis.graphLabel")}
+      </p>
+      {chart}
     </div>
   );
 }

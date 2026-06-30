@@ -282,7 +282,7 @@ class AnalyzeGameView(APIView):
             return Response({"error": "Game not completed"}, status=400)
         from apps.users.premium_utils import analysis_engine_depth, max_analysis_moves
 
-        from .analysis_utils import compute_accuracies
+        from .analysis_utils import compute_accuracies, compute_move_accuracies
 
         limit = max_analysis_moves(request.user)
         depth = analysis_engine_depth(request.user)
@@ -309,6 +309,7 @@ class AnalyzeGameView(APIView):
             if e.classification == "blunder" and not move_rows[i][1]
         )
         acc_w, acc_b = compute_accuracies(evaluations, move_rows)
+        move_acc_w, move_acc_b = compute_move_accuracies(evaluations, move_rows)
         best_moves_json = [
             {
                 "uci": e.uci,
@@ -338,6 +339,8 @@ class AnalyzeGameView(APIView):
             defaults={
                 "accuracy_white": acc_w,
                 "accuracy_black": acc_b,
+                "move_accuracy_white": move_acc_w,
+                "move_accuracy_black": move_acc_b,
                 "blunders_white": blunders_w,
                 "blunders_black": blunders_b,
                 "best_moves_json": best_moves_json,

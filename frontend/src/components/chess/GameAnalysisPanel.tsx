@@ -12,7 +12,7 @@ import clsx from "clsx";
 import { reviewBoardState } from "@/lib/reviewDisplay";
 import { ChessBoard } from "./ChessBoard";
 import { EvalGraph } from "./EvalGraph";
-import { MoveClassificationSummary } from "./MoveClassificationSummary";
+import { GameReviewStatsDashboard } from "./GameReviewStatsDashboard";
 
 interface MoveAnalysis {
   uci?: string;
@@ -29,6 +29,8 @@ interface MoveAnalysis {
 interface AnalysisData {
   accuracy_white: number | null;
   accuracy_black: number | null;
+  move_accuracy_white?: number | null;
+  move_accuracy_black?: number | null;
   blunders_white: number;
   blunders_black: number;
   best_moves_json: MoveAnalysis[];
@@ -226,20 +228,7 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
             onSelect={setSelectedIdx}
           />
 
-          <div className="grid grid-cols-2 gap-2 text-center text-sm">
-            <div className="rounded-lg bg-white/5 p-2">
-              <p className="text-xs opacity-50">{t("chess.analysis.white")}</p>
-              <p className="text-lg font-bold text-africhess-gold">
-                {analysis.accuracy_white != null ? `${analysis.accuracy_white}%` : "—"}
-              </p>
-            </div>
-            <div className="rounded-lg bg-white/5 p-2">
-              <p className="text-xs opacity-50">{t("chess.analysis.black")}</p>
-              <p className="text-lg font-bold text-africhess-gold">
-                {analysis.accuracy_black != null ? `${analysis.accuracy_black}%` : "—"}
-              </p>
-            </div>
-          </div>
+          <AccuracySummary analysis={analysis} compact />
 
           <MoveClassificationSummary moves={analysis.best_moves_json} colorColumns />
 

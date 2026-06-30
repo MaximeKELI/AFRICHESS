@@ -234,6 +234,8 @@ class GameAnalysis(models.Model):
     game = models.OneToOneField(Game, on_delete=models.CASCADE, related_name="analysis")
     accuracy_white = models.FloatField(null=True, blank=True)
     accuracy_black = models.FloatField(null=True, blank=True)
+    move_accuracy_white = models.FloatField(null=True, blank=True)
+    move_accuracy_black = models.FloatField(null=True, blank=True)
     blunders_white = models.PositiveSmallIntegerField(default=0)
     blunders_black = models.PositiveSmallIntegerField(default=0)
     best_moves_json = models.JSONField(default=list)

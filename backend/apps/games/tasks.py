@@ -86,7 +86,7 @@ def analyze_game_async(game_id: str, job_id: int):
     """Analyse cloud profonde en arrière-plan."""
     from django.utils import timezone
 
-    from apps.games.analysis_utils import compute_accuracies
+    from apps.games.analysis_utils import compute_accuracies, compute_move_accuracies
     from apps.games.engine import ChessEngineService
     from apps.learning.review_nlg import generate_game_review
 
@@ -113,6 +113,7 @@ def analyze_game_async(game_id: str, job_id: int):
             1 for i, e in enumerate(evaluations) if e.classification == "blunder" and not move_rows[i][1]
         )
         acc_w, acc_b = compute_accuracies(evaluations, move_rows)
+        move_acc_w, move_acc_b = compute_move_accuracies(evaluations, move_rows)
         best_moves_json = [
             {
                 "uci": e.uci,
@@ -140,6 +141,8 @@ def analyze_game_async(game_id: str, job_id: int):
             defaults={
                 "accuracy_white": acc_w,
                 "accuracy_black": acc_b,
+                "move_accuracy_white": move_acc_w,
+                "move_accuracy_black": move_acc_b,
                 "blunders_white": blunders_w,
                 "blunders_black": blunders_b,
                 "best_moves_json": best_moves_json,

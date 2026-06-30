@@ -6,7 +6,7 @@ import Link from "next/link";
 import { CapturedBoardStack } from "@/components/chess/CapturedBoardStack";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { EvalGraph } from "@/components/chess/EvalGraph";
-import { MoveClassificationSummary } from "@/components/chess/MoveClassificationSummary";
+import { GameReviewStatsDashboard } from "@/components/chess/GameReviewStatsDashboard";
 import { useGameAnalysis } from "@/hooks/useGameAnalysis";
 import {
   initAiSpeech,
@@ -210,10 +210,6 @@ export function GameReview({
     if (autoTour && voiceOn) speakCurrent(true);
   }, [selectedIdx, autoTour, speakCurrent, voiceOn]);
 
-  const userAccuracy = playerIsWhite
-    ? analysis?.accuracy_white
-    : analysis?.accuracy_black;
-
   const goPrev = () => {
     setAutoTour(false);
     setSelectedIdx((i) => Math.max(0, i - 1));
@@ -340,31 +336,14 @@ export function GameReview({
                 </p>
               )}
 
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-xl bg-white/5 p-2">
-                  <p className="text-[10px] uppercase opacity-50">{t("chess.review.yourAccuracy")}</p>
-                  <p className="text-2xl font-bold text-africhess-gold">
-                    {userAccuracy != null ? `${userAccuracy}%` : "—"}
-                  </p>
-                </div>
-                <div className="rounded-xl bg-white/5 p-2">
-                  <p className="text-[10px] uppercase opacity-50">{t("chess.analysis.white")}</p>
-                  <p className="text-lg font-semibold">
-                    {analysis.accuracy_white != null ? `${analysis.accuracy_white}%` : "—"}
-                  </p>
-                </div>
-                <div className="rounded-xl bg-white/5 p-2">
-                  <p className="text-[10px] uppercase opacity-50">{t("chess.analysis.black")}</p>
-                  <p className="text-lg font-semibold">
-                    {analysis.accuracy_black != null ? `${analysis.accuracy_black}%` : "—"}
-                  </p>
-                </div>
-              </div>
-
-              <MoveClassificationSummary moves={moves} playerIsWhite={playerIsWhite} />
+              <GameReviewStatsDashboard
+                analysis={analysis}
+                moves={moves}
+                playerIsWhite={playerIsWhite}
+              />
 
               {analysis.summary_fr && (
-                <div className="rounded-xl bg-africhess-gold/10 border border-africhess-gold/20 p-3 text-sm space-y-2">
+                <div className="rounded-xl bg-gradient-to-br from-africhess-gold/10 to-transparent border border-africhess-gold/20 p-4 text-sm space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-semibold text-africhess-gold">
                       {t("chess.analysis.reviewTitle")}
