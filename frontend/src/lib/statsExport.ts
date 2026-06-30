@@ -167,7 +167,8 @@ export function downloadFile(content: string, filename: string, mimeType: string
   URL.revokeObjectURL(url);
 }
 
-export function downloadStatsJson(data: StatsExportData, username: string) {
+export function downloadStatsJson(raw: object, username: string) {
+  const data = asExportData(raw);
   const payload = {
     exported_at: new Date().toISOString(),
     username,
