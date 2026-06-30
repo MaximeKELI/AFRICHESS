@@ -79,6 +79,7 @@ export function GameReview({
   const [autoTour, setAutoTour] = useState(false);
   const autoTourRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const voiceTourRef = useRef(false);
+  const analysisTourStartedRef = useRef(false);
 
   useEffect(() => {
     initAiSpeech();
@@ -96,6 +97,14 @@ export function GameReview({
       setSelectedIdx(0);
     }
   }, [analysis]);
+
+  useEffect(() => {
+    if (!analysis?.best_moves_json.length || analysisTourStartedRef.current) return;
+    analysisTourStartedRef.current = true;
+    if (voiceOn) {
+      setAutoTour(true);
+    }
+  }, [analysis, voiceOn]);
 
   const moves = analysis?.best_moves_json ?? [];
   const selectedMove = moves[selectedIdx] ?? null;
