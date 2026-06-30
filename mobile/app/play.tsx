@@ -20,7 +20,7 @@ import { parsePocketsFromFen, pocketForPlayer } from "../lib/crazyhouse";
 import { wsPayloadToGameData } from "../lib/gameState";
 import { type Bot, type GameData, type GameVariant, gamesApi } from "../lib/api";
 
-const AI_ELOS = [750, 1250, 1750, 2250, 2750, 3250];
+const AI_ELOS = [250, 750, 1250, 1750, 2250, 2750, 3250, 4000];
 const VARIANTS: { id: GameVariant; label: string }[] = [
   { id: "standard", label: "Classique" },
   { id: "chess960", label: "960" },
