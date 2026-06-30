@@ -652,6 +652,8 @@ class MatchmakingService:
                         continue
                     if a.time_control_minutes != b.time_control_minutes:
                         continue
+                    if (a.time_control or "") != (b.time_control or ""):
+                        continue
                     diff = abs(a.elo - b.elo)
                     if diff <= self.ELO_RANGE and diff < best_diff:
                         best = b
@@ -666,7 +668,7 @@ class MatchmakingService:
                         black=best.user,
                         mode=mode,
                         is_timed=a.is_timed,
-                        time_minutes=a.time_control_minutes,
+                        time_control=a.time_control or None,
                         is_rated=a.is_rated,
                     )
                     self._notify_match(a.user_id, best.user_id, game)
