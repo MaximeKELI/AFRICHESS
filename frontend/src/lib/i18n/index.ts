@@ -1254,7 +1254,9 @@ const fr: Record<string, string> = {
   "crazyhouse.dropHint": "Cliquez puis choisissez une case",
   "crazyhouse.cancelDrop": "Annuler",
   "chess.analysis.freeLimit": "Analyse limitée à 40 coups (Gold : 80 · Diamond : 120).",
+  "chess.analysis.limitFree": "Analyse limitée à {limit} coups (Gold : {gold} · Diamond : {diamond}).",
   "chess.analysis.goldLimit": "Analyse Gold : 80 coups max (Diamond : 120).",
+  "chess.analysis.limitGold": "Analyse Gold : {limit} coups max (Diamond : {diamond}).",
   "puzzles.rush.loginRequired": "Connectez-vous pour le Puzzle Rush.",
   "puzzles.rush.premiumLimit": "Limite daily atteinte (3 parties). Passez Premium pour l'illimité.",
 };
@@ -2509,7 +2511,9 @@ const en: Record<string, string> = {
   "crazyhouse.dropHint": "Click then choose a square",
   "crazyhouse.cancelDrop": "Cancel",
   "chess.analysis.freeLimit": "Analysis limited to 40 moves (Gold: 80 · Diamond: 120).",
+  "chess.analysis.limitFree": "Analysis limited to {limit} moves (Gold: {gold} · Diamond: {diamond}).",
   "chess.analysis.goldLimit": "Gold analysis: 80 moves max (Diamond: 120).",
+  "chess.analysis.limitGold": "Gold analysis: {limit} moves max (Diamond: {diamond}).",
   "puzzles.rush.loginRequired": "Sign in to play Puzzle Rush.",
   "puzzles.rush.premiumLimit": "Daily limit reached (3 runs). Go Premium for unlimited.",
 };
