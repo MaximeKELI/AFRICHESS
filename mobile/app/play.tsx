@@ -108,6 +108,8 @@ export default function PlayScreen() {
   );
 
   const aiComment = useMemo(() => latestComment(game?.moves), [game?.moves]);
+
+  const crazyhousePockets = useMemo(() => {
     if (!game || activeVariant !== "crazyhouse") return [];
     return pocketForPlayer(parsePocketsFromFen(game.fen), playerColor);
   }, [game, activeVariant, playerColor]);
@@ -138,7 +140,12 @@ export default function PlayScreen() {
   );
 
   const { searching, mmError, search: startMatchmaking, cancel: cancelMatchmaking } =
-    useMatchmakingWebSocket(Boolean(user && playMode === "human"), "blitz", handleMatchFound);
+    useMatchmakingWebSocket(
+      Boolean(user && playMode === "human"),
+      "blitz",
+      handleMatchFound,
+      { isTimed: true, timeControl: "3+2", isRated: true }
+    );
 
   const { connected: wsConnected, wsError, resign: wsResign } = useGameWebSocket(
     game?.id ?? null,
