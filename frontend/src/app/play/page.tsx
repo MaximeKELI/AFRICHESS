@@ -67,7 +67,7 @@ import {
 } from "@/lib/gamePlayers";
 import { parseAnalysisPayload, type GameAnalysisData } from "@/lib/gameAnalysis";
 
-import { useGameWebSocket, type WsGamePayload } from "@/hooks/useGameWebSocket";
+import { useGameWebSocket, type WsGamePatch, type WsGamePayload } from "@/hooks/useGameWebSocket";
 import { useMatchmakingWebSocket } from "@/hooks/useMatchmakingWebSocket";
 
 interface GameState {
@@ -491,11 +491,17 @@ function PlayContent() {
           status: g.status,
           result: g.result,
           is_vs_ai: g.is_vs_ai,
+          draw_offered_by: g.draw_offered_by,
+          takeback_requested_by: g.takeback_requested_by,
         });
       });
     },
     [applyGameResponse]
   );
+
+  const handleWsGamePatch = useCallback((patch: WsGamePatch) => {
+    setGameData((prev) => ({ ...prev, ...patch }));
+  }, []);
 
 
   const { connected: wsConnected, wsError, sendMove: wsSendMove, resign: wsResign, sendChat: wsSendChat, subscribeChat: wsSubscribeChat } = useGameWebSocket(
@@ -508,7 +514,8 @@ function PlayContent() {
           result: payload.game.result || t("play.status.gameEndGeneric"),
         })
       );
-    }
+    },
+    handleWsGamePatch
   );
 
   const handleMatchFound = useCallback(
@@ -1242,7 +1249,14 @@ function PlayContent() {
                       gameId &&
                       gamesApi
                         .offerTakeback(gameId)
-                        .then(() => setStatus(t("play.takeback.sent")))
+                        .then(({ data }) => {
+                          setGameData((prev) => ({
+                            ...prev,
+                            takeback_requested_by:
+                              (data as { requested_by?: number }).requested_by ?? user?.id ?? null,
+                          }));
+                          setStatus(t("play.takeback.sent"));
+                        })
                         .catch((err) => setStatus(formatApiError(err, t("play.error.takeback"))))
                     }
                     className="text-xs px-3 py-1 rounded border border-white/20"
@@ -1273,7 +1287,10 @@ function PlayContent() {
                             gameId &&
                             gamesApi
                               .respondTakeback(gameId, false)
-                              .then(() => setStatus(t("play.takeback.declined")))
+                              .then(() => {
+                                setGameData((prev) => ({ ...prev, takeback_requested_by: null }));
+                                setStatus(t("play.takeback.declined"));
+                              })
                               .catch((err) =>
                                 setStatus(formatApiError(err, t("play.error.takeback")))
                               )
@@ -1301,32 +1318,63 @@ function PlayContent() {
                   {t("play.abort")}
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() =>
-                  gameId &&
-                  gamesApi
-                    .offerDraw(gameId)
-                    .then(() => setStatus(t("play.draw.sent")))
-                    .catch((err) => setStatus(formatApiError(err, t("play.error.drawOffer"))))
-                }
-                className="text-xs px-3 py-1 rounded border border-white/20"
-              >
-                {t("play.draw.offer")}
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  gameId &&
-                  gamesApi
-                    .respondDraw(gameId, true)
-                    .then(({ data }) => applyGameResponse(data))
-                    .catch((err) => setStatus(formatApiError(err, t("play.error.drawAccept"))))
-                }
-                className="text-xs px-3 py-1 rounded border border-africhess-green text-africhess-green"
-              >
-                {t("play.draw.accept")}
-              </button>
+              {!gameData.draw_offered_by && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    gameId &&
+                    gamesApi
+                      .offerDraw(gameId)
+                      .then(({ data }) => {
+                        setGameData((prev) => ({
+                          ...prev,
+                          draw_offered_by:
+                            (data as { offered_by?: number }).offered_by ?? user?.id ?? null,
+                        }));
+                        setStatus(t("play.draw.sent"));
+                      })
+                      .catch((err) => setStatus(formatApiError(err, t("play.error.drawOffer"))))
+                  }
+                  className="text-xs px-3 py-1 rounded border border-white/20"
+                >
+                  {t("play.draw.offer")}
+                </button>
+              )}
+              {gameData.draw_offered_by != null &&
+                gameData.draw_offered_by !== user?.id && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        gameId &&
+                        gamesApi
+                          .respondDraw(gameId, true)
+                          .then(({ data }) => applyGameResponse(data))
+                          .catch((err) =>
+                            setStatus(formatApiError(err, t("play.error.drawAccept")))
+                          )
+                      }
+                      className="text-xs px-3 py-1 rounded border border-africhess-green text-africhess-green"
+                    >
+                      {t("play.draw.accept")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        gameId &&
+                        gamesApi
+                          .respondDraw(gameId, false)
+                          .then(({ data }) => applyGameResponse(data))
+                          .catch((err) =>
+                            setStatus(formatApiError(err, t("play.error.drawOffer")))
+                          )
+                      }
+                      className="text-xs px-3 py-1 rounded border border-white/20"
+                    >
+                      {t("play.draw.decline")}
+                    </button>
+                  </>
+                )}
               <button
                 type="button"
                 onClick={() => {

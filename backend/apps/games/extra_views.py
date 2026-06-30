@@ -90,9 +90,25 @@ class VoteGameCreateView(APIView):
         if not club_white.members.filter(pk=request.user.pk).exists():
             return Response({"error": "Vous devez être membre du club blanc"}, status=403)
 
+        if club_white.id == club_black.id:
+            return Response({"error": "Les clubs doivent être différents"}, status=400)
+
+        white_rep = club_white.owner
+        black_rep = club_black.owner
+        if white_rep_id := white_rep.id == black_rep.id:
+            pass
+        if white_rep.id == black_rep.id:
+            alt = club_black.members.exclude(pk=white_rep.pk).order_by("id").first()
+            if not alt:
+                return Response(
+                    {"error": "Impossible : aucun représentant distinct pour le club noir"},
+                    status=400,
+                )
+            black_rep = alt
+
         game = GameService().create_friend_game(
-            white=request.user,
-            black=request.user,
+            white=white_rep,
+            black=black_rep,
             mode=mode,
             is_rated=False,
         )
