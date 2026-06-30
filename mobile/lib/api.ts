@@ -286,5 +286,3 @@ export const socialApi = {
   request: (username: string) => api.post("/social/friends/request/", { username }),
   accept: (id: number) => api.post(`/social/friends/${id}/accept/`),
 };
-
-export { API_ORIGIN };
