@@ -197,8 +197,19 @@ def subscription_status(request):
             "is_premium": user.is_premium,
             "is_diamond": user.is_diamond,
             "premium_until": user.premium_until,
+            "has_billing_portal": bool(user.stripe_customer_id) and stripe_enabled(),
         }
     )
+
+
+@api_view(["POST"])
+@permission_classes([permissions.IsAuthenticated])
+def subscription_billing_portal(request):
+    """Portail Stripe — gérer abonnement / moyen de paiement."""
+    result = create_billing_portal_session(request.user)
+    if result.get("error"):
+        return Response(result, status=503)
+    return Response(result)
 
 
 @api_view(["POST"])

@@ -198,6 +198,10 @@ def handle_webhook(payload: bytes, sig_header: str | None):
             User = get_user_model()
             try:
                 user = User.objects.get(pk=int(user_id))
+                customer_id = obj.get("customer")
+                if customer_id and not user.stripe_customer_id:
+                    user.stripe_customer_id = customer_id
+                    user.save(update_fields=["stripe_customer_id"])
                 activate_plan(user, plan, period_end=period_end)
             except User.DoesNotExist:
                 pass

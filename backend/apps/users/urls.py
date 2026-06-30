@@ -14,6 +14,7 @@ urlpatterns = [
     path("subscription/plans/", views.subscription_plans, name="subscription-plans"),
     path("subscription/status/", views.subscription_status, name="subscription-status"),
     path("subscription/subscribe/", views.subscription_subscribe, name="subscription-subscribe"),
+    path("subscription/billing-portal/", views.subscription_billing_portal, name="subscription-billing-portal"),
     path("subscription/webhook/", views.stripe_webhook, name="stripe-webhook"),
     path("security/2fa/status/", totp_views.TotpStatusView.as_view(), name="totp-status"),
     path("security/2fa/setup/", totp_views.TotpSetupView.as_view(), name="totp-setup"),
