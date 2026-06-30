@@ -441,6 +441,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
                 data.get("variant", "standard"),
             )
         elif event in ("quitter_file", "leave_queue"):
+            self._leave_queue_on_disconnect = False
             await self._leave_queue()
 
     async def match_found(self, event):
@@ -467,7 +468,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
         variant: str = "standard",
     ):
         try:
-            result = await self._try_match(
+            result, ws_caused_queue = await self._try_match(
                 mode, is_timed, time_minutes, time_control, is_rated, variant
             )
         except ValueError as exc:
@@ -478,6 +479,8 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
             )
             return
         if result is None:
+            if ws_caused_queue:
+                self._leave_queue_on_disconnect = True
             still_waiting = await self._is_in_queue()
             if still_waiting:
                 await self.send(
