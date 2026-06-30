@@ -11,11 +11,11 @@ import { normalizeSpeechText, splitSpeechChunks } from "@/lib/speechText";
 
 let preferredVoice: SpeechSynthesisVoice | null = null;
 let voicesListenerAttached = false;
-let keepAliveId: ReturnType<typeof setInterval> | null = null;
+let keepAliveId: number | null = null;
 let backendTtsOk: boolean | null = null;
 let localTtsOk: boolean | null = null;
 let audioUnlocked = false;
-let pendingPlay: (() => Promise<boolean>) | null = null;
+let pendingPlay: (() => Promise<void>) | null = null;
 
 type SpeechJob = { text: string; byAi: boolean; generation: number };
 const pendingJobs: SpeechJob[] = [];
