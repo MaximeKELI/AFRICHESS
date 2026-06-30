@@ -206,7 +206,7 @@ export default function PlayScreen() {
         setBusy(false);
       }
     },
-    [game, busy, playerColor, applyGame]
+    [game, busy, playerColor, applyGame, aiCommentsEnabled, refreshComments]
   );
 
   const handleUndo = async () => {
@@ -231,11 +231,20 @@ export default function PlayScreen() {
         text: "Abandonner",
         style: "destructive",
         onPress: () => {
-          if (wsResign()) {
-            setStatus("Abandon envoyé…");
-          } else {
-            setStatus("WebSocket indisponible — reconnectez-vous");
-          }
+          if (!game) return;
+          gamesApi
+            .resign(game.id)
+            .then(({ data }) => {
+              applyGame(data);
+              setStatus("Partie abandonnée");
+            })
+            .catch(() => {
+              if (wsResign()) {
+                setStatus("Abandon envoyé…");
+              } else {
+                setStatus("Impossible d'abandonner");
+              }
+            });
         },
       },
     ]);
@@ -311,6 +320,16 @@ export default function PlayScreen() {
             </Pressable>
           ))}
         </View>
+
+        <Text style={styles.label}>Commentaires IA</Text>
+        <Pressable
+          onPress={() => setAiCommentsEnabled((v) => !v)}
+          style={[styles.chip, aiCommentsEnabled && styles.chipActive]}
+        >
+          <Text style={aiCommentsEnabled ? styles.chipTextActive : styles.chipText}>
+            {aiCommentsEnabled ? "Activés" : "Désactivés"}
+          </Text>
+        </Pressable>
 
         <Text style={styles.label}>Couleur</Text>
         <View style={styles.row}>
@@ -406,6 +425,9 @@ export default function PlayScreen() {
           incrementMs={game.increment_ms ?? 0}
         />
       )}
+      {aiComment ? (
+        <Text style={styles.commentBox}>🤖 {aiComment}</Text>
+      ) : null}
       {busy && <ActivityIndicator color="#D4A017" style={{ marginBottom: 8 }} />}
       {activeVariant === "crazyhouse" && game.status === "active" && isMyTurn && (
         <PocketBar
