@@ -12,7 +12,7 @@ import { AiTauntBubble } from "@/components/chess/AiTauntBubble";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { GameReview } from "@/components/chess/GameReview";
 import { PlayBoardSection } from "@/components/play/PlayBoardSection";
-import { pollPendingMoveComments } from "@/lib/pollGameComments";
+import { movesMissingComments, pollPendingMoveComments } from "@/lib/pollGameComments";
 import { useAuthStore } from "@/store/auth";
 import { unlockAiSpeech, speakComment, bindAiSpeechToUserGestures } from "@/lib/aiSpeech";
 import { defaultAiEloForUser, normalizeToPreset, resolveAiPlayMode, type AiLevelElo } from "@/lib/aiStrength";
@@ -324,8 +324,8 @@ function PlayContent() {
 
   const moveComments = useMemo(() => {
     if (!gameData.moves?.length) return [];
-    return commentsFromMoves(gameData.moves, playerIsWhite);
-  }, [gameData.moves, playerIsWhite]);
+    return commentsFromMoves(gameData.moves, playerIsWhite, isVsAi);
+  }, [gameData.moves, playerIsWhite, isVsAi]);
 
   const latestAiComment = useMemo(
     () => moveComments.filter((comment) => comment.byAi).at(-1),
@@ -454,7 +454,9 @@ function PlayContent() {
 
   const refreshPendingComments = useCallback(
     (data: Partial<GameState> & { comments_pending?: boolean }, id: string | null) => {
-      if (!id || !data.comments_pending || !aiCommentsEnabled) return;
+      if (!id || !aiCommentsEnabled || !data.is_vs_ai) return;
+      const missing = movesMissingComments(data.moves as ApiMove[] | undefined);
+      if (!data.comments_pending && missing === 0) return;
       void pollPendingMoveComments(id, (fresh) => {
         applyGameResponse(fresh as Partial<GameState> & { id?: string; fen?: string });
       });
