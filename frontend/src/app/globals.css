@@ -60,11 +60,14 @@ html.has-site-background .home-default-pattern {
   display: none;
 }
 
-html.has-site-background nav,
 html.has-site-background main,
 html.has-site-background footer {
   position: relative;
   z-index: 1;
+}
+
+html.has-site-background nav {
+  z-index: 50;
 }
 
 .low-bandwidth body,
