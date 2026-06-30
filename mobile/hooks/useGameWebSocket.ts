@@ -94,7 +94,7 @@ export function useGameWebSocket(
               onGamePatchRef.current?.({ takeback_requested_by: data.requested_by as number });
             } else if (data.game) {
               onUpdateRef.current(data as WsGamePayload);
-              const game = (data as WsGamePayload).game as Record<string, unknown>;
+              const game = (data as WsGamePayload).game as unknown as Record<string, unknown>;
               onGamePatchRef.current?.({
                 draw_offered_by: (game.draw_offered_by as number | null) ?? null,
                 takeback_requested_by: (game.takeback_requested_by as number | null) ?? null,
@@ -142,6 +142,24 @@ export function useGameWebSocket(
     };
   }, [gameId, enabled]);
 
+  const sendMove = useCallback(
+    (uci: string, spentMs?: number, telemetry?: Record<string, number | undefined>) => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(
+          JSON.stringify({
+            event: "jouer_coup",
+            uci,
+            spent_ms: spentMs,
+            telemetry,
+          })
+        );
+        return true;
+      }
+      return false;
+    },
+    []
+  );
+
   const resign = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ event: "abandonner_partie" }));
@@ -150,5 +168,5 @@ export function useGameWebSocket(
     return false;
   }, []);
 
-  return { connected, wsError, resign };
+  return { connected, wsError, sendMove, resign };
 }
