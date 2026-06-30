@@ -104,10 +104,24 @@ class CourseDetailSerializer(serializers.ModelSerializer):
         ]
 
     def get_lessons(self, obj):
+        from .premium_access import can_access_lesson, lesson_requires_premium
+
+        request = self.context.get("request")
+        user = request.user if request and request.user.is_authenticated else None
         lang = self.context.get("lang", "fr")
-        return LessonSerializer(
-            obj.lessons.all(), many=True, context={"lang": lang}
-        ).data
+        lessons = []
+        for lesson in obj.lessons.all():
+            data = LessonSerializer(lesson, context={"lang": lang}).data
+            if not can_access_lesson(user, lesson):
+                data["content"] = ""
+                data["video_url"] = ""
+                data["locked"] = True
+                data["premium_required"] = lesson_requires_premium(lesson)
+            else:
+                data["locked"] = False
+                data["premium_required"] = False
+            lessons.append(data)
+        return lessons
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

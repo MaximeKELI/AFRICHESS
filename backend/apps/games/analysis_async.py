@@ -18,7 +18,7 @@ def run_analyze_game_job(game_id: str, job_id: int) -> None:
     from apps.learning.review_nlg import generate_game_review
 
     try:
-        job = AnalysisJob.objects.get(pk=job_id)
+        job = AnalysisJob.objects.select_related("user").get(pk=job_id)
     except AnalysisJob.DoesNotExist:
         return
 
@@ -27,7 +27,14 @@ def run_analyze_game_job(game_id: str, job_id: int) -> None:
 
     try:
         game = Game.objects.get(id=game_id)
-        move_rows = list(game.moves.order_by("move_number").values_list("uci", "played_by_white"))
+        from apps.users.premium_utils import max_analysis_moves
+
+        limit = max_analysis_moves(job.user)
+        move_rows = list(
+            game.moves.order_by("move_number").values_list("uci", "played_by_white")
+        )[:limit]
+        if not move_rows:
+            raise RuntimeError("No moves to analyze")
         engine = ChessEngineService()
         evaluations = engine.analyze_game_moves(move_rows, depth=job.depth)
         if not evaluations:

@@ -16,6 +16,7 @@ from apps.common.throttles import AuthAnonThrottle, AuthUserThrottle
 
 from .countries_data import WORLD_COUNTRIES, country_flag
 from .oauth_exchange import consume_oauth_code
+from .totp_service import verify_totp
 from .serializers import RegisterSerializer, UserPublicSerializer, UserSerializer, UserUpdateSerializer
 from .premium_utils import DIAMOND_ANALYSIS_MOVES, FREE_ANALYSIS_MOVES, GOLD_ANALYSIS_MOVES
 from .stripe_service import create_checkout_session, handle_webhook, stripe_enabled
@@ -236,6 +237,15 @@ def oauth_exchange(request):
     user = consume_oauth_code(code)
     if not user:
         return Response({"error": "Code invalide ou expiré"}, status=400)
+    totp_code = (request.data.get("totp_code") or "").strip()
+    if user.totp_enabled:
+        if not totp_code:
+            return Response(
+                {"error": "TOTP_REQUIRED", "code": "TOTP_REQUIRED"},
+                status=400,
+            )
+        if not verify_totp(user.totp_secret, totp_code):
+            return Response({"error": "Code 2FA invalide."}, status=400)
     refresh = RefreshToken.for_user(user)
     return Response({"access": str(refresh.access_token), "refresh": str(refresh)})
 

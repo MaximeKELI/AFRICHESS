@@ -120,6 +120,14 @@ class CompleteLessonView(APIView):
         except Lesson.DoesNotExist:
             return Response({"error": "Leçon introuvable"}, status=404)
 
+        from .premium_access import can_access_lesson
+
+        if not can_access_lesson(request.user, lesson):
+            return Response(
+                {"error": "Contenu Premium — abonnement Gold ou Diamond requis.", "code": "premium_required"},
+                status=403,
+            )
+
         prog, _ = UserProgress.objects.get_or_create(user=request.user, course=course)
         already = lesson_id in (prog.completed_lesson_ids or [])
         progress = update_course_progress(request.user, course, lesson.id)
