@@ -99,7 +99,15 @@ export default function PlayScreen() {
     }
   }, []);
 
-  const crazyhousePockets = useMemo(() => {
+  const refreshComments = useCallback(
+    (data: GameData & { comments_pending?: boolean }) => {
+      if (!data.id || !data.is_vs_ai || !aiCommentsEnabled || !data.comments_pending) return;
+      void pollPendingMoveComments(data.id, applyGame);
+    },
+    [aiCommentsEnabled, applyGame]
+  );
+
+  const aiComment = useMemo(() => latestComment(game?.moves), [game?.moves]);
     if (!game || activeVariant !== "crazyhouse") return [];
     return pocketForPlayer(parsePocketsFromFen(game.fen), playerColor);
   }, [game, activeVariant, playerColor]);
