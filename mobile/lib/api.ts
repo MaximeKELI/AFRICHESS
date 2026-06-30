@@ -205,12 +205,13 @@ export const gamesApi = {
   move: (
     id: string,
     uci: string,
-    opts?: { spentMs?: number; includeComments?: boolean }
+    opts?: { spentMs?: number; includeComments?: boolean; telemetry?: Record<string, number | undefined> }
   ) =>
     api.post<GameData & { comments_pending?: boolean }>(`/games/${id}/move/`, {
       uci,
       include_comments: opts?.includeComments ?? false,
       ...(opts?.spentMs != null ? { spent_ms: opts.spentMs } : {}),
+      ...(opts?.telemetry ? { telemetry: opts.telemetry } : {}),
     }),
   undo: (id: string) => api.post<GameData>(`/games/${id}/undo/`),
   resign: (id: string) => api.post<GameData>(`/games/${id}/resign/`),
