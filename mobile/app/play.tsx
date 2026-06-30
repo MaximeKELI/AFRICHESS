@@ -616,6 +616,47 @@ export default function PlayScreen() {
         onMove={handleMove}
       />
       <View style={styles.gameActions}>
+        {opponentOfferedDraw && (
+          <View style={styles.offerRow}>
+            <Text style={styles.offerText}>L'adversaire propose la nulle</Text>
+            <View style={styles.row}>
+              <Pressable style={styles.secondaryBtn} onPress={() => handleRespondDraw(true)}>
+                <Text style={styles.secondaryText}>Accepter</Text>
+              </Pressable>
+              <Pressable style={styles.secondaryBtn} onPress={() => handleRespondDraw(false)}>
+                <Text style={styles.secondaryText}>Refuser</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+        {opponentRequestedTakeback && (
+          <View style={styles.offerRow}>
+            <Text style={styles.offerText}>L'adversaire demande une reprise</Text>
+            <View style={styles.row}>
+              <Pressable style={styles.secondaryBtn} onPress={() => handleRespondTakeback(true)}>
+                <Text style={styles.secondaryText}>Accepter</Text>
+              </Pressable>
+              <Pressable style={styles.secondaryBtn} onPress={() => handleRespondTakeback(false)}>
+                <Text style={styles.secondaryText}>Refuser</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+        {!game.is_vs_ai && game.status === "active" && !game.draw_offered_by && (
+          <Pressable style={styles.secondaryBtn} onPress={handleOfferDraw} disabled={busy}>
+            <Text style={styles.secondaryText}>Proposer nulle</Text>
+          </Pressable>
+        )}
+        {!game.is_vs_ai && !game.is_rated && game.status === "active" && !game.takeback_requested_by && (
+          <Pressable style={styles.secondaryBtn} onPress={handleOfferTakeback} disabled={busy}>
+            <Text style={styles.secondaryText}>Demander reprise</Text>
+          </Pressable>
+        )}
+        {canAbort && (
+          <Pressable style={styles.secondaryBtn} onPress={handleAbort} disabled={busy}>
+            <Text style={styles.secondaryText}>Annuler partie</Text>
+          </Pressable>
+        )}
         {game.is_vs_ai && game.status === "active" && (
           <Pressable style={styles.secondaryBtn} onPress={handleUndo} disabled={busy}>
             <Text style={styles.secondaryText}>Annuler coup</Text>
@@ -677,6 +718,9 @@ const styles = StyleSheet.create({
   },
   startText: { color: "#fff", fontWeight: "700", fontSize: 16 },
   status: { color: "#aaa", textAlign: "center", marginBottom: 4, fontSize: 14 },
+  opponent: { color: "#ccc", textAlign: "center", marginBottom: 8, fontSize: 13 },
+  offerRow: { marginBottom: 10, alignItems: "center", gap: 8 },
+  offerText: { color: "#D4A017", fontSize: 13, textAlign: "center" },
   wsStatus: { color: "#666", textAlign: "center", marginBottom: 12, fontSize: 11 },
   commentBox: {
     color: "#ddd",
