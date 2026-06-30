@@ -61,6 +61,8 @@ Redirect OAuth (Google Cloud / GitHub) : `https://api.africhess.com/accounts/goo
 
 Après login social, redirection vers `https://africhess.com/auth/callback?code=<one-time>`.
 
+Le frontend échange le code via `POST /api/users/auth/oauth/exchange/` `{ "code": "…" }` → `{ "access", "refresh" }`.
+
 OAuth mobile : redirect `africhess://auth/callback?code=…` via `?next=` sur `/accounts/{provider}/login/`.
 
 ## Services Docker
