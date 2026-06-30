@@ -37,7 +37,7 @@ services:
       - ./anticheat-cpp:/anticheat-cpp
       - media_data:/app/media
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.development
       - POSTGRES_HOST=db
