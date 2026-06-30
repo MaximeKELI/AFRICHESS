@@ -27,6 +27,12 @@ import {
 } from "@/lib/reviewDisplay";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuthStore } from "@/store/auth";
+import {
+  analysisLimitHint,
+  fetchSubscriptionPlans,
+  getAnalysisLimits,
+  type SubscriptionPlansPayload,
+} from "@/lib/subscriptionPlans";
 
 const CLASS_COLORS: Record<string, string> = {
   brilliant: "text-cyan-300",
@@ -80,6 +86,16 @@ export function GameReview({
   const autoTourRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const voiceTourRef = useRef(false);
   const analysisTourStartedRef = useRef(false);
+  const [plans, setPlans] = useState<SubscriptionPlansPayload | null>(null);
+
+  useEffect(() => {
+    void fetchSubscriptionPlans().then(setPlans);
+  }, []);
+
+  const limitHint = useMemo(
+    () => analysisLimitHint(t, getAnalysisLimits(plans), user),
+    [t, plans, user]
+  );
 
   useEffect(() => {
     initAiSpeech();
