@@ -35,7 +35,7 @@ interface AuthState {
   setLocale: (locale: AuthState["locale"]) => void;
   toggleDarkMode: () => void;
   setLowBandwidth: (v: boolean) => void;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string, totpCode?: string) => Promise<void>;
   register: (data: {
     username: string;
     email: string;

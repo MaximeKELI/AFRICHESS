@@ -275,6 +275,8 @@ const fr: Record<string, string> = {
   "auth.login.password": "Mot de passe",
   "auth.login.submit": "Se connecter",
   "auth.login.submitting": "Connexion…",
+  "auth.login.totpLabel": "Code 2FA (6 chiffres)",
+  "auth.login.totpHint": "Entrez le code de votre application d'authentification.",
   "auth.login.noAccount": "Pas encore de compte ?",
   "auth.login.signup": "S'inscrire",
   "auth.login.hint": "Nom d'utilisateur ou e-mail. Si votre e-mail est partagé entre plusieurs comptes, utilisez le nom d'utilisateur (ex. DKELI).",

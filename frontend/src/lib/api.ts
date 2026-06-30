@@ -115,8 +115,12 @@ api.interceptors.response.use(
 );
 
 export const authApi = {
-  login: (username: string, password: string) =>
-    api.post("/auth/login/", { username, password }),
+  login: (username: string, password: string, totpCode?: string) =>
+    api.post("/auth/login/", {
+      username,
+      password,
+      ...(totpCode ? { totp_code: totpCode } : {}),
+    }),
   logout: (refresh: string) => api.post("/auth/logout/", { refresh }),
   register: (data: Record<string, string | number>) =>
     api.post("/users/register/", data),
