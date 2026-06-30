@@ -4,6 +4,7 @@ import logging
 from datetime import timedelta
 
 from celery import shared_task
+from django.conf import settings
 from django.utils import timezone
 
 from .models import Game, GameRoom, MatchmakingQueue, GameAnalysis, AnalysisJob
@@ -20,8 +21,8 @@ def pair_matchmaking_queues():
 
 @shared_task
 def forfeit_disconnected_games():
-    """Victoire si adversaire déconnecté > 90 secondes."""
-    cutoff = timezone.now() - timedelta(seconds=90)
+    """Victoire si adversaire déconnecté au-delà du délai configuré."""
+    cutoff = timezone.now() - timedelta(seconds=settings.DISCONNECT_FORFEIT_SECONDS)
     for room in GameRoom.objects.select_related("game").filter(
         game__status=Game.Status.ACTIVE,
         game__is_vs_ai=False,

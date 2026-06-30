@@ -50,7 +50,7 @@ services:
       - ALLOWED_HOSTS=localhost,127.0.0.1,backend
       - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
       - WS_ALLOW_QUERY_TOKEN=false
-      - PREMIUM_DEMO_ALLOWED=true
+      - PREMIUM_DEMO_ALLOWED=${PREMIUM_DEMO_ALLOWED:-false}
       - ALLOW_PUBLIC_API_DOCS=false
       - FAIRPLAY_BIN=/usr/local/bin/africhess-fairplay
       - STOCKFISH_PATH=/usr/games/stockfish
