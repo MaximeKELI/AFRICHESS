@@ -39,7 +39,7 @@ export default function EndgameTrainerPage() {
       try {
         chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] });
         setFen(chess.fen());
-        if (drill.solution.includes(uci)) {
+        if ((drill.solution as readonly string[]).includes(uci)) {
           setFeedback(t("endgame.correct"));
         } else {
           setFeedback(t("endgame.tryAgain"));
