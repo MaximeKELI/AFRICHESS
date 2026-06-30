@@ -93,6 +93,20 @@ class StripeWebhookTests(TestCase):
         self.assertEqual(event["type"], "checkout.session.completed")
         mock_activate.assert_called_once()
 
+    @patch("apps.users.stripe_service.stripe_enabled", return_value=True)
+    @patch("apps.users.stripe_service._client")
+    def test_checkout_includes_subscription_metadata(self, mock_client, _enabled):
+        mock_stripe = MagicMock()
+        mock_client.return_value = mock_stripe
+        mock_stripe.checkout.Session.create.return_value = MagicMock(url="https://x", id="s1")
+        from apps.users.stripe_service import create_checkout_session
+
+        with patch.dict("apps.users.stripe_service.PLAN_PRICES", {"gold": "price_gold"}):
+            create_checkout_session(self.user, "gold")
+        kwargs = mock_stripe.checkout.Session.create.call_args.kwargs
+        self.assertEqual(kwargs["subscription_data"]["metadata"]["user_id"], str(self.user.id))
+        self.assertEqual(kwargs["subscription_data"]["metadata"]["plan"], "gold")
+
     @patch("apps.users.stripe_service.deactivate_plan")
     @patch("apps.users.stripe_service._client")
     def test_handle_webhook_subscription_deleted(self, mock_client, mock_deactivate):

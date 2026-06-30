@@ -13,6 +13,7 @@ from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
 from config.auth_views import registration_deprecated
+from apps.common.health import health_check
 from apps.users.auth_views import SecureLoginView, SecureLogoutView
 
 if settings.DEBUG and getattr(settings, "ALLOW_PUBLIC_API_DOCS", False):
@@ -23,6 +24,7 @@ else:
 urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("admin/", admin.site.urls),
+    path("api/health/", health_check, name="health"),
     path(
         "api/schema/",
         SpectacularAPIView.as_view(permission_classes=_doc_permissions),

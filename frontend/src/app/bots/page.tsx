@@ -63,6 +63,17 @@ export default function BotsPage() {
   const label = (b: Bot) => (locale === "fr" ? b.name : b.name_en || b.name);
   const desc = (b: Bot) => (locale === "fr" ? b.description : b.description_en || b.description);
 
+  const challengeHref = (b: Bot) => {
+    if (!user) return "/login";
+    if (b.is_premium && !user.is_premium) return "/premium";
+    return `/play?mode=blitz&bot=${b.slug}`;
+  };
+
+  const challengeLabel = (b: Bot) => {
+    if (b.is_premium && user && !user.is_premium) return t("premium.subscribe");
+    return user ? t("bots.challenge") : t("bots.loginToPlay");
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold mb-2">{t("bots.title")}</h1>
@@ -97,7 +108,7 @@ export default function BotsPage() {
             {featured.map((b) => (
               <Link
                 key={b.slug}
-                href={user ? `/play?mode=blitz&bot=${b.slug}` : "/login"}
+                href={challengeHref(b)}
                 className="glass-card p-3 min-w-[140px] snap-start flex flex-col items-center gap-2 hover:ring-1 hover:ring-africhess-gold/50 transition"
               >
                 <span className="relative w-16 h-16 rounded-xl overflow-hidden ring-2 ring-emerald-400/50">
@@ -161,10 +172,10 @@ export default function BotsPage() {
             </p>
             {user ? (
               <Link
-                href={`/play?mode=blitz&bot=${b.slug}`}
+                href={challengeHref(b)}
                 className="mt-auto text-center py-2 rounded-lg african-gradient text-white text-sm font-medium"
               >
-                {t("bots.challenge")}
+                {challengeLabel(b)}
               </Link>
             ) : (
               <Link href="/login" className="mt-auto text-center text-sm text-africhess-gold hover:underline">

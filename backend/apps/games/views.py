@@ -803,7 +803,9 @@ class AnalyzeGameStatusView(APIView):
         if job.status == AnalysisJob.Status.COMPLETED:
             try:
                 analysis = GameAnalysis.objects.get(game_id=game_id)
-                payload["analysis"] = GameAnalysisSerializer(analysis).data
+                payload["analysis"] = GameAnalysisSerializer(
+                    analysis, context={"request": request}
+                ).data
             except GameAnalysis.DoesNotExist:
                 pass
         if job.status == AnalysisJob.Status.FAILED:

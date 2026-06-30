@@ -52,6 +52,14 @@ class GameAnalysisSerializer(serializers.ModelSerializer):
             "best_moves_json", "summary_fr", "summary_en", "key_moments_json",
         ]
 
+    def to_representation(self, instance):
+        from apps.users.premium_utils import redact_game_analysis_payload
+
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        user = request.user if request and request.user.is_authenticated else None
+        return redact_game_analysis_payload(data, user)
+
 
 class ChessBotSerializer(serializers.ModelSerializer):
     is_legend = serializers.SerializerMethodField()

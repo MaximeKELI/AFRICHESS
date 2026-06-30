@@ -23,3 +23,9 @@ def can_access_premium_video(user, video) -> bool:
     if not video.is_premium:
         return True
     return user_has_learning_premium(user)
+
+
+def can_access_quiz(user, quiz) -> bool:
+    if quiz.lesson_id:
+        return can_access_lesson(user, quiz.lesson)
+    return True

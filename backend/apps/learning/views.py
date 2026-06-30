@@ -158,6 +158,17 @@ class QuizDetailView(generics.RetrieveAPIView):
         models.Q(course__is_published=True) | models.Q(lesson__course__is_published=True)
     )
 
+    def retrieve(self, request, *args, **kwargs):
+        quiz = self.get_object()
+        from .premium_access import can_access_quiz
+
+        if not can_access_quiz(request.user, quiz):
+            return Response(
+                {"error": "Contenu Premium — abonnement Gold ou Diamond requis.", "code": "premium_required"},
+                status=403,
+            )
+        return super().retrieve(request, *args, **kwargs)
+
 
 class SubmitQuizView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -167,6 +178,14 @@ class SubmitQuizView(APIView):
             quiz = Quiz.objects.get(pk=pk)
         except Quiz.DoesNotExist:
             return Response({"error": "Quiz introuvable"}, status=404)
+
+        from .premium_access import can_access_quiz
+
+        if not can_access_quiz(request.user, quiz):
+            return Response(
+                {"error": "Contenu Premium — abonnement Gold ou Diamond requis.", "code": "premium_required"},
+                status=403,
+            )
 
         ser = SubmitQuizSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
@@ -234,7 +253,13 @@ class AnalyzePgnView(APIView):
         if not pgn:
             return Response({"error": "PGN vide"}, status=400)
 
-        result = analyze_pgn(pgn)
+        from apps.users.premium_utils import analysis_engine_depth, max_analysis_moves
+
+        depth = analysis_engine_depth(request.user)
+        limit = max_analysis_moves(request.user)
+        result = analyze_pgn(pgn, depth=depth, max_moves=limit)
+        result["analysis_move_limit"] = limit
+        result["analysis_depth"] = depth
         profile = get_or_create_profile(request.user)
         profile.analyses_run += 1
         profile.save(update_fields=["analyses_run", "updated_at"])

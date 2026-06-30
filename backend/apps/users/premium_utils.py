@@ -51,3 +51,18 @@ def record_puzzle_rush_start(user) -> None:
         stats.puzzle_rush_last_date = today
     stats.puzzle_rush_daily_count += 1
     stats.save(update_fields=["puzzle_rush_daily_count", "puzzle_rush_last_date"])
+
+
+def redact_game_analysis_payload(data: dict, user) -> dict:
+    """Limite l'analyse visible selon le tier du viewer (pas de l'analyseur)."""
+    limit = max_analysis_moves(user)
+    out = dict(data)
+    moves = out.get("best_moves_json") or []
+    if isinstance(moves, list) and len(moves) > limit:
+        out["best_moves_json"] = moves[:limit]
+        out["analysis_truncated"] = True
+        out["analysis_move_limit"] = limit
+    moments = out.get("key_moments_json")
+    if isinstance(moments, list) and len(moments) > limit:
+        out["key_moments_json"] = moments[:limit]
+    return out

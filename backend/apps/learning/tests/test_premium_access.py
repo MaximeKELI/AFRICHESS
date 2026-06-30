@@ -77,3 +77,21 @@ class LearningPremiumAccessTests(TestCase):
         )
         self.assertEqual(resp.status_code, 403)
         self.assertEqual(resp.data.get("code"), "premium_required")
+
+    def test_quiz_submit_blocks_premium_lesson(self):
+        from apps.learning.models import Quiz
+
+        quiz = Quiz.objects.create(
+            lesson=self.lesson_premium,
+            course=self.course,
+            title="Premium quiz",
+            questions=[{"question": "Q?", "options": ["a", "b"], "correct_index": 0}],
+        )
+        self.client.force_authenticate(user=self.free_user)
+        resp = self.client.post(
+            f"/api/learning/quizzes/{quiz.id}/submit/",
+            {"answers": [0]},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.data.get("code"), "premium_required")

@@ -12,6 +12,7 @@ interface VideoRow {
   url: string;
   category: string;
   is_premium: boolean;
+  locked?: boolean;
 }
 
 export default function VideosPage() {
@@ -23,7 +24,8 @@ export default function VideosPage() {
     learningApi.videos(undefined, locale).then(({ data }) => {
       const list = Array.isArray(data) ? data : [];
       setVideos(list);
-      if (list[0]) setSelected(list[0]);
+      const firstUnlocked = list.find((v) => !v.locked && v.url) ?? list[0] ?? null;
+      setSelected(firstUnlocked);
     }).catch(() => setVideos([]));
   }, [locale]);
 

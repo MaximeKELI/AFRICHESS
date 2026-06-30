@@ -24,9 +24,12 @@ ADVICE_FR = {
 def explain_move(classification: str, san: str, cp_loss: int, **kwargs) -> str:
     return explain_move_detail(classification, san, cp_loss, **kwargs)
 
-def analyze_pgn(pgn: str, depth: int = 12) -> dict:
+def analyze_pgn(pgn: str, depth: int = 12, max_moves: int | None = None) -> dict:
     engine = ChessEngineService()
-    evaluations = engine.analyze_game(pgn)
+    move_tuples = engine._moves_from_pgn(pgn)
+    if max_moves is not None:
+        move_tuples = move_tuples[:max_moves]
+    evaluations = engine.analyze_game_moves(move_tuples, depth=depth)
     moves = []
     blunders = mistakes = inaccuracies = 0
 

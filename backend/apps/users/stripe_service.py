@@ -43,6 +43,9 @@ def create_checkout_session(user, plan_id: str) -> dict:
         customer_email=user.email or None,
         client_reference_id=str(user.id),
         metadata={"plan": plan_id, "user_id": str(user.id)},
+        subscription_data={
+            "metadata": {"plan": plan_id, "user_id": str(user.id)},
+        },
         line_items=[{"price": price_id, "quantity": 1}],
         success_url=f"{FRONTEND_URL}/premium?success=1&plan={plan_id}",
         cancel_url=f"{FRONTEND_URL}/premium?canceled=1",
