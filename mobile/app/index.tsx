@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { Link } from "expo-router";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "../context/LocaleContext";
 import { API_URL, gamesApi } from "../lib/api";
 
 export default function HomeScreen() {
   const { user, loading: authLoading, logout } = useAuth();
+  const { t, locale, setLocale } = useTranslation();
   const [bots, setBots] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -19,74 +21,96 @@ export default function HomeScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>AFRICHESS</Text>
-      <Text style={styles.subtitle}>Jouez, apprenez, progressez — partout dans le monde</Text>
+      <Text style={styles.title}>{t("app.title")}</Text>
+      <Text style={styles.subtitle}>{t("app.subtitle")}</Text>
+
+      <View style={styles.langRow}>
+        <Text style={styles.langLabel}>{t("app.language")}</Text>
+        {(["fr", "en"] as const).map((code) => (
+          <Pressable
+            key={code}
+            onPress={() => setLocale(code)}
+            style={[styles.langBtn, locale === code && styles.langBtnActive]}
+          >
+            <Text style={locale === code ? styles.langTextActive : styles.langText}>
+              {code.toUpperCase()}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
 
       {authLoading ? (
         <ActivityIndicator color="#D4A017" />
       ) : user ? (
         <Text style={styles.stat}>
-          Bonjour, {user.display_name || user.username}
-          {user.is_premium ? " · Premium" : ""}
+          {t("app.hello", { name: user.display_name || user.username })}
+          {user.is_premium ? ` · ${t("app.premium")}` : ""}
         </Text>
       ) : (
-        <Text style={styles.stat}>Connectez-vous pour jouer en ligne</Text>
+        <Text style={styles.stat}>{t("app.loginPrompt")}</Text>
       )}
 
       {loading ? (
         <ActivityIndicator color="#D4A017" />
       ) : (
-        <Text style={styles.stat}>{bots} bots IA disponibles</Text>
+        <Text style={styles.stat}>{t("app.botsAvailable", { count: bots })}</Text>
       )}
 
       <View style={styles.links}>
         <Link href={user ? "/play" : "/login"} asChild>
           <Pressable style={styles.btn}>
-            <Text style={styles.btnText}>{user ? "Jouer vs IA" : "Connexion"}</Text>
+            <Text style={styles.btnText}>{user ? t("app.playAi") : t("app.login")}</Text>
           </Pressable>
         </Link>
         <Link href="/bots" asChild>
           <Pressable style={[styles.btn, styles.btnOutline]}>
-            <Text style={styles.btnTextOutline}>Catalogue bots</Text>
+            <Text style={styles.btnTextOutline}>{t("app.botCatalog")}</Text>
           </Pressable>
         </Link>
         {user && (
           <Link href="/premium" asChild>
             <Pressable style={[styles.btn, styles.btnOutline]}>
-              <Text style={styles.btnTextOutline}>Premium</Text>
+              <Text style={styles.btnTextOutline}>{t("app.premium")}</Text>
             </Pressable>
           </Link>
         )}
         {user && (
           <Link href="/daily" asChild>
             <Pressable style={[styles.btn, styles.btnOutline]}>
-              <Text style={styles.btnTextOutline}>Daily chess</Text>
+              <Text style={styles.btnTextOutline}>{t("app.dailyChess")}</Text>
             </Pressable>
           </Link>
         )}
         {user && (
           <Link href="/friends" asChild>
             <Pressable style={[styles.btn, styles.btnOutline]}>
-              <Text style={styles.btnTextOutline}>Amis</Text>
+              <Text style={styles.btnTextOutline}>{t("app.friends")}</Text>
             </Pressable>
           </Link>
         )}
         <Link href="/puzzles" asChild>
           <Pressable style={[styles.btn, styles.btnOutline]}>
-            <Text style={styles.btnTextOutline}>Puzzle du jour</Text>
+            <Text style={styles.btnTextOutline}>{t("app.puzzles")}</Text>
+          </Pressable>
+        </Link>
+        <Link href="/learning" asChild>
+          <Pressable style={[styles.btn, styles.btnOutline]}>
+            <Text style={styles.btnTextOutline}>{t("app.learning")}</Text>
+          </Pressable>
+        </Link>
+        <Link href="/tournaments" asChild>
+          <Pressable style={[styles.btn, styles.btnOutline]}>
+            <Text style={styles.btnTextOutline}>{t("app.tournaments")}</Text>
           </Pressable>
         </Link>
         {user && (
           <Pressable style={styles.logoutBtn} onPress={() => logout()}>
-            <Text style={styles.logoutText}>Déconnexion</Text>
+            <Text style={styles.logoutText}>{t("app.logout")}</Text>
           </Pressable>
         )}
       </View>
 
-      <Text style={styles.hint}>
-        API : {API_URL}
-        {"\n"}Android émulateur : 10.0.2.2 · iOS : localhost ou IP LAN
-      </Text>
+      <Text style={styles.hint}>{t("app.apiHint", { url: API_URL })}</Text>
     </ScrollView>
   );
 }
@@ -109,6 +133,18 @@ const styles = StyleSheet.create({
     color: "#aaa",
     textAlign: "center",
   },
+  langRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  langLabel: { color: "#888", fontSize: 13 },
+  langBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#30363d",
+  },
+  langBtnActive: { backgroundColor: "#1B7A3D", borderColor: "#D4A017" },
+  langText: { color: "#aaa", fontWeight: "600" },
+  langTextActive: { color: "#fff", fontWeight: "700" },
   stat: {
     color: "#1B7A3D",
     fontSize: 14,
