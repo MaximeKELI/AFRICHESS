@@ -148,6 +148,7 @@ class ChessConsumerTests(TransactionTestCase):
             black_player=black,
             status=Game.Status.ACTIVE,
             is_vs_ai=False,
+            is_rated=False,
         )
         white_token = str(AccessToken.for_user(white))
         black_token = str(AccessToken.for_user(black))
