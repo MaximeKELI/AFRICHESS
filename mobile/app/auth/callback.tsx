@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import {
   ActivityIndicator,
   Pressable,
@@ -9,22 +9,18 @@ import {
   View,
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
-import { LoginError, useAuth } from "../context/AuthContext";
-import { parseOAuthCode } from "../lib/oauth";
+import { LoginError, useAuth } from "../../context/AuthContext";
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function OAuthCallbackScreen() {
+  const { code: codeParam } = useLocalSearchParams<{ code?: string }>();
   const { completeOAuth } = useAuth();
   const [error, setError] = useState("");
   const [needsTotp, setNeedsTotp] = useState(false);
   const [totpCode, setTotpCode] = useState("");
-  const [code, setCode] = useState<string | null>(null);
+  const [pendingCode, setPendingCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    // Deep link handled by expo-router params — also support manual mount
-  }, []);
 
   const exchange = async (oauthCode: string, totp?: string) => {
     setLoading(true);
@@ -34,7 +30,7 @@ export default function OAuthCallbackScreen() {
       router.replace("/play");
     } catch (err) {
       if (err instanceof LoginError && err.code === "TOTP_REQUIRED") {
-        setCode(oauthCode);
+        setPendingCode(oauthCode);
         setNeedsTotp(true);
         return;
       }
@@ -44,25 +40,13 @@ export default function OAuthCallbackScreen() {
     }
   };
 
-  // Route params from deep link: africhess://auth/callback?code=...
   useEffect(() => {
-    const sub = require("expo-linking").addEventListener("url", ({ url }: { url: string }) => {
-      const c = parseOAuthCode(url);
-      if (c) void exchange(c);
-    });
-    return () => sub.remove();
-  }, []);
+    if (typeof codeParam === "string" && codeParam && !needsTotp) {
+      void exchange(codeParam);
+    }
+  }, [codeParam, needsTotp]);
 
-  useEffect(() => {
-    const { getInitialURL } = require("expo-linking");
-    void getInitialURL().then((url: string | null) => {
-      if (!url) return;
-      const c = parseOAuthCode(url);
-      if (c && !needsTotp) void exchange(c);
-    });
-  }, [needsTotp]);
-
-  if (needsTotp && code) {
+  if (needsTotp && pendingCode) {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Code 2FA</Text>
@@ -78,7 +62,7 @@ export default function OAuthCallbackScreen() {
         <Pressable
           style={styles.btn}
           disabled={loading || totpCode.length < 6}
-          onPress={() => void exchange(code, totpCode)}
+          onPress={() => void exchange(pendingCode, totpCode)}
         >
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Valider</Text>}
         </Pressable>
