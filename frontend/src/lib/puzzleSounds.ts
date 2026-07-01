@@ -110,6 +110,8 @@ function playSynthetic(key: PuzzleSoundKey) {
 
 function play(key: PuzzleSoundKey, enabled = true) {
   if (!enabled || typeof window === "undefined") return;
+  const { soundsEnabled } = usePuzzlePreferencesStore.getState();
+  if (!soundsEnabled) return;
   preloadPuzzleSounds();
   if (useFileSounds && key !== "streak") playFileSound(key);
   else if (useFileSounds && key === "streak") {
