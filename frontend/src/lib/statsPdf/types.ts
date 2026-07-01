@@ -62,6 +62,7 @@ export interface StatsPdfDocumentProps {
   labels: StatsPdfLabels;
   exportedAt: Date;
   terminationMap: Record<string, string>;
+  locale: string;
 }
 
 export type { StatsExportData };

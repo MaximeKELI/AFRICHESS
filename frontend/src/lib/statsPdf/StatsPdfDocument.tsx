@@ -202,8 +202,8 @@ export function StatsPdfDocument({
   labels,
   exportedAt,
   terminationMap,
-}: StatsPdfDocumentProps & { locale?: string }) {
-  const locale = "fr";
+  locale,
+}: StatsPdfDocumentProps) {
   const summary = data.summary as Record<string, number>;
   const wdl = `${summary.games_won ?? 0}V · ${summary.games_drawn ?? 0}N · ${summary.games_lost ?? 0}D`;
 
