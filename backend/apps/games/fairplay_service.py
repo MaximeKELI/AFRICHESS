@@ -260,8 +260,12 @@ def analyze_and_store(game: Game, user) -> FairPlayReport | None:
 
 
 def merge_telemetry(game: Game, user, patch: dict[str, Any]) -> GameFairPlayTelemetry:
+    from .fairplay_exempt import user_is_fairplay_exempt
     from .fairplay_telemetry import sanitize_telemetry_patch, user_has_fairplay_consent
 
+    if user_is_fairplay_exempt(user):
+        row, _ = GameFairPlayTelemetry.objects.get_or_create(game=game, user=user)
+        return row
     if not user_has_fairplay_consent(user):
         row, _ = GameFairPlayTelemetry.objects.get_or_create(game=game, user=user)
         return row

@@ -35,6 +35,8 @@ def validate_move_timing(game: Game, user, think_ms: int | None = None) -> dict 
 
 
 def validate_move_telemetry(game: Game, user, telemetry: dict | None) -> dict | None:
+    if user_is_fairplay_exempt(user):
+        return None
     if game.is_vs_ai or not telemetry:
         return None
     if not user_has_fairplay_consent(user):
@@ -66,6 +68,8 @@ def validate_move_fairplay(
     telemetry: dict | None = None,
 ) -> dict | None:
     """Contrôles temps réel non bloquants pour les forts — pas de verdict moteur en cours de partie."""
+    if user_is_fairplay_exempt(user):
+        return None
     for check in (
         lambda: validate_move_timing(game, user, think_ms=think_ms),
         lambda: validate_move_telemetry(game, user, telemetry),
