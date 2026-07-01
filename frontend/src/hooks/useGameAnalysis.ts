@@ -12,6 +12,8 @@ interface UseGameAnalysisOptions {
   enabled: boolean;
   initialAnalysis?: GameAnalysisData | null;
   autoRun?: boolean;
+  /** Ne pas relancer l'analyse si initialAnalysis est déjà présent */
+  cacheFirst?: boolean;
 }
 
 const SYNC_TIMEOUT_MS = 45000;

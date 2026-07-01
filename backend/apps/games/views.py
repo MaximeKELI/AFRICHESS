@@ -314,21 +314,9 @@ class AnalyzeGameView(APIView):
         )
         acc_w, acc_b = compute_accuracies(evaluations, move_rows)
         move_acc_w, move_acc_b = compute_move_accuracies(evaluations, move_rows)
-        best_moves_json = [
-            {
-                "uci": e.uci,
-                "san": e.san,
-                "eval": e.eval_after,
-                "eval_before": e.eval_before,
-                "class": e.classification,
-                "cp_loss": e.centipawn_loss,
-                "played_by_white": move_rows[i][1],
-                "best_uci": e.best_uci,
-                "best_san": e.best_san,
-                "pv_san": e.pv_san,
-            }
-            for i, e in enumerate(evaluations)
-        ]
+        from .review_phases import build_analyzed_moves_json
+
+        best_moves_json = build_analyzed_moves_json(evaluations, move_rows)
         from apps.learning.review_nlg import generate_game_review
 
         summary_fr, summary_en, key_moments = generate_game_review(

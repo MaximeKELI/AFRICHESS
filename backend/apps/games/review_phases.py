@@ -32,3 +32,29 @@ def fen_after_moves(start_fen: str, ucis: list[str]) -> str:
             )
         )
     return board.fen()
+
+
+def build_analyzed_moves_json(evaluations, move_rows) -> list[dict]:
+    """Construit best_moves_json avec eval_before et phase."""
+    start = chess.Board().fen()
+    ucis: list[str] = []
+    rows: list[dict] = []
+    for i, e in enumerate(evaluations):
+        ucis.append(e.uci)
+        fen_after = fen_after_moves(start, ucis)
+        rows.append(
+            {
+                "uci": e.uci,
+                "san": e.san,
+                "eval": e.eval_after,
+                "eval_before": e.eval_before,
+                "class": e.classification,
+                "cp_loss": e.centipawn_loss,
+                "played_by_white": move_rows[i][1],
+                "best_uci": e.best_uci,
+                "best_san": e.best_san,
+                "pv_san": e.pv_san,
+                "phase": infer_phase(i, fen_after),
+            }
+        )
+    return rows
