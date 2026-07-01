@@ -96,6 +96,7 @@ class StripeWebhookTests(TestCase):
     def test_checkout_includes_subscription_metadata(self, mock_client, _enabled):
         mock_stripe = MagicMock()
         mock_client.return_value = mock_stripe
+        mock_stripe.Customer.create.return_value = MagicMock(id="cus_test_meta")
         mock_stripe.checkout.Session.create.return_value = MagicMock(url="https://x", id="s1")
         from apps.users.stripe_service import create_checkout_session
 
