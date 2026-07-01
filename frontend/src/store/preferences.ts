@@ -70,6 +70,8 @@ export function syncPreferencesForUser(userId: number | null) {
     aiCommentsEnabled: readAiComments(),
     zenMode,
   });
+  const { syncPuzzlePreferencesFromStorage } = require("@/store/puzzlePreferences");
+  syncPuzzlePreferencesFromStorage();
 }
 
 interface PreferencesState {
