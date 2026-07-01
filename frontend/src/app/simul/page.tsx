@@ -11,6 +11,7 @@ interface SimulRow {
   id: number;
   title: string;
   host: string;
+  host_id?: number;
   max_boards: number;
   boards: number;
 }
@@ -31,9 +32,10 @@ export default function SimulPage() {
   const create = async () => {
     if (!user) return;
     try {
-      await gamesApi.createSimul(title || t("simul.defaultTitle"));
+      const { data } = await gamesApi.createSimul(title || t("simul.defaultTitle"));
       setTitle("");
       load();
+      if (data?.id) window.location.href = `/simul/${data.id}`;
     } catch (err) {
       setError(formatApiError(err, t("simul.error")));
     }

@@ -578,8 +578,8 @@ function PlayContent() {
   const boardDisabled =
     !gameId ||
     gameCompleted ||
-    (isVoteChess ? movePending : !isMyTurn) ||
-    (isLiveHuman && movePending && !isVoteChess);
+    movePending ||
+    (!isVoteChess && !isMyTurn);
 
   const applyOptimisticUci = useCallback((uci: string) => {
     setGameData((prev) => {
