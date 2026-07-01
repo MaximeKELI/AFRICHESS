@@ -1,6 +1,5 @@
+import type { TranslateFn } from "@/lib/i18n/labels";
 import type { StatsPdfLabels } from "./types";
-
-type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
 
 export function buildStatsPdfLabels(t: TranslateFn, locale: string): StatsPdfLabels {
   const dateFmt = new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-GB", {
