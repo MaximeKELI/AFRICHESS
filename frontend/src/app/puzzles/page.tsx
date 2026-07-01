@@ -410,16 +410,21 @@ export default function PuzzlesPage() {
           return;
         }
         if (!solved) {
-          playPuzzleWrong(!lowBandwidth);
+          playPuzzleWrong(puzzleSoundsActive(lowBandwidth));
           setResult(t("puzzles.solved.wrong"));
         } else {
           const newScore = data.score ?? rushScore + 1;
           setResult(t("puzzles.solved.bravo", { streak: streak, rush: "" }));
           triggerCelebration(
-            { current: newScore, mode: "rush" },
+            {
+              current: newScore,
+              mode: "rush",
+              manualContinue: false,
+              sessionStreak: newScore,
+            },
             () => {
               if (data.next_puzzle) {
-                playPuzzleAdvance(!lowBandwidth);
+                playPuzzleAdvance(puzzleSoundsActive(lowBandwidth));
                 setRushIndex((i) => i + 1);
                 setRushQueue((q) => [...q, data.next_puzzle]);
                 setPuzzle(data.next_puzzle);
@@ -460,10 +465,15 @@ export default function PuzzlesPage() {
         setSurvivalScore(newScore);
         setResult(t("puzzles.solved.bravo", { streak: streak, rush: "" }));
         triggerCelebration(
-          { current: newScore, mode: "survival" },
+          {
+            current: newScore,
+            mode: "survival",
+            manualContinue: false,
+            sessionStreak: newScore,
+          },
           () => {
             if (data.next_puzzle) {
-              playPuzzleAdvance(!lowBandwidth);
+              playPuzzleAdvance(puzzleSoundsActive(lowBandwidth));
               setPuzzle(data.next_puzzle);
               setUciMoves([]);
               setStartTime(Date.now());
@@ -497,11 +507,13 @@ export default function PuzzlesPage() {
           return;
         }
         setResult(t("puzzles.solved.bravo", { streak: streak, rush: "" }));
-        triggerCelebration({ current: you, mode: "battle" }, async () => {
+        triggerCelebration(
+          { current: you, mode: "battle", manualContinue: false },
+          async () => {
           if (battleId) {
             const { data: detail } = await puzzlesApi.battleGet(battleId);
             if (detail.puzzle) {
-              playPuzzleAdvance(!lowBandwidth);
+              playPuzzleAdvance(puzzleSoundsActive(lowBandwidth));
               setPuzzle(detail.puzzle);
               setUciMoves([]);
               setStartTime(Date.now());
@@ -524,21 +536,93 @@ export default function PuzzlesPage() {
         setStreak(nextStreak);
       }
       if (solved) {
+        const wrongAttempts = sessionRef.current.getWrongCount(puzzle.id);
+        const lifetime = incrementLifetimePuzzleSolved() ?? getLifetimePuzzleSolved();
+        sessionRef.current.recordSolve({
+          puzzleId: puzzle.id,
+          rating: puzzle.rating,
+          themes: puzzle.themes,
+          difficulty: puzzle.difficulty,
+          wrongAttempts,
+          timeSeconds: time,
+          usedHint,
+        });
+        const sessionStreak = sessionRef.current.getPerfectStreak();
+        const sessionSolved = sessionRef.current.getSolvedCount();
+        const trainingCurrent = tab === "training" ? trainingIndex + 1 : 1;
+        const trainingTotal = tab === "training" ? trainingQueue.length : 1;
+        const completedFullSet =
+          tab === "training" && trainingCurrent >= trainingTotal && trainingTotal >= 10;
+
+        queueBadges({
+          sessionSolved,
+          perfectStreak: sessionStreak,
+          dailyStreak: nextStreak,
+          rushScore: 0,
+          completedFullSet,
+          solvedWithoutHint: !usedHint,
+          lifetimeSolved: lifetime,
+        });
+
+        refreshWeeklyRank();
+
         setResult(
           t("puzzles.solved.bravo", {
             streak: nextStreak,
             rush: "",
           })
         );
-        triggerCelebration({
-          current: tab === "training" ? trainingIndex + 1 : 1,
-          total: tab === "training" ? trainingQueue.length : 1,
-          streak: nextStreak,
-          eloChange: data.puzzle_elo_change,
-          mode: tab === "daily" ? "daily" : "training",
-        });
+        setHintSquare(null);
+        setHintOffered(false);
+        setUsedHint(false);
+
+        const variant = resolveCelebrationVariant(sessionStreak, trainingCurrent, trainingTotal);
+
+        triggerCelebration(
+          {
+            current: trainingCurrent,
+            total: tab === "training" ? trainingTotal : 1,
+            streak: nextStreak,
+            sessionStreak,
+            eloChange: data.puzzle_elo_change,
+            xpGained: data.xp_gained,
+            weeklyRank,
+            mode: tab === "daily" ? "daily" : "training",
+            variant,
+            showShare: tab === "daily",
+            manualContinue: tab === "daily" || tab === "training",
+          },
+          () => {
+            if (tab === "training") {
+              const next = trainingIndex + 1;
+              if (next < trainingQueue.length) {
+                playPuzzleAdvance(puzzleSoundsActive(lowBandwidth));
+                setTrainingIndex(next);
+                setPuzzle(trainingQueue[next]);
+                setUciMoves([]);
+                setResult(null);
+                setPuzzleFailed(false);
+                setStartTime(Date.now());
+                setBoardKey((k) => k + 1);
+              } else {
+                setSessionRecap(sessionRef.current.buildRecap());
+                setRecapOpen(true);
+                sessionRef.current.reset();
+              }
+            }
+          }
+        );
       } else {
-        playPuzzleWrong(!lowBandwidth);
+        playPuzzleWrong(puzzleSoundsActive(lowBandwidth));
+        sessionRef.current.recordFail({
+          puzzleId: puzzle.id,
+          rating: puzzle.rating,
+          themes: puzzle.themes,
+          difficulty: puzzle.difficulty,
+          wrongAttempts: sessionRef.current.getWrongCount(puzzle.id),
+          timeSeconds: time,
+          usedHint,
+        });
         setResult(t("puzzles.solved.wrong"));
         setPuzzleFailed(true);
       }
