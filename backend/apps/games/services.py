@@ -531,6 +531,163 @@ class GameService:
 class MatchmakingService:
     ELO_RANGE = settings.MATCHMAKING_ELO_RANGE
 
+    def _check_fairplay(self, user, is_rated: bool) -> None:
+        from .fairplay_exempt import user_is_fairplay_exempt
+        from .fairplay_review import user_has_active_matchmaking_block
+        from .fairplay_telemetry import user_has_fairplay_consent
+
+        if user_has_active_matchmaking_block(user):
+            raise ValueError("Matchmaking bloqué — sanction Fair Play active")
+        if is_rated and not user_is_fairplay_exempt(user):
+            if not user_has_fairplay_consent(user):
+                raise ValueError("Consentement Fair Play requis pour les parties classées")
+
+    def _resolve_time_control(
+        self,
+        mode: str,
+        *,
+        is_timed: bool,
+        is_rated: bool,
+        time_minutes: int | None,
+        time_control: str | None,
+    ) -> tuple[str, int | None]:
+        tc_key = normalize_matchmaking_time_control(
+            mode,
+            is_timed=is_timed,
+            is_rated=is_rated,
+            time_minutes=time_minutes,
+            time_control=time_control,
+        )
+        _, _, _, _, tcm = resolve_time_fields(is_timed, time_minutes, time_control=tc_key)
+        return tc_key, tcm
+
+    def _create_match(
+        self,
+        user_a,
+        user_b,
+        mode: str,
+        *,
+        is_timed: bool,
+        time_minutes: int | None,
+        time_control: str | None,
+        is_rated: bool,
+        variant: str,
+    ):
+        self.leave_queue(user_a)
+        self.leave_queue(user_b)
+        return create_matchmaking_game(
+            white=user_a,
+            black=user_b,
+            mode=mode,
+            is_timed=is_timed,
+            time_minutes=time_minutes,
+            time_control=time_control,
+            is_rated=is_rated,
+            variant=variant,
+        )
+
+    def search(
+        self,
+        user,
+        mode: str,
+        elo: int,
+        is_timed: bool = True,
+        time_minutes: int | None = None,
+        time_control: str | None = None,
+        is_rated: bool = True,
+        variant: str = "standard",
+    ):
+        """Rejoint la file et tente un pairing immédiat (Redis atomique ou PG)."""
+        self._check_fairplay(user, is_rated)
+        tc_key, tcm = self._resolve_time_control(
+            mode,
+            is_timed=is_timed,
+            is_rated=is_rated,
+            time_minutes=time_minutes,
+            time_control=time_control,
+        )
+
+        from django.contrib.auth import get_user_model
+
+        from . import matchmaking_redis as mmr
+
+        User = get_user_model()
+        if mmr.is_redis_matchmaking_available():
+            pool = mmr.pool_key(
+                mode=mode,
+                variant=variant,
+                is_timed=is_timed,
+                is_rated=is_rated,
+                time_control=tc_key or "",
+                time_control_minutes=tcm,
+            )
+            meta = {
+                "mode": mode,
+                "variant": variant,
+                "is_timed": is_timed,
+                "is_rated": is_rated,
+                "time_control": tc_key or "",
+                "time_control_minutes": tcm,
+            }
+            result = mmr.match_or_enqueue(
+                user_id=user.id,
+                elo=elo,
+                pool=pool,
+                meta=meta,
+                elo_range=self.ELO_RANGE,
+                enqueue_if_no_match=True,
+            )
+            if result and result.status == "paired" and result.opponent_id:
+                opponent = User.objects.get(pk=result.opponent_id)
+                return self._create_match(
+                    user,
+                    opponent,
+                    mode,
+                    is_timed=is_timed,
+                    time_minutes=time_minutes,
+                    time_control=tc_key,
+                    is_rated=is_rated,
+                    variant=variant,
+                )
+            MatchmakingQueue.objects.update_or_create(
+                user=user,
+                defaults={
+                    "mode": mode,
+                    "elo": elo,
+                    "is_timed": is_timed,
+                    "is_rated": is_rated,
+                    "time_control_minutes": tcm,
+                    "time_control": tc_key or "",
+                    "variant": variant,
+                },
+            )
+            return None
+
+        game = self._find_match_pg(
+            user,
+            mode,
+            elo,
+            is_timed=is_timed,
+            time_minutes=time_minutes,
+            time_control=time_control,
+            is_rated=is_rated,
+            variant=variant,
+        )
+        if game:
+            return game
+        self._join_queue_pg(
+            user,
+            mode,
+            elo,
+            is_timed=is_timed,
+            time_minutes=time_minutes,
+            time_control=time_control,
+            is_rated=is_rated,
+            variant=variant,
+        )
+        self.pair_all_waiting()
+        return None
+
     def join_queue(
         self,
         user,
@@ -542,26 +699,41 @@ class MatchmakingService:
         is_rated: bool = True,
         variant: str = "standard",
     ):
-        from .fairplay_review import user_has_active_matchmaking_block
-
-        from .fairplay_exempt import user_is_fairplay_exempt
-        from .fairplay_telemetry import user_has_fairplay_consent
-
-        if user_has_active_matchmaking_block(user):
-            raise ValueError("Matchmaking bloqué — sanction Fair Play active")
-        if is_rated and not user_is_fairplay_exempt(user):
-            if not user_has_fairplay_consent(user):
-                raise ValueError("Consentement Fair Play requis pour les parties classées")
-        tc_key = normalize_matchmaking_time_control(
+        self._check_fairplay(user, is_rated)
+        tc_key, tcm = self._resolve_time_control(
             mode,
             is_timed=is_timed,
             is_rated=is_rated,
             time_minutes=time_minutes,
             time_control=time_control,
         )
-        _, _, _, _, tcm = resolve_time_fields(
-            is_timed, time_minutes, time_control=tc_key
-        )
+        from . import matchmaking_redis as mmr
+
+        if mmr.is_redis_matchmaking_available():
+            pool = mmr.pool_key(
+                mode=mode,
+                variant=variant,
+                is_timed=is_timed,
+                is_rated=is_rated,
+                time_control=tc_key or "",
+                time_control_minutes=tcm,
+            )
+            meta = {
+                "mode": mode,
+                "variant": variant,
+                "is_timed": is_timed,
+                "is_rated": is_rated,
+                "time_control": tc_key or "",
+                "time_control_minutes": tcm,
+            }
+            mmr.match_or_enqueue(
+                user_id=user.id,
+                elo=elo,
+                pool=pool,
+                meta=meta,
+                elo_range=self.ELO_RANGE,
+                enqueue_if_no_match=True,
+            )
         MatchmakingQueue.objects.update_or_create(
             user=user,
             defaults={
@@ -577,6 +749,9 @@ class MatchmakingService:
 
     def leave_queue(self, user):
         MatchmakingQueue.objects.filter(user=user).delete()
+        from . import matchmaking_redis as mmr
+
+        mmr.leave_user(user.id)
 
     def find_match(
         self,
@@ -589,25 +764,118 @@ class MatchmakingService:
         is_rated: bool = True,
         variant: str = "standard",
     ):
-        from .fairplay_review import user_has_active_matchmaking_block
-
-        from .fairplay_exempt import user_is_fairplay_exempt
-        from .fairplay_telemetry import user_has_fairplay_consent
-
-        if user_has_active_matchmaking_block(user):
-            raise ValueError("Matchmaking bloqué — sanction Fair Play active")
-        if is_rated and not user_is_fairplay_exempt(user):
-            if not user_has_fairplay_consent(user):
-                raise ValueError("Consentement Fair Play requis pour les parties classées")
-        tc_key = normalize_matchmaking_time_control(
+        self._check_fairplay(user, is_rated)
+        tc_key, tcm = self._resolve_time_control(
             mode,
             is_timed=is_timed,
             is_rated=is_rated,
             time_minutes=time_minutes,
             time_control=time_control,
         )
-        _, _, _, _, tcm = resolve_time_fields(
-            is_timed, time_minutes, time_control=tc_key
+
+        from django.contrib.auth import get_user_model
+
+        from . import matchmaking_redis as mmr
+
+        User = get_user_model()
+        if mmr.is_redis_matchmaking_available():
+            pool = mmr.pool_key(
+                mode=mode,
+                variant=variant,
+                is_timed=is_timed,
+                is_rated=is_rated,
+                time_control=tc_key or "",
+                time_control_minutes=tcm,
+            )
+            meta = {
+                "mode": mode,
+                "variant": variant,
+                "is_timed": is_timed,
+                "is_rated": is_rated,
+                "time_control": tc_key or "",
+                "time_control_minutes": tcm,
+            }
+            result = mmr.match_or_enqueue(
+                user_id=user.id,
+                elo=elo,
+                pool=pool,
+                meta=meta,
+                elo_range=self.ELO_RANGE,
+                enqueue_if_no_match=False,
+            )
+            if result and result.status == "paired" and result.opponent_id:
+                opponent = User.objects.get(pk=result.opponent_id)
+                return self._create_match(
+                    user,
+                    opponent,
+                    mode,
+                    is_timed=is_timed,
+                    time_minutes=time_minutes,
+                    time_control=tc_key,
+                    is_rated=is_rated,
+                    variant=variant,
+                )
+            return None
+
+        return self._find_match_pg(
+            user,
+            mode,
+            elo,
+            is_timed=is_timed,
+            time_minutes=time_minutes,
+            time_control=time_control,
+            is_rated=is_rated,
+            variant=variant,
+        )
+
+    def _join_queue_pg(
+        self,
+        user,
+        mode: str,
+        elo: int,
+        is_timed: bool = True,
+        time_minutes: int | None = None,
+        time_control: str | None = None,
+        is_rated: bool = True,
+        variant: str = "standard",
+    ):
+        tc_key, tcm = self._resolve_time_control(
+            mode,
+            is_timed=is_timed,
+            is_rated=is_rated,
+            time_minutes=time_minutes,
+            time_control=time_control,
+        )
+        MatchmakingQueue.objects.update_or_create(
+            user=user,
+            defaults={
+                "mode": mode,
+                "elo": elo,
+                "is_timed": is_timed,
+                "is_rated": is_rated,
+                "time_control_minutes": tcm,
+                "time_control": tc_key or "",
+                "variant": variant,
+            },
+        )
+
+    def _find_match_pg(
+        self,
+        user,
+        mode: str,
+        elo: int,
+        is_timed: bool = True,
+        time_minutes: int | None = None,
+        time_control: str | None = None,
+        is_rated: bool = True,
+        variant: str = "standard",
+    ):
+        tc_key, tcm = self._resolve_time_control(
+            mode,
+            is_timed=is_timed,
+            is_rated=is_rated,
+            time_minutes=time_minutes,
+            time_control=time_control,
         )
         candidates = MatchmakingQueue.objects.filter(
             mode=mode,
@@ -622,12 +890,10 @@ class MatchmakingService:
 
         for candidate in candidates[:5]:
             opponent = candidate.user
-            self.leave_queue(user)
-            self.leave_queue(opponent)
-            return create_matchmaking_game(
-                white=user,
-                black=opponent,
-                mode=mode,
+            return self._create_match(
+                user,
+                opponent,
+                mode,
                 is_timed=is_timed,
                 time_minutes=time_minutes,
                 time_control=tc_key,
@@ -638,11 +904,25 @@ class MatchmakingService:
 
     def cleanup_stale(self, minutes=10):
         cutoff = timezone.now() - timedelta(minutes=minutes)
+        stale_users = list(
+            MatchmakingQueue.objects.filter(joined_at__lt=cutoff).values_list("user_id", flat=True)
+        )
         MatchmakingQueue.objects.filter(joined_at__lt=cutoff).delete()
+        from . import matchmaking_redis as mmr
+
+        for uid in stale_users:
+            mmr.leave_user(uid)
 
     def pair_all_waiting(self):
-        """Apparie automatiquement les joueurs en file par mode et ELO."""
+        """Réconciliation PG (+ Redis si disponible)."""
         self.cleanup_stale()
+        from . import matchmaking_redis as mmr
+
+        if mmr.is_redis_matchmaking_available():
+            return self._pair_all_waiting_pg()
+        return self._pair_all_waiting_pg()
+
+    def _pair_all_waiting_pg(self):
         modes = (
             MatchmakingQueue.objects.values_list("mode", flat=True).distinct()
         )
@@ -676,18 +956,24 @@ class MatchmakingService:
                 if best:
                     used.add(a.user_id)
                     used.add(best.user_id)
-                    self.leave_queue(a.user)
-                    self.leave_queue(best.user)
-                    game = create_matchmaking_game(
-                        white=a.user,
-                        black=best.user,
-                        mode=mode,
+                    game = self._create_match(
+                        a.user,
+                        best.user,
+                        mode,
                         is_timed=a.is_timed,
                         time_control=a.time_control or None,
                         is_rated=a.is_rated,
                         variant=a.variant,
                     )
                     self._notify_match(a.user_id, best.user_id, game)
+
+    def searching_count(self) -> int:
+        from . import matchmaking_redis as mmr
+
+        count = mmr.searching_count()
+        if count:
+            return count
+        return MatchmakingQueue.objects.count()
 
     def _notify_match(self, user_a_id, user_b_id, game):
         try:

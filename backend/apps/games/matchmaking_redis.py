@@ -196,6 +196,7 @@ def match_or_enqueue(
     if not is_redis_matchmaking_available():
         return None
     try:
+        client = _get_client()
         joined_at = str(time.time())
         elo_min = elo - elo_range
         elo_max = elo + elo_range

@@ -318,7 +318,7 @@ class MatchmakingView(APIView):
         elo = rating.elo if rating else request.user.initial_elo
         svc = MatchmakingService()
         try:
-            game = svc.find_match(
+            game = svc.search(
                 request.user,
                 mode,
                 elo,
@@ -333,30 +333,33 @@ class MatchmakingView(APIView):
         if game:
             svc._notify_match(game.white_player_id, game.black_player_id, game)
             return Response(GameSerializer(game).data, status=201)
-        try:
-            svc.join_queue(
-                request.user,
-                mode,
-                elo,
-                is_timed=is_timed,
-                time_minutes=time_minutes,
-                time_control=time_control,
-                is_rated=is_rated,
-                variant=variant,
-            )
-        except ValueError as exc:
-            return Response({"error": str(exc), "code": "fairplay_sanction"}, status=403)
-        svc.pair_all_waiting()
         return Response({
             "status": "searching",
             "elo": elo,
             "is_timed": is_timed,
             "time_minutes": time_minutes,
+            "searching_players": svc.searching_count(),
         })
 
     def delete(self, request):
         MatchmakingService().leave_queue(request.user)
         return Response({"status": "left_queue"})
+
+
+@extend_schema(summary="Joueurs en recherche de partie (matchmaking)")
+class MatchmakingStatusView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        from . import matchmaking_redis as mmr
+
+        svc = MatchmakingService()
+        return Response(
+            {
+                "searching_players": svc.searching_count(),
+                "redis_enabled": mmr.is_redis_matchmaking_available(),
+            }
+        )
 
 
 @extend_schema(

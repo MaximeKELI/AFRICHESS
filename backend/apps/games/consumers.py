@@ -524,18 +524,8 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
 
         was_in_queue = MatchmakingQueue.objects.filter(user=self.user).exists()
         svc = MatchmakingService()
-        game = svc.find_match(
-            self.user,
-            mode,
-            elo,
-            is_timed=is_timed,
-            time_minutes=time_minutes,
-            time_control=time_control,
-            is_rated=is_rated,
-            variant=variant,
-        )
-        if not game:
-            svc.join_queue(
+        try:
+            game = svc.search(
                 self.user,
                 mode,
                 elo,
@@ -545,7 +535,9 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
                 is_rated=is_rated,
                 variant=variant,
             )
-            svc.pair_all_waiting()
+        except ValueError as exc:
+            raise exc
+        if not game:
             return None, not was_in_queue
         room = ensure_game_room(game)
         opponent_id = (

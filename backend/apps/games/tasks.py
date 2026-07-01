@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 @shared_task
 def pair_matchmaking_queues():
-    """Apparie les joueurs en file sans action manuelle des deux côtés."""
+    """Réconciliation file matchmaking (Redis primary, PG fallback)."""
     MatchmakingService().pair_all_waiting()
 
 

@@ -11,6 +11,7 @@ urlpatterns = [
     path("bots/<slug:slug>/", views.BotDetailView.as_view(), name="bot-detail"),
     path("active/", views.active_games, name="active-games"),
     path("matchmaking/", views.MatchmakingView.as_view(), name="matchmaking"),
+    path("matchmaking/status/", views.MatchmakingStatusView.as_view(), name="matchmaking-status"),
     path("live/", views.LiveGamesView.as_view(), name="live-games"),
     path("correspondence/", views.CorrespondenceListView.as_view(), name="correspondence-list"),
     path("correspondence/challenge/", views.CorrespondenceChallengeView.as_view(), name="correspondence-challenge"),

@@ -239,11 +239,13 @@ K_FACTOR_BULLET = 40
 
 # Matchmaking
 MATCHMAKING_ELO_RANGE = config("MATCHMAKING_ELO_RANGE", default=200, cast=int)
+MATCHMAKING_REDIS_ENABLED = config("MATCHMAKING_REDIS_ENABLED", default=True, cast=bool)
+MATCHMAKING_REDIS_PREFIX = config("MATCHMAKING_REDIS_PREFIX", default="mm:pool")
 
 CELERY_BEAT_SCHEDULE = {
     "pair-matchmaking": {
         "task": "apps.games.tasks.pair_matchmaking_queues",
-        "schedule": 5.0,
+        "schedule": 60.0,
     },
     "forfeit-disconnected": {
         "task": "apps.games.tasks.forfeit_disconnected_games",
