@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Flame, TrendingUp } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { playPuzzleSuccess } from "@/lib/puzzleSounds";
@@ -37,6 +37,8 @@ export function PuzzleSolveCelebration({
   const { lowBandwidth } = useAuthStore();
   const [visible, setVisible] = useState(false);
   const [displayNum, setDisplayNum] = useState(0);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
 
   useEffect(() => {
     if (!data) {
