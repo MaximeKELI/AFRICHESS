@@ -1,130 +1,214 @@
 <div align="center">
 
-<!-- Bannière animée -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1117,50:1B7A3D,100:D4A017&height=200&section=header&text=AFRICHESS&fontSize=56&fontColor=ffffff&animation=twinkling" alt="AFRICHESS banner" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1117,50:1B7A3D,100:D4A017&height=220&section=header&text=AFRICHESS&fontSize=58&fontColor=ffffff&animation=twinkling" alt="AFRICHESS" />
 
 <br />
 
-<img src="frontend/public/images/logo.png" alt="Logo AFRICHESS" width="140" />
+<img src="frontend/public/images/logo.png" alt="Logo AFRICHESS" width="128" />
 
 <br />
 
-<!-- Ligne animée typewriter -->
-<a href="https://git.io/typing-svg">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=4000&pause=1200&color=D4A017&center=true&vCenter=true&width=600&lines=La+maison+des+%C3%A9checs+%E2%99%9F;Jouer.+Apprendre.+Progresser.;Temps+r%C3%A9el+%C2%B7+IA+Stockfish+%C2%B7+40+le%C3%A7ons" alt="Typing animation" />
-</a>
+<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=500&size=20&duration=3800&pause=900&color=67E8F9&center=true&vCenter=true&width=640&lines=GLOBAL+CHESS+INFRASTRUCTURE;PLAY+%C2%B7+TRAIN+%C2%B7+COMPETE;REAL-TIME+%C2%B7+STOCKFISH+%C2%B7+40-LESSON+CURRICULUM" alt="tagline" />
 
 <br />
 
 [![Django](https://img.shields.io/badge/Django-5.x-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-14-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
-[![Channels](https://img.shields.io/badge/Channels-WebSocket-1B7A3D?style=for-the-badge)](docs/WEBSOCKET_MULTIPLAYER.md)
-[![Stockfish](https://img.shields.io/badge/Stockfish-Moteur-6B4226?style=for-the-badge)](https://stockfishchess.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-14-0D1117?style=for-the-badge&logo=next.js&logoColor=D4A017)](https://nextjs.org/)
+[![WebSocket](https://img.shields.io/badge/Channels-Real--time-1B7A3D?style=for-the-badge)](docs/WEBSOCKET_MULTIPLAYER.md)
+[![Stockfish](https://img.shields.io/badge/Stockfish-Engine-6B4226?style=for-the-badge)](https://stockfishchess.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](docker-compose.yml)
-[![Tests](https://img.shields.io/badge/Tests-280+backend_24+frontend-D4A017?style=for-the-badge)](.github/workflows/ci.yml)
+[![CI](https://img.shields.io/badge/CI-280%2B_tests-D4A017?style=for-the-badge&logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
 
 <br />
 
-**Plateforme d'échecs en ligne** — thèmes et identité visuelle inspirés de l'Afrique, ingénierie de niveau mondial, ouverte à tous les joueurs.
+**Plateforme d'échecs en ligne** — identité visuelle africaine, ingénierie temps réel, ouverte au monde entier.
+
+<br />
 
 | | |
 |:---:|:---|
-| **Développeur** | **Maxime Dzidula KELI** |
+| **Architecte** | Maxime Dzidula KELI |
 | **Contact** | [WhatsApp +33 7 54 83 00 39](https://wa.me/33754830039) |
-| **Application** | [http://localhost:3000](http://localhost:3000) (dev) |
-| **API / Swagger** | [http://localhost:8000/api/docs/](http://localhost:8000/api/docs/) |
+| **Application** | [localhost:3000](http://localhost:3000) |
+| **API / Swagger** | [localhost:8000/api/docs/](http://localhost:8000/api/docs/) |
 
-[🚀 Démarrage rapide](#-démarrage-rapide) ·
-[✨ Fonctionnalités](#-fonctionnalités) ·
-[🏗 Architecture](#️-architecture) ·
-[🔌 API & WebSocket](#-api--websocket) ·
-[🎨 Design](#-design-system) ·
-[📚 Documentation](#-documentation) ·
-[🗺 Roadmap](#️-roadmap)
+<br />
 
-<img src="https://capsule-render.vercel.app/api?type=divider&height=1&color=1B7A3D" />
+[`Démarrage`](#démarrage) · [`Architecture`](#architecture) · [`Fonctionnalités`](#fonctionnalités) · [`Flux temps réel`](#flux-temps-réel) · [`API`](#api--websocket) · [`Design`](#design-system) · [`Routes`](#routes) · [`Docs`](#documentation) · [`Roadmap`](#roadmap)
+
+<img src="https://capsule-render.vercel.app/api?type=divider&height=1&color=67E8F9" />
 
 </div>
 
 ---
 
-## 🌍 Vision
+## Vision
 
-**AFRICHESS** vise à devenir une référence mondiale des échecs en ligne : parties en direct, entrainement structuré, tournois communautaires, et mise en avant des talents de tous les continents — avec une expérience comparable aux grandes plateformes internationales.
+**AFRICHESS** construit une couche logicielle complète autour des échecs : jeu humain synchronisé, entraînement tactique, parcours pédagogique, tournois et réseau social — avec une expérience comparable aux grandes plateformes internationales, ancrée dans une esthétique et une communauté africaines.
 
----
-
-## ✨ Fonctionnalités
-
-### ♟ Jeu & moteur
-
-| Fonctionnalité | Description |
-|----------------|-------------|
-| **Parties humaines** | WebSocket temps réel, chrono serveur (Fischer), nulle, revanche |
-| **Matchmaking** | File d'attente par mode + ELO, appariement Celery (toutes les 5 s) |
-| **Vs ordinateur** | 10 niveaux Stockfish, ELO adaptatif, commentaires coach (FR) |
-| **Analyse** | Post-partie : meilleurs coups, gaffes, eval |
-| **Reprise** | `localStorage` + API partie active |
-| **Promotion** | Dialogue dame / tour / fou / cavalier |
-| **Annuler (IA)** | 1 ou 2 coups selon réponse moteur |
-| **Observateur** | `/live` + `/watch/[id]` en lecture seule |
-
-### 🧩 Puzzles & apprentissage
-
-| Fonctionnalité | Description |
-|----------------|-------------|
-| **Problème du jour** | Puzzle quotidien + validation |
-| **Entraînement** | Lots par difficulté |
-| **Rush** | 5 puzzles enchaînés |
-| **Classement puzzles** | Top résolveurs |
-| **Curriculum** | **40 leçons** long format (~20 pages/doc) — `seed_full_curriculum` |
-| **Coach IA** | Conseils dashboard + analyse PGN |
-| **XP & badges** | Progression cours, badge `course_first` |
-
-### 👥 Social & compétition
-
-| Fonctionnalité | Description |
-|----------------|-------------|
-| **Amis** | Demandes, acceptation, défis directs |
-| **Messages privés** | Chat 1-to-1 sur `/friends` |
-| **Chat partie** | REST + WS en jeu humain |
-| **Clubs** | Liste publique par pays |
-| **Tournois** | Arène / suisse simplifié, standings, « Ma partie » |
-| **Notifications** | Cloche REST + **push WebSocket** instantané |
-| **Classements** | Mondial + **africain** (filtre par pays) |
-
-### 🛡 Plateforme & ops
-
-| Fonctionnalité | Description |
-|----------------|-------------|
-| **Auth** | JWT, inscription, **OAuth Google / GitHub** → `/auth/callback` |
-| **i18n** | EN · FR · AR · PT · SW (menu + hero) |
-| **Thèmes** | Plateaux (classiques + fleuris ♣), pièces « africaines » |
-| **PWA** | `manifest.json`, mode faible bande passante |
-| **Anti-triche** | Limite coups/min, intervalle minimum |
-| **Rate limit** | DRF throttling anon / user |
-| **CI** | GitHub Actions : tests backend, lint, **E2E Playwright** |
+```mermaid
+mindmap
+  root((AFRICHESS))
+    Play
+      WebSocket live
+      Matchmaking ELO
+      Stockfish 10 niveaux
+      Analyse post-partie
+    Train
+      300+ puzzles
+      Daily / Rush / Survival
+      Curriculum 40 leçons
+      Coach IA
+    Compete
+      Tournois arène / suisse
+      Classements mondiaux
+      Filtre africain
+    Connect
+      Amis & DM
+      Clubs par pays
+      Notifications push WS
+```
 
 ---
 
-## 🏗 Architecture
+## Démarrage
+
+### Prérequis
+
+| Ressource | Version | Port |
+|-----------|---------|------|
+| Docker + Compose | récent | — |
+| Node.js | 20+ | 3000 (front) |
+| Python | 3.12+ | 8000 (API) |
+| PostgreSQL | 16 | 5433 |
+| Redis | 7 | 6379 |
+
+### Une commande — dev hybride (recommandé)
+
+Backend containerisé, frontend local avec hot-reload :
+
+```bash
+docker compose up -d db redis backend && cd frontend && npm run dev
+```
+
+Première installation frontend : `cd frontend && npm install`
+
+Cache Next.js corrompu (page blanche, 404 assets) :
+
+```bash
+cd frontend && npm run dev:clean
+```
+
+> **Attention** — ne pas lancer simultanément le conteneur `frontend` Docker et `npm run dev` local : conflit sur le port **3000**.
+
+### Stack complète Docker
+
+```bash
+git clone <votre-repo> AFRICHESS && cd AFRICHESS
+cp .env.example .env
+docker compose up --build
+```
+
+### Pipeline de bootstrap
+
+```mermaid
+flowchart LR
+    A[git clone] --> B[cp .env.example .env]
+    B --> C{Mode}
+    C -->|Dev hybride| D[docker compose up -d db redis backend]
+    C -->|Full Docker| E[docker compose up --build]
+    D --> F[npm run dev]
+    E --> G[localhost:3000]
+    F --> G
+    G --> H[seed optionnel]
+    H --> I[Application prête]
+```
+
+### Endpoints locaux
+
+| Service | URL |
+|---------|-----|
+| Application | http://localhost:3000 |
+| API REST | http://localhost:8000/api/ |
+| Swagger UI | http://localhost:8000/api/docs/ |
+| Admin Django | http://localhost:8000/admin/ |
+
+### Données de démo
+
+```bash
+docker compose exec backend python manage.py seed_puzzles --download   # 300+ puzzles (Lichess CC0)
+docker compose exec backend python manage.py seed_learning
+docker compose exec backend python manage.py seed_full_curriculum      # 40 leçons long format
+docker compose exec backend python manage.py seed_tournaments
+docker compose exec backend python manage.py createsuperuser
+```
+
+### Variables frontend
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000/api
+NEXT_PUBLIC_WS_URL=ws://localhost:8000
+NEXT_PUBLIC_API_ORIGIN=http://localhost:8000
+NEXT_PUBLIC_MEDIA_ORIGIN=http://localhost:8000
+```
+
+### Tests
+
+```bash
+# Backend — 10 apps Django
+docker compose exec backend python manage.py test \
+  apps.analytics.tests apps.games.tests apps.notifications.tests \
+  apps.social.tests apps.tournaments.tests apps.learning.tests \
+  apps.users.tests apps.ratings.tests apps.puzzles.tests
+
+# Frontend unitaire
+cd frontend && npm run test
+
+# E2E Playwright (backend + frontend actifs)
+cd frontend && npm ci && npx playwright install chromium
+npm run test:e2e
+```
+
+<details>
+<summary><strong>Développement sans Docker</strong></summary>
+
+Guide complet : [docs/SETUP.md](docs/SETUP.md)
+
+| Composant | Commande |
+|-----------|----------|
+| Backend | `pip install -r backend/requirements.txt` puis `daphne config.asgi:application` |
+| Frontend | `cd frontend && npm install && npm run dev` |
+| Celery worker | `celery -A config worker -l info` |
+| Celery beat | `celery -A config beat -l info` |
+| Stockfish | `STOCKFISH_PATH=/usr/games/stockfish` |
+
+</details>
+
+<img src="https://capsule-render.vercel.app/api?type=divider&height=1&color=1B7A3D" />
+
+---
+
+## Architecture
+
+### Vue système
 
 ```mermaid
 flowchart TB
-    subgraph Client["🌐 Frontend — Next.js 14"]
-        P[Pages: play, puzzles, learning…]
-        WS_C[Hooks WebSocket]
-        Z[Zustand auth + préférences]
+    subgraph CLIENT["CLIENT LAYER — Next.js 14 / Expo"]
+        WEB[Web App Router]
+        MOB[Mobile Expo]
+        WS_C[WebSocket hooks]
+        ZST[Zustand stores]
     end
 
-    subgraph Edge["⚡ ASGI — Daphne"]
-        API[REST /api/*]
-        WSG[WebSocket]
+    subgraph EDGE["EDGE — Daphne ASGI"]
+        REST[REST /api/*]
+        WSS[WebSocket /ws/*]
     end
 
-    subgraph Apps["📦 Django Apps"]
+    subgraph CORE["CORE — Django 5 Apps"]
         U[users]
         G[games + Stockfish]
         R[ratings]
@@ -133,256 +217,441 @@ flowchart TB
         TO[tournaments]
         NO[notifications]
         LE[learning]
+        AN[analytics]
     end
 
-    subgraph Data["💾 Données"]
+    subgraph DATA["DATA PLANE"]
+        PG[(PostgreSQL 16)]
+        RD[(Redis 7)]
+    end
+
+    subgraph ASYNC["ASYNC — Celery"]
+        BEAT[beat: matchmaking · forfeit]
+        WRK[worker tasks]
+    end
+
+    WEB --> REST
+    MOB --> REST
+    WS_C --> WSS
+    REST --> CORE
+    WSS --> CORE
+    CORE --> PG
+    CORE --> RD
+    BEAT --> WRK
+    WRK --> G
+    WRK --> TO
+```
+
+### Stack technique
+
+```mermaid
+flowchart LR
+    subgraph Presentation
+        N[Next.js 14]
+        T[Tailwind CSS]
+        F[Framer Motion]
+    end
+    subgraph Application
+        D[Django 5]
+        DRF[DRF]
+        CH[Channels 4]
+    end
+    subgraph Intelligence
+        SF[Stockfish]
+        AC[Anticheat C++]
+    end
+    subgraph Persistence
         PG[(PostgreSQL)]
         RD[(Redis)]
     end
-
-    subgraph Workers["⏱ Celery"]
-        BEAT[beat: matchmaking + forfeit]
-        WRK[worker]
-    end
-
-    P --> API
-    WS_C --> WSG
-    API --> Apps
-    WSG --> Apps
-    Apps --> PG
-    Apps --> RD
-    BEAT --> WRK
-    WRK --> G
+    N --> DRF
+    N --> CH
+    D --> SF
+    G --> AC
 ```
 
 ### Structure du dépôt
 
 ```
 AFRICHESS/
-├── backend/                      # Django 5 + DRF + Channels + Celery
-│   ├── config/                   # settings, ASGI, URLs
+├── backend/
+│   ├── config/                 settings · ASGI · URLs · Celery
 │   └── apps/
-│       ├── users/                # Profils, OAuth adapter, JWT
-│       ├── games/                # Parties, WS, chrono, anti-triche, IA
-│       ├── ratings/              # ELO par mode, leaderboards
-│       ├── puzzles/              # Daily, training, rush, leaderboard
-│       ├── social/               # Amis, clubs, chat, DM
-│       ├── tournaments/          # Arène, suisse, standings
-│       ├── notifications/        # REST + push WS (signals)
-│       └── learning/             # Cours, 40 docs, coach, PGN
-├── anticheat-cpp/                # Moteur Fair Play C++ (post-partie)
-├── mobile/                       # App Expo (play, puzzles, daily)
-├── frontend/                     # Next.js 14, TypeScript, Tailwind
-│   ├── src/app/                  # Routes App Router
-│   ├── src/components/           # Échiquier, layout, learning…
-│   ├── e2e/                      # Playwright (login → partie IA)
-│   └── public/                   # Logo, manifest PWA
-├── docker-compose.yml            # db, redis, backend, celery, beat, frontend
-├── .github/workflows/ci.yml      # Tests + lint + E2E
-└── docs/                         # Guides détaillés
+│       ├── users/                JWT · OAuth · profils · 2FA TOTP
+│       ├── games/                parties · WS · chrono Fischer · IA
+│       ├── ratings/              ELO multi-mode · leaderboards
+│       ├── puzzles/              daily · training · rush · battle · survival
+│       ├── social/               amis · clubs · chat · DM
+│       ├── tournaments/          arène · suisse · standings
+│       ├── notifications/        REST + push WebSocket
+│       ├── learning/             cours · 40 docs · coach · PGN
+│       └── analytics/            métriques · événements
+├── frontend/
+│   ├── src/app/                  App Router (pages)
+│   ├── src/components/           échiquier · puzzles · learning
+│   ├── src/lib/                  API · WS · moteur puzzle · i18n
+│   └── e2e/                      Playwright
+├── mobile/                       Expo — play · puzzles · daily
+├── anticheat-cpp/                moteur Fair Play post-partie
+├── docker-compose.yml
+├── .github/workflows/ci.yml
+└── docs/
 ```
+
+### Services Docker
+
+| Service | Image / build | Rôle |
+|---------|---------------|------|
+| `db` | PostgreSQL 16 | Persistance relationnelle |
+| `redis` | Redis 7 | Channels layer · broker Celery |
+| `backend` | Django + Daphne | HTTP REST + WebSocket |
+| `celery` | worker | tâches asynchrones |
+| `celery-beat` | scheduler | matchmaking 5s · forfaits déconnexion |
+| `frontend` | Next.js 14 | UI production (port 3000) |
+
+<img src="https://capsule-render.vercel.app/api?type=divider&height=1&color=D4A017" />
 
 ---
 
-## 🚀 Démarrage rapide
+## Fonctionnalités
 
-### Prérequis
+### Jeu & moteur
 
-- [Docker](https://docs.docker.com/get-docker/) & Docker Compose
-- Ports libres : **3000** (front), **8000** (API), **5433** (Postgres), **6379** (Redis)
+| Module | Capacités |
+|--------|-----------|
+| **Multijoueur** | WebSocket bidirectionnel, chrono serveur Fischer, nulle, revanche |
+| **Matchmaking** | File par mode + ELO, appariement Celery toutes les 5 s |
+| **Vs moteur** | 10 niveaux Stockfish, ELO adaptatif, commentaires coach FR |
+| **Analyse** | Post-partie : meilleurs coups, gaffes, évaluation |
+| **Reprise** | Persistance `localStorage` + API partie active |
+| **Promotion** | Dialogue dame / tour / fou / cavalier |
+| **Annulation IA** | 1 ou 2 coups selon réponse moteur |
+| **Spectateur** | `/live` + `/watch/[id]` lecture seule |
 
-### Installation en 3 commandes
+### Puzzles & apprentissage
 
-```bash
-git clone <votre-repo> AFRICHESS && cd AFRICHESS
-cp .env.example .env    # adapter SECRET_KEY, OAuth si besoin
-docker compose up --build
+| Module | Capacités |
+|--------|-----------|
+| **Daily** | Puzzle quotidien, streak, partage |
+| **Training** | Lots de 10 par difficulté / thème, bilan de session |
+| **Rush** | Enchaînement chronométré, score + misses |
+| **Survival / Battle** | Modes compétitifs avancés |
+| **Catalogue** | 300+ puzzles (seed Lichess CC0 + catalogue local) |
+| **Curriculum** | 40 leçons long format (~20 pages/doc) |
+| **Coach IA** | Conseils dashboard + analyse PGN |
+| **Progression** | XP, badges, ELO puzzle |
+
+### Social & compétition
+
+| Module | Capacités |
+|--------|-----------|
+| **Amis** | Demandes, acceptation, défis directs |
+| **Messages** | Chat privé 1-to-1 sur `/friends` |
+| **Chat partie** | REST + WebSocket en jeu humain |
+| **Clubs** | Liste publique filtrée par pays |
+| **Tournois** | Arène / suisse, standings, « Ma partie » |
+| **Notifications** | Cloche REST + push WebSocket instantané |
+| **Classements** | Mondial + filtre africain par pays |
+
+### Plateforme
+
+| Module | Capacités |
+|--------|-----------|
+| **Auth** | JWT · inscription · OAuth Google / GitHub → `/auth/callback` |
+| **i18n** | EN · FR · AR · PT · SW |
+| **Thèmes** | Plateaux classiques + jardins fleuris · pièces stylisées |
+| **PWA** | `manifest.json` · mode faible bande passante |
+| **Anti-triche** | Limite coups/min · intervalle minimum · moteur C++ |
+| **Rate limit** | DRF throttling anon / user |
+| **CI** | GitHub Actions : tests · lint · E2E Playwright |
+
+### Matrice fonctionnelle
+
+```mermaid
+quadrantChart
+    title Priorité produit
+    x-axis Accessibilité --> Compétitif
+    y-axis Solo --> Social
+    quadrant-1 Tournois
+    quadrant-2 Matchmaking live
+    quadrant-3 Puzzles & Learning
+    quadrant-4 Amis & Clubs
+    Puzzles: [0.25, 0.3]
+    Learning: [0.2, 0.25]
+    Live play: [0.75, 0.55]
+    Tournaments: [0.85, 0.7]
+    Social: [0.6, 0.85]
+    AI coach: [0.35, 0.15]
 ```
 
-| Service | URL |
-|---------|-----|
-| **Application** | http://localhost:3000 |
-| **API REST** | http://localhost:8000/api/ |
-| **Swagger UI** | http://localhost:8000/api/docs/ |
-| **Admin Django** | http://localhost:8000/admin/ |
-
-### Données de démo (optionnel)
-
-```bash
-docker compose exec backend python manage.py seed_puzzles
-docker compose exec backend python manage.py seed_learning
-docker compose exec backend python manage.py seed_full_curriculum
-docker compose exec backend python manage.py seed_tournaments
-```
-
-### Variables frontend (`.env` ou `docker-compose`)
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
-NEXT_PUBLIC_WS_URL=ws://localhost:8000
-NEXT_PUBLIC_API_ORIGIN=http://localhost:8000
-```
-
-### Tests
-
-```bash
-# Backend (CI : 10 apps Django)
-docker compose exec backend python manage.py test \
-  apps.analytics.tests apps.games.tests apps.notifications.tests \
-  apps.social.tests apps.tournaments.tests apps.learning.tests \
-  apps.users.tests apps.ratings.tests apps.puzzles.tests
-
-# E2E (backend + frontend requis)
-cd frontend && npm ci && npx playwright install chromium
-npm run test:e2e
-```
-
-<details>
-<summary><b>🔧 Développement sans Docker</b></summary>
-
-Voir le guide complet : [docs/SETUP.md](docs/SETUP.md)
-
-- Backend : `pip install -r backend/requirements.txt`, Postgres + Redis locaux, `daphne config.asgi:application`
-- Frontend : `cd frontend && npm install && npm run dev`
-- Celery : `celery -A config worker -l info` + `celery -A config beat -l info`
-
-</details>
+<img src="https://capsule-render.vercel.app/api?type=divider&height=1&color=67E8F9" />
 
 ---
 
-## 🔌 API & WebSocket
+## Flux temps réel
 
-### REST (extrait)
-
-| Méthode | Endpoint | Rôle |
-|---------|----------|------|
-| `POST` | `/api/auth/login/` | JWT access + refresh |
-| `POST` | `/api/users/register/` | Création compte |
-| `GET` | `/api/games/live/` | Parties humaines en cours |
-| `POST` | `/api/games/{id}/move/` | Coup (REST fallback) |
-| `POST` | `/api/games/{id}/draw/` | Proposer nulle |
-| `POST` | `/api/games/{id}/rematch/` | Revanche |
-| `GET` | `/api/puzzles/daily/` | Puzzle du jour |
-| `GET` | `/api/learning/dashboard/` | Parcours + coach |
-| `GET` | `/api/tournaments/` | Liste tournois |
-
-Référence complète : [docs/API.md](docs/API.md)
-
-### WebSocket (JWT via `Sec-WebSocket-Protocol`)
-
-| Canal | URL | Auth |
-|-------|-----|------|
-| **Partie** | `ws://host/ws/game/<uuid>/` | `Sec-WebSocket-Protocol: bearer,<JWT>` |
-| **Matchmaking** | `ws://host/ws/matchmaking/` | idem |
-| **Notifications** | `ws://host/ws/notifications/` | idem |
-
-Repli dev optionnel : `?token=JWT` si `WS_ALLOW_QUERY_TOKEN=true` (désactivé par défaut).
-
-Abandon HTTP : `POST /api/games/<uuid>/resign/`
+### Cycle d'une partie multijoueur
 
 ```mermaid
 sequenceDiagram
-    participant J as Joueur
-    participant WS as ChessConsumer
+    autonumber
+    participant A as Joueur A
+    participant MM as Matchmaking WS
+    participant C as Celery Beat
+    participant G as Game WS
     participant S as GameService
-    participant O as Adversaire
+    participant B as Joueur B
 
-    J->>WS: jouer_coup (uci, spent_ms)
-    WS->>S: validate + clock serveur
-    S-->>WS: nouveau FEN
-    WS->>J: game_state
-    WS->>O: game_state
+    A->>MM: join_queue(mode, elo)
+    C->>C: scan queues (5s)
+    C-->>G: create_game(A, B)
+    G->>A: game_state
+    G->>B: game_state
+    A->>G: jouer_coup(uci, spent_ms)
+    G->>S: validate + clock serveur
+    S-->>G: FEN + statut
+    G->>A: game_state
+    G->>B: game_state
 ```
 
-Détails protocole : [docs/WEBSOCKET_MULTIPLAYER.md](docs/WEBSOCKET_MULTIPLAYER.md)
+### Flux puzzle (entraînement)
 
-### OAuth (production)
+```mermaid
+flowchart TD
+    A[GET /api/puzzles/training/] --> B[Lot de 10 puzzles]
+    B --> C[PuzzleBoard — validation locale]
+    C --> D{Coup correct?}
+    D -->|Non| E[Indice après 1 erreur]
+    D -->|Oui| F[Auto-reply adversaire]
+    F --> G{Ligne terminée?}
+    G -->|Non| C
+    G -->|Oui| H[POST /api/puzzles/id/submit/]
+    H --> I[Célébration + ELO + XP]
+    I --> J{Fin du lot?}
+    J -->|Non| B
+    J -->|Oui| K[Bilan de session]
+```
 
-1. Configurer `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GITHUB_*`, `FRONTEND_URL`
-2. Redirect URI : `https://api.votredomaine.com/accounts/google/login/callback/`
-3. Boutons login → redirection → `/auth/callback?code=…` → POST `/api/users/auth/oauth/exchange/` → JWT (TOTP si 2FA activée)
+### Authentification OAuth
+
+```mermaid
+sequenceDiagram
+    participant U as Utilisateur
+    participant F as Frontend
+    participant P as Provider OAuth
+    participant B as Backend
+
+    U->>F: Clic Google / GitHub
+    F->>P: Redirect OAuth
+    P->>F: /auth/callback?code=...
+    F->>B: POST /api/users/auth/oauth/exchange/
+    B-->>F: JWT access + refresh
+    F->>F: Store Zustand + cookie
+```
+
+<img src="https://capsule-render.vercel.app/api?type=divider&height=1&color=1B7A3D" />
+
+---
+
+## API & WebSocket
+
+### REST — extrait
+
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| `POST` | `/api/auth/login/` | JWT access + refresh |
+| `POST` | `/api/users/register/` | Création de compte |
+| `GET` | `/api/games/live/` | Parties humaines en cours |
+| `POST` | `/api/games/{id}/move/` | Coup (fallback REST) |
+| `POST` | `/api/games/{id}/draw/` | Proposition de nulle |
+| `POST` | `/api/games/{id}/rematch/` | Revanche |
+| `GET` | `/api/puzzles/daily/` | Puzzle du jour |
+| `GET` | `/api/puzzles/training/` | Lot d'entraînement |
+| `POST` | `/api/puzzles/{id}/submit/` | Validation + ELO puzzle |
+| `GET` | `/api/learning/dashboard/` | Parcours + coach |
+| `GET` | `/api/tournaments/` | Liste des tournois |
+
+Référence complète : [docs/API.md](docs/API.md)
+
+### WebSocket
+
+| Canal | URL | Authentification |
+|-------|-----|------------------|
+| Partie | `ws://host/ws/game/<uuid>/` | `Sec-WebSocket-Protocol: bearer,<JWT>` |
+| Matchmaking | `ws://host/ws/matchmaking/` | idem |
+| Notifications | `ws://host/ws/notifications/` | idem |
+
+Repli dev (désactivé par défaut) : `?token=JWT` si `WS_ALLOW_QUERY_TOKEN=true`
+
+Abandon : `POST /api/games/<uuid>/resign/`
+
+Protocole détaillé : [docs/WEBSOCKET_MULTIPLAYER.md](docs/WEBSOCKET_MULTIPLAYER.md)
+
+### OAuth production
+
+1. Variables : `GOOGLE_OAUTH_*`, `GITHUB_*`, `FRONTEND_URL`
+2. Redirect URI : `https://api.domaine.com/accounts/google/login/callback/`
+3. Flux : login → provider → `/auth/callback` → exchange JWT (TOTP si 2FA)
 
 Guide : [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
+<img src="https://capsule-render.vercel.app/api?type=divider&height=1&color=D4A017" />
+
 ---
 
-## 🎨 Design system
+## Design system
+
+### Palette
 
 <table>
 <tr>
-<td align="center" width="120"><img src="https://img.shields.io/badge/♛-Gold-D4A017?style=flat-square" /><br/><b>Gold</b><br/><code>#D4A017</code><br/>CTA, accents</td>
-<td align="center" width="120"><img src="https://img.shields.io/badge/♟-Green-1B7A3D?style=flat-square" /><br/><b>Green</b><br/><code>#1B7A3D</code><br/>Succès, terre</td>
-<td align="center" width="120"><img src="https://img.shields.io/badge/♞-Terracotta-C45C26?style=flat-square" /><br/><b>Terracotta</b><br/><code>#C45C26</code><br/>Alertes chaudes</td>
-<td align="center" width="120"><img src="https://img.shields.io/badge/♚-Night-0D1117?style=flat-square" /><br/><b>Night</b><br/><code>#0D1117</code><br/>Fond sombre</td>
+<td align="center" width="140">
+<img src="https://img.shields.io/badge/GOLD-D4A017?style=flat-square&labelColor=0D1117" /><br/><br/>
+<b>Gold</b><br/>
+<code>#D4A017</code><br/>
+CTA · accents · titres
+</td>
+<td align="center" width="140">
+<img src="https://img.shields.io/badge/GREEN-1B7A3D?style=flat-square&labelColor=0D1117" /><br/><br/>
+<b>Green</b><br/>
+<code>#1B7A3D</code><br/>
+Succès · progression
+</td>
+<td align="center" width="140">
+<img src="https://img.shields.io/badge/CYAN-67E8F9?style=flat-square&labelColor=0D1117" /><br/><br/>
+<b>Cyan</b><br/>
+<code>#67E8F9</code><br/>
+Highlights · data
+</td>
+<td align="center" width="140">
+<img src="https://img.shields.io/badge/NIGHT-0D1117?style=flat-square&labelColor=1B7A3D" /><br/><br/>
+<b>Night</b><br/>
+<code>#0D1117</code><br/>
+Fond · profondeur
+</td>
+<td align="center" width="140">
+<img src="https://img.shields.io/badge/TERRA-C45C26?style=flat-square&labelColor=0D1117" /><br/><br/>
+<b>Terracotta</b><br/>
+<code>#C45C26</code><br/>
+Alertes · erreurs
+</td>
 </tr>
 </table>
 
-- **Typo display** : titres `font-display`, dégradés or → vert
-- **Composants** : cartes `glass-card`, boutons `african-gradient`
-- **Échiquier** : thèmes classiques + jardins fleuris ; pièces Unicode « africaines »
-- **Assets** : logo, motifs inspirés Kente
+### Composants
+
+| Token | Usage |
+|-------|-------|
+| `font-display` | Titres, hero, célébrations puzzle |
+| `glass-card` | Panneaux flottants, modales |
+| `african-gradient` | Boutons primaires or → vert |
+| `puzzle-garden-*` | Overlay célébration puzzles |
+| Pièces Unicode | Set « africain » sur l'échiquier |
+| Motifs Kente | Textures de fond, identité visuelle |
+
+<img src="https://capsule-render.vercel.app/api?type=divider&height=1&color=67E8F9" />
 
 ---
 
-## 📱 Pages principales
+## Routes
 
-| Route | Description |
-|-------|-------------|
-| `/` | Accueil hero, CTA jouer / puzzle |
-| `/play` | IA, matchmaking WS, chrono, chat, analyse |
-| `/live` | Liste parties en direct |
+### Web
+
+| Route | Module |
+|-------|--------|
+| `/` | Accueil hero · CTA jouer / puzzle |
+| `/play` | IA · matchmaking WS · chrono · chat · analyse |
+| `/live` | Parties en direct |
 | `/watch/[id]` | Mode observateur |
-| `/puzzles` | Daily, training, rush, classement |
-| `/puzzles/build` | Créateur de puzzles custom |
-| `/learning` | Dashboard, cours, leçons markdown + FEN |
+| `/puzzles` | Daily · training · rush · battle · survival |
+| `/puzzles/build` | Créateur de puzzles |
+| `/learning` | Dashboard · cours · leçons markdown + FEN |
 | `/learning/analyze` | Import PGN |
-| `/friends` | Amis, défis, **messages privés** |
+| `/friends` | Amis · défis · messages privés |
 | `/clubs` | Clubs par pays |
-| `/tournaments` | Inscription, start, standings |
-| `/leaderboard` | Mondial / africain + filtre pays |
-| `/community` | Joueurs africains mis en avant |
-| `/profile` | Avatar, niveau, thèmes plateau |
-| `/auth/callback` | Retour OAuth JWT |
+| `/tournaments` | Inscription · standings |
+| `/leaderboard` | Mondial / africain · filtre pays |
+| `/community` | Talents africains |
+| `/profile` | Avatar · niveau · thèmes |
+| `/stats` | Statistiques détaillées |
+| `/login` · `/register` | Auth JWT |
+| `/auth/callback` | Retour OAuth |
+
+### Cartographie navigation
+
+```mermaid
+flowchart TB
+    HOME[/] --> PLAY[/play]
+    HOME --> PUZZLES[/puzzles]
+    HOME --> LEARN[/learning]
+    PLAY --> LIVE[/live]
+    PLAY --> WATCH[/watch/id]
+    PUZZLES --> BUILD[/puzzles/build]
+    LEARN --> ANALYZE[/learning/analyze]
+    HOME --> SOCIAL[/friends]
+    HOME --> TOUR[/tournaments]
+    HOME --> RANK[/leaderboard]
+```
+
+<img src="https://capsule-render.vercel.app/api?type=divider&height=1&color=1B7A3D" />
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 | Document | Contenu |
 |----------|---------|
-| [docs/SETUP.md](docs/SETUP.md) | Installation détaillée, dépannage |
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Prod, HTTPS/WSS, Celery, OAuth |
-| [docs/API.md](docs/API.md) | Endpoints REST |
-| [docs/WEBSOCKET_MULTIPLAYER.md](docs/WEBSOCKET_MULTIPLAYER.md) | Protocole WS multijoueur |
+| [docs/SETUP.md](docs/SETUP.md) | Installation · dépannage · Stockfish |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Production · HTTPS/WSS · Celery · OAuth |
+| [docs/API.md](docs/API.md) | Référence REST complète |
+| [docs/WEBSOCKET_MULTIPLAYER.md](docs/WEBSOCKET_MULTIPLAYER.md) | Protocole WebSocket multijoueur |
 | [docs/LEARNING.md](docs/LEARNING.md) | Module pédagogique |
 | [docs/CURRICULUM_40_DOCUMENTS.md](docs/CURRICULUM_40_DOCUMENTS.md) | Programme 40 leçons |
-| [docs/FEATURES_ROADMAP.md](docs/FEATURES_ROADMAP.md) | Feuille de route 20 points |
+| [docs/FEATURES_ROADMAP.md](docs/FEATURES_ROADMAP.md) | Feuille de route détaillée |
 
 ---
 
-## 🗺 Roadmap
+## Roadmap
+
+### Livré
+
+```mermaid
+timeline
+    title Milestones
+    section Core
+        Multijoueur WebSocket : Chrono serveur Fischer
+        Matchmaking Celery : Forfait déconnexion
+        Tournois : Arène · Suisses · Observateur
+    section Train
+        Puzzles : Daily · Rush · 300+ catalogue
+        Learning : 40 documents · UI leçons
+    section Platform
+        OAuth Google GitHub : Notifications push WS
+        CI CD : 280+ tests · E2E Playwright
+        Mobile Expo : Play · Puzzles · Daily
+```
 
 <details open>
-<summary><b>✅ Livré</b></summary>
+<summary><strong>Détail — fonctionnalités en production</strong></summary>
 
-- [x] Multijoueur WebSocket + chrono serveur
-- [x] Matchmaking Celery + forfait déconnexion
-- [x] Tournois arène / suisse, observateur
-- [x] Puzzles rush + leaderboard
-- [x] Curriculum 40 documents + UI leçons
-- [x] Notifications push WS
-- [x] OAuth Google / GitHub + callback JWT
-- [x] CI + tests étendus + E2E Playwright
-- [x] Messages privés UI
+- Multijoueur WebSocket + chrono serveur
+- Matchmaking Celery + forfait déconnexion
+- Tournois arène / suisse, observateur
+- Puzzles rush · survival · battle · leaderboard
+- Curriculum 40 documents + UI leçons
+- Notifications push WebSocket
+- OAuth Google / GitHub + callback JWT
+- CI + tests étendus + E2E Playwright
+- Messages privés UI
+- App mobile Expo
 
 </details>
 
 <details>
-<summary><b>🔶 En cours / à venir</b></summary>
+<summary><strong>En cours / à venir</strong></summary>
 
-- [ ] Pièces SVG illustrées (style africain)
+- [ ] Pièces SVG illustrées style africain
 - [ ] i18n complet de toutes les pages
-- [x] App mobile Expo (`mobile/`) — play, puzzles, daily, fairplay
 - [ ] Intégration rating FIDE
 - [ ] Push notifications natives (APNs / FCM)
 - [ ] Streaming live avancé
@@ -391,20 +660,28 @@ Guide : [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
 ---
 
-## 🐳 Services Docker
+## CI / CD
 
-| Service | Rôle |
-|---------|------|
-| `db` | PostgreSQL 16 |
-| `redis` | Channels + broker Celery |
-| `backend` | Daphne (HTTP + WebSocket) |
-| `celery` | Tâches async |
-| `celery-beat` | Matchmaking périodique, forfaits |
-| `frontend` | Next.js 14 |
+```mermaid
+flowchart LR
+    PUSH[git push] --> GHA[GitHub Actions]
+    GHA --> BT[Backend tests]
+    GHA --> LT[Frontend lint]
+    GHA --> FT[Frontend vitest]
+    GHA --> E2E[Playwright E2E]
+    BT --> OK{All green?}
+    LT --> OK
+    FT --> OK
+    E2E --> OK
+    OK -->|Yes| MERGE[Merge ready]
+    OK -->|No| FIX[Fix required]
+```
+
+Fichier : [.github/workflows/ci.yml](.github/workflows/ci.yml)
 
 ---
 
-## 👤 Crédits & licence
+## Crédits & licence
 
 <table>
 <tr>
@@ -426,881 +703,10 @@ Projet **propriétaire**. Tous droits réservés.
 
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:D4A017,50:1B7A3D,100:0D1117&height=100&section=footer&text=%E2%99%9F%20Elevating%20chess%20on%20the%20global%20stage&fontSize=18&fontColor=ffffff&animation=scaleIn" alt="footer" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:D4A017,50:1B7A3D,100:0D1117&height=110&section=footer&text=Elevating+chess+on+the+global+stage&fontSize=17&fontColor=ffffff&animation=scaleIn" alt="footer" />
 
-**♟ Jouez. Apprenez. Brillez. — AFRICHESS**
+<br />
+
+<sub>Jouez · Apprenez · Progressez — AFRICHESS</sub>
 
 </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

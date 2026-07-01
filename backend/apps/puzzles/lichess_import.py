@@ -15,12 +15,15 @@ import zstandard
 LICHESS_PUZZLE_URL = "https://database.lichess.org/lichess_db_puzzle.csv.zst"
 DEFAULT_CACHE = Path(__file__).resolve().parents[2] / "data" / "lichess_db_puzzle.csv.zst"
 
+# Répartition cible par niveau (total typique = 300)
 RATING_TARGETS = {
-    "easy": 150,
-    "medium": 150,
-    "hard": 150,
-    "expert": 150,
+    "easy": 75,
+    "medium": 75,
+    "hard": 75,
+    "expert": 75,
 }
+
+MIN_PUZZLE_POOL = 300
 
 
 def rating_to_difficulty(rating: int) -> str:

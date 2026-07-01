@@ -24,7 +24,7 @@ def _validate_puzzle(data: dict) -> bool:
 
 
 class Command(BaseCommand):
-    help = "Seed tactical puzzle catalogue (80+ puzzles)"
+    help = "Seed tactical puzzle catalogue (80+ puzzles, complété par Lichess via seed_puzzles)"
 
     def add_arguments(self, parser):
         parser.add_argument(

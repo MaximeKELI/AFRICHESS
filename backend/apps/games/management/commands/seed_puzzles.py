@@ -1,38 +1,71 @@
-"""Seed sample puzzles for development."""
+"""Seed puzzles : catalogue local + import Lichess jusqu'à 300+."""
+
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
+from apps.puzzles.lichess_import import DEFAULT_CACHE, MIN_PUZZLE_POOL
 from apps.puzzles.models import Puzzle
 
 
-SAMPLE_PUZZLES = [
-    {
-        "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 4",
-        "solution_moves": ["f6g4"],
-        "themes": ["mate", "scholar"],
-        "difficulty": "easy",
-        "rating": 800,
-    },
-    {
-        "fen": "rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq g3 0 2",
-        "solution_moves": ["d8h4"],
-        "themes": ["mate"],
-        "difficulty": "easy",
-        "rating": 900,
-    },
-    {
-        "fen": "6k1/5ppp/8/8/8/8/8/R6K w - - 0 1",
-        "solution_moves": ["a1a8"],
-        "themes": ["back_rank"],
-        "difficulty": "medium",
-        "rating": 1100,
-    },
-]
-
-
 class Command(BaseCommand):
-    help = "Seed sample chess puzzles"
+    help = f"Seed puzzles tactiques (catalogue + Lichess, min {MIN_PUZZLE_POOL})"
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--min-total",
+            type=int,
+            default=MIN_PUZZLE_POOL,
+            help=f"Nombre minimum de puzzles en base (défaut: {MIN_PUZZLE_POOL})",
+        )
+        parser.add_argument(
+            "--skip-lichess",
+            action="store_true",
+            help="Ne pas importer depuis Lichess (catalogue seul)",
+        )
+        parser.add_argument(
+            "--download",
+            action="store_true",
+            help="Télécharge la base Lichess si absente (~150 Mo)",
+        )
 
     def handle(self, *args, **options):
-        for data in SAMPLE_PUZZLES:
-            Puzzle.objects.get_or_create(fen=data["fen"], defaults=data)
-        self.stdout.write(self.style.SUCCESS(f"Seeded {len(SAMPLE_PUZZLES)} puzzles"))
+        min_total = options["min_total"]
+        verbosity = options["verbosity"]
+
+        call_command("seed_puzzle_catalog", verbosity=verbosity)
+        total = Puzzle.objects.count()
+        self.stdout.write(f"Après catalogue : {total} puzzles")
+
+        needed = max(0, min_total - total)
+        if needed > 0 and not options["skip_lichess"]:
+            import_limit = max(needed + 120, min_total + 80)
+            self.stdout.write(
+                f"Import Lichess : objectif +{needed} (limite {import_limit})…"
+            )
+            try:
+                call_command(
+                    "import_lichess_puzzles",
+                    limit=import_limit,
+                    download=options["download"] or not DEFAULT_CACHE.exists(),
+                    verbosity=verbosity,
+                )
+            except Exception as exc:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"Import Lichess échoué ({exc}). "
+                        f"Lancez : python manage.py import_lichess_puzzles --download"
+                    )
+                )
+
+        total = Puzzle.objects.count()
+        if total >= min_total:
+            self.stdout.write(
+                self.style.SUCCESS(f"✓ {total} puzzles en base (objectif {min_total})")
+            )
+        else:
+            self.stdout.write(
+                self.style.WARNING(
+                    f"Seulement {total} puzzles (objectif {min_total}). "
+                    "Importez Lichess : python manage.py seed_puzzles --download"
+                )
+            )

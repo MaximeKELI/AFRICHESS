@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "NEXT_DIST_DIR=${NEXT_DIST_DIR:-.next-build} next dev -H 0.0.0.0",
+    "dev:clean": "rm -rf .next-build && NEXT_DIST_DIR=.next-build next dev -H 0.0.0.0",
     "build": "NEXT_DIST_DIR=${NEXT_DIST_DIR:-.next-build} next build",
     "build:safe": "NEXT_DIST_DIR=.next-build next build",
     "start": "next start",

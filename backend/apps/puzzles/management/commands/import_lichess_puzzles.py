@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from apps.puzzles.lichess_import import (
     DEFAULT_CACHE,
+    MIN_PUZZLE_POOL,
     RATING_TARGETS,
     download_lichess_db,
     iter_valid_puzzles,
@@ -16,14 +17,14 @@ from apps.puzzles.models import Puzzle
 
 
 class Command(BaseCommand):
-    help = "Import Lichess puzzles (500+ par défaut, validés python-chess)"
+    help = f"Import Lichess puzzles ({MIN_PUZZLE_POOL}+ par défaut, validés python-chess)"
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--limit",
             type=int,
-            default=600,
-            help="Nombre max de puzzles à importer (défaut: 600)",
+            default=MIN_PUZZLE_POOL,
+            help=f"Nombre max de puzzles à importer (défaut: {MIN_PUZZLE_POOL})",
         )
         parser.add_argument(
             "--min-rating",
