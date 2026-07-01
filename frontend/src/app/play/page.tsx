@@ -55,6 +55,7 @@ import {
   formatElo,
   isProvisionalRating,
   ratingForMode,
+  type GameRatingChanges,
   type RatingRow,
 } from "@/lib/ratings";
 import { PgnExportButton } from "@/components/chess/PgnExportButton";
