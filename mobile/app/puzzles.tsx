@@ -165,6 +165,8 @@ export default function PuzzlesScreen() {
           const solved = data.solved;
           if (solved) {
             setPuzzleSolved(true);
+            setLastXp(data.xp_gained);
+            setGardenVisible(true);
             setResult(t("puzzles.bravo", { streak: data.daily_streak ?? streak }));
             playPuzzleSuccess();
           } else {
@@ -256,13 +258,22 @@ export default function PuzzlesScreen() {
             <Text style={styles.badge}>{puzzle.difficulty}</Text>
             <Text style={styles.badge}>ELO {puzzle.rating}</Text>
           </View>
-          <ChessBoard
-            fen={displayFen || puzzle.fen}
-            orientation="white"
-            lastMove={lastMove}
-            onMove={handleMove}
-            disabled={puzzleFailed || puzzleSolved}
-          />
+          <View style={{ position: "relative", width: "100%" }}>
+            <ChessBoard
+              fen={displayFen || puzzle.fen}
+              orientation="white"
+              lastMove={lastMove}
+              onMove={handleMove}
+              disabled={puzzleFailed || puzzleSolved}
+            />
+            <PuzzleGardenMobile
+              visible={gardenVisible}
+              current={1}
+              streak={streak}
+              xpGained={lastXp}
+              onDone={() => setGardenVisible(false)}
+            />
+          </View>
           <View style={styles.actions}>
             {puzzleFailed && tab === "daily" ? (
               <Pressable style={styles.btn} onPress={retryPuzzle}>
