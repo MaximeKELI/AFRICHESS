@@ -124,6 +124,7 @@ export function PuzzleBoard({ puzzle, onComplete, onWrong, disabled }: PuzzleBoa
         playSoundOnFenChange
         serverValidated
       />
+      </div>
       {feedback && (
         <p className={`text-sm text-center ${feedback.includes("!") ? "text-africhess-green" : "text-africhess-terracotta"}`}>
           {feedback}
