@@ -4,12 +4,15 @@ export interface AnalysisMove {
   uci?: string;
   san: string;
   eval: number;
+  eval_before?: number;
   class: string;
   cp_loss?: number;
   played_by_white?: boolean;
   best_san?: string | null;
   best_uci?: string | null;
   pv_san?: string | null;
+  phase?: "opening" | "middlegame" | "endgame";
+  explanation_fr?: string;
 }
 
 export interface GameAnalysisData {
