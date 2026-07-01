@@ -148,6 +148,22 @@ export default function StatsPage() {
 
   const username = user.username;
 
+  const handlePdfExport = async () => {
+    if (!data) return;
+    setPdfLoading(true);
+    try {
+      await downloadStatsPdf(
+        toExportData(data),
+        username,
+        user.display_name || user.username,
+        t,
+        locale
+      );
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
       <div className="stats-fx-hero">
