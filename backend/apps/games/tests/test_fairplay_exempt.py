@@ -69,9 +69,13 @@ class FairPlayExemptTests(TestCase):
         self.assertFalse(restrictions["suspended"])
 
     def test_rated_matchmaking_without_consent(self):
+        from apps.games.tests.test_matchmaking import grant_fairplay_consent
+
+        grant_fairplay_consent(self.opponent)
         svc = MatchmakingService()
         svc.join_queue(self.exempt, "blitz", 1200, is_rated=True)
-        svc.find_match(self.opponent, "blitz", 1200, is_rated=True)
+        game = svc.find_match(self.opponent, "blitz", 1200, is_rated=True)
+        self.assertIsNotNone(game)
 
     def test_fairplay_status_api(self):
         client = APIClient()
