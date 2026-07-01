@@ -2422,6 +2422,7 @@ const en: Record<string, string> = {
   "puzzles.loading": "Loading puzzle…",
   "puzzles.validate": "Submit",
   "puzzles.reset": "Reset",
+  "puzzles.retry": "Try again",
   "puzzles.next": "Next →",
   "puzzles.nextRush": "Next rush →",
   "tournaments.africanOnly": "African cups only",
