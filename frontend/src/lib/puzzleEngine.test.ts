@@ -61,3 +61,10 @@ describe("applyPuzzleMove", () => {
     expect(buildPuzzleFen(fen, result.moves)).toBe(result.fen);
   });
 });
+
+describe("alignMovesToSolution", () => {
+  it("uses exact solution notation including promotion", () => {
+    const solution = ["e7e8q", "a8b8"];
+    expect(alignMovesToSolution(["e7e8", "a8b8"], solution)).toEqual(solution);
+  });
+});
