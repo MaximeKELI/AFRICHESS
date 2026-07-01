@@ -280,11 +280,11 @@ export function StatsPdfDocument({
               rows={data.by_mode.map((m) => {
                 const row = m as Record<string, unknown>;
                 return [
-                  String(row.mode ?? ""),
-                  row.played ?? 0,
-                  row.won ?? 0,
-                  row.drawn ?? 0,
-                  row.lost ?? 0,
+                  cell(row.mode),
+                  cell(row.played),
+                  cell(row.won),
+                  cell(row.drawn),
+                  cell(row.lost),
                   `${row.win_rate ?? 0}%`,
                 ];
               })}
