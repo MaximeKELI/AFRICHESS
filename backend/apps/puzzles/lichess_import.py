@@ -15,15 +15,22 @@ import zstandard
 LICHESS_PUZZLE_URL = "https://database.lichess.org/lichess_db_puzzle.csv.zst"
 DEFAULT_CACHE = Path(__file__).resolve().parents[2] / "data" / "lichess_db_puzzle.csv.zst"
 
-# Répartition cible par niveau (total typique = 2000)
-RATING_TARGETS = {
-    "easy": 500,
-    "medium": 500,
-    "hard": 500,
-    "expert": 500,
-}
+DIFFICULTY_LEVELS = ("easy", "medium", "hard", "expert")
+MIN_PUZZLE_POOL = 10_000
 
-MIN_PUZZLE_POOL = 2000
+
+def rating_targets_for_limit(limit: int) -> dict[str, int]:
+    """Répartit limit uniformément sur easy / medium / hard / expert."""
+    limit = max(int(limit), len(DIFFICULTY_LEVELS))
+    base, rem = divmod(limit, len(DIFFICULTY_LEVELS))
+    return {
+        level: base + (1 if i < rem else 0)
+        for i, level in enumerate(DIFFICULTY_LEVELS)
+    }
+
+
+# Répartition par défaut (10 000 → 2500 / niveau)
+RATING_TARGETS = rating_targets_for_limit(MIN_PUZZLE_POOL)
 
 
 def rating_to_difficulty(rating: int) -> str:
@@ -119,21 +126,27 @@ def download_lichess_db(dest: Path | None = None) -> Path:
     return dest
 
 
+def _targets_satisfied(counts: dict[str, int], targets: dict[str, int]) -> bool:
+    return all(counts.get(k, 0) >= targets.get(k, 0) for k in targets)
+
+
 def iter_valid_puzzles(
     source: Path | str | None = None,
     *,
     min_rating: int = 600,
     max_rating: int = 2400,
     min_popularity: int = 75,
-    limit: int = 600,
+    limit: int = MIN_PUZZLE_POOL,
+    targets: dict[str, int] | None = None,
 ) -> Iterator[dict]:
     """Parcourt le CSV et renvoie des puzzles valides, répartis par niveau."""
-    counts = {k: 0 for k in RATING_TARGETS}
+    targets = targets or rating_targets_for_limit(limit)
+    counts = {k: 0 for k in targets}
     seen_fens: set[str] = set()
     total = 0
 
     for row in open_lichess_csv(source):
-        if total >= limit:
+        if total >= limit or _targets_satisfied(counts, targets):
             break
 
         try:
@@ -152,13 +165,13 @@ def iter_valid_puzzles(
             continue
 
         diff = puzzle["difficulty"]
-        if counts[diff] >= RATING_TARGETS[diff]:
+        if counts.get(diff, 0) >= targets.get(diff, 0):
             continue
 
         if puzzle["fen"] in seen_fens:
             continue
         seen_fens.add(puzzle["fen"])
 
-        counts[diff] += 1
+        counts[diff] = counts.get(diff, 0) + 1
         total += 1
         yield puzzle
