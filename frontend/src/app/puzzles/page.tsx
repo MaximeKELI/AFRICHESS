@@ -622,21 +622,20 @@ export default function PuzzlesPage() {
           },
           () => {
             if (tab === "training") {
-              const next = trainingIndex + 1;
-              if (next < trainingQueue.length) {
-                playPuzzleAdvance(puzzleSoundsActive(lowBandwidth));
-                setTrainingIndex(next);
-                setPuzzle(trainingQueue[next]);
-                setUciMoves([]);
-                setResult(null);
-                setPuzzleFailed(false);
-                setStartTime(Date.now());
-                setBoardKey((k) => k + 1);
-              } else {
+              setTrainingIndex((idx) => {
+                const next = idx + 1;
+                const queue = trainingQueueRef.current;
+                if (next < queue.length) {
+                  playPuzzleAdvance(puzzleSoundsActive(lowBandwidth));
+                  setPuzzle(queue[next]);
+                  resetPuzzleUiForNewPuzzle();
+                  return next;
+                }
                 setSessionRecap(sessionRef.current.buildRecap());
                 setRecapOpen(true);
                 sessionRef.current.reset();
-              }
+                return idx;
+              });
             }
           }
         );

@@ -135,7 +135,7 @@ export function PuzzleBoard({
       <div className="relative">
         {wrongFlash && <div className="puzzle-fx-wrong-flash" aria-hidden />}
         <ChessBoard
-        key={boardNonce}
+        key={`${puzzle.id}-${boardNonce}`}
         fen={fen}
         orientation={orientation}
         onMove={handleMove}
