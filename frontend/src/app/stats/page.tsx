@@ -114,22 +114,6 @@ export default function StatsPage() {
   const [activeTab, setActiveTab] = useState<StatsTab>("charts");
   const [pdfLoading, setPdfLoading] = useState(false);
 
-  const handlePdfExport = async () => {
-    if (!data) return;
-    setPdfLoading(true);
-    try {
-      await downloadStatsPdf(
-        toExportData(data),
-        username,
-        user.display_name || user.username,
-        t,
-        locale
-      );
-    } finally {
-      setPdfLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (!user) return;
     setLoading(true);
