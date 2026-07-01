@@ -1,49 +1,52 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Chess } from "chess.js";
 import { ChessBoard } from "@/components/chess/ChessBoard";
+import { learningApi } from "@/lib/learningApi";
 import { useTranslation } from "@/hooks/useTranslation";
 
-const DRILLS = [
-  {
-    id: "kp1",
-    fen: "8/8/8/8/8/4K3/8/4k3 w - - 0 1",
-    goal: "endgame.kp.opposition",
-    solution: ["e3"],
-  },
-  {
-    id: "kp2",
-    fen: "8/8/8/3k4/8/3K4/3P4/8 w - - 0 1",
-    goal: "endgame.kp.push",
-    solution: ["d4"],
-  },
-  {
-    id: "rook1",
-    fen: "6k1/8/8/8/8/8/6PP/6K1 w - - 0 1",
-    goal: "endgame.rook.lift",
-    solution: ["g3"],
-  },
-] as const;
+interface Drill {
+  id: string;
+  fen: string;
+  goal_key: string;
+  solution: string[];
+  theme: string;
+  rating: number;
+}
 
 export default function EndgameTrainerPage() {
   const { t } = useTranslation();
+  const [drills, setDrills] = useState<Drill[]>([]);
   const [idx, setIdx] = useState(0);
-  const drill = DRILLS[idx];
-  const [fen, setFen] = useState<string>(drill.fen);
+  const [fen, setFen] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
+
+  useEffect(() => {
+    learningApi.endgameDrills().then(({ data }) => {
+      const list = Array.isArray(data) ? (data as Drill[]) : [];
+      setDrills(list);
+      if (list[0]) setFen(list[0].fen);
+    });
+  }, []);
+
+  const drill = drills[idx];
 
   const onMove = useCallback(
     (uci: string) => {
+      if (!drill) return;
       const chess = new Chess(fen);
       try {
-        chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] });
+        chess.move({
+          from: uci.slice(0, 2),
+          to: uci.slice(2, 4),
+          promotion: uci[4] as "q" | "r" | "b" | "n" | undefined,
+        });
         setFen(chess.fen());
-        if ((drill.solution as readonly string[]).includes(uci)) {
-          setFeedback(t("endgame.correct"));
-        } else {
-          setFeedback(t("endgame.tryAgain"));
-        }
+        const ok = drill.solution.some(
+          (s) => s.toLowerCase() === uci.toLowerCase() || s.toLowerCase() === uci.slice(0, 4).toLowerCase()
+        );
+        setFeedback(ok ? t("endgame.correct") : t("endgame.tryAgain"));
       } catch {
         setFeedback(t("endgame.illegal"));
       }
@@ -52,18 +55,28 @@ export default function EndgameTrainerPage() {
   );
 
   const next = () => {
-    const n = (idx + 1) % DRILLS.length;
+    if (!drills.length) return;
+    const n = (idx + 1) % drills.length;
     setIdx(n);
-    setFen(DRILLS[n].fen);
+    setFen(drills[n].fen);
     setFeedback(null);
   };
+
+  if (!drill) {
+    return <p className="p-8 text-center opacity-60">{t("common.loading")}</p>;
+  }
+
+  const orientation = drill.fen.includes(" w ") ? "white" : "black";
 
   return (
     <div className="max-w-3xl mx-auto p-4 space-y-6">
       <h1 className="text-2xl font-bold">{t("endgame.title")}</h1>
       <p className="text-sm opacity-70">{t("endgame.subtitle")}</p>
-      <p className="text-sm font-medium text-africhess-gold">{t(drill.goal)}</p>
-      <ChessBoard fen={fen} onMove={onMove} orientation="white" />
+      <p className="text-xs opacity-50">
+        {idx + 1}/{drills.length} · {drill.theme} · {drill.rating}
+      </p>
+      <p className="text-sm font-medium text-africhess-gold">{t(drill.goal_key)}</p>
+      <ChessBoard fen={fen} onMove={onMove} orientation={orientation} />
       {feedback && <p className="text-sm">{feedback}</p>}
       <button type="button" onClick={next} className="px-4 py-2 text-sm rounded-lg border border-white/20">
         {t("endgame.next")}
