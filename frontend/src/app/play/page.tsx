@@ -121,6 +121,7 @@ function PlayContent() {
   const [orientation, setOrientation] = useState<"white" | "black">("white");
   const [status, setStatus] = useState<string>("");
   const [searching, setSearching] = useState(false);
+  const [searchingPool, setSearchingPool] = useState<number | null>(null);
   const [aiEloChoice, setAiEloChoice] = useState<AiLevelElo>(1250);
   const [selectedBot, setSelectedBot] = useState<string | null>(botFromUrl);
   const [selectedBotInfo, setSelectedBotInfo] = useState<GameBotPublic | null>(null);

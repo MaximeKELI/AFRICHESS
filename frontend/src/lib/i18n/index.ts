@@ -364,6 +364,7 @@ const fr: Record<string, string> = {
   "play.online.title": "Joueur en ligne",
   "play.online.find": "Trouver un adversaire",
   "play.online.searching": "Recherche…",
+  "play.online.searchingPool": "{count} joueur(s) en recherche",
   "play.online.cancel": "Annuler",
   "play.recent.title": "Parties précédentes",
   "play.recent.empty": "Aucune partie enregistrée.",
