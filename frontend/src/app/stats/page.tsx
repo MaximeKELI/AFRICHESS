@@ -428,10 +428,15 @@ export default function StatsPage() {
                   <FormTimeline outcomes={data.recent_form.slice(0, 20).map((g) => g.outcome)} />
                 </FuturisticPanel>
               )}
-            </>
+            </div>
           )}
 
           {activeTab === "history" && (
+            <div
+              id="stats-panel-history"
+              role="tabpanel"
+              aria-labelledby="stats-tab-history"
+            >
             <FuturisticPanel
               title={t("stats.history.title")}
               subtitle={t("stats.history.subtitle")}
