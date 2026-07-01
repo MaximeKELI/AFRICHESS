@@ -10,8 +10,6 @@ import {
 } from "@/lib/puzzleGardenThemes";
 import { usePuzzlePreferencesStore } from "@/store/puzzlePreferences";
 
-import { usePuzzlePreferencesStore } from "@/store/puzzlePreferences";
-
 interface PuzzleSettingsPanelProps {
   unlockCtx: ThemeUnlockContext;
 }

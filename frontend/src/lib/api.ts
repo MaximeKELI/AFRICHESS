@@ -296,6 +296,7 @@ export const ratingsApi = {
 };
 
 export const puzzlesApi = {
+  get: (id: number) => api.get(`/puzzles/${id}/`),
   daily: () => api.get("/puzzles/daily/"),
   themes: () => api.get("/puzzles/themes/"),
   training: (difficulty: string, count = 10, theme?: string) =>

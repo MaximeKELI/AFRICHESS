@@ -11,6 +11,7 @@ import {
 } from "@/lib/puzzleEngine";
 import { useTranslation } from "@/hooks/useTranslation";
 import { playPuzzleWrong } from "@/lib/puzzleSounds";
+import { puzzleSoundsActive } from "@/store/puzzlePreferences";
 import { useAuthStore } from "@/store/auth";
 
 export interface PuzzleData {
@@ -27,9 +28,18 @@ interface PuzzleBoardProps {
   onComplete: (moves: string[], wrong: boolean) => void;
   onWrong?: (played: string[]) => void;
   disabled?: boolean;
+  hintSquare?: string | null;
+  reviewHighlight?: { played?: { from: string; to: string }; best?: { from: string; to: string } } | null;
 }
 
-export function PuzzleBoard({ puzzle, onComplete, onWrong, disabled }: PuzzleBoardProps) {
+export function PuzzleBoard({
+  puzzle,
+  onComplete,
+  onWrong,
+  disabled,
+  hintSquare,
+  reviewHighlight,
+}: PuzzleBoardProps) {
   const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
   const solution = puzzle.solution_moves ?? [];
@@ -67,7 +77,7 @@ export function PuzzleBoard({ puzzle, onComplete, onWrong, disabled }: PuzzleBoa
         setShake(true);
         setWrongFlash(true);
         setFeedback(t("puzzles.wrongMove"));
-        playPuzzleWrong(!lowBandwidth);
+        playPuzzleWrong(puzzleSoundsActive(lowBandwidth));
         onWrong?.(played);
         setBoardNonce((n) => n + 1);
         setTimeout(() => {
@@ -123,8 +133,15 @@ export function PuzzleBoard({ puzzle, onComplete, onWrong, disabled }: PuzzleBoa
         lastMove={lastMove}
         playSoundOnFenChange
         serverValidated
+        reviewHighlight={
+          reviewHighlight ??
+          (hintSquare ? { best: { from: hintSquare, to: hintSquare } } : null)
+        }
       />
       </div>
+      {hintSquare && (
+        <p className="text-xs text-center text-africhess-gold/80">{t("puzzles.hint.active")}</p>
+      )}
       {feedback && (
         <p className={`text-sm text-center ${feedback.includes("!") ? "text-africhess-green" : "text-africhess-terracotta"}`}>
           {feedback}
