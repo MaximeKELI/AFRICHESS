@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { PuzzleBoard } from "@/components/puzzles/PuzzleBoard";
 import {
   PuzzleSolveCelebration,
   type PuzzleCelebrationData,
+  type CelebrationVariant,
 } from "@/components/puzzles/PuzzleSolveCelebration";
 import { PuzzleProgressRail } from "@/components/puzzles/PuzzleProgressRail";
+import { PuzzleMiniStairs } from "@/components/puzzles/PuzzleMiniStairs";
+import { PuzzleSettingsPanel } from "@/components/puzzles/PuzzleSettingsPanel";
+import { PuzzleSessionRecapModal } from "@/components/puzzles/PuzzleSessionRecap";
+import { PuzzleBadgeToast } from "@/components/puzzles/PuzzleBadgeToast";
 import { OptionSection } from "@/components/ui/OptionSection";
 import { puzzlesApi, ratingsApi } from "@/lib/api";
 import { InlineAlert } from "@/components/ui/InlineAlert";
@@ -16,6 +21,18 @@ import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { chessLevelLabel } from "@/lib/i18n/labels";
 import { getPuzzleStreak, recordPuzzleSolved } from "@/lib/puzzleStreak";
+import {
+  evaluateNewBadges,
+  loadUnlockedBadges,
+  saveUnlockedBadges,
+  type PuzzleBadgeId,
+} from "@/lib/puzzleBadges";
+import { PuzzleSessionTracker, type PuzzleSessionRecap } from "@/lib/puzzleSession";
+import {
+  getLifetimePuzzleSolved,
+  incrementLifetimePuzzleSolved,
+  puzzleSoundsActive,
+} from "@/store/puzzlePreferences";
 import { playPuzzleAdvance, playPuzzleWrong, preloadPuzzleSounds } from "@/lib/puzzleSounds";
 import Link from "next/link";
 
