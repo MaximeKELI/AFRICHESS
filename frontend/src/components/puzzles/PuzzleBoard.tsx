@@ -10,6 +10,8 @@ import {
   solverColor,
 } from "@/lib/puzzleEngine";
 import { useTranslation } from "@/hooks/useTranslation";
+import { playPuzzleWrong } from "@/lib/puzzleSounds";
+import { useAuthStore } from "@/store/auth";
 
 export interface PuzzleData {
   id: number;

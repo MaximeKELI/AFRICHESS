@@ -59,14 +59,14 @@ export function PuzzleSolveCelebration({
 
     const timer = window.setTimeout(() => {
       setVisible(false);
-      onDone?.();
+      onDoneRef.current?.();
     }, autoDismissMs);
 
     return () => {
       window.clearInterval(countUp);
       window.clearTimeout(timer);
     };
-  }, [data, autoDismissMs, lowBandwidth, onDone]);
+  }, [data, autoDismissMs, lowBandwidth]);
 
   if (!data || !visible) return null;
 
