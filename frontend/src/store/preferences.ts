@@ -9,6 +9,7 @@ import {
   isBoardBackgroundId,
   type BoardBackgroundId,
 } from "@/lib/boardBackgrounds";
+import { syncPuzzlePreferencesFromStorage } from "@/store/puzzlePreferences";
 
 const BOARD_THEME_KEY = "board_theme";
 const BOARD_BACKGROUND_KEY = "board_background";
@@ -70,7 +71,6 @@ export function syncPreferencesForUser(userId: number | null) {
     aiCommentsEnabled: readAiComments(),
     zenMode,
   });
-  const { syncPuzzlePreferencesFromStorage } = require("@/store/puzzlePreferences");
   syncPuzzlePreferencesFromStorage();
 }
 

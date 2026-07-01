@@ -10,6 +10,8 @@ import {
 } from "@/lib/puzzleGardenThemes";
 import { usePuzzlePreferencesStore } from "@/store/puzzlePreferences";
 
+import { usePuzzlePreferencesStore } from "@/store/puzzlePreferences";
+
 interface PuzzleSettingsPanelProps {
   unlockCtx: ThemeUnlockContext;
 }
@@ -79,28 +81,4 @@ export function PuzzleSettingsPanel({ unlockCtx }: PuzzleSettingsPanelProps) {
       </div>
     </div>
   );
-}
-
-/** Recharge préférences puzzle après connexion. */
-export function syncPuzzlePreferencesFromStorage() {
-  if (typeof window === "undefined") return;
-  const { usePuzzlePreferencesStore } = require("@/store/puzzlePreferences");
-  const readBool = (key: string, fb: boolean) => {
-    const { preferenceStorageKey } = require("@/store/preferences");
-    const v = localStorage.getItem(preferenceStorageKey(key));
-    return v === null ? fb : v === "1";
-  };
-  const readVol = () => {
-    const { preferenceStorageKey } = require("@/store/preferences");
-    const v = localStorage.getItem(preferenceStorageKey("puzzle_volume"));
-    const n = v ? parseFloat(v) : 0.85;
-    return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0.85;
-  };
-  usePuzzlePreferencesStore.setState({
-    soundsEnabled: readBool("puzzle_sounds", true),
-    soundVolume: readVol(),
-    gardenTheme: (localStorage.getItem(
-      require("@/store/preferences").preferenceStorageKey("puzzle_garden_theme")
-    ) as PuzzleGardenThemeId) || "savanna",
-  });
 }
