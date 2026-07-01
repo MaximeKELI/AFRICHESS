@@ -705,3 +705,9 @@ class MatchmakingService:
                 async_to_sync(layer.group_send)(f"user_{uid}", payload)
         except Exception as exc:
             logger.warning("Matchmaking WS notify failed: %s", exc)
+        try:
+            from apps.notifications.services import create_match_found_notifications
+
+            create_match_found_notifications(user_a_id, user_b_id, game)
+        except Exception as exc:
+            logger.warning("Match found push notification failed: %s", exc)

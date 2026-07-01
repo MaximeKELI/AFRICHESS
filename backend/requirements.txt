@@ -24,3 +24,4 @@ gunicorn>=22.0,<23.0
 whitenoise>=6.6,<7.0
 stripe>=11.0,<13.0
 watchdog>=4.0,<7.0
+pywebpush>=2.0,<3.0
