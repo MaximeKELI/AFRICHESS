@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gamesApi } from "@/lib/api";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -14,6 +14,17 @@ export function FairPlayConsentModal({ open, onAccepted, onDecline }: FairPlayCo
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const acceptRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    acceptRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && onDecline) onDecline();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onDecline]);
 
   if (!open) return null;
 
@@ -33,10 +44,14 @@ export function FairPlayConsentModal({ open, onAccepted, onDecline }: FairPlayCo
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4"
-      role="dialog"
-      aria-labelledby="fairplay-consent-title"
+      role="presentation"
     >
-      <div className="max-w-lg w-full rounded-xl border border-white/10 bg-africhess-navy p-6 shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="fairplay-consent-title"
+        className="max-w-lg w-full rounded-xl border border-white/10 bg-africhess-navy p-6 shadow-2xl"
+      >
         <h2 id="fairplay-consent-title" className="font-display text-xl font-bold mb-3">
           {t("fairplay.consent.title")}
         </h2>
@@ -48,7 +63,11 @@ export function FairPlayConsentModal({ open, onAccepted, onDecline }: FairPlayCo
           <li>{t("fairplay.consent.item.engine")}</li>
         </ul>
         <p className="text-xs opacity-60 mb-5">{t("fairplay.consent.legal")}</p>
-        {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
+        {error && (
+          <p className="text-sm text-red-400 mb-3" role="alert">
+            {error}
+          </p>
+        )}
         <div className="flex flex-wrap gap-3 justify-end">
           {onDecline && (
             <button
@@ -61,6 +80,7 @@ export function FairPlayConsentModal({ open, onAccepted, onDecline }: FairPlayCo
             </button>
           )}
           <button
+            ref={acceptRef}
             type="button"
             onClick={accept}
             disabled={loading}

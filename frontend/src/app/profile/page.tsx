@@ -14,6 +14,7 @@ import { UserFlair } from "@/components/profile/UserFlair";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { BackgroundPicker } from "@/components/chess/BackgroundPicker";
 import { OptionSection } from "@/components/ui/OptionSection";
+import { OptionCategoryNav } from "@/components/ui/OptionCategoryNav";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { FairPlayAppealPanel } from "@/components/fairplay/FairPlayAppealPanel";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
@@ -86,6 +87,13 @@ export default function ProfilePage() {
 
   const levelLabel = chessLevelLabel(t, user.chess_level ?? "intermediate");
 
+  const profileSections = [
+    { id: "profile-customize", label: t("profile.customize") },
+    { id: "profile-appearance", label: t("profile.appearance.title") },
+    { id: "profile-ratings", label: t("profile.ratings.title") },
+    { id: "profile-fairplay", label: t("fairplay.appeal.title") },
+  ];
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
       <div className="flex items-center gap-4">
@@ -109,6 +117,16 @@ export default function ProfilePage() {
           </p>
         </div>
       </div>
+
+      <OptionCategoryNav
+        categories={profileSections}
+        active=""
+        onChange={(id) => {
+          document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }}
+        ariaLabel={t("profile.nav.sections")}
+        className="sticky top-14 z-30 -mx-4 px-4 py-2 bg-[var(--bg)]/90 backdrop-blur-sm border-b border-white/5"
+      />
 
       {user.stats && (
         <div className="grid grid-cols-2 gap-4">

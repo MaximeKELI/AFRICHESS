@@ -128,7 +128,11 @@ export default function RegisterPage() {
 
         <section className="space-y-4">
           <h2 className="text-sm font-semibold text-africhess-gold">{t("auth.register.section.account")}</h2>
+          <label htmlFor="register-username" className="sr-only">
+            {t("auth.register.username")}
+          </label>
           <input
+            id="register-username"
             type="text"
             placeholder={t("auth.register.username")}
             autoComplete="username"
@@ -138,7 +142,11 @@ export default function RegisterPage() {
             required
             minLength={3}
           />
+          <label htmlFor="register-email" className="sr-only">
+            {t("auth.register.email")}
+          </label>
           <input
+            id="register-email"
             type="email"
             placeholder={t("auth.register.email")}
             autoComplete="email"
@@ -147,7 +155,11 @@ export default function RegisterPage() {
             className="w-full px-4 py-3 rounded-lg border bg-transparent"
             required
           />
+          <label htmlFor="register-password" className="sr-only">
+            {t("auth.register.password")}
+          </label>
           <input
+            id="register-password"
             type="password"
             placeholder={t("auth.register.password")}
             autoComplete="new-password"
@@ -158,7 +170,11 @@ export default function RegisterPage() {
             minLength={8}
           />
           <p className="text-[11px] opacity-50 -mt-2">{t("auth.register.passwordHint")}</p>
+          <label htmlFor="register-password-confirm" className="sr-only">
+            {t("auth.register.passwordConfirm")}
+          </label>
           <input
+            id="register-password-confirm"
             type="password"
             placeholder={t("auth.register.passwordConfirm")}
             autoComplete="new-password"
@@ -176,7 +192,11 @@ export default function RegisterPage() {
             value={form.country}
             onChange={(country) => setForm({ ...form, country })}
           />
+          <label htmlFor="register-city" className="sr-only">
+            {t("auth.register.city")}
+          </label>
           <input
+            id="register-city"
             type="text"
             placeholder={t("auth.register.city")}
             autoComplete="address-level2"

@@ -7,6 +7,7 @@ import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { consumeReturnAfterLogin } from "@/lib/session";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 function LoginContent() {
   const [username, setUsername] = useState("");
@@ -46,36 +47,54 @@ function LoginContent() {
     <div className="max-w-md mx-auto px-4 py-16">
       <h1 className="font-display text-3xl font-bold mb-8 text-center">{t("auth.login.title")}</h1>
       <form onSubmit={handleSubmit} className="glass-card p-8 space-y-4">
-        <input
-          type="text"
-          placeholder={t("auth.login.username")}
-          autoComplete="username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="w-full px-4 py-3 rounded-lg border bg-transparent"
-          required
-        />
-        <input
-          type="password"
-          placeholder={t("auth.login.password")}
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-4 py-3 rounded-lg border bg-transparent"
-          required
-        />
-        {needsTotp && (
+        <div>
+          <label htmlFor="login-username" className="sr-only">
+            {t("auth.login.username")}
+          </label>
           <input
+            id="login-username"
             type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            placeholder={t("auth.login.totpLabel")}
-            value={totpCode}
-            onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-            className="w-full px-4 py-3 rounded-lg border bg-transparent tracking-widest"
+            placeholder={t("auth.login.username")}
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg border bg-transparent"
             required
-            maxLength={6}
           />
+        </div>
+        <div>
+          <label htmlFor="login-password" className="sr-only">
+            {t("auth.login.password")}
+          </label>
+          <input
+            id="login-password"
+            type="password"
+            placeholder={t("auth.login.password")}
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg border bg-transparent"
+            required
+          />
+        </div>
+        {needsTotp && (
+          <div>
+            <label htmlFor="login-totp" className="sr-only">
+              {t("auth.login.totpLabel")}
+            </label>
+            <input
+              id="login-totp"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              placeholder={t("auth.login.totpLabel")}
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              className="w-full px-4 py-3 rounded-lg border bg-transparent tracking-widest"
+              required
+              maxLength={6}
+            />
+          </div>
         )}
         {username.includes("@") && (
           <p className="text-xs text-africhess-gold/90 -mt-2">{t("auth.login.emailWarning")}</p>
@@ -106,9 +125,8 @@ function LoginContent() {
 }
 
 export default function LoginPage() {
-  const { t } = useTranslation();
   return (
-    <Suspense fallback={<div className="p-8 text-center">{t("common.loading")}</div>}>
+    <Suspense fallback={<LoadingState className="py-16" />}>
       <LoginContent />
     </Suspense>
   );

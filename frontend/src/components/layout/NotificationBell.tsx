@@ -68,6 +68,15 @@ export function NotificationBell() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   if (!user) return null;
 
   const unread = items.filter((n) => !n.is_read).length;
@@ -84,6 +93,8 @@ export function NotificationBell() {
         onClick={() => setOpen((o) => !o)}
         className="p-2 rounded-lg hover:bg-white/10 relative"
         aria-label={t("notifications.title")}
+        aria-expanded={open}
+        aria-haspopup="true"
       >
         <Bell size={18} />
         {unread > 0 && (
@@ -93,7 +104,11 @@ export function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto glass-card shadow-xl z-50 text-sm">
+        <div
+          className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto glass-card shadow-xl z-50 text-sm"
+          role="region"
+          aria-label={t("notifications.title")}
+        >
           <div className="p-3 border-b border-white/10 flex justify-between items-center">
             <span className="font-semibold">{t("notifications.title")}</span>
             {unread > 0 && (
