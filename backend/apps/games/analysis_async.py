@@ -9,13 +9,14 @@ logger = logging.getLogger(__name__)
 
 
 def run_analyze_game_job(game_id: str, job_id: int) -> None:
-    """Exécute une analyse cloud (même logique que la tâche Celery)."""
+    """Exécute une analyse cloud (job utilisateur premium)."""
     from django.utils import timezone
 
-    from apps.games.analysis_utils import compute_accuracies, compute_move_accuracies
-    from apps.games.engine import ChessEngineService
-    from apps.games.models import AnalysisJob, Game, GameAnalysis
-    from apps.learning.review_nlg import generate_game_review
+    from apps.games.models import AnalysisJob, Game
+    from apps.users.premium_utils import max_analysis_moves
+
+    from .game_analysis_service import build_and_save_game_analysis
+    from .ws_notify import notify_analysis_ready
 
     try:
         job = AnalysisJob.objects.select_related("user").get(pk=job_id)
@@ -27,60 +28,44 @@ def run_analyze_game_job(game_id: str, job_id: int) -> None:
 
     try:
         game = Game.objects.get(id=game_id)
-        from apps.users.premium_utils import max_analysis_moves
-
         limit = max_analysis_moves(job.user)
-        move_rows = list(
-            game.moves.order_by("move_number").values_list("uci", "played_by_white")
-        )[:limit]
-        if not move_rows:
+        analysis = build_and_save_game_analysis(game, depth=job.depth, move_limit=limit)
+        if not analysis:
             raise RuntimeError("No moves to analyze")
-        engine = ChessEngineService()
-        evaluations = engine.analyze_game_moves(move_rows, depth=job.depth)
-        if not evaluations:
-            raise RuntimeError("Engine returned no evaluations")
-
-        blunders_w = sum(
-            1 for i, e in enumerate(evaluations) if e.classification == "blunder" and move_rows[i][1]
-        )
-        blunders_b = sum(
-            1 for i, e in enumerate(evaluations) if e.classification == "blunder" and not move_rows[i][1]
-        )
-        acc_w, acc_b = compute_accuracies(evaluations, move_rows)
-        move_acc_w, move_acc_b = compute_move_accuracies(evaluations, move_rows)
-        from .review_phases import build_analyzed_moves_json
-
-        best_moves_json = build_analyzed_moves_json(evaluations, move_rows)
-        summary_fr, summary_en, key_moments = generate_game_review(
-            best_moves_json,
-            accuracy_white=acc_w,
-            accuracy_black=acc_b,
-            blunders_white=blunders_w,
-            blunders_black=blunders_b,
-        )
-        GameAnalysis.objects.update_or_create(
-            game=game,
-            defaults={
-                "accuracy_white": acc_w,
-                "accuracy_black": acc_b,
-                "move_accuracy_white": move_acc_w,
-                "move_accuracy_black": move_acc_b,
-                "blunders_white": blunders_w,
-                "blunders_black": blunders_b,
-                "best_moves_json": best_moves_json,
-                "summary_fr": summary_fr,
-                "summary_en": summary_en,
-                "key_moments_json": key_moments,
-            },
-        )
         job.status = AnalysisJob.Status.COMPLETED
         job.completed_at = timezone.now()
         job.save(update_fields=["status", "completed_at"])
+        notify_analysis_ready(game)
     except Exception as exc:
         job.status = AnalysisJob.Status.FAILED
         job.error = str(exc)[:500]
         job.completed_at = timezone.now()
         job.save(update_fields=["status", "error", "completed_at"])
+
+
+def run_auto_game_analysis(game_id: str) -> None:
+    """Analyse post-partie automatique (profondeur selon le tier des joueurs)."""
+    from apps.games.models import Game
+
+    from .game_analysis_service import (
+        analysis_params_for_game,
+        build_and_save_game_analysis,
+        game_needs_auto_analysis,
+    )
+    from .ws_notify import notify_analysis_ready
+
+    try:
+        game = Game.objects.select_related("white_player", "black_player").get(id=game_id)
+    except Game.DoesNotExist:
+        return
+    if not game_needs_auto_analysis(game):
+        return
+
+    move_limit, depth = analysis_params_for_game(game)
+    analysis = build_and_save_game_analysis(game, depth=depth, move_limit=move_limit)
+    if analysis:
+        logger.info("Auto game analysis saved for game %s", game_id)
+        notify_analysis_ready(game)
 
 
 def schedule_analyze_game(game_id: str, job_id: int) -> None:
@@ -99,4 +84,24 @@ def schedule_analyze_game(game_id: str, job_id: int) -> None:
             args=(game_id, job_id),
             daemon=True,
             name=f"analyze-game-{game_id[:8]}",
+        ).start()
+
+
+def schedule_auto_game_analysis(game_id: str) -> None:
+    """File Celery ou thread pour analyse post-partie."""
+    try:
+        from apps.games.tasks import auto_analyze_completed_game
+
+        auto_analyze_completed_game.delay(game_id)
+    except Exception as exc:
+        logger.warning(
+            "Celery indisponible pour auto-analyse (game=%s) — repli thread : %s",
+            game_id,
+            exc,
+        )
+        threading.Thread(
+            target=run_auto_game_analysis,
+            args=(game_id,),
+            daemon=True,
+            name=f"auto-analyze-{game_id[:8]}",
         ).start()

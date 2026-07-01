@@ -84,6 +84,21 @@ def forfeit_overdue_correspondence_games():
 
 
 @shared_task
+def auto_analyze_completed_game(game_id: str):
+    """Analyse Stockfish en arrière-plan dès qu'une partie se termine."""
+    from .analysis_async import run_auto_game_analysis
+
+    run_auto_game_analysis(game_id)
+
+
+def schedule_auto_game_analysis(game_id: str) -> None:
+    try:
+        auto_analyze_completed_game.delay(game_id)
+    except Exception:
+        auto_analyze_completed_game(game_id)
+
+
+@shared_task
 def analyze_game_async(game_id: str, job_id: int):
     """Analyse cloud profonde en arrière-plan."""
     from .analysis_async import run_analyze_game_job
