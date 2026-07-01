@@ -116,6 +116,41 @@ class VoteGameCreateView(APIView):
         return Response(GameSerializer(game).data, status=201)
 
 
+def _vote_tally(game: Game, user=None) -> dict:
+    try:
+        meta = game.vote_meta
+    except VoteGame.DoesNotExist:
+        meta = None
+    ply = game.move_count
+    votes = GameVote.objects.filter(game=game, ply=ply)
+    tally: dict[str, int] = {}
+    for v in votes:
+        tally[v.move_uci] = tally.get(v.move_uci, 0) + 1
+    my_vote = None
+    if user and user.is_authenticated:
+        row = votes.filter(user=user).first()
+        my_vote = row.move_uci if row else None
+    return {
+        "tally": tally,
+        "ply": ply,
+        "votes": votes.count(),
+        "my_vote": my_vote,
+        "club_white": meta.club_white.name if meta else None,
+        "club_black": meta.club_black.name if meta else None,
+    }
+
+
+class VoteStatusView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, game_id):
+        try:
+            game = Game.objects.get(pk=game_id, is_vote_chess=True)
+        except Game.DoesNotExist:
+            return Response({"error": "Partie introuvable"}, status=404)
+        return Response(_vote_tally(game, request.user))
+
+
 class CastVoteView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -141,13 +176,7 @@ class CastVoteView(APIView):
             ply=ply,
             defaults={"move_uci": move_uci},
         )
-
-        votes = GameVote.objects.filter(game=game, ply=ply)
-        tally: dict[str, int] = {}
-        for v in votes:
-            tally[v.move_uci] = tally.get(v.move_uci, 0) + 1
-
-        return Response({"tally": tally, "ply": ply, "votes": votes.count()})
+        return Response(_vote_tally(game, request.user))
 
 
 class ApplyVoteMoveView(APIView):
@@ -180,3 +209,36 @@ class ApplyVoteMoveView(APIView):
 
         notify_move_made(game, result)
         return Response(GameSerializer(game).data)
+
+
+class SimulDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, session_id):
+        try:
+            session = SimulSession.objects.select_related("host").get(pk=session_id)
+        except SimulSession.DoesNotExist:
+            return Response({"error": "Introuvable"}, status=404)
+        boards = []
+        for b in session.boards.select_related("game", "opponent").order_by("board_number"):
+            boards.append(
+                {
+                    "board_number": b.board_number,
+                    "game_id": str(b.game_id),
+                    "opponent": b.opponent.username,
+                    "status": b.game.status,
+                    "result": b.game.result or "",
+                    "fen": b.game.fen,
+                }
+            )
+        return Response(
+            {
+                "id": session.id,
+                "title": session.title or f"Simul de {session.host.display_name}",
+                "host": session.host.username,
+                "host_id": session.host_id,
+                "status": session.status,
+                "max_boards": session.max_boards,
+                "boards": boards,
+            }
+        )

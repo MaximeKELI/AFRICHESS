@@ -151,6 +151,7 @@ class GameSerializer(serializers.ModelSerializer):
             "created_at", "started_at", "ended_at",
             "days_per_move", "turn_deadline",
             "draw_offered_by", "takeback_requested_by", "conditional_moves",
+            "is_vote_chess",
         ]
 
 
