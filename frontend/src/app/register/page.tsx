@@ -264,6 +264,13 @@ export default function RegisterPage() {
             )}
           </div>
         )}
+        <p className="text-xs opacity-60 text-center leading-relaxed">
+          {t("auth.register.privacyPolicy")}{" "}
+          <Link href="/legal/privacy" className="text-africhess-gold underline">
+            {t("auth.register.privacyLink")}
+          </Link>
+          .
+        </p>
         <button
           type="submit"
           disabled={isLoading}
