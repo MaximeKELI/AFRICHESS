@@ -230,6 +230,9 @@ export default function PuzzlesPage() {
     setResult(null);
     setPuzzleFailed(false);
     setUciMoves([]);
+    setHintSquare(null);
+    setHintOffered(false);
+    setUsedHint(false);
     setStartTime(Date.now());
     setLoadError(null);
     puzzlesApi
@@ -346,8 +349,12 @@ export default function PuzzlesPage() {
     setResult(null);
     setPuzzleFailed(false);
     setUciMoves([]);
+    setHintSquare(null);
+    setHintOffered(false);
+    setUsedHint(false);
     setStartTime(Date.now());
     setLoadError(null);
+    sessionRef.current.reset();
     puzzlesApi
       .training(difficulty, 10, theme || undefined)
       .then(({ data }) => {
