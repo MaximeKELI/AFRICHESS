@@ -237,6 +237,10 @@ def persist_fairplay_report(game: Game, user, result: dict[str, Any]) -> FairPla
 
 
 def analyze_and_store(game: Game, user) -> FairPlayReport | None:
+    from .fairplay_exempt import user_is_fairplay_exempt
+
+    if user_is_fairplay_exempt(user):
+        return None
     if game.is_vs_ai or not game.is_rated:
         return None
     result, error_reason = run_fairplay_analysis(game, user, analysis_mode="full")

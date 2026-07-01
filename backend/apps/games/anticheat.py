@@ -17,6 +17,8 @@ MAX_COPY_PASTE_PER_GAME = 8
 
 def validate_move_timing(game: Game, user, think_ms: int | None = None) -> dict | None:
     """Retourne {"error": ...} si suspect, None si OK."""
+    if user_is_fairplay_exempt(user):
+        return None
     if game.is_vs_ai:
         return None
     since = timezone.now() - timedelta(minutes=1)
