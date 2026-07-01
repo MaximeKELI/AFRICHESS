@@ -371,13 +371,20 @@ export default function PuzzlesPage() {
           setSurvivalSessionId(null);
           return;
         }
+        const newScore = data.score ?? survivalScore + 1;
         setResult(t("puzzles.solved.bravo", { streak: streak, rush: "" }));
-        if (data.next_puzzle) {
-          setPuzzle(data.next_puzzle);
-          setUciMoves([]);
-          setStartTime(Date.now());
-          setBoardKey((k) => k + 1);
-        }
+        triggerCelebration(
+          { current: newScore, mode: "survival" },
+          () => {
+            if (data.next_puzzle) {
+              playPuzzleAdvance(!lowBandwidth);
+              setPuzzle(data.next_puzzle);
+              setUciMoves([]);
+              setStartTime(Date.now());
+              setBoardKey((k) => k + 1);
+            }
+          }
+        );
         return;
       }
 
