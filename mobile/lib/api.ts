@@ -221,6 +221,24 @@ export const puzzlesApi = {
       time_seconds,
     }),
   streak: () => api.get<{ daily_streak: number }>("/puzzles/streak/"),
+  training: (difficulty = "medium", count = 10, theme?: string) =>
+    api.get<Puzzle[]>("/puzzles/training/", { params: { difficulty, count, theme } }),
+  survivalStart: () =>
+    api.post<{ session_id: number; puzzle: Puzzle }>("/puzzles/survival/start/"),
+  survivalSubmit: (sessionId: number, moves: string[], time_seconds: number) =>
+    api.post<{
+      solved: boolean;
+      score: number;
+      completed: boolean;
+      next_puzzle?: Puzzle;
+    }>(`/puzzles/survival/${sessionId}/submit/`, { moves, time_seconds }),
+  battleQueue: () =>
+    api.post<{ battle_id: number; status: string; opponent?: string }>("/puzzles/battle/queue/"),
+  battleGet: (id: number) =>
+    api.get<{ status: string; opponent?: string; your_score: number; opponent_score: number }>(
+      `/puzzles/battle/${id}/`
+    ),
+  battleLeave: () => api.post("/puzzles/battle/leave/"),
 };
 
 export interface CourseSummary {

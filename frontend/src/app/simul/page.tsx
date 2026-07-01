@@ -80,9 +80,19 @@ export default function SimulPage() {
               <p className="text-xs opacity-50">{s.host} · {s.boards}/{s.max_boards}</p>
             </div>
             {user && (
-              <button type="button" onClick={() => join(s.id)} className="px-3 py-1.5 text-sm border rounded-lg hover:bg-white/10">
-                {t("simul.join")}
-              </button>
+              <div className="flex gap-2">
+                {user.id === s.host_id && (
+                  <Link
+                    href={`/simul/${s.id}`}
+                    className="px-3 py-1.5 text-sm border rounded-lg hover:bg-white/10 text-africhess-gold"
+                  >
+                    {t("simul.manage")}
+                  </Link>
+                )}
+                <button type="button" onClick={() => join(s.id)} className="px-3 py-1.5 text-sm border rounded-lg hover:bg-white/10">
+                  {t("simul.join")}
+                </button>
+              </div>
             )}
           </div>
         ))}

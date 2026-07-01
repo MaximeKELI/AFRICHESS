@@ -22,6 +22,7 @@ class SimulListCreateView(APIView):
                 "id": s.id,
                 "title": s.title or f"Simul de {s.host.display_name}",
                 "host": s.host.username,
+                "host_id": s.host_id,
                 "max_boards": s.max_boards,
                 "boards": s.boards.count(),
             }

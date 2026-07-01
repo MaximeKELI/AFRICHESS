@@ -1320,7 +1320,7 @@ function PlayContent() {
               canApply={isMyTurn}
               onApplied={() => {
                 gamesApi.get(gameId).then(({ data }) => applyGameResponse(data)).catch(() => {});
-                setStatus(t("play.status.movePlayed"));
+                setStatus("");
               }}
             />
           )}
