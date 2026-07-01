@@ -57,7 +57,7 @@ mindmap
       Stockfish 10 niveaux
       Analyse post-partie
     Train
-      300+ puzzles
+      10 000+ puzzles
       Daily / Rush / Survival
       Curriculum 40 leçons
       Coach IA
@@ -125,7 +125,7 @@ xychart-beta
 | | Chrono serveur Fischer | OK authoritative | OK + intégré fair play | **Parité technique** |
 | | Analyse post-partie | OK Stockfish gaffes/eval | OK Game Review IA premium | **Chess.com +** profondeur IA |
 | | Spectateur | OK `/live` + `/watch` | OK TV + millions de vues | **Parité** · écart audience |
-| **Puzzles** | Catalogue | OK ~300+ (seed Lichess) | OK millions | **Chess.com +** volume |
+| **Puzzles** | Catalogue | OK ~10 000+ (seed Lichess) | OK millions | **Chess.com +** volume |
 | | Daily + streak | OK | OK | **Parité** |
 | | Training thématique | OK lots + ELO puzzle | OK paths + rating puzzle | **Parité** cœur produit |
 | | Rush / Survival / Battle | OK 4 modes | OK Rush + Battle | **Parité** modes compétitifs |
