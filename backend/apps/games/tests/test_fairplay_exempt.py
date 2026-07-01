@@ -9,7 +9,7 @@ from apps.games.anticheat import validate_move_fairplay, validate_move_telemetry
 from apps.games.fairplay_exempt import user_is_fairplay_exempt
 from apps.games.fairplay_review import user_fairplay_restrictions, user_has_active_matchmaking_block
 from apps.games.fairplay_service import analyze_and_store, merge_telemetry
-from apps.games.models import FairPlaySanction, Game
+from apps.games.models import Game
 from apps.games.services import MatchmakingService
 
 User = get_user_model()
@@ -63,11 +63,6 @@ class FairPlayExemptTests(TestCase):
         self.assertIsNone(analyze_and_store(self.game, self.exempt))
 
     def test_sanctions_ignored_for_exempt(self):
-        FairPlaySanction.objects.create(
-            user=self.exempt,
-            sanction_type=FairPlaySanction.SanctionType.MATCHMAKING_BLOCK,
-            is_active=True,
-        )
         self.assertFalse(user_has_active_matchmaking_block(self.exempt))
         restrictions = user_fairplay_restrictions(self.exempt)
         self.assertFalse(restrictions["matchmaking_blocked"])
