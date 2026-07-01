@@ -103,6 +103,7 @@ interface GameState {
   delta?: boolean;
   new_moves?: ApiMove[];
   game_over?: boolean;
+  rating_changes?: GameRatingChanges | null;
 }
 
 function PlayContent() {
@@ -350,6 +351,17 @@ function PlayContent() {
       .catch(() => setModeRating(null));
   }, [user, mode]);
 
+  useEffect(() => {
+    if (!gameCompleted || !user || !gameData.is_rated || !gameData.rating_changes) return;
+    ratingsApi
+      .me()
+      .then(({ data }) => {
+        const list = Array.isArray(data) ? data : data.results ?? [];
+        setModeRating(ratingForMode(list, mode) ?? null);
+      })
+      .catch(() => {});
+  }, [gameCompleted, user, gameData.is_rated, gameData.rating_changes, mode]);
+
   const aiPlayMode = useMemo(
     () => (useClock ? playModeFromPreset(timePreset) : resolveAiPlayMode(mode)),
     [useClock, timePreset, mode]
@@ -433,6 +445,9 @@ function PlayContent() {
           data.black_elo_provisional !== undefined
             ? data.black_elo_provisional
             : prev.black_elo_provisional,
+        is_rated: data.is_rated !== undefined ? data.is_rated : prev.is_rated,
+        rating_changes:
+          data.rating_changes !== undefined ? data.rating_changes : prev.rating_changes,
         bot: data.bot !== undefined ? data.bot : prev.bot,
         variant: (data.variant as GameVariant) ?? prev.variant ?? "standard",
         draw_offered_by:
@@ -493,6 +508,13 @@ function PlayContent() {
           status: g.status,
           result: g.result,
           is_vs_ai: g.is_vs_ai,
+          is_rated: g.is_rated,
+          termination_reason: g.termination_reason,
+          white_elo: g.white_elo,
+          black_elo: g.black_elo,
+          white_elo_provisional: g.white_elo_provisional,
+          black_elo_provisional: g.black_elo_provisional,
+          rating_changes: g.rating_changes,
           draw_offered_by: g.draw_offered_by,
           takeback_requested_by: g.takeback_requested_by,
         });
