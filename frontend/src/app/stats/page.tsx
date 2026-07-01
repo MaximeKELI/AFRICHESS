@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { BarChart3, Download, FileJson, History, Sparkles, Table2 } from "lucide-react";
+import { BarChart3, Download, FileJson, FileText, History, Sparkles, Table2 } from "lucide-react";
 import { statsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { formatApiError } from "@/lib/errors";
