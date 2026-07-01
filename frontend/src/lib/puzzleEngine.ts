@@ -158,3 +158,12 @@ export function isPlayerTurn(startFen: string, playedMoves: string[]): boolean {
 export function puzzleOrientation(startFen: string): "white" | "black" {
   return solverColor(startFen) === "w" ? "white" : "black";
 }
+
+/** Aligne les coups joués sur le format exact de la ligne solution (API). */
+export function alignMovesToSolution(played: string[], solution: string[]): string[] {
+  return played.map((move, i) => {
+    const expected = solution[i];
+    if (!expected) return normalizeUci(move);
+    return uciEquals(move, expected) ? normalizeUci(expected) : normalizeUci(move);
+  });
+}

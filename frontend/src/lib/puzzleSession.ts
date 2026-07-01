@@ -62,6 +62,23 @@ export class PuzzleSessionTracker {
     this.entries.push({ ...entry, solved });
   }
 
+  /** Évite un double comptage client + API pour le même puzzle. */
+  recordSolveOnce(entry: Omit<PuzzleSessionEntry, "solved"> & { solved?: boolean }): boolean {
+    if (this.entries.some((e) => e.puzzleId === entry.puzzleId)) return false;
+    this.recordSolve(entry);
+    return true;
+  }
+
+  /** Corrige le bilan si l'API rejette un puzzle déjà compté côté client. */
+  reviseOutcome(puzzleId: number, solved: boolean) {
+    const entry = this.entries.find((e) => e.puzzleId === puzzleId);
+    if (!entry || entry.solved === solved) return;
+    entry.solved = solved;
+    if (!solved) {
+      this.perfectStreak = 0;
+    }
+  }
+
   recordFail(entry: Omit<PuzzleSessionEntry, "solved">) {
     this.perfectStreak = 0;
     this.entries.push({ ...entry, solved: false });
