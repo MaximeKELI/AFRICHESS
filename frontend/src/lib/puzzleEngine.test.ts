@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  alignMovesToSolution,
   applyPuzzleMove,
   buildPuzzleFen,
   nextPlayerSolutionMove,

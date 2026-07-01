@@ -697,22 +697,35 @@ export default function PuzzlesPage() {
       } else {
         playPuzzleWrong(puzzleSoundsActive(lowBandwidth));
         if (tab === "training") {
-          sessionRef.current.reviseOutcome(puzzle.id, false);
+          if (sessionRef.current.entries.some((e) => e.puzzleId === puzzle.id)) {
+            sessionRef.current.reviseOutcome(puzzle.id, false);
+          } else {
+            sessionRef.current.recordFail({
+              puzzleId: puzzle.id,
+              rating: puzzle.rating,
+              themes: puzzle.themes,
+              difficulty: puzzle.difficulty,
+              wrongAttempts: sessionRef.current.getWrongCount(puzzle.id),
+              timeSeconds: time,
+              usedHint: usedHintRef.current,
+            });
+          }
           const idx = trainingIndexRef.current;
           const queue = trainingQueueRef.current;
           if (queue.length > 0 && idx + 1 >= queue.length) {
             captureSessionRecapIfNeeded();
           }
+        } else {
+          sessionRef.current.recordFail({
+            puzzleId: puzzle.id,
+            rating: puzzle.rating,
+            themes: puzzle.themes,
+            difficulty: puzzle.difficulty,
+            wrongAttempts: sessionRef.current.getWrongCount(puzzle.id),
+            timeSeconds: time,
+            usedHint: usedHintRef.current,
+          });
         }
-        sessionRef.current.recordFail({
-          puzzleId: puzzle.id,
-          rating: puzzle.rating,
-          themes: puzzle.themes,
-          difficulty: puzzle.difficulty,
-          wrongAttempts: sessionRef.current.getWrongCount(puzzle.id),
-          timeSeconds: time,
-          usedHint,
-        });
         setResult(t("puzzles.solved.wrong"));
         setPuzzleFailed(true);
       }
