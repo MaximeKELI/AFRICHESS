@@ -286,61 +286,13 @@ class AnalyzeGameView(APIView):
             return Response({"error": "Game not completed"}, status=400)
         from apps.users.premium_utils import analysis_engine_depth, max_analysis_moves
 
-        from .analysis_utils import compute_accuracies, compute_move_accuracies
+        from .game_analysis_service import build_and_save_game_analysis
 
         limit = max_analysis_moves(request.user)
         depth = analysis_engine_depth(request.user)
-        move_rows = list(
-            game.moves.order_by("move_number").values_list("uci", "played_by_white")
-        )[:limit]
-        if not move_rows:
+        analysis = build_and_save_game_analysis(game, depth=depth, move_limit=limit)
+        if not analysis:
             return Response({"error": "No moves to analyze"}, status=400)
-        engine = ChessEngineService()
-        evaluations = engine.analyze_game_moves(move_rows, depth=depth)
-        if not evaluations:
-            return Response(
-                {"error": "Analysis failed (engine unavailable or invalid moves)"},
-                status=503,
-            )
-        blunders_w = sum(
-            1
-            for i, e in enumerate(evaluations)
-            if e.classification == "blunder" and move_rows[i][1]
-        )
-        blunders_b = sum(
-            1
-            for i, e in enumerate(evaluations)
-            if e.classification == "blunder" and not move_rows[i][1]
-        )
-        acc_w, acc_b = compute_accuracies(evaluations, move_rows)
-        move_acc_w, move_acc_b = compute_move_accuracies(evaluations, move_rows)
-        from .review_phases import build_analyzed_moves_json
-
-        best_moves_json = build_analyzed_moves_json(evaluations, move_rows)
-        from apps.learning.review_nlg import generate_game_review
-
-        summary_fr, summary_en, key_moments = generate_game_review(
-            best_moves_json,
-            accuracy_white=acc_w,
-            accuracy_black=acc_b,
-            blunders_white=blunders_w,
-            blunders_black=blunders_b,
-        )
-        analysis, _ = GameAnalysis.objects.update_or_create(
-            game=game,
-            defaults={
-                "accuracy_white": acc_w,
-                "accuracy_black": acc_b,
-                "move_accuracy_white": move_acc_w,
-                "move_accuracy_black": move_acc_b,
-                "blunders_white": blunders_w,
-                "blunders_black": blunders_b,
-                "best_moves_json": best_moves_json,
-                "summary_fr": summary_fr,
-                "summary_en": summary_en,
-                "key_moments_json": key_moments,
-            },
-        )
         return Response(GameSerializer(game).data)
 
 

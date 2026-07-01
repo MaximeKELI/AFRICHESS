@@ -282,7 +282,3 @@ VAPID_CONTACT = config("VAPID_CONTACT", default="mailto:admin@africhess.com")
 # Analyse post-partie automatique (Stockfish en arrière-plan)
 AUTO_GAME_ANALYSIS_ENABLED = config("AUTO_GAME_ANALYSIS_ENABLED", default=True, cast=bool)
 AUTO_GAME_ANALYSIS_MIN_MOVES = config("AUTO_GAME_ANALYSIS_MIN_MOVES", default=2, cast=int)
-
-# Analyse Stockfish automatique à la fin de chaque partie
-AUTO_GAME_ANALYSIS_ENABLED = config("AUTO_GAME_ANALYSIS_ENABLED", default=True, cast=bool)
-AUTO_GAME_ANALYSIS_MIN_MOVES = config("AUTO_GAME_ANALYSIS_MIN_MOVES", default=2, cast=int)

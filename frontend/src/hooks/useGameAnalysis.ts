@@ -12,13 +12,15 @@ interface UseGameAnalysisOptions {
   enabled: boolean;
   initialAnalysis?: GameAnalysisData | null;
   autoRun?: boolean;
-  /** Ne pas relancer l'analyse si initialAnalysis est déjà présent */
+  /** Attendre l'analyse auto (cache/WS) avant de relancer Stockfish */
   cacheFirst?: boolean;
 }
 
 const SYNC_TIMEOUT_MS = 45000;
 const ASYNC_POLL_MS = 2500;
 const ASYNC_MAX_MS = 120000;
+const AUTO_CACHE_POLL_MS = 2500;
+const AUTO_CACHE_MAX_MS = 90000;
 
 async function pollAsyncAnalysis(
   gameId: string,
@@ -39,6 +41,21 @@ async function pollAsyncAnalysis(
   throw new Error("Analysis timeout");
 }
 
+async function pollCachedGameAnalysis(
+  gameId: string,
+  signal: AbortSignal
+): Promise<GameAnalysisData | null> {
+  const started = Date.now();
+  while (Date.now() - started < AUTO_CACHE_MAX_MS) {
+    if (signal.aborted) return null;
+    const { data } = await gamesApi.get(gameId);
+    const payload = parseAnalysisPayload(data?.analysis);
+    if (payload) return payload;
+    await new Promise((r) => setTimeout(r, AUTO_CACHE_POLL_MS));
+  }
+  return null;
+}
+
 export function useGameAnalysis({
   gameId,
   enabled,
@@ -51,6 +68,7 @@ export function useGameAnalysis({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const cachePollStartedRef = useRef(false);
 
   const runAnalysis = useCallback(async () => {
     if (!gameId) return;
@@ -97,17 +115,52 @@ export function useGameAnalysis({
   }, [gameId, t]);
 
   useEffect(() => {
-    if (initialAnalysis && !analysis) {
-      setAnalysis(initialAnalysis);
+    if (initialAnalysis) {
+      setAnalysis((prev) => prev ?? initialAnalysis);
     }
-  }, [initialAnalysis, analysis]);
+  }, [initialAnalysis]);
 
   useEffect(() => {
-    if (!enabled || !autoRun || loading) return;
-    if (cacheFirst && (initialAnalysis || analysis)) return;
+    if (!enabled || !autoRun || !gameId) return;
     if (analysis) return;
+
+    if (cacheFirst) {
+      if (initialAnalysis) return;
+      if (cachePollStartedRef.current) return;
+      cachePollStartedRef.current = true;
+
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      setLoading(true);
+      setError(null);
+
+      void (async () => {
+        try {
+          const payload = await pollCachedGameAnalysis(gameId, controller.signal);
+          if (controller.signal.aborted) return;
+          if (payload) {
+            setAnalysis(payload);
+            return;
+          }
+          await runAnalysis();
+        } catch (err: unknown) {
+          if (!controller.signal.aborted) {
+            setError(formatApiError(err, t("chess.analysis.unavailable")));
+          }
+        } finally {
+          if (!controller.signal.aborted) setLoading(false);
+        }
+      })();
+      return;
+    }
+
     void runAnalysis();
-  }, [enabled, autoRun, cacheFirst, initialAnalysis, analysis, loading, runAnalysis]);
+  }, [enabled, autoRun, cacheFirst, gameId, initialAnalysis, analysis, runAnalysis, t]);
+
+  useEffect(() => {
+    cachePollStartedRef.current = false;
+  }, [gameId]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 

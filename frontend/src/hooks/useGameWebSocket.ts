@@ -83,6 +83,13 @@ export interface WsChatPayload {
 
 type ChatListener = (msg: WsChatPayload) => void;
 
+export interface WsAnalysisReadyPayload {
+  game_id: string;
+  analysis: unknown;
+}
+
+type AnalysisReadyHandler = (payload: WsAnalysisReadyPayload) => void;
+
 const MAX_WS_RETRIES = 5;
 
 export function useGameWebSocket(
@@ -90,7 +97,8 @@ export function useGameWebSocket(
   enabled: boolean,
   onUpdate: WsHandler,
   onGameOver?: WsHandler,
-  onGamePatch?: WsPatchHandler
+  onGamePatch?: WsPatchHandler,
+  onAnalysisReady?: AnalysisReadyHandler
 ) {
   const [connected, setConnected] = useState(false);
   const [wsError, setWsError] = useState<string | null>(null);
