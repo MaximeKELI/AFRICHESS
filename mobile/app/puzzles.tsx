@@ -146,6 +146,8 @@ export default function PuzzlesScreen() {
             return;
           }
           setResult(solved ? t("puzzles.correct") : t("puzzles.wrong"));
+          if (solved) playPuzzleSuccess();
+          else playPuzzleWrong();
           if (!solved) setPuzzleFailed(true);
           if (data.next_puzzle) {
             setRushIndex((i) => i + 1);
