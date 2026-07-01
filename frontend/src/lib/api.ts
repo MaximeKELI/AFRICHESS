@@ -428,6 +428,17 @@ export const notificationsApi = {
   list: () => api.get("/notifications/"),
   markRead: (id: number) => api.post(`/notifications/${id}/read/`),
   markAllRead: () => api.post("/notifications/read-all/"),
+  vapidKey: () =>
+    api.get<{ public_key: string | null; enabled: boolean }>("/notifications/push/vapid-key/"),
+  registerDevice: (payload: {
+    token: string;
+    platform: "ios" | "android" | "web";
+    kind: "expo" | "webpush";
+    device_id?: string;
+    subscription?: Record<string, unknown>;
+  }) => api.post("/notifications/devices/", payload),
+  unregisterDevice: (payload: { token?: string; device_id?: string }) =>
+    api.delete("/notifications/devices/unregister/", { data: payload }),
 };
 
 export const tournamentsApi = {

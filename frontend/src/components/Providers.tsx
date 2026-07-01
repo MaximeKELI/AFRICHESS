@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store/auth";
 import { ActivityTracker } from "@/components/analytics/ActivityTracker";
 import { SiteBackground } from "@/components/layout/SiteBackground";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
+import { PushRegistration } from "@/components/notifications/PushRegistration";
 import { initAiSpeech } from "@/lib/aiSpeech";
 import { refreshAuthTokens } from "@/lib/api";
 import { JWT_REFRESH_HTTPONLY } from "@/lib/authConfig";
