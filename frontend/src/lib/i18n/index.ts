@@ -420,6 +420,7 @@ const fr: Record<string, string> = {
   "stats.loginRequired": "Connectez-vous pour voir vos statistiques",
   "stats.backProfile": "← Profil",
   "stats.tabs.charts": "Diagrammes",
+  "stats.tabs.label": "Sections des statistiques",
   "stats.tabs.tables": "Tableaux",
   "stats.export.csv": "Télécharger CSV",
   "stats.export.json": "Télécharger JSON",
