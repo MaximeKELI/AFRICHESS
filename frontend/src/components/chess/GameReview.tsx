@@ -20,6 +20,10 @@ import {
 import { buildGameDisplayFromUciList } from "@/lib/chessDisplay";
 import type { GameAnalysisData } from "@/lib/gameAnalysis";
 import { coachUserMoveComment, cpLossLabel, formatEvalDisplay, moveClassSymbol } from "@/lib/coachReview";
+import { evalToWinPercent, formatWinPercent } from "@/lib/evalWinProb";
+import { gamesApi } from "@/lib/api";
+import { formatApiError } from "@/lib/errors";
+import { inferMovePhase, phaseLabelKey } from "@/lib/reviewPhases";
 import {
   firstUserMistakeIndex,
   reviewBoardState,
@@ -61,7 +65,14 @@ interface GameReviewProps {
   initialAnalysis?: GameAnalysisData | null;
   result?: string;
   onClose: () => void;
+  layout?: "modal" | "page";
+  cacheFirst?: boolean;
+  /** Analyse statique (PGN import) — pas d'appel API */
+  staticMode?: boolean;
+  openingLabel?: string;
 }
+
+const MOVE_FILTERS = ["all", "brilliant", "great", "best", "good", "inaccuracy", "mistake", "blunder"] as const;
 
 export function GameReview({
   gameId,
@@ -70,19 +81,30 @@ export function GameReview({
   initialAnalysis = null,
   result,
   onClose,
+  layout = "modal",
+  cacheFirst = false,
+  staticMode = false,
+  openingLabel,
 }: GameReviewProps) {
   const { t, locale } = useTranslation();
   const { user } = useAuthStore();
   const { analysis, loading, error, runAnalysis } = useGameAnalysis({
     gameId,
-    enabled: true,
+    enabled: !staticMode && Boolean(gameId),
     initialAnalysis,
-    autoRun: true,
+    autoRun: !staticMode,
+    cacheFirst,
   });
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [voiceOn, setVoiceOn] = useState(true);
   const [userMovesOnly, setUserMovesOnly] = useState(false);
   const [autoTour, setAutoTour] = useState(false);
+  const [classFilter, setClassFilter] = useState<string>("all");
+  const [retryIdx, setRetryIdx] = useState<number | null>(null);
+  const [retryFeedback, setRetryFeedback] = useState<string | null>(null);
+  const [openingName, setOpeningName] = useState<string | null>(openingLabel ?? null);
+  const [asyncRunning, setAsyncRunning] = useState(false);
+  const [asyncError, setAsyncError] = useState<string | null>(null);
   const autoTourRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const voiceTourRef = useRef(false);
   const analysisTourStartedRef = useRef(false);
@@ -131,10 +153,78 @@ export function GameReview({
   const moves = analysis?.best_moves_json ?? [];
   const selectedMove = moves[selectedIdx] ?? null;
 
-  const boardState = useMemo(
-    () => reviewBoardState(moves, selectedIdx, playerIsWhite),
-    [moves, selectedIdx, playerIsWhite]
-  );
+  const filteredMoves = useMemo(() => {
+    if (classFilter === "all") return moves.map((m, i) => ({ move: m, index: i }));
+    return moves
+      .map((m, i) => ({ move: m, index: i }))
+      .filter(({ move }) => move.class === classFilter);
+  }, [moves, classFilter]);
+
+  useEffect(() => {
+    if (staticMode || !analysis?.best_moves_json.length) return;
+    const sans = analysis.best_moves_json.map((m) => m.san);
+    gamesApi
+      .openingLookup(sans, locale)
+      .then(({ data }) => {
+        const name = (data as { name?: string }).name;
+        if (name) setOpeningName(name);
+      })
+      .catch(() => {});
+  }, [analysis, locale, staticMode]);
+
+  const runDeepAnalysis = async () => {
+    if (!gameId || staticMode) return;
+    setAsyncRunning(true);
+    setAsyncError(null);
+    try {
+      await gamesApi.analyzeAsync(gameId);
+      const started = Date.now();
+      while (Date.now() - started < 120000) {
+        const { data } = await gamesApi.analyzeStatus(gameId);
+        if (data.status === "completed" && data.analysis) {
+          await runAnalysis();
+          break;
+        }
+        if (data.status === "failed") {
+          setAsyncError(typeof data.error === "string" ? data.error : t("chess.analysis.unavailable"));
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 2500));
+      }
+    } catch (err) {
+      setAsyncError(formatApiError(err, t("chess.analysis.unavailable")));
+    } finally {
+      setAsyncRunning(false);
+    }
+  };
+
+  const winPercent = useMemo(() => {
+    if (!selectedMove) return null;
+    const ev = selectedMove.eval_before ?? selectedMove.eval;
+    return evalToWinPercent(ev, playerIsWhite);
+  }, [selectedMove, playerIsWhite]);
+
+  const boardState = useMemo(() => {
+    if (retryIdx != null && moves[retryIdx]) {
+      const uciBefore = moves
+        .slice(0, retryIdx)
+        .map((m) => m.uci)
+        .filter((u): u is string => Boolean(u));
+      const fenBefore = buildGameDisplayFromUciList(REVIEW_START_FEN, uciBefore).fen;
+      const mistake = moves[retryIdx];
+      const best = mistake.best_uci
+        ? { from: mistake.best_uci.slice(0, 2), to: mistake.best_uci.slice(2, 4) }
+        : undefined;
+      return {
+        fen: fenBefore,
+        lastMove: null,
+        reviewHighlight: best ? { best } : null,
+        moveClassBadge: null,
+        interactive: true,
+      };
+    }
+    return { ...reviewBoardState(moves, selectedIdx, playerIsWhite), interactive: false };
+  }, [moves, selectedIdx, playerIsWhite, retryIdx]);
 
   const reviewCaptured = useMemo(() => {
     if (selectedIdx == null || selectedIdx < 0 || !moves.length) {
@@ -246,8 +336,45 @@ export function GameReview({
   const goMistakes = () => {
     setAutoTour(false);
     const idx = firstUserMistakeIndex(moves, playerIsWhite);
-    if (idx != null) setSelectedIdx(idx);
+    if (idx != null) {
+      setSelectedIdx(idx);
+      setRetryIdx(idx);
+      setRetryFeedback(null);
+    }
   };
+
+  const handleRetryMove = useCallback(
+    (uci: string) => {
+      if (retryIdx == null) return;
+      const mistake = moves[retryIdx];
+      const expected = mistake.best_uci?.slice(0, 4) ?? "";
+      const played = uci.slice(0, 4);
+      if (played === expected) {
+        setRetryFeedback(t("chess.review.retryCorrect"));
+        setTimeout(() => {
+          const next = moves.findIndex(
+            (m, i) =>
+              i > retryIdx &&
+              m.played_by_white === playerIsWhite &&
+              ["inaccuracy", "mistake", "blunder"].includes(m.class)
+          );
+          if (next >= 0) {
+            setRetryIdx(next);
+            setSelectedIdx(next);
+            setRetryFeedback(null);
+          } else {
+            setRetryIdx(null);
+            setRetryFeedback(null);
+          }
+        }, 900);
+      } else {
+        setRetryFeedback(
+          t("chess.review.retryWrong", { move: mistake.best_san ?? expected })
+        );
+      }
+    },
+    [retryIdx, moves, playerIsWhite, t]
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -264,14 +391,14 @@ export function GameReview({
     return () => window.removeEventListener("keydown", onKey);
   }, [moves.length]);
 
-  return (
+  const shell = (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 p-0 sm:p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="game-review-title"
+      className={clsx(
+        layout === "modal"
+          ? "glass-card w-full sm:max-w-4xl max-h-[96dvh] sm:max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-white/10 shadow-2xl"
+          : "glass-card w-full max-w-5xl mx-auto rounded-2xl border border-white/10 shadow-xl my-6"
+      )}
     >
-      <div className="glass-card w-full sm:max-w-4xl max-h-[96dvh] sm:max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-white/10 shadow-2xl">
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/10 bg-[var(--card)]/95 backdrop-blur px-4 py-3">
           <div>
             <h2 id="game-review-title" className="font-display font-bold text-lg">
@@ -280,8 +407,19 @@ export function GameReview({
             {result && (
               <p className="text-xs opacity-60 capitalize">{result.replace("_", " ")}</p>
             )}
+            {openingName && (
+              <p className="text-xs text-africhess-gold/80">{openingName}</p>
+            )}
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
+            {layout === "page" && (
+              <Link
+                href="/profile"
+                className="text-xs px-2.5 py-1 rounded-lg border border-white/20 opacity-80 hover:opacity-100"
+              >
+                {t("chess.review.backProfile")}
+              </Link>
+            )}
             {isAiSpeechSupported() && analysis && (
               <>
                 <button
@@ -322,7 +460,7 @@ export function GameReview({
               onClick={onClose}
               className="text-xs px-2.5 py-1 rounded-lg border border-white/20 opacity-80 hover:opacity-100"
             >
-              {t("chess.review.close")}
+              {layout === "page" ? t("chess.review.backProfile") : t("chess.review.close")}
             </button>
           </div>
         </div>

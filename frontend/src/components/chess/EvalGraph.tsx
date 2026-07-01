@@ -6,6 +6,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 
 interface EvalPoint {
   eval: number;
+  eval_before?: number;
   class?: string;
   san?: string;
 }
@@ -15,8 +16,9 @@ interface EvalGraphProps {
   selectedIndex?: number | null;
   onSelect?: (index: number) => void;
   height?: number;
-  /** Affiche le conteneur carte avec titre */
   framed?: boolean;
+  /** Point d'évaluation initial (début de partie) */
+  includeStart?: boolean;
 }
 
 function clampEval(cp: number): number {
@@ -34,26 +36,40 @@ export function EvalGraph({
   onSelect,
   height = 140,
   framed = true,
+  includeStart = true,
 }: EvalGraphProps) {
   const { t } = useTranslation();
   const width = 400;
   const padX = 12;
   const padY = 14;
 
+  const displayPoints = useMemo(() => {
+    if (!includeStart || !points.length) return points;
+    return [{ eval: 0, san: "…" }, ...points];
+  }, [points, includeStart]);
+
+  const graphSelectedIndex =
+    includeStart && selectedIndex != null ? selectedIndex + 1 : selectedIndex;
+
   const coords = useMemo(() => {
-    if (!points.length) return [];
-    const maxX = Math.max(points.length - 1, 1);
-    return points.map((p, i) => {
+    if (!displayPoints.length) return [];
+    const maxX = Math.max(displayPoints.length - 1, 1);
+    return displayPoints.map((p, i) => {
       const evalCp = typeof p.eval === "number" ? p.eval * 100 : 0;
       const yNorm = 0.5 - clampEval(evalCp) / 1600;
+      const swing =
+        p.eval_before != null && p.eval != null
+          ? Math.abs(p.eval - p.eval_before)
+          : 0;
       return {
         x: padX + (i / maxX) * (width - padX * 2),
         y: padY + yNorm * (height - padY * 2),
         ...p,
         index: i,
+        bigSwing: swing >= 1.5,
       };
     });
-  }, [points, height]);
+  }, [displayPoints, height]);
 
   const linePath = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c.x},${c.y}`).join(" ");
   const areaPath =
@@ -62,7 +78,7 @@ export function EvalGraph({
       : "";
   const zeroY = padY + 0.5 * (height - padY * 2);
 
-  const chart = !points.length ? (
+  const chart = !displayPoints.length ? (
     <p className="text-xs opacity-50 text-center py-8">{t("chess.analysis.graphEmpty")}</p>
   ) : (
     <div className="w-full">
@@ -126,10 +142,22 @@ export function EvalGraph({
         />
 
         {coords.map((c) => {
-          const isSelected = selectedIndex === c.index;
+          const moveIndex = includeStart ? c.index - 1 : c.index;
+          const isSelected = graphSelectedIndex === c.index;
           const color = pointColor(c.class);
           return (
             <g key={c.index}>
+              {c.bigSwing && c.index > 0 && (
+                <line
+                  x1={c.x}
+                  y1={padY}
+                  x2={c.x}
+                  y2={height - padY}
+                  stroke="rgba(224,122,95,0.25)"
+                  strokeWidth={1}
+                  strokeDasharray="3 3"
+                />
+              )}
               {isSelected && (
                 <circle
                   cx={c.x}
@@ -146,9 +174,11 @@ export function EvalGraph({
                 fill={color}
                 stroke={isSelected ? "#fff" : "rgba(0,0,0,0.4)"}
                 strokeWidth={isSelected ? 1.5 : 0.5}
-                className="cursor-pointer transition-all hover:opacity-100"
+                className={moveIndex >= 0 ? "cursor-pointer transition-all hover:opacity-100" : ""}
                 opacity={isSelected ? 1 : 0.85}
-                onClick={() => onSelect?.(c.index)}
+                onClick={() => {
+                  if (moveIndex >= 0) onSelect?.(moveIndex);
+                }}
               />
             </g>
           );
