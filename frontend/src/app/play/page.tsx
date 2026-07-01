@@ -538,6 +538,13 @@ function PlayContent() {
     setGameData((prev) => ({ ...prev, ...patch }));
   }, []);
 
+  const handleAnalysisReady = useCallback((payload: { analysis?: unknown }) => {
+    const parsed = parseAnalysisPayload(payload.analysis);
+    if (parsed) {
+      setGameData((prev) => ({ ...prev, analysis: parsed }));
+    }
+  }, []);
+
 
   const { connected: wsConnected, wsError, sendMove: wsSendMove, resign: wsResign, sendChat: wsSendChat, subscribeChat: wsSubscribeChat } = useGameWebSocket(
     gameId,
@@ -550,7 +557,8 @@ function PlayContent() {
         })
       );
     },
-    handleWsGamePatch
+    handleWsGamePatch,
+    handleAnalysisReady
   );
 
   const handleMatchFound = useCallback(
@@ -1289,7 +1297,7 @@ function PlayContent() {
               orientation={orientation}
               initialAnalysis={gameData.analysis ?? null}
               result={gameData.result}
-              cacheFirst={Boolean(gameData.analysis)}
+              cacheFirst
               onClose={() => setReviewOpen(false)}
             />
           )}

@@ -108,13 +108,15 @@ export function useGameWebSocket(
   const onUpdateRef = useRef(onUpdate);
   const onGameOverRef = useRef(onGameOver);
   const onGamePatchRef = useRef(onGamePatch);
+  const onAnalysisReadyRef = useRef(onAnalysisReady);
   const chatListenersRef = useRef<Set<ChatListener>>(new Set());
 
   useEffect(() => {
     onUpdateRef.current = onUpdate;
     onGameOverRef.current = onGameOver;
     onGamePatchRef.current = onGamePatch;
-  }, [onUpdate, onGameOver, onGamePatch]);
+    onAnalysisReadyRef.current = onAnalysisReady;
+  }, [onUpdate, onGameOver, onGamePatch, onAnalysisReady]);
 
   useEffect(() => {
     if (!gameId || !enabled) {
@@ -161,6 +163,9 @@ export function useGameWebSocket(
           }
           if (event === "chat" && data) {
             chatListenersRef.current.forEach((fn) => fn(data as WsChatPayload));
+          }
+          if (event === "analysis_ready" && data) {
+            onAnalysisReadyRef.current?.(data as WsAnalysisReadyPayload);
           }
           if (event === "proposition_nulle" && data) {
             if (data.declined) {
