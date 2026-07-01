@@ -301,12 +301,12 @@ class GameService:
             if timed_out == "white":
                 self._finalize_game_on_timeout(game, winner_white=False)
                 game.save()
-                on_game_completed(game)
+                self._after_human_game_finished(game)
                 return {"error": "Time out", "game_over": True}
             if timed_out == "black":
                 self._finalize_game_on_timeout(game, winner_white=True)
                 game.save()
-                on_game_completed(game)
+                self._after_human_game_finished(game)
                 return {"error": "Time out", "game_over": True}
         elif not is_correspondence and game.is_timed and spent_ms is not None:
             clock = game.white_time_ms if is_white_turn else game.black_time_ms
@@ -320,6 +320,7 @@ class GameService:
             ):
                 self._finalize_game_on_timeout(game, winner_white=not is_white_turn)
                 game.save()
+                self._after_human_game_finished(game)
                 return {"error": "Time out", "game_over": True}
 
         result = self.engine.apply_move(game.fen, uci, variant=game.variant)
@@ -381,7 +382,7 @@ class GameService:
         if can_claim_threefold_from_game(game):
             finalize_repetition_draw(game)
             game.save()
-            on_game_completed(game)
+            self._after_human_game_finished(game)
             if pending_comment_specs:
                 schedule_move_comments(str(game.id), pending_comment_specs)
             return {
@@ -439,7 +440,7 @@ class GameService:
                     if can_claim_threefold_from_game(game):
                         finalize_repetition_draw(game)
                         game.save()
-                        on_game_completed(game)
+                        self._after_human_game_finished(game)
                         response["game_over"] = True
                         response["result"] = game.result
                         response["termination_reason"] = "repetition"
