@@ -949,3 +949,401 @@ html.has-site-background nav {
   }
 }
 
+/* --- Puzzle garden & perspective stairs --- */
+
+.puzzle-garden-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  animation: puzzle-garden-fade-in 0.35s ease forwards;
+}
+
+@keyframes puzzle-garden-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.puzzle-garden-sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    #1a3d5c 0%,
+    #2d6a8f 28%,
+    #87c4e8 55%,
+    #b8e8c8 78%,
+    #3d7a45 100%
+  );
+}
+
+.puzzle-garden-sun {
+  position: absolute;
+  top: 8%;
+  right: 14%;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff8dc 0%, #ffd54a 45%, transparent 70%);
+  box-shadow: 0 0 40px rgba(255, 213, 74, 0.55);
+  animation: puzzle-garden-sun-pulse 3s ease-in-out infinite;
+}
+
+@keyframes puzzle-garden-sun-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.95; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+
+.puzzle-garden-hill {
+  position: absolute;
+  border-radius: 50% 50% 0 0;
+  opacity: 0.55;
+}
+
+.puzzle-garden-hill-back {
+  bottom: 18%;
+  left: -10%;
+  width: 55%;
+  height: 35%;
+  background: #2d5a3a;
+}
+
+.puzzle-garden-hill-front {
+  bottom: 10%;
+  right: -8%;
+  width: 48%;
+  height: 28%;
+  background: #3d7a45;
+  opacity: 0.7;
+}
+
+.puzzle-garden-grass {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 32%;
+  background: linear-gradient(180deg, transparent, #2a6b35 30%, #1b4d28 100%);
+}
+
+.puzzle-garden-flower {
+  position: absolute;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+  animation: puzzle-garden-flower-sway 2.5s ease-in-out infinite;
+}
+
+.puzzle-garden-flower::after {
+  content: "";
+  position: absolute;
+  bottom: -0.45rem;
+  left: 50%;
+  width: 2px;
+  height: 0.5rem;
+  background: #2d5a3a;
+  transform: translateX(-50%);
+}
+
+@keyframes puzzle-garden-flower-sway {
+  0%, 100% { transform: rotate(-6deg) scale(1); }
+  50% { transform: rotate(6deg) scale(1.1); }
+}
+
+.puzzle-garden-butterfly {
+  position: absolute;
+  font-size: 0.75rem;
+  color: #ffd54a;
+  opacity: 0.85;
+  animation: puzzle-garden-butterfly 4s ease-in-out infinite;
+}
+
+@keyframes puzzle-garden-butterfly {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(12px, -8px) rotate(8deg); }
+  75% { transform: translate(-10px, 6px) rotate(-8deg); }
+}
+
+.puzzle-garden-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0.75rem 0.75rem;
+}
+
+.puzzle-garden-title {
+  font-family: var(--font-display, inherit);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+  margin-bottom: 0.35rem;
+  animation: puzzle-garden-title-in 0.5s ease 0.1s both;
+}
+
+@keyframes puzzle-garden-title-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.puzzle-garden-stairs-scene {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 200px;
+  perspective: 520px;
+  perspective-origin: 50% 80%;
+}
+
+.puzzle-garden-stairs {
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 280px;
+  height: 200px;
+  transform-style: preserve-3d;
+  transform: rotateX(16deg);
+  padding-bottom: 0.25rem;
+}
+
+.puzzle-garden-step {
+  --w: calc(72px + (var(--step-steps-total, 5) - var(--step-index)) * 22px);
+  width: var(--w);
+  height: 18px;
+  margin-top: 3px;
+  border-radius: 3px 3px 2px 2px;
+  background: linear-gradient(180deg, #8b7355 0%, #6b5344 55%, #4a3728 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 4px 0 #3d2e22,
+    0 8px 16px rgba(0, 0, 0, 0.35);
+  position: relative;
+  transform: translateZ(calc(var(--step-index) * 4px));
+  opacity: 0.55;
+  transition: opacity 0.4s ease, box-shadow 0.4s ease;
+}
+
+.puzzle-garden-stairs .puzzle-garden-step {
+  --step-steps-total: 5;
+}
+
+.puzzle-garden-step-done {
+  opacity: 0.85;
+  background: linear-gradient(180deg, #5a9a6a 0%, #3d7a4a 55%, #2d5a38 100%);
+  box-shadow:
+    0 4px 0 #1e3d28,
+    0 0 14px rgba(110, 231, 168, 0.25);
+}
+
+.puzzle-garden-step-active {
+  opacity: 1;
+  background: linear-gradient(180deg, #d4a843 0%, #b8922e 50%, #8b6914 100%);
+  box-shadow:
+    0 4px 0 #6b5010,
+    0 0 22px rgba(212, 168, 67, 0.55);
+  animation: puzzle-garden-step-glow 1.2s ease-in-out infinite;
+}
+
+.puzzle-garden-step-upcoming {
+  opacity: 0.4;
+}
+
+@keyframes puzzle-garden-step-glow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.15); }
+}
+
+.puzzle-garden-step-num {
+  position: absolute;
+  top: -1.15rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.75);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.puzzle-garden-step-check {
+  position: absolute;
+  right: 4px;
+  top: 2px;
+  font-size: 0.55rem;
+  color: #6ee7a8;
+}
+
+.puzzle-garden-pawn {
+  position: absolute;
+  left: 50%;
+  bottom: calc(6px + var(--pawn-step) * 21px);
+  transform: translateX(-50%);
+  z-index: 20;
+  transition: bottom 0.9s cubic-bezier(0.34, 1.45, 0.64, 1);
+  pointer-events: none;
+}
+
+.puzzle-garden-pawn-piece {
+  display: block;
+  font-size: 2rem;
+  line-height: 1;
+  color: #f5f0e6;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  animation: puzzle-garden-pawn-hop 0.9s cubic-bezier(0.34, 1.45, 0.64, 1);
+}
+
+@keyframes puzzle-garden-pawn-hop {
+  0% { transform: translateY(0) scale(1); }
+  35% { transform: translateY(-18px) scale(1.08); }
+  70% { transform: translateY(-4px) scale(0.98); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.puzzle-garden-pawn-shadow {
+  display: block;
+  width: 1.5rem;
+  height: 0.35rem;
+  margin: -0.15rem auto 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  animation: puzzle-garden-shadow-pulse 0.9s ease;
+}
+
+@keyframes puzzle-garden-shadow-pulse {
+  0%, 100% { transform: scaleX(1); opacity: 0.5; }
+  35% { transform: scaleX(0.65); opacity: 0.25; }
+}
+
+.puzzle-garden-hud {
+  width: 100%;
+  text-align: center;
+  padding: 0.5rem 0.75rem 0.25rem;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.35));
+  border-radius: 0 0 0.75rem 0.75rem;
+  animation: puzzle-garden-hud-in 0.5s ease 0.25s both;
+}
+
+@keyframes puzzle-garden-hud-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.puzzle-garden-progress {
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin: 0;
+}
+
+.puzzle-garden-progress-current {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--africhess-gold);
+  text-shadow: 0 0 20px rgba(212, 168, 67, 0.5);
+}
+
+.puzzle-garden-progress-sep {
+  font-size: 1.25rem;
+  opacity: 0.5;
+  margin: 0 0.1rem;
+}
+
+.puzzle-garden-progress-total {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.puzzle-garden-progress-solo {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--africhess-gold);
+}
+
+.puzzle-garden-progress-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.65;
+  color: #fff;
+  margin: 0.2rem 0 0.4rem;
+}
+
+.puzzle-garden-progress-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+  max-width: 200px;
+  margin: 0 auto 0.5rem;
+}
+
+.puzzle-garden-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--africhess-green), var(--africhess-gold));
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.puzzle-garden-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.puzzle-garden-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.puzzle-garden-chip-streak {
+  background: rgba(212, 168, 67, 0.2);
+  border: 1px solid rgba(212, 168, 67, 0.4);
+  color: #ffd54a;
+}
+
+.puzzle-garden-chip-elo {
+  background: rgba(27, 122, 61, 0.25);
+  border: 1px solid rgba(110, 231, 168, 0.35);
+  color: #6ee7a8;
+}
+
+.puzzle-garden-hint {
+  font-size: 0.625rem;
+  opacity: 0.55;
+  color: #fff;
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .puzzle-garden-sun,
+  .puzzle-garden-flower,
+  .puzzle-garden-butterfly,
+  .puzzle-garden-step-active,
+  .puzzle-garden-pawn-piece,
+  .puzzle-garden-pawn-shadow,
+  .puzzle-garden-overlay,
+  .puzzle-garden-title,
+  .puzzle-garden-hud {
+    animation: none !important;
+  }
+  .puzzle-garden-pawn {
+    transition: none;
+  }
+}
+
