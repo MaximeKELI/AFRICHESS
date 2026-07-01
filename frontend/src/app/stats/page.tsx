@@ -363,7 +363,7 @@ export default function StatsPage() {
               )}
 
               <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <FuturisticPanel title={t("stats.chart.activity")} subtitle="30 jours" delay={80}>
+                <FuturisticPanel title={t("stats.chart.activity")} delay={80}>
                   <ActivityPulseChart
                     items={data.activity.map((a) => ({
                       label: a.date.slice(8),
@@ -446,10 +446,15 @@ export default function StatsPage() {
               <StatsHistorySummary games={data.recent_form} />
               <StatsGameHistory games={data.recent_form} />
             </FuturisticPanel>
+            </div>
           )}
 
           {activeTab === "tables" && (
-            <>
+            <div
+              id="stats-panel-tables"
+              role="tabpanel"
+              aria-labelledby="stats-tab-tables"
+            >
               <section className="glass-card p-5 space-y-4">
                 <h2 className="font-semibold">{t("stats.table.summary")}</h2>
                 <DataTable
