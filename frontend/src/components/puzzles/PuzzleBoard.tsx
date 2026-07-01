@@ -40,6 +40,7 @@ export function PuzzleBoard({
   disabled,
   hintSquare,
   reviewHighlight,
+  onPlayedChange,
 }: PuzzleBoardProps) {
   const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
