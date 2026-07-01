@@ -1317,7 +1317,7 @@ function PlayContent() {
           {isVoteChess && gameId && gameActive && (
             <VoteChessPanel
               gameId={gameId}
-              canApply={isMyTurn}
+              canApply={Boolean(isMyTurn)}
               onApplied={() => {
                 gamesApi.get(gameId).then(({ data }) => applyGameResponse(data)).catch(() => {});
                 setStatus("");
