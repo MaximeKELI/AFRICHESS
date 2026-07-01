@@ -8,6 +8,7 @@ import { formatApiError } from "@/lib/errors";
 import { translate } from "@/lib/i18n";
 import { clearAuthCookies } from "@/lib/session";
 import { syncPreferencesForUser } from "@/store/preferences";
+import { syncPuzzlePreferencesFromStorage } from "@/store/puzzlePreferences";
 
 interface User {
   id: number;
@@ -106,6 +107,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           },
         });
         syncPreferencesForUser(loginUser.pk);
+        syncPuzzlePreferencesFromStorage();
       }
 
       await get().fetchProfile();
@@ -171,6 +173,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     authApi.logout(refresh ?? undefined).catch(() => undefined);
     clearAuthCookies();
     syncPreferencesForUser(null);
+    syncPuzzlePreferencesFromStorage();
     set({ user: null });
   },
 
@@ -181,6 +184,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       if (!Cookies.get("access_token")) {
         syncPreferencesForUser(null);
+        syncPuzzlePreferencesFromStorage();
         set({ user: null });
         return;
       }
@@ -189,9 +193,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { data } = await authApi.profile();
       set({ user: data });
       syncPreferencesForUser(data.id);
+      syncPuzzlePreferencesFromStorage();
     } catch (error) {
       if (!Cookies.get("access_token") && !Cookies.get("refresh_token")) {
         syncPreferencesForUser(null);
+        syncPuzzlePreferencesFromStorage();
         set({ user: null });
       }
     }

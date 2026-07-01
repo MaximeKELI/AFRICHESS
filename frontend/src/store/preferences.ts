@@ -9,7 +9,10 @@ import {
   isBoardBackgroundId,
   type BoardBackgroundId,
 } from "@/lib/boardBackgrounds";
-import { syncPuzzlePreferencesFromStorage } from "@/store/puzzlePreferences";
+import {
+  preferenceStorageKey,
+  setPreferenceScopeUserId,
+} from "@/store/preferenceScope";
 
 const BOARD_THEME_KEY = "board_theme";
 const BOARD_BACKGROUND_KEY = "board_background";
@@ -19,12 +22,7 @@ const ZEN_KEY = "zen_mode";
 
 export type PieceSetId = "classic" | "african" | "african-svg";
 
-/** Compte actif — les préférences sont stockées par utilisateur dans localStorage. */
-let scopeUserId: number | null = null;
-
-export function preferenceStorageKey(base: string): string {
-  return scopeUserId != null ? `${base}:user:${scopeUserId}` : `${base}:guest`;
-}
+export { preferenceStorageKey } from "@/store/preferenceScope";
 
 function readBoardTheme(): BoardThemeId {
   if (typeof window === "undefined") return DEFAULT_BOARD_THEME;
@@ -59,7 +57,7 @@ function readZenMode(): boolean {
 
 /** Recharge thème, arrière-plan, etc. après connexion / déconnexion. */
 export function syncPreferencesForUser(userId: number | null) {
-  scopeUserId = userId;
+  setPreferenceScopeUserId(userId);
   const zenMode = readZenMode();
   if (typeof document !== "undefined") {
     document.documentElement.classList.toggle("zen-mode", zenMode);
@@ -71,7 +69,6 @@ export function syncPreferencesForUser(userId: number | null) {
     aiCommentsEnabled: readAiComments(),
     zenMode,
   });
-  syncPuzzlePreferencesFromStorage();
 }
 
 interface PreferencesState {

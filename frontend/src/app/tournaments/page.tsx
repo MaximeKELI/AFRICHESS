@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { tournamentsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
@@ -35,6 +35,14 @@ interface Tournament {
 }
 
 export default function TournamentsPage() {
+  return (
+    <Suspense fallback={<p className="p-8 text-center opacity-70">…</p>}>
+      <TournamentsPageContent />
+    </Suspense>
+  );
+}
+
+function TournamentsPageContent() {
   const { user } = useAuthStore();
   const { t } = useTranslation();
   const searchParams = useSearchParams();

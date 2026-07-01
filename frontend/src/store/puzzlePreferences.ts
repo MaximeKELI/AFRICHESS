@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { PuzzleGardenThemeId } from "@/lib/puzzleGardenThemes";
-import { preferenceStorageKey } from "@/store/preferences";
+import { preferenceStorageKey } from "@/store/preferenceScope";
 
 const SOUNDS_KEY = "puzzle_sounds";
 const VOLUME_KEY = "puzzle_volume";
