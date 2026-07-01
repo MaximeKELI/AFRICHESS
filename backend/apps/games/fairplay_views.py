@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .fairplay_exempt import user_is_fairplay_exempt
 from .fairplay_review import (
     resolve_fairplay_appeal,
     submit_fairplay_appeal,
