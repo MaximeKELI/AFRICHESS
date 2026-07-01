@@ -53,8 +53,18 @@ Si `npm install` échoue avec `Invalid Version`, supprimez le lockfile corrompu 
 rm -rf node_modules package-lock.json && npm install
 ```
 
+## Push notifications (APNs / FCM via Expo)
+
+L'app enregistre automatiquement un token Expo après connexion (`expo-notifications`).
+
+**Production (EAS Build)** :
+1. `eas credentials` — configurer APNs (iOS) et FCM (Android)
+2. Optionnel : `EXPO_ACCESS_TOKEN` côté backend pour l'API Expo Push
+3. Les notifications matchmaking, défis amis et fair-play arrivent même app fermée
+
+**Dev** : les push ne fonctionnent pas dans Expo Go sur simulateur — tester sur appareil physique avec dev build.
+
 ## Prochaines étapes
 
 - Matchmaking humain (WebSocket file d'attente)
-  mobile/README.md
 - Pièces SVG / images africaines
