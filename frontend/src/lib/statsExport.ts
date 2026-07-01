@@ -17,6 +17,11 @@ export interface StatsExportData {
   rating_history: Record<string, unknown>[];
   recent_form: Record<string, unknown>[];
   activity: { date: string; games: number }[];
+  ai_stats?: {
+    games_vs_ai?: number;
+    avg_ai_elo_beaten?: number | null;
+    best_ai_elo_beaten?: number | null;
+  };
 }
 
 function escapeCsv(value: unknown): string {

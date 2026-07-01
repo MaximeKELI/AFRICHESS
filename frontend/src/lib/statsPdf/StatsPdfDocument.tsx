@@ -178,7 +178,10 @@ function ActivityChart({ activity }: { activity: { date: string; games: number }
   );
 }
 
-function outcomeText(labels: StatsPdfLabels, outcome: string): string {
+function cell(value: unknown): string | number {
+  if (typeof value === "number" || typeof value === "string") return value;
+  return String(value ?? "");
+}
   if (outcome === "win") return labels.outcomeWin;
   if (outcome === "loss") return labels.outcomeLoss;
   return labels.outcomeDraw;
