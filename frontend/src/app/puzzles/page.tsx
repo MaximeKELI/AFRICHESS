@@ -63,6 +63,7 @@ export default function PuzzlesPage() {
   const [battleScoreOpp, setBattleScoreOpp] = useState(0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [puzzleFailed, setPuzzleFailed] = useState(false);
 
   useEffect(() => {
     puzzlesApi.themes().then(({ data }) => {

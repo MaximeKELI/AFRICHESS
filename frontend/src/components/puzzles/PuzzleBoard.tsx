@@ -34,12 +34,14 @@ export function PuzzleBoard({ puzzle, onComplete, onWrong, disabled }: PuzzleBoa
   const [fen, setFen] = useState(puzzle.fen);
   const [shake, setShake] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [boardNonce, setBoardNonce] = useState(0);
 
   useEffect(() => {
     setPlayed([]);
     setFen(puzzle.fen);
     setFeedback(null);
     setShake(false);
+    setBoardNonce(0);
   }, [puzzle.id, puzzle.fen]);
 
   const orientation = useMemo(() => puzzleOrientation(puzzle.fen), [puzzle.fen]);
@@ -60,6 +62,7 @@ export function PuzzleBoard({ puzzle, onComplete, onWrong, disabled }: PuzzleBoa
         setShake(true);
         setFeedback(t("puzzles.wrongMove"));
         onWrong?.(played);
+        setBoardNonce((n) => n + 1);
         setTimeout(() => setShake(false), 500);
         return;
       }
