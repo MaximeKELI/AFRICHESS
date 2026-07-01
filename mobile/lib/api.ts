@@ -318,7 +318,7 @@ export const gamesApi = {
   respondTakeback: (id: string, accept: boolean) =>
     api.post(`/games/${id}/takeback/respond/`, { accept }),
   fairplayStatus: () =>
-    api.get<{ consent_given: boolean; blocked?: boolean }>("/games/fairplay/status/"),
+    api.get<{ consent_given: boolean; exempt?: boolean; blocked?: boolean }>("/games/fairplay/status/"),
   fairplayConsent: () => api.post("/games/fairplay/consent/"),
   correspondence: () => api.get<GameData[]>("/games/correspondence/"),
   correspondenceSeek: (days_per_move = 3) =>

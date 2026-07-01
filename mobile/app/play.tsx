@@ -185,7 +185,7 @@ export default function PlayScreen() {
     );
 
   const promptFairplayThenSearch = () => {
-    if (isRated && fairplayConsent !== true) {
+    if (isRated && fairplayConsent !== true && !fairplayExempt) {
       Alert.alert(
         "Fair Play",
         "Les parties classées nécessitent votre consentement au programme Fair Play (télémétrie anti-triche).",
@@ -220,7 +220,7 @@ export default function PlayScreen() {
   };
 
   const isLiveHuman = Boolean(game && !game.is_vs_ai && game.status === "active");
-  const telemetryEnabled = isLiveHuman && isRated && fairplayConsent === true;
+  const telemetryEnabled = isLiveHuman && isRated && fairplayConsent === true && !fairplayExempt;
   const { consumePatch: consumeFairPlayPatch } = useFairPlayTelemetry(telemetryEnabled);
 
   const { connected: wsConnected, wsError, sendMove: wsSendMove, resign: wsResign } = useGameWebSocket(
