@@ -1,7 +1,48 @@
 /**
- * Sons puzzle — fanfare de réussite et buzz d'erreur (style Chess.com).
- * Synthèse Web Audio avec repli silencieux si low-bandwidth.
+ * Sons puzzle — fichiers MP3 + repli synthétique Web Audio.
  */
+
+const PUZZLE_SOUND_PATHS = {
+  success: "/sounds/puzzle-success.mp3",
+  wrong: "/sounds/puzzle-wrong.mp3",
+  advance: "/sounds/puzzle-advance.mp3",
+} as const;
+
+type PuzzleSoundKey = keyof typeof PUZZLE_SOUND_PATHS;
+
+const VOLUME: Record<PuzzleSoundKey, number> = {
+  success: 0.85,
+  wrong: 0.75,
+  advance: 0.55,
+};
+
+const audioCache = new Map<PuzzleSoundKey, HTMLAudioElement>();
+let useFileSounds = true;
+
+function getAudio(key: PuzzleSoundKey): HTMLAudioElement {
+  let audio = audioCache.get(key);
+  if (!audio) {
+    audio = new Audio(PUZZLE_SOUND_PATHS[key]);
+    audio.preload = "auto";
+    audio.volume = VOLUME[key];
+    audio.addEventListener("error", () => {
+      useFileSounds = false;
+    }, { once: true });
+    audioCache.set(key, audio);
+  }
+  return audio;
+}
+
+function playFileSound(key: PuzzleSoundKey) {
+  const base = getAudio(key);
+  const node = base.cloneNode(true) as HTMLAudioElement;
+  node.volume = VOLUME[key];
+  node.currentTime = 0;
+  void node.play().catch(() => {
+    useFileSounds = false;
+    playSynthetic(key);
+  });
+}
 
 let audioCtx: AudioContext | null = null;
 
@@ -23,8 +64,7 @@ function tone(
   duration: number,
   volume = 0.14,
   type: OscillatorType = "sine",
-  delayMs = 0,
-  attackMs = 8
+  delayMs = 0
 ) {
   const ctx = getContext();
   if (!ctx) return;
@@ -32,9 +72,8 @@ function tone(
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = type;
-  osc.frequency.setValueAtTime(freq, start);
-  gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.linearRampToValueAtTime(volume, start + attackMs / 1000);
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(volume, start);
   gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
   osc.connect(gain);
   gain.connect(ctx.destination);
@@ -42,48 +81,50 @@ function tone(
   osc.stop(start + duration + 0.05);
 }
 
-/** Fanfare ascendante + sparkle final */
 function playSuccessSynthetic() {
-  const melody = [
-    { f: 392, d: 0.14, t: 0 },
-    { f: 523.25, d: 0.14, t: 70 },
-    { f: 659.25, d: 0.16, t: 140 },
-    { f: 783.99, d: 0.18, t: 220 },
-    { f: 1046.5, d: 0.28, t: 310 },
-  ];
-  melody.forEach(({ f, d, t }) => tone(f, d, 0.16, "triangle", t));
+  [392, 523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, 0.16, 0.16, "triangle", i * 70));
   tone(1318.51, 0.35, 0.1, "sine", 420);
-  tone(1567.98, 0.4, 0.08, "sine", 480);
 }
 
-/** Buzz court + descente */
 function playWrongSynthetic() {
   tone(180, 0.12, 0.22, "sawtooth");
-  tone(140, 0.18, 0.2, "square", 40);
   tone(95, 0.22, 0.18, "sawtooth", 90);
 }
 
-/** Petit « tick » quand on passe au puzzle suivant */
 function playAdvanceSynthetic() {
   tone(440, 0.06, 0.1, "sine");
   tone(554.37, 0.08, 0.09, "triangle", 50);
 }
 
-export function playPuzzleSuccess(enabled = true) {
+function playSynthetic(key: PuzzleSoundKey) {
+  if (key === "success") playSuccessSynthetic();
+  else if (key === "wrong") playWrongSynthetic();
+  else playAdvanceSynthetic();
+}
+
+function play(key: PuzzleSoundKey, enabled = true) {
   if (!enabled || typeof window === "undefined") return;
-  playSuccessSynthetic();
+  preloadPuzzleSounds();
+  if (useFileSounds) playFileSound(key);
+  else playSynthetic(key);
+}
+
+export function playPuzzleSuccess(enabled = true) {
+  play("success", enabled);
 }
 
 export function playPuzzleWrong(enabled = true) {
-  if (!enabled || typeof window === "undefined") return;
-  playWrongSynthetic();
+  play("wrong", enabled);
 }
 
 export function playPuzzleAdvance(enabled = true) {
-  if (!enabled || typeof window === "undefined") return;
-  playAdvanceSynthetic();
+  play("advance", enabled);
 }
 
 export function preloadPuzzleSounds() {
+  if (typeof window === "undefined") return;
+  (Object.keys(PUZZLE_SOUND_PATHS) as PuzzleSoundKey[]).forEach((key) => {
+    getAudio(key).load();
+  });
   getContext();
 }
