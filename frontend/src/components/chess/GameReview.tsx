@@ -723,30 +723,32 @@ export function GameReview({
                 </button>
               )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  unlockAiSpeech();
-                  setAutoTour((v) => !v);
-                  if (!autoTour) speakCurrent(true);
-                }}
-                className={clsx(
-                  "w-full py-2 text-sm rounded-xl border",
-                  autoTour
-                    ? "border-africhess-green bg-africhess-green/15 text-africhess-green"
-                    : "border-white/20 hover:bg-white/5"
-                )}
-              >
-                {autoTour ? t("chess.review.stopTour") : t("chess.review.startTour")}
-              </button>
+              <div className="flex flex-wrap gap-1">
+                {MOVE_FILTERS.map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setClassFilter(f)}
+                    className={clsx(
+                      "px-2 py-0.5 rounded text-[10px] border capitalize",
+                      classFilter === f
+                        ? "border-africhess-gold bg-africhess-gold/15"
+                        : "opacity-50 border-white/15"
+                    )}
+                  >
+                    {f === "all" ? t("chess.analysis.filterAll") : f}
+                  </button>
+                ))}
+              </div>
 
               <ul className="max-h-40 overflow-y-auto text-xs space-y-0.5 scrollbar-thin rounded-xl border border-white/8 bg-black/15 p-2">
-                {moves.map((m, i) => (
+                {filteredMoves.map(({ move: m, index: i }) => (
                   <li key={i}>
                     <button
                       type="button"
                       onClick={() => {
                         setAutoTour(false);
+                        setRetryIdx(null);
                         setSelectedIdx(i);
                       }}
                       className={clsx(
@@ -763,8 +765,11 @@ export function GameReview({
                       <span className={clsx("capitalize opacity-70", CLASS_COLORS[m.class] ?? "")}>
                         {m.class}
                       </span>
+                      <span className="text-[9px] opacity-30 ml-auto">
+                        {t(phaseLabelKey(m.phase ?? inferMovePhase(i)))}
+                      </span>
                       {m.played_by_white === playerIsWhite && (
-                        <span className="text-[10px] opacity-40 ml-1">{t("chess.review.you")}</span>
+                        <span className="text-[10px] opacity-40">{t("chess.review.you")}</span>
                       )}
                     </button>
                   </li>
