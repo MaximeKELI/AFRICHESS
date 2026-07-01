@@ -498,6 +498,21 @@ class GameService:
         game.ended_at = timezone.now()
         game.termination_reason = "timeout"
 
+    def _after_human_game_finished(self, game: Game) -> None:
+        """ELO, stats et tournoi après fin de partie (idempotent)."""
+        if not game.is_vs_ai and game.white_player and game.black_player:
+            self.rating_service.update_ratings(game)
+        on_game_completed(game)
+        if game.tournament_id:
+            try:
+                from apps.tournaments.services import TournamentEngine
+
+                TournamentEngine().record_result(game)
+            except Exception as exc:
+                logger.warning(
+                    "Tournament result not recorded for game %s: %s", game.id, exc
+                )
+
     def _finalize_game(self, game: Game):
         import chess
         board = chess.Board(game.fen)
@@ -510,17 +525,7 @@ class GameService:
         game.status = Game.Status.COMPLETED
         game.ended_at = timezone.now()
         game.save()
-        if not game.is_vs_ai and game.white_player and game.black_player:
-            self.rating_service.update_ratings(game)
-        if game.tournament_id:
-            try:
-                from apps.tournaments.services import TournamentEngine
-
-                TournamentEngine().record_result(game)
-            except Exception as exc:
-                logger.warning(
-                    "Tournament result not recorded for game %s: %s", game.id, exc
-                )
+        self._after_human_game_finished(game)
 
 
 class MatchmakingService:

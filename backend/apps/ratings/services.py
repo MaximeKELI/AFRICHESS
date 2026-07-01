@@ -31,6 +31,8 @@ class RatingService:
             return
         if not getattr(game, "is_rated", True):
             return
+        if RatingHistory.objects.filter(game=game).exists():
+            return
 
         mode = game.mode if game.mode != Game.Mode.AI else "blitz"
         k = self.K_FACTORS.get(mode, 32)
@@ -39,19 +41,30 @@ class RatingService:
         black_rating = self.get_or_create_rating(game.black_player, mode)
 
         expected_white = self.expected_score(white_rating.elo, black_rating.elo)
+        expected_black = 1.0 - expected_white
 
         if game.result == Game.Result.WHITE_WIN:
-            score_white = 1.0
+            score_white, score_black = 1.0, 0.0
         elif game.result == Game.Result.BLACK_WIN:
-            score_white = 0.0
+            score_white, score_black = 0.0, 1.0
         else:
-            score_white = 0.5
+            score_white, score_black = 0.5, 0.5
 
-        delta_white = round(k * (score_white - expected_white))
-        delta_black = -delta_white
+        k_white = self._effective_k(white_rating, k)
+        k_black = self._effective_k(black_rating, k)
+        delta_white = round(k_white * (score_white - expected_white))
+        delta_black = round(k_black * (score_black - expected_black))
 
         self._apply_change(white_rating, delta_white, game)
         self._apply_change(black_rating, delta_black, game)
+
+    def _effective_k(self, rating: PlayerRating, base_k: int) -> int:
+        """K plus élevé pour les classements provisoires (convergence rapide, style Chess.com)."""
+        from .provisional import is_provisional
+
+        if is_provisional(rating):
+            return max(base_k, 40)
+        return base_k
 
     def _apply_change(self, rating: PlayerRating, delta: int, game: Game):
         elo_before = rating.elo
