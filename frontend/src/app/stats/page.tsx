@@ -2,20 +2,25 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { BarChart3, Download, FileJson, Table2 } from "lucide-react";
+import { BarChart3, Download, FileJson, History, Sparkles, Table2 } from "lucide-react";
 import { statsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
-import {
-  BarChart,
-  CHART_COLORS,
-  DonutChart,
-  FormSparkline,
-  HorizontalBarChart,
-  LineChart,
-} from "@/components/stats/StatsCharts";
+import { CHART_COLORS } from "@/components/stats/StatsCharts";
 import { DataTable } from "@/components/stats/StatsTables";
+import {
+  ActivityPulseChart,
+  AnimatedStatCard,
+  FormTimeline,
+  FuturisticPanel,
+  NeonBarChart,
+  NeonDonutChart,
+  NeonHorizontalBars,
+  NeonLineChart,
+  WinRateGauge,
+} from "@/components/stats/StatsFuturistic";
+import { StatsGameHistory, StatsHistorySummary } from "@/components/stats/StatsGameHistory";
 import { downloadStatsCsv, downloadStatsJson, type StatsExportData } from "@/lib/statsExport";
 import { useTranslation } from "@/hooks/useTranslation";
 import { formatLocaleDate, terminationLabel } from "@/lib/i18n/labels";
@@ -63,6 +68,7 @@ interface StatsPayload {
     move_count: number;
     date: string;
     is_vs_ai: boolean;
+    termination?: string;
   }[];
   ratings: { mode: string; elo: number; peak_elo: number; games_count: number }[];
   rating_history: {
@@ -96,26 +102,7 @@ const MODE_COLORS: Record<string, string> = {
   classical: "#8b5cf6",
 };
 
-function StatCard({
-  label,
-  value,
-  sub,
-  accent,
-}: {
-  label: string;
-  value: string | number;
-  sub?: string;
-  accent?: "gold" | "green";
-}) {
-  const color = accent === "green" ? "text-africhess-green" : "text-africhess-gold";
-  return (
-    <div className="glass-card p-4 text-center">
-      <p className={`text-2xl font-bold ${color}`}>{value}</p>
-      <p className="text-sm opacity-60">{label}</p>
-      {sub && <p className="text-[10px] opacity-40 mt-1">{sub}</p>}
-    </div>
-  );
-}
+type StatsTab = "charts" | "history" | "tables";
 
 export default function StatsPage() {
   const { user } = useAuthStore();
@@ -123,7 +110,7 @@ export default function StatsPage() {
   const [data, setData] = useState<StatsPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"charts" | "tables">("charts");
+  const [activeTab, setActiveTab] = useState<StatsTab>("charts");
 
   useEffect(() => {
     if (!user) return;
@@ -160,38 +147,45 @@ export default function StatsPage() {
   const username = user.username;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-bold">{t("stats.title")}</h1>
-          <p className="opacity-60 text-sm mt-1">
-            {t("stats.subtitle", { name: user.display_name || user.username })}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {data && (
-            <>
-              <button
-                type="button"
-                onClick={() => downloadStatsCsv(toExportData(data), username)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-africhess-gold/50 text-africhess-gold text-sm hover:bg-africhess-gold/10"
-              >
-                <Download size={14} />
-                CSV
-              </button>
-              <button
-                type="button"
-                onClick={() => downloadStatsJson(toExportData(data), username)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/20 text-sm hover:bg-white/5"
-              >
-                <FileJson size={14} />
-                JSON
-              </button>
-            </>
-          )}
-          <Link href="/profile" className="text-sm text-africhess-gold hover:underline px-2">
-            {t("stats.backProfile")}
-          </Link>
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+      <div className="stats-fx-hero">
+        <div className="stats-fx-hero-mesh" aria-hidden />
+        <div className="relative z-10 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-africhess-gold/80 flex items-center gap-1.5 mb-2">
+              <Sparkles className="w-3.5 h-3.5" aria-hidden />
+              {t("stats.hero.tagline")}
+            </p>
+            <h1 className="font-display text-3xl sm:text-4xl font-bold">{t("stats.title")}</h1>
+            <p className="opacity-60 text-sm mt-1">
+              {t("stats.subtitle", { name: user.display_name || user.username })}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {data && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => downloadStatsCsv(toExportData(data), username)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-africhess-gold/50 text-africhess-gold text-sm hover:bg-africhess-gold/10"
+                >
+                  <Download size={14} />
+                  CSV
+                </button>
+                <button
+                  type="button"
+                  onClick={() => downloadStatsJson(toExportData(data), username)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/20 text-sm hover:bg-white/5"
+                >
+                  <FileJson size={14} />
+                  JSON
+                </button>
+              </>
+            )}
+            <Link href="/profile" className="text-sm text-africhess-gold hover:underline px-2">
+              {t("stats.backProfile")}
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -201,8 +195,8 @@ export default function StatsPage() {
       {data && (
         <>
           <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <StatCard label={t("stats.card.games")} value={data.summary.games_played} accent="gold" />
-            <StatCard
+            <AnimatedStatCard label={t("stats.card.games")} value={data.summary.games_played} accent="gold" delay={0} />
+            <AnimatedStatCard
               label={t("stats.card.wins")}
               value={`${data.summary.win_rate}%`}
               sub={t("stats.summary.wdl", {
@@ -211,8 +205,9 @@ export default function StatsPage() {
                 l: data.summary.games_lost,
               })}
               accent="green"
+              delay={60}
             />
-            <StatCard
+            <AnimatedStatCard
               label={t("stats.card.streak")}
               value={
                 data.summary.current_streak > 0
@@ -220,10 +215,16 @@ export default function StatsPage() {
                   : data.summary.current_streak
               }
               sub={t("stats.card.streakRecord", { n: data.summary.best_win_streak })}
+              accent="cyan"
+              delay={120}
             />
-            <StatCard label={t("stats.card.playTime")} value={`${data.summary.total_play_time_hours}h`} />
-            <StatCard label={t("stats.card.puzzles")} value={data.summary.puzzles_solved} />
-            <StatCard
+            <AnimatedStatCard
+              label={t("stats.card.playTime")}
+              value={`${data.summary.total_play_time_hours}h`}
+              delay={180}
+            />
+            <AnimatedStatCard label={t("stats.card.puzzles")} value={data.summary.puzzles_solved} delay={240} />
+            <AnimatedStatCard
               label={t("stats.card.vsAi")}
               value={data.ai_stats.games_vs_ai}
               sub={
@@ -231,58 +232,53 @@ export default function StatsPage() {
                   ? t("stats.card.bestAi", { elo: data.ai_stats.best_ai_elo_beaten })
                   : undefined
               }
+              delay={300}
             />
           </section>
 
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveTab("charts")}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm ${
-                activeTab === "charts"
-                  ? "african-gradient text-white"
-                  : "border border-white/15 hover:bg-white/5"
-              }`}
-            >
-              <BarChart3 size={14} />
-              {t("stats.tabs.charts")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("tables")}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm ${
-                activeTab === "tables"
-                  ? "african-gradient text-white"
-                  : "border border-white/15 hover:bg-white/5"
-              }`}
-            >
-              <Table2 size={14} />
-              {t("stats.tabs.tables")}
-            </button>
+          <div className="stats-fx-tabs">
+            {(
+              [
+                { id: "charts" as const, icon: BarChart3, label: t("stats.tabs.charts") },
+                { id: "history" as const, icon: History, label: t("stats.history.title") },
+                { id: "tables" as const, icon: Table2, label: t("stats.tabs.tables") },
+              ] as const
+            ).map(({ id, icon: Icon, label }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveTab(id)}
+                className={`stats-fx-tab flex items-center gap-1.5 ${activeTab === id ? "stats-fx-tab-active" : ""}`}
+              >
+                <Icon size={14} />
+                {label}
+              </button>
+            ))}
           </div>
 
           {activeTab === "charts" && (
             <>
-              <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">{t("stats.chart.outcomes")}</h2>
-                  <DonutChart
-                    centerLabel={`${data.summary.win_rate}%`}
-                    centerSub={t("stats.chart.wins")}
-                    slices={[
-                      { label: t("stats.chart.victories"), value: data.summary.games_won, color: CHART_COLORS.win },
-                      { label: t("stats.chart.draws"), value: data.summary.games_drawn, color: CHART_COLORS.draw },
-                      { label: t("stats.chart.losses"), value: data.summary.games_lost, color: CHART_COLORS.loss },
-                    ]}
-                  />
-                </div>
+              <section className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <FuturisticPanel title={t("stats.chart.outcomes")} delay={0}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                    <NeonDonutChart
+                      centerLabel={`${data.summary.win_rate}%`}
+                      centerSub={t("stats.chart.wins")}
+                      slices={[
+                        { label: t("stats.chart.victories"), value: data.summary.games_won, color: CHART_COLORS.win },
+                        { label: t("stats.chart.draws"), value: data.summary.games_drawn, color: CHART_COLORS.draw },
+                        { label: t("stats.chart.losses"), value: data.summary.games_lost, color: CHART_COLORS.loss },
+                      ]}
+                    />
+                    <WinRateGauge value={data.summary.win_rate} />
+                  </div>
+                </FuturisticPanel>
 
-                <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">{t("stats.chart.byMode")}</h2>
+                <FuturisticPanel title={t("stats.chart.byMode")} delay={80}>
                   {data.by_mode.length === 0 ? (
                     <p className="text-sm opacity-50">{t("stats.chart.noGames")}</p>
                   ) : (
-                    <BarChart
+                    <NeonBarChart
                       items={data.by_mode.map((m) => ({
                         label: m.mode,
                         value: m.played,
@@ -290,11 +286,10 @@ export default function StatsPage() {
                       }))}
                     />
                   )}
-                </div>
+                </FuturisticPanel>
 
-                <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">{t("stats.chart.humanVsAi")}</h2>
-                  <BarChart
+                <FuturisticPanel title={t("stats.chart.humanVsAi")} delay={160}>
+                  <NeonBarChart
                     items={[
                       {
                         label: t("stats.chart.online"),
@@ -308,53 +303,56 @@ export default function StatsPage() {
                       },
                     ]}
                   />
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                    <div className="text-center p-2 rounded-lg bg-white/5">
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                    <div className="text-center p-2 rounded-lg bg-white/5 border border-white/5">
                       <p className="opacity-50">{t("stats.chart.online")}</p>
-                      <p className="font-mono text-africhess-green">
-                        {data.vs_opponent.human.win_rate}%
-                      </p>
+                      <p className="font-mono text-africhess-green text-lg">{data.vs_opponent.human.win_rate}%</p>
                     </div>
-                    <div className="text-center p-2 rounded-lg bg-white/5">
+                    <div className="text-center p-2 rounded-lg bg-white/5 border border-white/5">
                       <p className="opacity-50">{t("stats.chart.ai")}</p>
-                      <p className="font-mono text-africhess-gold">{data.vs_opponent.ai.win_rate}%</p>
+                      <p className="font-mono text-africhess-gold text-lg">{data.vs_opponent.ai.win_rate}%</p>
                     </div>
                   </div>
-                </div>
+                </FuturisticPanel>
               </section>
 
+              {eloLinePoints.length >= 2 && (
+                <FuturisticPanel
+                  title={t("stats.chart.eloEvolution")}
+                  subtitle={t("stats.chart.eloHistory")}
+                  delay={0}
+                >
+                  <NeonLineChart points={eloLinePoints} />
+                </FuturisticPanel>
+              )}
+
               <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">{t("stats.chart.activity")}</h2>
-                  <BarChart
-                    maxHeight={100}
+                <FuturisticPanel title={t("stats.chart.activity")} subtitle="30 jours" delay={80}>
+                  <ActivityPulseChart
                     items={data.activity.map((a) => ({
                       label: a.date.slice(8),
                       value: a.games,
-                      color: CHART_COLORS.gold,
                     }))}
                   />
-                </div>
+                </FuturisticPanel>
 
-                <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">{t("stats.chart.terminations")}</h2>
-                  <HorizontalBarChart
+                <FuturisticPanel title={t("stats.chart.terminations")} delay={160}>
+                  <NeonHorizontalBars
                     items={Object.entries(data.by_termination).map(([k, v]) => ({
                       label: terminationLabel(t, k),
                       value: v,
                       color: CHART_COLORS.blue,
                     }))}
                   />
-                </div>
+                </FuturisticPanel>
               </section>
 
               <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">{t("stats.chart.openings")}</h2>
+                <FuturisticPanel title={t("stats.chart.openings")} delay={0}>
                   {data.openings.length === 0 ? (
                     <p className="text-sm opacity-50">{t("stats.chart.noOpenings")}</p>
                   ) : (
-                    <HorizontalBarChart
+                    <NeonHorizontalBars
                       items={data.openings.slice(0, 8).map((o) => ({
                         label: o.name,
                         value: o.played,
@@ -363,16 +361,15 @@ export default function StatsPage() {
                       }))}
                     />
                   )}
-                </div>
+                </FuturisticPanel>
 
-                <div className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">{t("stats.chart.colors")}</h2>
-                  <DonutChart
+                <FuturisticPanel title={t("stats.chart.colors")} delay={80}>
+                  <NeonDonutChart
                     slices={[
                       {
                         label: t("stats.chart.white", { rate: data.by_color.white.win_rate }),
                         value: data.by_color.white.played,
-                        color: "#f5f5f5",
+                        color: "#e5e7eb",
                       },
                       {
                         label: t("stats.chart.black", { rate: data.by_color.black.win_rate }),
@@ -381,31 +378,33 @@ export default function StatsPage() {
                       },
                     ]}
                   />
-                </div>
+                </FuturisticPanel>
               </section>
 
-              {eloLinePoints.length >= 2 && (
-                <section className="glass-card p-5">
-                  <h2 className="font-semibold mb-2">{t("stats.chart.eloEvolution")}</h2>
-                  <p className="text-xs opacity-50 mb-4">{t("stats.chart.eloHistory")}</p>
-                  <LineChart points={eloLinePoints} />
-                </section>
-              )}
-
               {data.recent_form.length > 0 && (
-                <section className="glass-card p-5">
-                  <h2 className="font-semibold mb-4">{t("stats.chart.recentForm")}</h2>
-                  <FormSparkline
-                    outcomes={data.recent_form.slice(0, 20).map((g) => g.outcome)}
-                  />
-                  <p className="text-xs opacity-40 mt-3">
-                    {t("stats.chart.recentFormHint", {
-                      n: Math.min(20, data.recent_form.length),
-                    })}
-                  </p>
-                </section>
+                <FuturisticPanel
+                  title={t("stats.chart.recentForm")}
+                  subtitle={t("stats.chart.recentFormHint", {
+                    n: Math.min(20, data.recent_form.length),
+                  })}
+                  delay={0}
+                >
+                  <FormTimeline outcomes={data.recent_form.slice(0, 20).map((g) => g.outcome)} />
+                </FuturisticPanel>
               )}
             </>
+          )}
+
+          {activeTab === "history" && (
+            <FuturisticPanel
+              title={t("stats.history.title")}
+              subtitle={t("stats.history.subtitle")}
+              delay={0}
+              className="!p-6"
+            >
+              <StatsHistorySummary games={data.recent_form} />
+              <StatsGameHistory games={data.recent_form} />
+            </FuturisticPanel>
           )}
 
           {activeTab === "tables" && (
