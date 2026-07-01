@@ -147,6 +147,8 @@ function ChessBoardInner({
   /** En mode puzzle (serverValidated), le FEN affiché est la source de vérité — évite le décalage au 2e puzzle. */
   const activeChess = serverValidated && positionChess ? positionChess : game;
   const activeTurn = activeChess.turn();
+
+  useEffect(() => {
     try {
       const g = new Chess(displayFen === "start" ? undefined : displayFen);
       const plies = g.history().length;
