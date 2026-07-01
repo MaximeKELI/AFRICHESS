@@ -32,7 +32,8 @@ export default function PuzzlesScreen() {
   const [survivalScore, setSurvivalScore] = useState(0);
   const [battleId, setBattleId] = useState<number | null>(null);
   const [battleStatus, setBattleStatus] = useState("idle");
-  const [battleOpponent, setBattleOpponent] = useState<string | null>(null);
+  const [battleScoreYou, setBattleScoreYou] = useState(0);
+  const [battleScoreOpp, setBattleScoreOpp] = useState(0);
   const [rushScore, setRushScore] = useState(0);
   const [rushMisses, setRushMisses] = useState(0);
   const [rushTimeLeft, setRushTimeLeft] = useState(180);
@@ -160,21 +161,25 @@ export default function PuzzlesScreen() {
     reset();
     setBattleId(null);
     setBattleStatus("waiting");
+    setBattleScoreYou(0);
+    setBattleScoreOpp(0);
     puzzlesApi
       .battleQueue()
       .then(({ data }) => {
         setBattleId(data.battle_id);
         setBattleStatus(data.status);
-        setBattleOpponent(data.opponent ?? null);
-        if (data.status === "active") loadTraining();
-        else setLoading(false);
+        if (data.puzzle) {
+          setPuzzle(data.puzzle);
+          setBattleStatus("active");
+        }
+        setLoading(false);
       })
       .catch(() => {
         setBattleStatus("idle");
         setError(t("puzzles.error.load"));
         setLoading(false);
       });
-  }, [user, t, loadTraining]);
+  }, [user, t]);
 
   useEffect(() => {
     if (tab === "daily") loadDaily();
