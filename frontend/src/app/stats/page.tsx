@@ -7,6 +7,7 @@ import { statsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { CHART_COLORS } from "@/components/stats/StatsCharts";
 import { DataTable } from "@/components/stats/StatsTables";
 import {
@@ -217,7 +218,7 @@ export default function StatsPage() {
       </div>
 
       {error && <InlineAlert>{error}</InlineAlert>}
-      {loading && <p className="text-sm opacity-60">{t("common.loading")}</p>}
+      {loading && <LoadingState />}
 
       {data && (
         <>
@@ -263,7 +264,7 @@ export default function StatsPage() {
             />
           </section>
 
-          <div className="stats-fx-tabs">
+          <div className="stats-fx-tabs" role="tablist" aria-label={t("stats.tabs.label")}>
             {(
               [
                 { id: "charts" as const, icon: BarChart3, label: t("stats.tabs.charts") },
@@ -274,6 +275,10 @@ export default function StatsPage() {
               <button
                 key={id}
                 type="button"
+                role="tab"
+                id={`stats-tab-${id}`}
+                aria-selected={activeTab === id}
+                aria-controls={`stats-panel-${id}`}
                 onClick={() => setActiveTab(id)}
                 className={`stats-fx-tab flex items-center gap-1.5 ${activeTab === id ? "stats-fx-tab-active" : ""}`}
               >

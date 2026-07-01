@@ -63,8 +63,19 @@ export default function PublicProfilePage() {
       .finally(() => setLoading(false));
   }, [username, t]);
 
-  if (loading) return <p className="max-w-3xl mx-auto px-4 py-12 opacity-60">{t("common.loading")}</p>;
-  if (error) return <div className="max-w-3xl mx-auto px-4 py-12"><InlineAlert>{error}</InlineAlert></div>;
+  if (loading) return <LoadingState className="max-w-3xl mx-auto px-4" />;
+  if (error) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-12 space-y-4">
+        <InlineAlert>{error}</InlineAlert>
+        <p className="text-center">
+          <Link href="/" className="text-sm text-africhess-gold hover:underline">
+            {t("legal.backHome")}
+          </Link>
+        </p>
+      </div>
+    );
+  }
   if (!profile) return null;
 
   const isMe = me?.username === profile.username;
