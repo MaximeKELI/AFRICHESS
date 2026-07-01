@@ -177,17 +177,9 @@ export default function PuzzlesPage() {
   }, []);
 
   useEffect(() => {
-    if (user) {
-      puzzlesApi.streak().then(({ data }) => setStreak(data.daily_streak ?? 0)).catch(() => setStreak(getPuzzleStreak()));
-      ratingsApi.me().then(({ data }) => {
-        const list = Array.isArray(data) ? data : data.results ?? [];
-        const pr = list.find((r: { mode: string }) => r.mode === "puzzle");
-        if (pr) setPuzzleElo(pr.elo);
-      }).catch(() => {});
-    } else {
-      setStreak(getPuzzleStreak());
-    }
-  }, [user]);
+    unlockedBadgesRef.current = loadUnlockedBadges(user?.id ?? null);
+    refreshWeeklyRank();
+  }, [user, refreshWeeklyRank]);
 
   useEffect(() => {
     if (tab !== "rush" || !rushEndsAt || !puzzle) return;
