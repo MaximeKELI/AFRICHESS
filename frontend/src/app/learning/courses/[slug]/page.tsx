@@ -168,7 +168,7 @@ export default function CoursePage() {
       </div>
 
       {course.quizzes?.map((q) => (
-        <section key={q.id} className="glass-card p-6 mt-8">
+        <section key={q.id} className="glass-card p-6 mt-8 relative min-h-[400px] overflow-hidden">
           <h3 className="font-semibold text-lg mb-4">{q.title}</h3>
           {q.questions.map((question, qi) => (
             <div key={qi} className="mb-4">
