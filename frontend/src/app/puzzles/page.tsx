@@ -99,6 +99,7 @@ export default function PuzzlesPage() {
   const [recapOpen, setRecapOpen] = useState(false);
   const [sessionRecap, setSessionRecap] = useState<PuzzleSessionRecap | null>(null);
   const [weeklyRank, setWeeklyRank] = useState<number | null>(null);
+  const [localPlayed, setLocalPlayed] = useState<string[]>([]);
 
   const unlockCtx = useMemo(
     () => ({

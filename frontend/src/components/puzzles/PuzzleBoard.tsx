@@ -92,6 +92,7 @@ export function PuzzleBoard({
       setPlayed(result.moves);
       setFen(result.fen);
       setFeedback(null);
+      onPlayedChange?.(result.moves);
 
       if (result.complete) {
         setFeedback(t("puzzles.solved.correct"));
