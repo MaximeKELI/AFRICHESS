@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GameReview } from "@/components/chess/GameReview";
@@ -8,6 +8,7 @@ import { gamesApi } from "@/lib/api";
 import { parseAnalysisPayload } from "@/lib/gameAnalysis";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 import { formatApiError } from "@/lib/errors";
 
 interface GameReviewPageProps {
@@ -25,6 +26,20 @@ export default function GameReviewPage({ params }: GameReviewPageProps) {
   const [result, setResult] = useState<string | undefined>();
   const [initialAnalysis, setInitialAnalysis] = useState(
     () => null as ReturnType<typeof parseAnalysisPayload>
+  );
+
+  const handleAnalysisReady = useCallback((payload: { analysis?: unknown }) => {
+    const parsed = parseAnalysisPayload(payload.analysis);
+    if (parsed) setInitialAnalysis((prev) => prev ?? parsed);
+  }, []);
+
+  useGameWebSocket(
+    params.id,
+    Boolean(user),
+    () => {},
+    undefined,
+    undefined,
+    handleAnalysisReady
   );
 
   useEffect(() => {

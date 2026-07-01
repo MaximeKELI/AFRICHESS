@@ -79,4 +79,18 @@ Authentification : **`Sec-WebSocket-Protocol: bearer,<access_token>`** (voir `fr
 
 Le paramètre `?token=` n'est accepté que si `WS_ALLOW_QUERY_TOKEN=true` (déconseillé en production).
 
+## Analyse post-partie automatique
+
+Dès qu'une partie se termine, Stockfish analyse la position en arrière-plan (tâche Celery `auto_analyze_completed_game`). La revue de partie s'ouvre quasi instantanément si l'analyse est déjà en cache.
+
+```bash
+# .env (défauts)
+AUTO_GAME_ANALYSIS_ENABLED=true
+AUTO_GAME_ANALYSIS_MIN_MOVES=2
+```
+
+- Nécessite **Celery worker** (`docker compose up celery`) et Stockfish configuré.
+- Les clients reçoivent `analysis_ready` sur le WebSocket de la partie.
+- Désactiver : `AUTO_GAME_ANALYSIS_ENABLED=false`
+
 Chat in-game : événement `{ "event": "chat", "message": "..." }` sur le canal partie (pas `ws/chat/`).
