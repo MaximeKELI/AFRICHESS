@@ -13,6 +13,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../context/LocaleContext";
 import { type Puzzle, puzzlesApi } from "../lib/api";
 import { buildFenFromUciMoves, lastMoveFromUci } from "../lib/puzzleDisplay";
+import { applyPuzzleMove } from "../lib/puzzleEngine";
 
 type Tab = "daily" | "rush";
 
@@ -33,11 +34,19 @@ export default function PuzzlesScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [startTime, setStartTime] = useState(Date.now());
   const [error, setError] = useState<string | null>(null);
+  const [puzzleFailed, setPuzzleFailed] = useState(false);
+  const [puzzleSolved, setPuzzleSolved] = useState(false);
 
   const reset = () => {
     setUciMoves([]);
     setResult(null);
+    setPuzzleFailed(false);
+    setPuzzleSolved(false);
     setStartTime(Date.now());
+  };
+
+  const retryPuzzle = () => {
+    reset();
   };
 
   const loadDaily = useCallback(() => {
@@ -110,18 +119,31 @@ export default function PuzzlesScreen() {
 
   const lastMove = useMemo(() => lastMoveFromUci(uciMoves), [uciMoves]);
 
-  const handleMove = useCallback((uci: string) => {
-    if (result) return;
-    setUciMoves((prev) => [...prev, uci]);
-  }, [result]);
+  const handleMove = useCallback(
+    (uci: string) => {
+      if (!puzzle || puzzleFailed || puzzleSolved) return;
+      const solution = puzzle.solution_moves ?? [];
+      const outcome = applyPuzzleMove(puzzle.fen, solution, uciMoves, uci);
+      if (outcome.wrong) {
+        setPuzzleFailed(true);
+        setResult(t("puzzles.wrongLine"));
+        return;
+      }
+      setUciMoves(outcome.moves);
+      if (outcome.complete && user) {
+        void submitWithMoves(outcome.moves);
+      }
+    },
+    [puzzle, puzzleFailed, puzzleSolved, uciMoves, user, t]
+  );
 
-  const submit = async () => {
+  const submitWithMoves = async (moves: string[]) => {
     if (!puzzle || !user) return;
     setSubmitting(true);
     const time = Math.floor((Date.now() - startTime) / 1000);
     try {
       if (tab === "rush" && rushSessionId) {
-        const { data } = await puzzlesApi.rushSubmit(rushSessionId, uciMoves, time);
+        const { data } = await puzzlesApi.rushSubmit(rushSessionId, moves, time);
         setRushScore(data.score ?? rushScore);
         setRushMisses(data.misses ?? rushMisses);
         if (data.time_left != null) setRushTimeLeft(data.time_left);
@@ -140,6 +162,7 @@ export default function PuzzlesScreen() {
           return;
         }
         setResult(solved ? t("puzzles.correct") : t("puzzles.wrong"));
+        if (!solved) setPuzzleFailed(true);
         if (data.next_puzzle) {
           setRushIndex((i) => i + 1);
           setTimeout(() => {
@@ -148,20 +171,27 @@ export default function PuzzlesScreen() {
           }, 600);
         }
       } else {
-        const { data } = await puzzlesApi.submit(puzzle.id, uciMoves, time);
+        const { data } = await puzzlesApi.submit(puzzle.id, moves, time);
         if (data.daily_streak != null) setStreak(data.daily_streak);
         const solved = data.solved;
-        setResult(
-          solved
-            ? t("puzzles.bravo", { streak: data.daily_streak ?? streak })
-            : t("puzzles.wrongLine")
-        );
+        if (solved) {
+          setPuzzleSolved(true);
+          setResult(t("puzzles.bravo", { streak: data.daily_streak ?? streak }));
+        } else {
+          setPuzzleFailed(true);
+          setResult(t("puzzles.wrongLine"));
+        }
       }
     } catch {
       setResult(t("puzzles.submitError"));
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const submit = async () => {
+    if (!puzzle || !user || uciMoves.length === 0) return;
+    await submitWithMoves(uciMoves);
   };
 
   return (
