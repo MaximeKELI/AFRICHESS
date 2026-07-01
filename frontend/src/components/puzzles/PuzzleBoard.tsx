@@ -59,7 +59,7 @@ export function PuzzleBoard({
     setFeedback(null);
     setShake(false);
     setWrongFlash(false);
-    setBoardNonce(0);
+    setBoardNonce((n) => n + 1);
   }, [puzzle.id, puzzle.fen]);
 
   const orientation = useMemo(() => puzzleOrientation(puzzle.fen), [puzzle.fen]);

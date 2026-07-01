@@ -717,13 +717,7 @@ export default function PuzzlesPage() {
   };
 
   const reset = () => {
-    setUciMoves([]);
-    setLocalPlayed([]);
-    setResult(null);
-    setPuzzleFailed(false);
-    setHintRevealed(false);
-    setStartTime(Date.now());
-    setBoardKey((k) => k + 1);
+    resetPuzzleUiForNewPuzzle();
   };
 
   const retryPuzzle = () => {
@@ -948,11 +942,12 @@ export default function PuzzlesPage() {
                 />
               )}
               <PuzzleBoard
+                key={`${puzzle.id}-${boardKey}`}
                 puzzle={puzzle}
                 onComplete={(moves) => handlePuzzleComplete(moves)}
                 onWrong={handlePuzzleWrong}
                 onPlayedChange={setLocalPlayed}
-                disabled={puzzleSolved && tab !== "rush" && tab !== "survival"}
+                disabled={puzzleSolved && !celebration && tab !== "rush" && tab !== "survival"}
                 hintRevealed={hintRevealed}
               />
               <PuzzleSolveCelebration
