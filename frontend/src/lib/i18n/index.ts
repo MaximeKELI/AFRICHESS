@@ -2504,7 +2504,7 @@ const en: Record<string, string> = {
   "puzzles.celebrate.perfect": "Perfect set — 10/10!",
   "puzzles.celebrate.sessionStreak": "×{n} flawless",
   "puzzles.hint.button": "Hint",
-  "puzzles.hint.active": "Hint: starting square highlighted",
+  "puzzles.hint.active": "Hint: start (outline) and target (green) highlighted",
   "puzzles.settings.title": "Puzzles",
   "puzzles.settings.hint": "Sounds and garden theme",
   "puzzles.settings.sounds": "Sounds",
