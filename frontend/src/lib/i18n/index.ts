@@ -1753,6 +1753,7 @@ const en: Record<string, string> = {
   "play.online.title": "Online player",
   "play.online.find": "Find opponent",
   "play.online.searching": "Searching…",
+  "play.online.searchingPool": "{count} player(s) searching",
   "play.online.cancel": "Cancel",
   "play.recent.title": "Recent games",
   "play.recent.empty": "No games recorded yet.",
