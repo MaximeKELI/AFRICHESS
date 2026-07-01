@@ -16,6 +16,7 @@ import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { chessLevelLabel } from "@/lib/i18n/labels";
 import { getPuzzleStreak, recordPuzzleSolved } from "@/lib/puzzleStreak";
+import { playPuzzleAdvance, playPuzzleWrong, preloadPuzzleSounds } from "@/lib/puzzleSounds";
 import Link from "next/link";
 
 interface Puzzle {
@@ -37,7 +38,7 @@ interface LeaderboardRow {
 type Tab = "daily" | "training" | "rush" | "battle" | "survival" | "leaderboard";
 
 export default function PuzzlesPage() {
-  const { user } = useAuthStore();
+  const { user, lowBandwidth } = useAuthStore();
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>("daily");
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
