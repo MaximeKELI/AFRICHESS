@@ -345,15 +345,20 @@ class HumanOnlineFlowTests(TestCase):
         self.assertEqual(game.status, Game.Status.ACTIVE)
         self.assertFalse(game.is_vs_ai)
 
-        white_move = self.white_client.post(
+        if game.white_player_id == self.white.id:
+            white_client, black_client = self.white_client, self.black_client
+        else:
+            white_client, black_client = self.black_client, self.white_client
+
+        white_move = white_client.post(
             f"/api/games/{game_id}/move/", {"uci": "e2e4"}, format="json"
         )
-        self.assertEqual(white_move.status_code, 200)
+        self.assertEqual(white_move.status_code, 200, white_move.data)
 
-        black_move = self.black_client.post(
+        black_move = black_client.post(
             f"/api/games/{game_id}/move/", {"uci": "e7e5"}, format="json"
         )
-        self.assertEqual(black_move.status_code, 200)
+        self.assertEqual(black_move.status_code, 200, black_move.data)
 
         game.refresh_from_db()
         self.assertEqual(game.move_count, 2)
