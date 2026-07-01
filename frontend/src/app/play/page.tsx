@@ -1030,6 +1030,11 @@ function PlayContent() {
   const playOnlineSection = (
     <OptionSection compact title={t("play.online.title")}>
       {mmError && <InlineAlert className="mb-3 text-xs">{mmError}</InlineAlert>}
+      {searchingPool != null && searchingPool > 0 && !searching && !wsSearching && (
+        <p className="text-xs opacity-60 mb-2">
+          {t("play.online.searchingPool", { count: searchingPool })}
+        </p>
+      )}
       <button
         onClick={findMatch}
         disabled={searching || wsSearching}
