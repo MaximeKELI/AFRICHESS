@@ -119,6 +119,64 @@ export default function PuzzlesScreen() {
 
   const lastMove = useMemo(() => lastMoveFromUci(uciMoves), [uciMoves]);
 
+  const submitWithMoves = useCallback(
+    async (moves: string[]) => {
+      if (!puzzle || !user) return;
+      setSubmitting(true);
+      const time = Math.floor((Date.now() - startTime) / 1000);
+      try {
+        if (tab === "rush" && rushSessionId) {
+          const { data } = await puzzlesApi.rushSubmit(rushSessionId, moves, time);
+          setRushScore(data.score ?? rushScore);
+          setRushMisses(data.misses ?? rushMisses);
+          if (data.time_left != null) setRushTimeLeft(data.time_left);
+          const solved = Boolean(data.solved);
+          if (data.completed) {
+            const score = data.score ?? rushScore;
+            const msg =
+              data.reason === "timeout"
+                ? t("puzzles.rush.timeout", { score })
+                : (data.misses ?? rushMisses) >= 3
+                  ? t("puzzles.rush.threeMisses", { score })
+                  : t("puzzles.rush.done", { score });
+            setResult(msg);
+            setPuzzle(null);
+            setRushSessionId(null);
+            return;
+          }
+          setResult(solved ? t("puzzles.correct") : t("puzzles.wrong"));
+          if (!solved) setPuzzleFailed(true);
+          if (data.next_puzzle) {
+            setRushIndex((i) => i + 1);
+            setTimeout(() => {
+              setPuzzle(data.next_puzzle!);
+              reset();
+            }, 600);
+          }
+        } else {
+          const { data } = await puzzlesApi.submit(puzzle.id, moves, time);
+          if (data.daily_streak != null) setStreak(data.daily_streak);
+          const solved = data.solved;
+          if (solved) {
+            setPuzzleSolved(true);
+            setResult(t("puzzles.bravo", { streak: data.daily_streak ?? streak }));
+          } else {
+            setPuzzleFailed(true);
+            setResult(t("puzzles.wrongLine"));
+          }
+        }
+      } catch {
+        setResult(t("puzzles.submitError"));
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [puzzle, user, startTime, tab, rushSessionId, rushScore, rushMisses, streak, t]
+  );
+
+  const submitRef = useRef(submitWithMoves);
+  submitRef.current = submitWithMoves;
+
   const handleMove = useCallback(
     (uci: string) => {
       if (!puzzle || puzzleFailed || puzzleSolved) return;
@@ -131,63 +189,11 @@ export default function PuzzlesScreen() {
       }
       setUciMoves(outcome.moves);
       if (outcome.complete && user) {
-        void submitWithMoves(outcome.moves);
+        void submitRef.current(outcome.moves);
       }
     },
     [puzzle, puzzleFailed, puzzleSolved, uciMoves, user, t]
   );
-
-  const submitWithMoves = async (moves: string[]) => {
-    if (!puzzle || !user) return;
-    setSubmitting(true);
-    const time = Math.floor((Date.now() - startTime) / 1000);
-    try {
-      if (tab === "rush" && rushSessionId) {
-        const { data } = await puzzlesApi.rushSubmit(rushSessionId, moves, time);
-        setRushScore(data.score ?? rushScore);
-        setRushMisses(data.misses ?? rushMisses);
-        if (data.time_left != null) setRushTimeLeft(data.time_left);
-        const solved = Boolean(data.solved);
-        if (data.completed) {
-          const score = data.score ?? rushScore;
-          const msg =
-            data.reason === "timeout"
-              ? t("puzzles.rush.timeout", { score })
-              : (data.misses ?? rushMisses) >= 3
-                ? t("puzzles.rush.threeMisses", { score })
-                : t("puzzles.rush.done", { score });
-          setResult(msg);
-          setPuzzle(null);
-          setRushSessionId(null);
-          return;
-        }
-        setResult(solved ? t("puzzles.correct") : t("puzzles.wrong"));
-        if (!solved) setPuzzleFailed(true);
-        if (data.next_puzzle) {
-          setRushIndex((i) => i + 1);
-          setTimeout(() => {
-            setPuzzle(data.next_puzzle!);
-            reset();
-          }, 600);
-        }
-      } else {
-        const { data } = await puzzlesApi.submit(puzzle.id, moves, time);
-        if (data.daily_streak != null) setStreak(data.daily_streak);
-        const solved = data.solved;
-        if (solved) {
-          setPuzzleSolved(true);
-          setResult(t("puzzles.bravo", { streak: data.daily_streak ?? streak }));
-        } else {
-          setPuzzleFailed(true);
-          setResult(t("puzzles.wrongLine"));
-        }
-      }
-    } catch {
-      setResult(t("puzzles.submitError"));
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const submit = async () => {
     if (!puzzle || !user || uciMoves.length === 0) return;
@@ -246,20 +252,26 @@ export default function PuzzlesScreen() {
             orientation="white"
             lastMove={lastMove}
             onMove={handleMove}
-            disabled={Boolean(result && tab === "daily")}
+            disabled={puzzleFailed || puzzleSolved}
           />
           <View style={styles.actions}>
-            <Pressable
-              style={styles.btn}
-              onPress={submit}
-              disabled={submitting || !user || uciMoves.length === 0}
-            >
-              {submitting ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.btnText}>{user ? t("puzzles.validate") : t("app.login")}</Text>
-              )}
-            </Pressable>
+            {puzzleFailed && tab === "daily" ? (
+              <Pressable style={styles.btn} onPress={retryPuzzle}>
+                <Text style={styles.btnText}>{t("puzzles.retry")}</Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                style={styles.btn}
+                onPress={submit}
+                disabled={submitting || !user || uciMoves.length === 0 || puzzleSolved}
+              >
+                {submitting ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.btnText}>{user ? t("puzzles.validate") : t("app.login")}</Text>
+                )}
+              </Pressable>
+            )}
             <Pressable style={[styles.btn, styles.btnOutline]} onPress={reset}>
               <Text style={styles.btnTextOutline}>{t("puzzles.reset")}</Text>
             </Pressable>
