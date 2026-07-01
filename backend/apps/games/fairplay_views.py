@@ -32,6 +32,7 @@ class FairPlayStatusView(APIView):
 
     def get(self, request):
         user = request.user
+        exempt = user_is_fairplay_exempt(user)
         restrictions = user_fairplay_restrictions(user)
         appeals = FairPlayAppeal.objects.filter(user=user).order_by("-created_at")[:5]
         pending_cases = FairPlayReviewCase.objects.filter(
@@ -43,7 +44,8 @@ class FairPlayStatusView(APIView):
         ).select_related("report__game")[:10]
         return Response(
             {
-                "consent_given": user_has_fairplay_consent(user),
+                "exempt": exempt,
+                "consent_given": exempt or user_has_fairplay_consent(user),
                 "consent_version": FairPlayUserConsent.CONSENT_VERSION,
                 "restrictions": restrictions,
                 "appealable_cases": pending_cases.count(),

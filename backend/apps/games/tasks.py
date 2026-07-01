@@ -103,8 +103,10 @@ def analyze_fairplay_async(game_id: str):
         return
     if game.is_vs_ai or not game.is_rated:
         return
+    from .fairplay_exempt import user_is_fairplay_exempt
+
     for player in (game.white_player, game.black_player):
-        if player:
+        if player and not user_is_fairplay_exempt(player):
             analyze_and_store(game, player)
 
 

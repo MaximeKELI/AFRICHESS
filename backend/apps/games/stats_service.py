@@ -132,9 +132,12 @@ def on_game_completed(game: Game) -> None:
     record_game_stats(game)
     if not game.is_vs_ai and game.is_rated:
         try:
+            from .fairplay_exempt import user_is_fairplay_exempt
             from .tasks import schedule_fairplay_analysis
 
-            schedule_fairplay_analysis(str(game.id))
+            players = [p for p in (game.white_player, game.black_player) if p]
+            if any(not user_is_fairplay_exempt(p) for p in players):
+                schedule_fairplay_analysis(str(game.id))
         except Exception:
             pass
     try:
