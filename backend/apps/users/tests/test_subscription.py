@@ -122,6 +122,7 @@ class StripeWebhookTests(TestCase):
 
     @patch("apps.users.stripe_service.stripe_enabled", return_value=True)
     def test_billing_portal_api(self, _enabled):
+        self.client.force_authenticate(user=self.user)
         self.user.stripe_customer_id = "cus_api"
         self.user.save(update_fields=["stripe_customer_id"])
         with patch(
