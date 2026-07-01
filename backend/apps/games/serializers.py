@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from apps.users.serializers import UserPublicSerializer
 
+from apps.ratings.game_payload import rating_changes_for_game
 from apps.ratings.provisional import player_rating_info
 
 from .elo_config import get_user_elo
@@ -104,6 +105,7 @@ class GameSerializer(serializers.ModelSerializer):
     black_elo = serializers.SerializerMethodField()
     white_elo_provisional = serializers.SerializerMethodField()
     black_elo_provisional = serializers.SerializerMethodField()
+    rating_changes = serializers.SerializerMethodField()
 
     def get_white_elo(self, obj: Game):
         if obj.white_player_id:
@@ -128,6 +130,9 @@ class GameSerializer(serializers.ModelSerializer):
         if not obj.black_player_id:
             return False
         return player_rating_info(obj.black_player, _game_rating_mode(obj))["is_provisional"]
+
+    def get_rating_changes(self, obj: Game):
+        return rating_changes_for_game(obj)
 
     class Meta:
         model = Game
