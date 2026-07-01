@@ -89,6 +89,65 @@ export default function PuzzlesPage() {
   const [puzzleFailed, setPuzzleFailed] = useState(false);
   const [celebration, setCelebration] = useState<PuzzleCelebrationData | null>(null);
   const pendingAfterCelebration = useRef<(() => void) | null>(null);
+  const sessionRef = useRef(new PuzzleSessionTracker());
+  const unlockedBadgesRef = useRef<Set<PuzzleBadgeId>>(new Set());
+  const [showMiniError, setShowMiniError] = useState(false);
+  const [hintSquare, setHintSquare] = useState<string | null>(null);
+  const [hintOffered, setHintOffered] = useState(false);
+  const [usedHint, setUsedHint] = useState(false);
+  const [badgeQueue, setBadgeQueue] = useState<PuzzleBadgeId[]>([]);
+  const [recapOpen, setRecapOpen] = useState(false);
+  const [sessionRecap, setSessionRecap] = useState<PuzzleSessionRecap | null>(null);
+  const [weeklyRank, setWeeklyRank] = useState<number | null>(null);
+
+  const unlockCtx = useMemo(
+    () => ({
+      lifetimeSolved: getLifetimePuzzleSolved(),
+      dailyStreak: streak,
+      sessionPerfectStreak: sessionRef.current.getPerfectStreak(),
+      completedFullSet:
+        tab === "training" &&
+        trainingQueue.length > 0 &&
+        trainingIndex + 1 >= trainingQueue.length &&
+        Boolean(result?.startsWith("✓")),
+    }),
+    [streak, tab, trainingQueue.length, trainingIndex, result]
+  );
+
+  const refreshWeeklyRank = useCallback(() => {
+    if (!user) return;
+    puzzlesApi
+      .leaderboard()
+      .then(({ data }) => {
+        const list: LeaderboardRow[] = Array.isArray(data) ? data : [];
+        const row = list.find((r) => r.username === user.username);
+        setWeeklyRank(row?.rank ?? null);
+      })
+      .catch(() => {});
+  }, [user]);
+
+  const queueBadges = useCallback(
+    (ctx: Parameters<typeof evaluateNewBadges>[0]) => {
+      const earned = evaluateNewBadges(ctx, unlockedBadgesRef.current);
+      if (!earned.length) return;
+      for (const id of earned) unlockedBadgesRef.current.add(id);
+      saveUnlockedBadges(user?.id ?? null, unlockedBadgesRef.current);
+      setBadgeQueue((q) => [...q, ...earned]);
+    },
+    [user?.id]
+  );
+
+  const resolveCelebrationVariant = useCallback(
+    (sessionStreak: number, current: number, total?: number | null): CelebrationVariant => {
+      if (total && total >= 10 && current >= total) return "perfect_set";
+      if (sessionStreak >= 10) return "streak10";
+      if (sessionStreak >= 5) return "streak5";
+      if (sessionStreak >= 3) return "streak3";
+      if (current === 1 && getLifetimePuzzleSolved() <= 1) return "first";
+      return "default";
+    },
+    []
+  );
 
   const triggerCelebration = useCallback(
     (payload: Omit<PuzzleCelebrationData, "id">, after?: () => void) => {
