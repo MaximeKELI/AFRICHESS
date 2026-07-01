@@ -813,6 +813,7 @@ function PlayContent() {
       playerIsWhite,
       consumeFairPlayPatch,
       telemetryEnabled,
+      t,
     ]
   );
 
@@ -1313,7 +1314,17 @@ function PlayContent() {
               disabled={!gameActive || !isMyTurn}
             />
           )}
-          {isLiveHuman && gameActive && (
+          {isVoteChess && gameId && gameActive && (
+            <VoteChessPanel
+              gameId={gameId}
+              canApply={isMyTurn}
+              onApplied={() => {
+                gamesApi.get(gameId).then(({ data }) => applyGameResponse(data)).catch(() => {});
+                setStatus(t("play.status.movePlayed"));
+              }}
+            />
+          )}
+          {isLiveHuman && gameActive && !isVoteChess && (
             <div className="flex flex-wrap gap-2 justify-center w-full">
               {!gameData.is_rated && (
                 <>
