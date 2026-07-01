@@ -30,6 +30,7 @@ interface PuzzleBoardProps {
   disabled?: boolean;
   hintSquare?: string | null;
   reviewHighlight?: { played?: { from: string; to: string }; best?: { from: string; to: string } } | null;
+  onPlayedChange?: (played: string[]) => void;
 }
 
 export function PuzzleBoard({
