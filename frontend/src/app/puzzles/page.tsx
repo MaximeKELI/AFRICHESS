@@ -696,6 +696,7 @@ export default function PuzzlesPage() {
     setUciMoves([]);
     setResult(null);
     setPuzzleFailed(false);
+    setHintSquare(null);
     setStartTime(Date.now());
     setBoardKey((k) => k + 1);
   };
