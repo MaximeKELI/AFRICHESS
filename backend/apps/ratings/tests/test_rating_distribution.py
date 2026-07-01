@@ -61,9 +61,12 @@ class RatingDistributionTests(TestCase):
 
     def test_draw_gives_smaller_changes(self):
         game = _rated_game(self.white, self.black)
-        GameService().get_or_create_rating = self.svc.get_or_create_rating  # noqa: not needed
-        PlayerRating.objects.filter(user=self.white, mode="blitz").update(elo=1400)
-        PlayerRating.objects.filter(user=self.black, mode="blitz").update(elo=1400)
+        PlayerRating.objects.update_or_create(
+            user=self.white, mode="blitz", defaults={"elo": 1400, "peak_elo": 1400}
+        )
+        PlayerRating.objects.update_or_create(
+            user=self.black, mode="blitz", defaults={"elo": 1400, "peak_elo": 1400}
+        )
 
         game.result = Game.Result.DRAW
         game.status = Game.Status.COMPLETED
