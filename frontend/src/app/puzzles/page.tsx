@@ -715,7 +715,7 @@ export default function PuzzlesPage() {
               <PuzzleSolveCelebration
                 data={celebration}
                 onDone={handleCelebrationDone}
-                autoDismissMs={tab === "daily" || tab === "training" ? 2200 : 1600}
+                autoDismissMs={tab === "daily" || tab === "training" ? 3200 : 2800}
               />
             </div>
             <OptionSection
