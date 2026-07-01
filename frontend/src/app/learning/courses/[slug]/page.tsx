@@ -195,13 +195,18 @@ export default function CoursePage() {
           {user && (
             <button
               type="button"
-              onClick={() => submitQuiz(q.id)}
+              onClick={() => submitQuiz(q.id, q.questions.length)}
               className="px-5 py-2 rounded-lg border border-africhess-green text-africhess-green"
             >
               {t("learning.quiz.submit")}
             </button>
           )}
           {quizResult && <p className="mt-3 text-sm">{quizResult}</p>}
+          <PuzzleSolveCelebration
+            data={quizCelebration}
+            onDone={() => setQuizCelebration(null)}
+            autoDismissMs={3200}
+          />
         </section>
       ))}
     </div>
