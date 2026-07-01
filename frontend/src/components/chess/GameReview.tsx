@@ -723,6 +723,23 @@ export function GameReview({
                 </button>
               )}
 
+              <button
+                type="button"
+                onClick={() => {
+                  unlockAiSpeech();
+                  setAutoTour((v) => !v);
+                  if (!autoTour) speakCurrent(true);
+                }}
+                className={clsx(
+                  "w-full py-2 text-sm rounded-xl border",
+                  autoTour
+                    ? "border-africhess-green bg-africhess-green/15 text-africhess-green"
+                    : "border-white/20 hover:bg-white/5"
+                )}
+              >
+                {autoTour ? t("chess.review.stopTour") : t("chess.review.startTour")}
+              </button>
+
               <div className="flex flex-wrap gap-1">
                 {MOVE_FILTERS.map((f) => (
                   <button
