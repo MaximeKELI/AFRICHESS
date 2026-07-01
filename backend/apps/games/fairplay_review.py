@@ -433,6 +433,13 @@ def user_has_active_matchmaking_block(user) -> bool:
 
 
 def user_fairplay_restrictions(user) -> dict[str, Any]:
+    from .fairplay_exempt import user_is_fairplay_exempt
+
+    if user_is_fairplay_exempt(user):
+        return {
+            "matchmaking_blocked": False,
+            "suspended": False,
+        }
     now = timezone.now()
     qs = FairPlaySanction.objects.filter(user=user, is_active=True).filter(
         Q(until__isnull=True) | Q(until__gt=now)
