@@ -427,6 +427,7 @@ export function GameReview({
               >
                 {t("chess.review.close")}
               </button>
+            )}
             {isAiSpeechSupported() && analysis && (
               <>
                 <button
