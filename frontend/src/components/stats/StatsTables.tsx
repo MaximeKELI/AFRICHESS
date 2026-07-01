@@ -13,7 +13,7 @@ interface Column<T> {
 export function DataTable<T extends object>({
   columns,
   rows,
-  emptyMessage = "Aucune donnée.",
+  emptyMessage,
   caption,
 }: {
   columns: Column<T>[];
@@ -21,8 +21,11 @@ export function DataTable<T extends object>({
   emptyMessage?: string;
   caption?: string;
 }) {
+  const { t } = useTranslation();
+  const empty = emptyMessage ?? t("common.noData");
+
   if (rows.length === 0) {
-    return <p className="text-sm opacity-50 py-4 text-center">{emptyMessage}</p>;
+    return <p className="text-sm opacity-50 py-4 text-center">{empty}</p>;
   }
 
   return (

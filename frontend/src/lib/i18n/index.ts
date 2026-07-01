@@ -389,6 +389,7 @@ const fr: Record<string, string> = {
   "profile.stats.games": "Parties",
   "profile.stats.wins": "Victoires",
   "profile.customize": "Personnaliser le profil",
+  "profile.nav.sections": "Sections du profil",
   "profile.appearance.title": "Apparence",
   "profile.save": "Enregistrer le niveau",
   "profile.saving": "Enregistrement…",
