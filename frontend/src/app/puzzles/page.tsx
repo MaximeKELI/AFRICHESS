@@ -100,6 +100,33 @@ export default function PuzzlesPage() {
   const [sessionRecap, setSessionRecap] = useState<PuzzleSessionRecap | null>(null);
   const [weeklyRank, setWeeklyRank] = useState<number | null>(null);
   const [localPlayed, setLocalPlayed] = useState<string[]>([]);
+  const trainingQueueRef = useRef(trainingQueue);
+  trainingQueueRef.current = trainingQueue;
+
+  const resetPuzzleUiForNewPuzzle = useCallback(() => {
+    setUciMoves([]);
+    setLocalPlayed([]);
+    setResult(null);
+    setPuzzleFailed(false);
+    setHintRevealed(false);
+    setHintOffered(false);
+    setUsedHint(false);
+    setShowMiniError(false);
+    setStartTime(Date.now());
+    setBoardKey((k) => k + 1);
+  }, []);
+
+  useEffect(() => {
+    if (!puzzle) return;
+    setResult(null);
+    setPuzzleFailed(false);
+    setLocalPlayed([]);
+    setHintRevealed(false);
+    setHintOffered(false);
+    setUsedHint(false);
+    setShowMiniError(false);
+    setUciMoves([]);
+  }, [puzzle?.id]);
 
   const unlockCtx = useMemo(
     () => ({

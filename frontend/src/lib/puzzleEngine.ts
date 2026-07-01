@@ -65,8 +65,7 @@ export function applyPuzzleMove(
 }
 
 export function isPlayerTurn(startFen: string, playedMoves: string[]): boolean {
-  if (!playedMoves.length) return true;
-  const fen = buildPuzzleFen(startFen, playedMoves);
+  const fen = playedMoves.length ? buildPuzzleFen(startFen, playedMoves) : startFen;
   const chess = new Chess(fen);
   return chess.turn() === solverColor(startFen);
 }
