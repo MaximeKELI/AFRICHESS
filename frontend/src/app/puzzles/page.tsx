@@ -324,14 +324,36 @@ export default function PuzzlesPage() {
           setRushSessionId(null);
           return;
         }
-        setResult(solved ? t("puzzles.solved.bravo", { streak: streak, rush: "" }) : t("puzzles.solved.wrong"));
-        if (data.next_puzzle) {
+        if (!solved) {
+          playPuzzleWrong(!lowBandwidth);
+          setResult(t("puzzles.solved.wrong"));
+        } else {
+          const newScore = data.score ?? rushScore + 1;
+          setResult(t("puzzles.solved.bravo", { streak: streak, rush: "" }));
+          triggerCelebration(
+            { current: newScore, mode: "rush" },
+            () => {
+              if (data.next_puzzle) {
+                playPuzzleAdvance(!lowBandwidth);
+                setRushIndex((i) => i + 1);
+                setRushQueue((q) => [...q, data.next_puzzle]);
+                setPuzzle(data.next_puzzle);
+                setUciMoves([]);
+                setStartTime(Date.now());
+                setBoardKey((k) => k + 1);
+              }
+            }
+          );
+        }
+        if (!solved && data.next_puzzle) {
           setRushIndex((i) => i + 1);
           setRushQueue((q) => [...q, data.next_puzzle]);
-          setPuzzle(data.next_puzzle);
-          setUciMoves([]);
-          setStartTime(Date.now());
-          setBoardKey((k) => k + 1);
+          setTimeout(() => {
+            setPuzzle(data.next_puzzle!);
+            setUciMoves([]);
+            setStartTime(Date.now());
+            setBoardKey((k) => k + 1);
+          }, 600);
         }
         return;
       }
