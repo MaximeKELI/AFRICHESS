@@ -544,11 +544,12 @@ class MatchmakingService:
     ):
         from .fairplay_review import user_has_active_matchmaking_block
 
+        from .fairplay_exempt import user_is_fairplay_exempt
+        from .fairplay_telemetry import user_has_fairplay_consent
+
         if user_has_active_matchmaking_block(user):
             raise ValueError("Matchmaking bloqué — sanction Fair Play active")
-        if is_rated:
-            from .fairplay_telemetry import user_has_fairplay_consent
-
+        if is_rated and not user_is_fairplay_exempt(user):
             if not user_has_fairplay_consent(user):
                 raise ValueError("Consentement Fair Play requis pour les parties classées")
         tc_key = normalize_matchmaking_time_control(
@@ -590,11 +591,12 @@ class MatchmakingService:
     ):
         from .fairplay_review import user_has_active_matchmaking_block
 
+        from .fairplay_exempt import user_is_fairplay_exempt
+        from .fairplay_telemetry import user_has_fairplay_consent
+
         if user_has_active_matchmaking_block(user):
             raise ValueError("Matchmaking bloqué — sanction Fair Play active")
-        if is_rated:
-            from .fairplay_telemetry import user_has_fairplay_consent
-
+        if is_rated and not user_is_fairplay_exempt(user):
             if not user_has_fairplay_consent(user):
                 raise ValueError("Consentement Fair Play requis pour les parties classées")
         tc_key = normalize_matchmaking_time_control(
