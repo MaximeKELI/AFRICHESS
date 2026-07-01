@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { ChessBoard } from "../components/ChessBoard";
+import { PuzzleGardenMobile } from "../components/PuzzleGardenMobile";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../context/LocaleContext";
 import { type Puzzle, puzzlesApi } from "../lib/api";
@@ -37,6 +38,8 @@ export default function PuzzlesScreen() {
   const [error, setError] = useState<string | null>(null);
   const [puzzleFailed, setPuzzleFailed] = useState(false);
   const [puzzleSolved, setPuzzleSolved] = useState(false);
+  const [gardenVisible, setGardenVisible] = useState(false);
+  const [lastXp, setLastXp] = useState<number | undefined>();
 
   const reset = () => {
     setUciMoves([]);
