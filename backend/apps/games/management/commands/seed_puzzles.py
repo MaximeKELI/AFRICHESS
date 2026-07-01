@@ -1,4 +1,4 @@
-"""Seed puzzles : catalogue local + import Lichess jusqu'à 300+."""
+"""Seed puzzles : catalogue local + import Lichess jusqu'à 10 000+."""
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
@@ -38,9 +38,10 @@ class Command(BaseCommand):
 
         needed = max(0, min_total - total)
         if needed > 0 and not options["skip_lichess"]:
-            import_limit = max(needed + 120, min_total + 80)
+            # Marge pour doublons FEN et répartition par niveau
+            import_limit = min_total + max(500, min_total // 10)
             self.stdout.write(
-                f"Import Lichess : objectif +{needed} (limite {import_limit})…"
+                f"Import Lichess : objectif +{needed} (limite scan {import_limit})…"
             )
             try:
                 call_command(

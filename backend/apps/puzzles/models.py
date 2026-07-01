@@ -34,6 +34,8 @@ class Puzzle(models.Model):
         indexes = [
             models.Index(fields=["is_daily", "daily_date"]),
             models.Index(fields=["difficulty"]),
+            models.Index(fields=["difficulty", "rating"]),
+            models.Index(fields=["source"]),
             models.Index(fields=["author", "source"]),
         ]
 

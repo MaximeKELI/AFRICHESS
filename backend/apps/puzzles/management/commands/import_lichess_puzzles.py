@@ -9,9 +9,9 @@ from django.utils import timezone
 from apps.puzzles.lichess_import import (
     DEFAULT_CACHE,
     MIN_PUZZLE_POOL,
-    RATING_TARGETS,
     download_lichess_db,
     iter_valid_puzzles,
+    rating_targets_for_limit,
 )
 from apps.puzzles.models import Puzzle
 
@@ -58,9 +58,17 @@ class Command(BaseCommand):
             action="store_true",
             help="Supprime les puzzles source=lichess avant import",
         )
+        parser.add_argument(
+            "--batch-size",
+            type=int,
+            default=500,
+            help="Taille des insertions bulk_create (défaut 500)",
+        )
 
     def handle(self, *args, **options):
         limit = options["limit"]
+        batch_size = max(50, options["batch_size"])
+        targets = rating_targets_for_limit(limit)
         source = options["file"] or None
 
         if options["download"] or (not source and not DEFAULT_CACHE.exists()):
@@ -73,16 +81,16 @@ class Command(BaseCommand):
             deleted, _ = Puzzle.objects.filter(source="lichess").delete()
             self.stdout.write(f"Supprimé {deleted} puzzles lichess")
 
-        existing_fens = set(Puzzle.objects.values_list("fen", flat=True))
-        per_diff = {k: 0 for k in RATING_TARGETS}
+        self.stdout.write("Chargement des FEN existants…")
+        existing_fens = set(Puzzle.objects.values_list("fen", flat=True).iterator(chunk_size=4096))
+        per_diff = {k: 0 for k in targets}
         batch: list[Puzzle] = []
         created = 0
         skipped = 0
-        batch_size = 200
 
         self.stdout.write(
             f"Import jusqu'à {limit} puzzles "
-            f"(cibles: {RATING_TARGETS}, popularité ≥ {options['min_popularity']})…"
+            f"(cibles: {targets}, popularité ≥ {options['min_popularity']})…"
         )
 
         for data in iter_valid_puzzles(
@@ -91,6 +99,7 @@ class Command(BaseCommand):
             max_rating=options["max_rating"],
             min_popularity=options["min_popularity"],
             limit=limit,
+            targets=targets,
         ):
             if data["fen"] in existing_fens:
                 skipped += 1
@@ -114,14 +123,14 @@ class Command(BaseCommand):
                     Puzzle.objects.bulk_create(batch, ignore_conflicts=True)
                 created += len(batch)
                 batch.clear()
-                self.stdout.write(f"  … {created} insérés", ending="\r")
+                if created % 1000 == 0:
+                    self.stdout.write(f"  … {created} insérés")
 
         if batch:
             with transaction.atomic():
                 Puzzle.objects.bulk_create(batch, ignore_conflicts=True)
             created += len(batch)
 
-        # Puzzle du jour depuis le pool lichess (medium, bon rating)
         today = timezone.now().date()
         daily = (
             Puzzle.objects.filter(source="lichess", difficulty="medium", rating__gte=1000)
@@ -136,11 +145,10 @@ class Command(BaseCommand):
             daily.save(update_fields=["is_daily", "daily_date"])
 
             candidates = list(
-                Puzzle.objects.filter(source="lichess", difficulty="medium").order_by("rating")[:30]
+                Puzzle.objects.filter(source="lichess", difficulty="medium")
+                .order_by("?")[:60]
             )
-            for i, day_offset in enumerate(range(1, 8)):
-                if i >= len(candidates):
-                    break
+            for i, day_offset in enumerate(range(1, min(len(candidates) + 1, 31))):
                 p = candidates[i]
                 p.daily_date = today + timedelta(days=day_offset)
                 p.save(update_fields=["daily_date"])
@@ -152,6 +160,6 @@ class Command(BaseCommand):
             self.style.SUCCESS(
                 f"Import Lichess : +{created} nouveaux, {skipped} doublons ignorés\n"
                 f"  lichess en base : {total} | total puzzles : {all_total}\n"
-                f"  par niveau : {per_diff}"
+                f"  par niveau (lot) : {per_diff}"
             )
         )
