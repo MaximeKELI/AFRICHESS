@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { PuzzleBoard } from "@/components/puzzles/PuzzleBoard";
+import {
+  PuzzleSolveCelebration,
+  type PuzzleCelebrationData,
+} from "@/components/puzzles/PuzzleSolveCelebration";
+import { PuzzleProgressRail } from "@/components/puzzles/PuzzleProgressRail";
 import { OptionSection } from "@/components/ui/OptionSection";
 import { puzzlesApi, ratingsApi } from "@/lib/api";
 import { InlineAlert } from "@/components/ui/InlineAlert";
