@@ -129,23 +129,22 @@ export function applyPuzzleMove(
     };
   }
 
+  const solver = solverColor(startFen);
   let moves = [...playedMoves, expected];
 
-  // Réponses automatiques de l'adversaire
+  // Réponses automatiques de l'adversaire uniquement (pas les prochains coups joueur)
   while (moves.length < solutionMoves.length) {
+    const c = chessAtPuzzleProgress(startFen, moves);
+    if (!c || c.turn() === solver) break;
     const opponentMove = normalizeUci(solutionMoves[moves.length]);
-    if (!opponentMove) break;
-    const fenBefore = buildPuzzleFen(startFen, moves);
-    const c = new Chess(fenBefore);
-    if (!isLegalUci(c, opponentMove)) break;
+    if (!opponentMove || !isLegalUci(c, opponentMove)) break;
     moves = [...moves, opponentMove];
   }
 
   const complete = moves.length >= solutionMoves.length;
   const fen = buildPuzzleFen(startFen, moves);
   const chess = new Chess(fen);
-  const color = solverColor(startFen);
-  const playerTurn = complete ? false : chess.turn() === color;
+  const playerTurn = complete ? false : chess.turn() === solver;
 
   return { fen, moves, complete, wrong: false, playerTurn };
 }
