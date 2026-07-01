@@ -90,6 +90,8 @@ export default function CoursePage() {
           current: data.correct,
           total: data.total ?? questionCount,
           mode: "quiz",
+          manualContinue: true,
+          xpGained: data.xp_gained,
         });
       } else {
         setQuizResult(
