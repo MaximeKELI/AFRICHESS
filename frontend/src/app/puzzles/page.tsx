@@ -237,6 +237,7 @@ export default function PuzzlesPage() {
 
   const loadTraining = () => {
     setResult(null);
+    setPuzzleFailed(false);
     setUciMoves([]);
     setStartTime(Date.now());
     setLoadError(null);
@@ -332,6 +333,7 @@ export default function PuzzlesPage() {
       if (tab === "battle" && battleId) {
         const { data } = await puzzlesApi.battleSubmit(battleId, moves, time);
         if (!data.solved) {
+          setPuzzleFailed(true);
           setResult(t("puzzles.solved.wrong"));
           return;
         }
@@ -385,6 +387,7 @@ export default function PuzzlesPage() {
             })
           : t("puzzles.solved.wrong")
       );
+      if (!solved) setPuzzleFailed(true);
     } catch {
       setResult(t("puzzles.loginToSubmit"));
     }
@@ -402,17 +405,20 @@ export default function PuzzlesPage() {
     (played: string[]) => {
       if (tab === "rush" || tab === "survival") {
         void submitWithMoves(played);
+        return;
+      }
+      if (tab === "battle") {
+        setPuzzleFailed(true);
+        setResult(t("puzzles.solved.wrong"));
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [tab, puzzle]
   );
 
-  const reset = () => {
-    setUciMoves([]);
-    setResult(null);
-    setStartTime(Date.now());
-    setBoardKey((k) => k + 1);
+  const retryPuzzle = () => {
+    setPuzzleFailed(false);
+    reset();
   };
 
   const nextRush = () => {
