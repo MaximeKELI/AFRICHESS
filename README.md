@@ -871,7 +871,7 @@ timeline
 - [ ] Pièces SVG illustrées style africain
 - [ ] i18n complet de toutes les pages
 - [ ] Intégration rating FIDE
-- [ ] Push notifications natives (APNs / FCM)
+- [x] Push notifications natives (APNs / FCM)
 - [ ] Streaming live avancé
 
 </details>
