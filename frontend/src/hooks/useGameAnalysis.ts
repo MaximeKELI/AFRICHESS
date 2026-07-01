@@ -44,6 +44,7 @@ export function useGameAnalysis({
   enabled,
   initialAnalysis = null,
   autoRun = false,
+  cacheFirst = false,
 }: UseGameAnalysisOptions) {
   const { t } = useTranslation();
   const [analysis, setAnalysis] = useState<GameAnalysisData | null>(initialAnalysis);
@@ -102,9 +103,11 @@ export function useGameAnalysis({
   }, [initialAnalysis, analysis]);
 
   useEffect(() => {
-    if (!enabled || !autoRun || analysis || loading) return;
+    if (!enabled || !autoRun || loading) return;
+    if (cacheFirst && (initialAnalysis || analysis)) return;
+    if (analysis) return;
     void runAnalysis();
-  }, [enabled, autoRun, analysis, loading, runAnalysis]);
+  }, [enabled, autoRun, cacheFirst, initialAnalysis, analysis, loading, runAnalysis]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
