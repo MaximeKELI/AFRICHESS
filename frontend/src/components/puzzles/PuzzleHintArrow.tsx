@@ -23,10 +23,9 @@ export function PuzzleHintArrow({
   fen,
   orientation = "white",
 }: PuzzleHintArrowProps) {
-  const { pathD, origin, segments } = useMemo(() => {
-    const chess = new Chess(fen === "start" ? undefined : fen);
-    const piece = chess.get(from as Square);
-    const pieceType = piece?.type ?? "q";
+  const { segments, origin, dest } = useMemo(() => {
+    const chess = chessFromDisplayFen(fen);
+    const pieceType = chess?.get(from as Square)?.type ?? "q";
     const waypoints = hintArrowWaypoints(from, to, pieceType);
     const pathD = buildHintArrowPathD(waypoints, orientation);
     const origin = toBoardPercent(squareToFileRank(from), orientation);

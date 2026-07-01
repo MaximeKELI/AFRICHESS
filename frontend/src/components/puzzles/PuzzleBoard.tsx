@@ -107,10 +107,10 @@ export function PuzzleBoard({
 
   const hintArrow = useMemo(() => {
     if (!hintRevealed) return null;
-    const uci = nextPlayerSolutionMove(solution, played);
+    const uci = nextPlayerSolutionMove(puzzle.fen, solution, played);
     if (!uci) return null;
     return { from: uci.slice(0, 2), to: uci.slice(2, 4) };
-  }, [hintRevealed, solution, played]);
+  }, [hintRevealed, puzzle.fen, solution, played]);
 
   return (
     <div className={`space-y-2 relative ${shake ? "puzzle-fx-shake" : ""}`}>
