@@ -916,32 +916,65 @@ export default function PuzzlesPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(160px,200px)] gap-4 lg:gap-6 items-start">
             <div className="w-full min-w-0 relative min-h-[360px]">
+              {tab === "training" && trainingQueue.length > 1 && (
+                <PuzzleMiniStairs
+                  current={trainingIndex + 1}
+                  total={trainingQueue.length}
+                  showError={showMiniError}
+                  className="mb-2"
+                />
+              )}
               <PuzzleBoard
                 puzzle={puzzle}
                 onComplete={(moves) => handlePuzzleComplete(moves)}
                 onWrong={handlePuzzleWrong}
+                onPlayedChange={setLocalPlayed}
                 disabled={puzzleSolved && tab !== "rush" && tab !== "survival"}
+                hintSquare={hintSquare}
               />
               <PuzzleSolveCelebration
                 data={celebration}
                 onDone={handleCelebrationDone}
-                autoDismissMs={tab === "daily" || tab === "training" ? 3200 : 2800}
+                autoDismissMs={tab === "rush" || tab === "survival" ? 2400 : 3200}
+              />
+              <PuzzleBadgeToast
+                badgeIds={badgeQueue}
+                onDone={() => setBadgeQueue([])}
               />
             </div>
-            <OptionSection
-              compact
-              title={t("board.picker.title")}
-              description={t("board.picker.hint")}
-              className="h-fit"
-            >
-              <BoardThemePicker compact showHeader={false} />
-            </OptionSection>
+            <div className="space-y-4">
+              <OptionSection
+                compact
+                title={t("board.picker.title")}
+                description={t("board.picker.hint")}
+                className="h-fit"
+              >
+                <BoardThemePicker compact showHeader={false} />
+              </OptionSection>
+              <OptionSection
+                compact
+                title={t("puzzles.settings.title")}
+                description={t("puzzles.settings.hint")}
+                className="h-fit"
+              >
+                <PuzzleSettingsPanel unlockCtx={unlockCtx} />
+              </OptionSection>
+            </div>
           </div>
 
           <div className="mt-6 flex flex-wrap gap-4 items-center">
             <button type="button" onClick={reset} className="px-6 py-2 border rounded-lg">
               {t("puzzles.reset")}
             </button>
+            {hintOffered && !hintSquare && !puzzleSolved && tab !== "rush" && tab !== "survival" && (
+              <button
+                type="button"
+                onClick={revealHint}
+                className="px-6 py-2 border border-africhess-gold text-africhess-gold rounded-lg text-sm"
+              >
+                {t("puzzles.hint.button")}
+              </button>
+            )}
             {puzzleFailed && tab !== "rush" && tab !== "survival" && (
               <button
                 type="button"
