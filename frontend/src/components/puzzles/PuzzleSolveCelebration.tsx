@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Check, Flame, TrendingUp } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Flame, TrendingUp } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { playPuzzleSuccess } from "@/lib/puzzleSounds";
 import { useAuthStore } from "@/store/auth";
@@ -12,7 +12,8 @@ export interface PuzzleCelebrationData {
   total?: number | null;
   streak?: number;
   eloChange?: number;
-  mode: "daily" | "training" | "rush" | "survival" | "battle" | "generic";
+  mode: "daily" | "training" | "rush" | "survival" | "battle" | "quiz" | "generic";
+  titleOverride?: string;
 }
 
 interface PuzzleSolveCelebrationProps {
@@ -21,41 +22,58 @@ interface PuzzleSolveCelebrationProps {
   autoDismissMs?: number;
 }
 
-const CONFETTI = Array.from({ length: 14 }, (_, i) => ({
-  id: i,
-  left: `${8 + ((i * 17) % 84)}%`,
-  delay: `${i * 45}ms`,
-  hue: i % 3 === 0 ? "var(--africhess-gold)" : i % 3 === 1 ? "var(--africhess-green)" : "#67e8f9",
-}));
+const FLOWERS = [
+  { left: "8%", bottom: "18%", color: "#e07a5f", delay: "0s" },
+  { left: "22%", bottom: "12%", color: "#d4a843", delay: "0.4s" },
+  { left: "78%", bottom: "15%", color: "#6ee7a8", delay: "0.2s" },
+  { left: "88%", bottom: "22%", color: "#f4a4c0", delay: "0.6s" },
+  { left: "52%", bottom: "8%", color: "#67e8f9", delay: "0.3s" },
+];
+
+const BUTTERFLIES = [
+  { left: "15%", top: "28%", delay: "0s" },
+  { left: "70%", top: "22%", delay: "1.2s" },
+];
 
 export function PuzzleSolveCelebration({
   data,
   onDone,
-  autoDismissMs = 1800,
+  autoDismissMs = 3000,
 }: PuzzleSolveCelebrationProps) {
   const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
   const [visible, setVisible] = useState(false);
-  const [displayNum, setDisplayNum] = useState(0);
+  const [pawnStep, setPawnStep] = useState(0);
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
+
+  const fromStep = data ? Math.max(0, data.current - 1) : 0;
+  const toStep = data?.current ?? 1;
+
+  const visibleSteps = useMemo(() => {
+    if (!data) return 5;
+    const horizon = data.total && data.total > 1 ? data.total : Math.max(toStep + 3, 5);
+    return Math.min(Math.max(horizon, 5), 9);
+  }, [data, toStep]);
+
+  const steps = useMemo(
+    () => Array.from({ length: visibleSteps }, (_, i) => i + 1),
+    [visibleSteps]
+  );
 
   useEffect(() => {
     if (!data) {
       setVisible(false);
+      setPawnStep(0);
       return;
     }
     setVisible(true);
-    setDisplayNum(0);
+    setPawnStep(fromStep);
     playPuzzleSuccess(!lowBandwidth);
 
-    const target = data.current;
-    let frame = 0;
-    const countUp = window.setInterval(() => {
-      frame += 1;
-      setDisplayNum(Math.min(target, Math.ceil((frame / 12) * target)));
-      if (frame >= 12) window.clearInterval(countUp);
-    }, 35);
+    const climbTimer = window.setTimeout(() => {
+      setPawnStep(toStep);
+    }, 350);
 
     const timer = window.setTimeout(() => {
       setVisible(false);
@@ -63,10 +81,10 @@ export function PuzzleSolveCelebration({
     }, autoDismissMs);
 
     return () => {
-      window.clearInterval(countUp);
+      window.clearTimeout(climbTimer);
       window.clearTimeout(timer);
     };
-  }, [data, autoDismissMs, lowBandwidth]);
+  }, [data, autoDismissMs, lowBandwidth, fromStep, toStep]);
 
   if (!data || !visible) return null;
 
@@ -74,77 +92,124 @@ export function PuzzleSolveCelebration({
     data.total && data.total > 0 ? Math.min(100, (data.current / data.total) * 100) : 100;
 
   const title =
-    data.mode === "daily"
+    data.titleOverride ??
+    (data.mode === "daily"
       ? t("puzzles.celebrate.daily")
       : data.mode === "rush"
         ? t("puzzles.celebrate.rush")
         : data.mode === "survival"
           ? t("puzzles.celebrate.survival")
-          : t("puzzles.celebrate.title");
+          : data.mode === "quiz"
+            ? t("puzzles.celebrate.quiz")
+            : t("puzzles.celebrate.title"));
 
   return (
     <div
-      className="puzzle-fx-celebration"
+      className="puzzle-garden-overlay"
       role="status"
       aria-live="polite"
       aria-label={title}
     >
-      <div className="puzzle-fx-celebration-backdrop" />
-      <div className="puzzle-fx-celebration-ring" aria-hidden />
-      <div className="puzzle-fx-celebration-card">
-        {!lowBandwidth &&
-          CONFETTI.map((c) => (
-            <span
-              key={c.id}
-              className="puzzle-fx-confetti"
-              style={{ left: c.left, animationDelay: c.delay, background: c.hue }}
-            />
-          ))}
+      <div className="puzzle-garden-sky" aria-hidden />
+      <div className="puzzle-garden-sun" aria-hidden />
+      <div className="puzzle-garden-hill puzzle-garden-hill-back" aria-hidden />
+      <div className="puzzle-garden-hill puzzle-garden-hill-front" aria-hidden />
+      <div className="puzzle-garden-grass" aria-hidden />
 
-        <div className="puzzle-fx-check-wrap">
-          <div className="puzzle-fx-check-circle">
-            <Check className="puzzle-fx-check-icon" strokeWidth={3} aria-hidden />
-          </div>
-        </div>
+      {!lowBandwidth &&
+        FLOWERS.map((f, i) => (
+          <span
+            key={i}
+            className="puzzle-garden-flower"
+            style={{ left: f.left, bottom: f.bottom, animationDelay: f.delay, color: f.color }}
+            aria-hidden
+          />
+        ))}
 
-        <p className="puzzle-fx-celebrate-title">{title}</p>
+      {!lowBandwidth &&
+        BUTTERFLIES.map((b, i) => (
+          <span
+            key={i}
+            className="puzzle-garden-butterfly"
+            style={{ left: b.left, top: b.top, animationDelay: b.delay }}
+            aria-hidden
+          >
+            ✦
+          </span>
+        ))}
 
-        {data.total != null && data.total > 1 ? (
-          <div className="puzzle-fx-progress-block">
-            <p className="puzzle-fx-progress-count">
-              <span className="puzzle-fx-progress-current">{displayNum}</span>
-              <span className="puzzle-fx-progress-sep">/</span>
-              <span className="puzzle-fx-progress-total">{data.total}</span>
-            </p>
-            <p className="puzzle-fx-progress-label">{t("puzzles.celebrate.progress")}</p>
-            <div className="puzzle-fx-progress-track">
-              <div
-                className="puzzle-fx-progress-fill"
-                style={{ width: `${progressPct}%` }}
-              />
+      <div className="puzzle-garden-content">
+        <p className="puzzle-garden-title">{title}</p>
+
+        <div className="puzzle-garden-stairs-scene">
+          <div className="puzzle-garden-stairs">
+            {steps.map((stepNum) => {
+              const done = stepNum < toStep;
+              const active = stepNum === toStep;
+              const upcoming = stepNum > toStep;
+              return (
+                <div
+                  key={stepNum}
+                  className={`puzzle-garden-step ${done ? "puzzle-garden-step-done" : ""} ${
+                    active ? "puzzle-garden-step-active" : ""
+                  } ${upcoming ? "puzzle-garden-step-upcoming" : ""}`}
+                  style={{ "--step-index": stepNum } as React.CSSProperties}
+                >
+                  <span className="puzzle-garden-step-num">{stepNum}</span>
+                  {done && <span className="puzzle-garden-step-check" aria-hidden>✓</span>}
+                </div>
+              );
+            })}
+
+            <div
+              className="puzzle-garden-pawn"
+              style={
+                {
+                  "--pawn-step": pawnStep,
+                  "--pawn-steps-total": visibleSteps,
+                } as React.CSSProperties
+              }
+              aria-hidden
+            >
+              <span className="puzzle-garden-pawn-piece">♟</span>
+              <span className="puzzle-garden-pawn-shadow" />
             </div>
           </div>
-        ) : (
-          <p className="puzzle-fx-solo-count puzzle-fx-pop-in">{displayNum || 1}</p>
-        )}
-
-        <div className="puzzle-fx-meta-row">
-          {data.streak != null && data.streak > 0 && (
-            <span className="puzzle-fx-meta-chip puzzle-fx-meta-streak">
-              <Flame size={14} aria-hidden />
-              {t("puzzles.celebrate.streak", { n: data.streak })}
-            </span>
-          )}
-          {data.eloChange != null && data.eloChange !== 0 && (
-            <span className="puzzle-fx-meta-chip puzzle-fx-meta-elo">
-              <TrendingUp size={14} aria-hidden />
-              {data.eloChange > 0 ? "+" : ""}
-              {data.eloChange} ELO
-            </span>
-          )}
         </div>
 
-        <p className="puzzle-fx-celebrate-hint">{t("puzzles.celebrate.hint")}</p>
+        <div className="puzzle-garden-hud">
+          {data.total != null && data.total > 1 ? (
+            <p className="puzzle-garden-progress">
+              <span className="puzzle-garden-progress-current">{data.current}</span>
+              <span className="puzzle-garden-progress-sep">/</span>
+              <span className="puzzle-garden-progress-total">{data.total}</span>
+            </p>
+          ) : (
+            <p className="puzzle-garden-progress puzzle-garden-progress-solo">{data.current}</p>
+          )}
+          <p className="puzzle-garden-progress-label">{t("puzzles.celebrate.progress")}</p>
+          <div className="puzzle-garden-progress-track">
+            <div className="puzzle-garden-progress-fill" style={{ width: `${progressPct}%` }} />
+          </div>
+
+          <div className="puzzle-garden-meta">
+            {data.streak != null && data.streak > 0 && (
+              <span className="puzzle-garden-chip puzzle-garden-chip-streak">
+                <Flame size={14} aria-hidden />
+                {t("puzzles.celebrate.streak", { n: data.streak })}
+              </span>
+            )}
+            {data.eloChange != null && data.eloChange !== 0 && (
+              <span className="puzzle-garden-chip puzzle-garden-chip-elo">
+                <TrendingUp size={14} aria-hidden />
+                {data.eloChange > 0 ? "+" : ""}
+                {data.eloChange} ELO
+              </span>
+            )}
+          </div>
+
+          <p className="puzzle-garden-hint">{t("puzzles.celebrate.hint")}</p>
+        </div>
       </div>
     </div>
   );
