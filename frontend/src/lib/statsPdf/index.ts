@@ -1,2 +1,2 @@
-export { downloadStatsPdf } from "./downloadStatsPdf.tsx";
+export { downloadStatsPdf } from "./downloadStatsPdf";
 export { buildStatsPdfLabels } from "./buildLabels";
