@@ -146,6 +146,9 @@ const en: Dict = {
   "puzzles.rush.done": "Rush over — score: {score}",
   "puzzles.rush.timeout": "Time's up — score: {score}",
   "puzzles.rush.threeMisses": "3 misses — score: {score}",
+  "puzzles.celebrate.daily": "Daily puzzle complete!",
+  "puzzles.celebrate.progress": "puzzles solved",
+  "puzzles.celebrate.streak": "Streak {n}d",
 
   "learning.title": "Learning",
   "learning.subtitle": "Courses, videos and progress",
