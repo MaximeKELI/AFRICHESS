@@ -673,6 +673,7 @@ const fr: Record<string, string> = {
   "play.status.drawRepetition": "Nulle — même position 3 fois (répétition)",
   "play.status.gameEnd": "Fin de partie : {result}",
   "play.status.gameEndGeneric": "Terminée",
+  "play.rating.beforeAfter": "{before} → {after}",
   "play.status.opponentFound": "Adversaire trouvé — partie en direct !",
   "play.status.gameLoaded": "Partie chargée",
   "play.status.gameNotFound": "Partie introuvable",

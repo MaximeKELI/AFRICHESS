@@ -27,6 +27,26 @@ export interface WsGamePayload {
     is_vs_ai?: boolean;
     draw_offered_by?: number | null;
     takeback_requested_by?: number | null;
+    is_rated?: boolean;
+    termination_reason?: string;
+    white_elo?: number | null;
+    black_elo?: number | null;
+    white_elo_provisional?: boolean;
+    black_elo_provisional?: boolean;
+    rating_changes?: {
+      white?: {
+        user_id: number;
+        elo_before: number;
+        elo_after: number;
+        change: number;
+      };
+      black?: {
+        user_id: number;
+        elo_before: number;
+        elo_after: number;
+        change: number;
+      };
+    };
   };
   last_move?: {
     san: string;
