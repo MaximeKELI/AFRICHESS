@@ -1149,7 +1149,7 @@ const fr: Record<string, string> = {
   "puzzles.celebrate.perfect": "Set parfait — 10/10 !",
   "puzzles.celebrate.sessionStreak": "×{n} sans erreur",
   "puzzles.hint.button": "Indice",
-  "puzzles.hint.active": "Indice : case de départ surlignée",
+  "puzzles.hint.active": "Indice : départ (cadre) et arrivée (vert) surlignés",
   "puzzles.settings.title": "Puzzles",
   "puzzles.settings.hint": "Sons et thème du jardin",
   "puzzles.settings.sounds": "Sons",
