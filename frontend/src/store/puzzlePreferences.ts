@@ -72,3 +72,15 @@ export function puzzleSoundsActive(lowBandwidth: boolean): boolean {
   const { soundsEnabled } = usePuzzlePreferencesStore.getState();
   return soundsEnabled && !lowBandwidth;
 }
+
+export function syncPuzzlePreferencesFromStorage() {
+  if (typeof window === "undefined") return;
+  const v = localStorage.getItem(preferenceStorageKey(GARDEN_THEME_KEY));
+  const theme: PuzzleGardenThemeId =
+    v === "forest" || v === "night" || v === "aurora" ? v : "savanna";
+  usePuzzlePreferencesStore.setState({
+    soundsEnabled: readBool(SOUNDS_KEY, true),
+    soundVolume: readVolume(),
+    gardenTheme: theme,
+  });
+}
