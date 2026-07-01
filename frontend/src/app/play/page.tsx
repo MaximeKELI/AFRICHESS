@@ -1218,6 +1218,21 @@ function PlayContent() {
             captured={panelDisplay.captured}
           />
           </div>
+          {gameCompleted &&
+            isLiveHuman &&
+            gameData.is_rated &&
+            gameData.rating_changes && (
+              <GameOverRatingBanner
+                ratingChanges={gameData.rating_changes}
+                playerIsWhite={playerIsWhite}
+                mode={mode}
+                provisional={
+                  playerIsWhite
+                    ? Boolean(gameData.white_elo_provisional)
+                    : Boolean(gameData.black_elo_provisional)
+                }
+              />
+            )}
           {isLiveHuman && gameId && mobileTab === "board" && (
             <button
               type="button"
