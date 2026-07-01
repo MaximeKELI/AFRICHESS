@@ -14,7 +14,6 @@ import { UserFlair } from "@/components/profile/UserFlair";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { BackgroundPicker } from "@/components/chess/BackgroundPicker";
 import { OptionSection } from "@/components/ui/OptionSection";
-import { OptionCategoryNav } from "@/components/ui/OptionCategoryNav";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { FairPlayAppealPanel } from "@/components/fairplay/FairPlayAppealPanel";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
@@ -118,15 +117,22 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <OptionCategoryNav
-        categories={profileSections}
-        active=""
-        onChange={(id) => {
-          document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }}
-        ariaLabel={t("profile.nav.sections")}
+      <nav
         className="sticky top-14 z-30 -mx-4 px-4 py-2 bg-[var(--bg)]/90 backdrop-blur-sm border-b border-white/5"
-      />
+        aria-label={t("profile.nav.sections")}
+      >
+        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+          {profileSections.map(({ id, label }) => (
+            <a
+              key={id}
+              href={`#${id}`}
+              className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border border-white/15 opacity-80 hover:opacity-100 hover:text-africhess-gold hover:border-africhess-gold/40 transition-colors whitespace-nowrap"
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+      </nav>
 
       {user.stats && (
         <div className="grid grid-cols-2 gap-4">
@@ -141,7 +147,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      <div className="glass-card p-6 space-y-6">
+      <div id="profile-customize" className="glass-card p-6 space-y-6 scroll-mt-20">
         <h2 className="font-semibold text-lg">{t("profile.customize")}</h2>
         <UserAvatarUpload
           avatar={user.avatar}
