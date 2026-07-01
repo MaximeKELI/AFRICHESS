@@ -372,6 +372,7 @@ export default function PuzzlesPage() {
           return;
         }
         const newScore = data.score ?? survivalScore + 1;
+        setSurvivalScore(newScore);
         setResult(t("puzzles.solved.bravo", { streak: streak, rush: "" }));
         triggerCelebration(
           { current: newScore, mode: "survival" },
@@ -676,6 +677,10 @@ export default function PuzzlesPage() {
 
       {tab !== "leaderboard" && puzzle && puzzle.solution_moves?.length ? (
         <div key={`${puzzle.id}-${boardKey}`}>
+          {tab === "training" && trainingQueue.length > 1 && (
+            <PuzzleProgressRail current={trainingIndex + 1} total={trainingQueue.length} />
+          )}
+
           <div className="flex flex-wrap gap-2 mb-4">
             <span className="px-3 py-1 rounded-full bg-africhess-green/20 text-sm capitalize">
               {puzzle.difficulty}
@@ -700,12 +705,17 @@ export default function PuzzlesPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(160px,200px)] gap-4 lg:gap-6 items-start">
-            <div className="w-full min-w-0">
+            <div className="w-full min-w-0 relative min-h-[280px]">
               <PuzzleBoard
                 puzzle={puzzle}
                 onComplete={(moves) => handlePuzzleComplete(moves)}
                 onWrong={handlePuzzleWrong}
                 disabled={puzzleSolved && tab !== "rush" && tab !== "survival"}
+              />
+              <PuzzleSolveCelebration
+                data={celebration}
+                onDone={handleCelebrationDone}
+                autoDismissMs={tab === "daily" || tab === "training" ? 2200 : 1600}
               />
             </div>
             <OptionSection
