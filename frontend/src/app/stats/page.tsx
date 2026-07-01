@@ -22,6 +22,7 @@ import {
 } from "@/components/stats/StatsFuturistic";
 import { StatsGameHistory, StatsHistorySummary } from "@/components/stats/StatsGameHistory";
 import { downloadStatsCsv, downloadStatsJson, type StatsExportData } from "@/lib/statsExport";
+import { downloadStatsPdf } from "@/lib/statsPdf";
 import { useTranslation } from "@/hooks/useTranslation";
 import { formatLocaleDate, terminationLabel } from "@/lib/i18n/labels";
 
