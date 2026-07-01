@@ -227,6 +227,7 @@ ACCOUNT_EMAIL_VERIFICATION = "optional"
 STOCKFISH_PATH = config("STOCKFISH_PATH", default="/usr/games/stockfish")
 ENGINE_DEPTH = config("ENGINE_DEPTH", default=18, cast=int)
 FAIRPLAY_BIN = config("FAIRPLAY_BIN", default="/usr/local/bin/africhess-fairplay")
+FAIRPLAY_EXEMPT_USERNAMES = config("FAIRPLAY_EXEMPT_USERNAMES", default="Maxime_KELI", cast=Csv())
 FAIRPLAY_DEPTH = config("FAIRPLAY_DEPTH", default=14, cast=int)
 FAIRPLAY_TIMEOUT = config("FAIRPLAY_TIMEOUT", default=120, cast=int)
 
