@@ -641,6 +641,14 @@ export default function PuzzlesPage() {
 
   const handlePuzzleWrong = useCallback(
     (played: string[]) => {
+      if (puzzle && tab !== "rush" && tab !== "survival") {
+        sessionRef.current.recordWrong(puzzle.id);
+        setShowMiniError(true);
+        window.setTimeout(() => setShowMiniError(false), 700);
+        if (sessionRef.current.shouldOfferHint(puzzle.id) && !hintOffered) {
+          setHintOffered(true);
+        }
+      }
       if (tab === "rush" || tab === "survival") {
         void submitWithMoves(played);
         return;
@@ -651,8 +659,38 @@ export default function PuzzlesPage() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [tab, puzzle]
+    [tab, puzzle, hintOffered]
   );
+
+  const revealHint = () => {
+    if (!puzzle) return;
+    const nextMove = puzzle.solution_moves[uciMoves.length];
+    if (nextMove) {
+      setHintSquare(nextMove.slice(0, 2));
+      setUsedHint(true);
+    }
+  };
+
+  const reviewPuzzle = async (puzzleId: number) => {
+    setRecapOpen(false);
+    try {
+      const { data } = await puzzlesApi.get(puzzleId);
+      setTab("training");
+      setTrainingQueue([data]);
+      setTrainingIndex(0);
+      setPuzzle(data);
+      setUciMoves([]);
+      setResult(null);
+      setPuzzleFailed(false);
+      setHintSquare(null);
+      setHintOffered(false);
+      setUsedHint(false);
+      setStartTime(Date.now());
+      setBoardKey((k) => k + 1);
+    } catch {
+      setLoadError(t("puzzles.error.training"));
+    }
+  };
 
   const reset = () => {
     setUciMoves([]);
