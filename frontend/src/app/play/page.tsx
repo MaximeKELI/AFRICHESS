@@ -795,6 +795,7 @@ function PlayContent() {
     [
       gameId,
       gameCompleted,
+      isVoteChess,
       isMyTurn,
       isVsAi,
       movePending,
