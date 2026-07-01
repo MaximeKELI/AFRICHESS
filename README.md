@@ -123,7 +123,7 @@ xychart-beta
 | | Vote chess | STUB création sans UI vote in-game | OK clubs vote chess | **Chess.com +** |
 | | Simultané | PART join → 1v1 isolé | OK multi-board host | **Chess.com +** |
 | | Chrono serveur Fischer | OK authoritative | OK + intégré fair play | **Parité technique** |
-| | Analyse post-partie | OK Stockfish gaffes/eval | OK Game Review IA premium | **Chess.com +** profondeur IA |
+| | Analyse post-partie | OK Stockfish auto background + Game Review | OK Game Review IA premium | **Chess.com +** profondeur IA |
 | | Spectateur | OK `/live` + `/watch` | OK TV + millions de vues | **Parité** · écart audience |
 | **Puzzles** | Catalogue | OK ~10 000+ (seed Lichess) | OK millions | **Chess.com +** volume |
 | | Daily + streak | OK | OK | **Parité** |
@@ -151,7 +151,7 @@ xychart-beta
 | | Leaderboard ELO | OK global + african + pays | OK global + national | **Parité** · AFRICHESS + filtre Afrique |
 | | Events calendrier | OK platform events | OK événements titled | **Parité** légère · Chess.com + prestige |
 | **Mobile** | App native | PART Expo (play · daily · puzzles partiels) | OK iOS/Android matures | **Chess.com +** |
-| | Push notifications | N/A WS web seulement | OK APNs / FCM | **Chess.com +** |
+| | Push notifications | OK APNs/FCM (Expo) + Web Push VAPID | OK APNs / FCM | **Parité** |
 | | Parité web/mobile | ~40 % des modules web | OK quasi-complète | **Chess.com +** |
 | **Fair play** | Télémétrie client | OK tab-blur · paste · cadence | OK Fair Play avancé | **Chess.com +** |
 | | Moteur post-partie | OK C++ + review admin | OK détection moteur à échelle | **Chess.com +** |
@@ -260,6 +260,7 @@ Segments **où Chess.com domine** :
 - Mobile natif + push
 - Anti-triche automatique à échelle
 - Game Review IA profonde (premium)
+- Analyse Stockfish automatique en background à la fin de partie
 
 ### Verdict
 
