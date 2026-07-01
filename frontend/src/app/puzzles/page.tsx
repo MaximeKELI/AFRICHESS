@@ -411,15 +411,18 @@ export default function PuzzlesPage() {
           return;
         }
         setResult(t("puzzles.solved.bravo", { streak: streak, rush: "" }));
-        if (battleId) {
-          const { data: detail } = await puzzlesApi.battleGet(battleId);
-          if (detail.puzzle) {
-            setPuzzle(detail.puzzle);
-            setUciMoves([]);
-            setStartTime(Date.now());
-            setBoardKey((k) => k + 1);
+        triggerCelebration({ current: you, mode: "battle" }, async () => {
+          if (battleId) {
+            const { data: detail } = await puzzlesApi.battleGet(battleId);
+            if (detail.puzzle) {
+              playPuzzleAdvance(!lowBandwidth);
+              setPuzzle(detail.puzzle);
+              setUciMoves([]);
+              setStartTime(Date.now());
+              setBoardKey((k) => k + 1);
+            }
           }
-        }
+        });
         return;
       }
 
@@ -434,18 +437,25 @@ export default function PuzzlesPage() {
       } else {
         setStreak(nextStreak);
       }
-      setResult(
-        solved
-          ? t("puzzles.solved.bravo", {
-              streak: nextStreak,
-              rush:
-                tab === "rush"
-                  ? t("puzzles.solved.rush", { score: rushScore + (solved ? 1 : 0) })
-                  : "",
-            })
-          : t("puzzles.solved.wrong")
-      );
-      if (!solved) setPuzzleFailed(true);
+      if (solved) {
+        setResult(
+          t("puzzles.solved.bravo", {
+            streak: nextStreak,
+            rush: "",
+          })
+        );
+        triggerCelebration({
+          current: tab === "training" ? trainingIndex + 1 : 1,
+          total: tab === "training" ? trainingQueue.length : 1,
+          streak: nextStreak,
+          eloChange: data.puzzle_elo_change,
+          mode: tab === "daily" ? "daily" : "training",
+        });
+      } else {
+        playPuzzleWrong(!lowBandwidth);
+        setResult(t("puzzles.solved.wrong"));
+        setPuzzleFailed(true);
+      }
     } catch {
       setResult(t("puzzles.loginToSubmit"));
     }
