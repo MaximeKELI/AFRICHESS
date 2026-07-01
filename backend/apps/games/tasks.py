@@ -45,18 +45,7 @@ def _award_forfeit(game: Game, winner_white: bool, reason: str):
     game.termination_reason = reason
     game.ended_at = timezone.now()
     game.save()
-    if game.white_player and game.black_player and game.is_rated:
-        GameService().rating_service.update_ratings(game)
-    from .stats_service import on_game_completed
-
-    on_game_completed(game)
-    if game.tournament_id:
-        try:
-            from apps.tournaments.services import TournamentEngine
-
-            TournamentEngine().record_result(game)
-        except Exception:
-            pass
+    GameService()._after_human_game_finished(game)
 
 
 @shared_task
