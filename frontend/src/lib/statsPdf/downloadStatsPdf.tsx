@@ -2,9 +2,8 @@
 
 import type { StatsExportData } from "@/lib/statsExport";
 import { terminationLabel } from "@/lib/i18n/labels";
+import type { TranslateFn } from "@/lib/i18n/labels";
 import { buildStatsPdfLabels } from "./buildLabels";
-
-type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
 
 export async function downloadStatsPdf(
   data: StatsExportData,
