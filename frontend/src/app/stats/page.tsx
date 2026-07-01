@@ -289,7 +289,11 @@ export default function StatsPage() {
           </div>
 
           {activeTab === "charts" && (
-            <>
+            <div
+              id="stats-panel-charts"
+              role="tabpanel"
+              aria-labelledby="stats-tab-charts"
+            >
               <section className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                 <FuturisticPanel title={t("stats.chart.outcomes")} delay={0}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
