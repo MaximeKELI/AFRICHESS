@@ -233,12 +233,28 @@ export const puzzlesApi = {
       next_puzzle?: Puzzle;
     }>(`/puzzles/survival/${sessionId}/submit/`, { moves, time_seconds }),
   battleQueue: () =>
-    api.post<{ battle_id: number; status: string; opponent?: string }>("/puzzles/battle/queue/"),
-  battleGet: (id: number) =>
-    api.get<{ status: string; opponent?: string; your_score: number; opponent_score: number }>(
-      `/puzzles/battle/${id}/`
+    api.post<{ battle_id: number; status: string; opponent?: string; puzzle?: Puzzle }>(
+      "/puzzles/battle/queue/"
     ),
-  battleLeave: () => api.post("/puzzles/battle/leave/"),
+  battleGet: (id: number) =>
+    api.get<{
+      id: number;
+      status: string;
+      score1: number;
+      score2: number;
+      puzzle?: Puzzle;
+      winner_id?: number | null;
+    }>(`/puzzles/battle/${id}/`),
+  battleSubmit: (id: number, moves: string[], time_seconds: number) =>
+    api.post<{
+      solved: boolean;
+      score1: number;
+      score2: number;
+      completed: boolean;
+      next_puzzle?: Puzzle;
+      winner_id?: number | null;
+    }>(`/puzzles/battle/${id}/`, { moves, time_seconds }),
+  battleLeave: () => api.delete("/puzzles/battle/queue/"),
 };
 
 export interface CourseSummary {
