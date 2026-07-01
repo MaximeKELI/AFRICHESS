@@ -31,10 +31,12 @@ interface PuzzleBoardProps {
 
 export function PuzzleBoard({ puzzle, onComplete, onWrong, disabled }: PuzzleBoardProps) {
   const { t } = useTranslation();
+  const { lowBandwidth } = useAuthStore();
   const solution = puzzle.solution_moves ?? [];
   const [played, setPlayed] = useState<string[]>([]);
   const [fen, setFen] = useState(puzzle.fen);
   const [shake, setShake] = useState(false);
+  const [wrongFlash, setWrongFlash] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [boardNonce, setBoardNonce] = useState(0);
 
@@ -43,6 +45,7 @@ export function PuzzleBoard({ puzzle, onComplete, onWrong, disabled }: PuzzleBoa
     setFen(puzzle.fen);
     setFeedback(null);
     setShake(false);
+    setWrongFlash(false);
     setBoardNonce(0);
   }, [puzzle.id, puzzle.fen]);
 
@@ -62,10 +65,15 @@ export function PuzzleBoard({ puzzle, onComplete, onWrong, disabled }: PuzzleBoa
 
       if (result.wrong) {
         setShake(true);
+        setWrongFlash(true);
         setFeedback(t("puzzles.wrongMove"));
+        playPuzzleWrong(!lowBandwidth);
         onWrong?.(played);
         setBoardNonce((n) => n + 1);
-        setTimeout(() => setShake(false), 500);
+        setTimeout(() => {
+          setShake(false);
+          setWrongFlash(false);
+        }, 500);
         return;
       }
 
@@ -78,13 +86,13 @@ export function PuzzleBoard({ puzzle, onComplete, onWrong, disabled }: PuzzleBoa
         onComplete(result.moves, false);
       }
     },
-    [disabled, puzzle.fen, solution, played, onComplete, onWrong, t]
+    [disabled, puzzle.fen, solution, played, onComplete, onWrong, t, lowBandwidth]
   );
 
   const progress = solution.length ? Math.round((played.length / solution.length) * 100) : 0;
 
   return (
-    <div className={`space-y-2 ${shake ? "animate-pulse" : ""}`}>
+    <div className={`space-y-2 relative ${shake ? "puzzle-fx-shake" : ""}`}>
       <div className="flex flex-wrap gap-2 items-center text-xs">
         {puzzle.rating != null && (
           <span className="px-2 py-0.5 rounded-full bg-white/10">{puzzle.rating}</span>
@@ -103,7 +111,9 @@ export function PuzzleBoard({ puzzle, onComplete, onWrong, disabled }: PuzzleBoa
       <p className="text-sm text-center text-africhess-gold">
         {playerColor === "w" ? t("puzzles.findWhiteMove") : t("puzzles.findBlackMove")}
       </p>
-      <ChessBoard
+      <div className="relative">
+        {wrongFlash && <div className="puzzle-fx-wrong-flash" aria-hidden />}
+        <ChessBoard
         key={boardNonce}
         fen={fen}
         orientation={orientation}
