@@ -247,6 +247,8 @@ class MatchmakingConsumerTests(TransactionTestCase):
         async_to_sync(self._test_ws_match_found_when_second_player_joins)()
 
     async def _test_ws_match_found_when_second_player_joins(self):
+        from channels.db import database_sync_to_async
+
         from apps.games.models import MatchmakingQueue
         from apps.games.services import MatchmakingService
 
