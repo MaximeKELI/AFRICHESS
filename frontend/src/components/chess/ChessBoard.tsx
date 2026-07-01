@@ -55,6 +55,14 @@ function normalizeFenForDisplay(fen: string): string {
   return fen.replace(/\[.*?\]/g, "");
 }
 
+function chessFromDisplayFen(displayFen: string): Chess | null {
+  try {
+    return new Chess(displayFen === "start" ? undefined : displayFen);
+  } catch {
+    return null;
+  }
+}
+
 function ChessBoardInner({
   fen = "start",
   orientation = "white",
