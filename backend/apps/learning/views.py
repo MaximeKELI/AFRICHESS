@@ -347,3 +347,16 @@ class MyProgressView(generics.ListAPIView):
 
     def get_queryset(self):
         return UserProgress.objects.filter(user=self.request.user).select_related("course")
+
+
+class EndgameDrillsView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        from .endgame_drills import ENDGAME_DRILLS
+
+        theme = request.query_params.get("theme")
+        drills = ENDGAME_DRILLS
+        if theme:
+            drills = [d for d in drills if d.get("theme") == theme]
+        return Response(drills)

@@ -45,4 +45,5 @@ urlpatterns = [
     path("study/<int:line_id>/review/", level3_views.StudyReviewView.as_view(), name="learning-study-submit"),
     path("classroom/", level3_views.ClassroomListCreateView.as_view(), name="learning-classroom"),
     path("classroom/<str:code>/", level3_views.ClassroomDetailView.as_view(), name="learning-classroom-detail"),
+    path("endgames/", views.EndgameDrillsView.as_view(), name="learning-endgames"),
 ]
