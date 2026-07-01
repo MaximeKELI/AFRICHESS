@@ -48,3 +48,21 @@ def notify_move_made(game, result: dict) -> None:
         },
     )
     notify_game_room(game.id, "broadcast_move", payload)
+
+
+def notify_analysis_ready(game) -> None:
+    """Informe les clients WS que l'analyse post-partie est prête."""
+    try:
+        from .models import GameAnalysis
+        from .serializers import GameAnalysisSerializer
+
+        analysis = GameAnalysis.objects.filter(game=game).first()
+        if not analysis or not analysis.best_moves_json:
+            return
+        payload = {
+            "game_id": str(game.id),
+            "analysis": GameAnalysisSerializer(analysis).data,
+        }
+        notify_game_room(game.id, "analysis_ready", payload)
+    except Exception as exc:
+        logger.warning("notify_analysis_ready failed for game %s: %s", game.id, exc)

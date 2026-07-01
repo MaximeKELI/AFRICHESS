@@ -165,6 +165,9 @@ class ChessConsumer(AsyncWebsocketConsumer):
     async def relay_chat(self, event):
         await self._send_event("chat", event["payload"])
 
+    async def analysis_ready(self, event):
+        await self._send_event("analysis_ready", event["payload"])
+
     @database_sync_to_async
     def _save_game_chat(self, content: str) -> dict:
         from apps.social.models import ChatMessage

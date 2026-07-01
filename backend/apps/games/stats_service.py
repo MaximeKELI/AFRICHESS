@@ -168,6 +168,12 @@ def on_game_completed(game: Game) -> None:
                 )
     except Exception:
         pass
+    try:
+        from .analysis_async import schedule_auto_game_analysis
+
+        schedule_auto_game_analysis(str(game.id))
+    except Exception:
+        pass
 
 
 def _result_counts(games_qs, user_id: int) -> dict[str, Any]:
