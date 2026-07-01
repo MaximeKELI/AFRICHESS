@@ -176,7 +176,7 @@ export function PuzzleSolveCelebration({
               }
               aria-hidden
             >
-              <span className="puzzle-garden-pawn-piece">♟</span>
+              <span className="puzzle-garden-pawn-piece">♙</span>
               <span className="puzzle-garden-pawn-shadow" />
             </div>
           </div>
