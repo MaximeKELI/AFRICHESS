@@ -148,10 +148,7 @@ def resign_game(game: Game, user) -> dict:
     game.draw_offered_by = None
     game.takeback_requested_by = None
     game.save()
-    if game.white_player and game.black_player:
-        GameService().rating_service.update_ratings(game)
-    on_game_completed(game)
-    _record_tournament_result(game)
+    GameService()._after_human_game_finished(game)
     return {"ok": True, "result": game.result}
 
 
