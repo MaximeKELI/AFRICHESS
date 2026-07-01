@@ -36,9 +36,10 @@ class FairPlayExemptTests(TestCase):
 
     def test_username_and_flag_exempt(self):
         self.assertTrue(user_is_fairplay_exempt(self.exempt))
-        by_settings = User.objects.create_user(username="Maxime_KELI", password="x")
-        self.assertTrue(user_is_fairplay_exempt(by_settings))
         self.assertFalse(user_is_fairplay_exempt(self.regular))
+        other = User.objects.create_user(username="TrustedDev", password="x")
+        with override_settings(FAIRPLAY_EXEMPT_USERNAMES=["TrustedDev"]):
+            self.assertTrue(user_is_fairplay_exempt(other))
 
     def test_anticheat_skipped_for_exempt(self):
         self.assertIsNone(
