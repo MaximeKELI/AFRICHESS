@@ -242,3 +242,52 @@ class MatchmakingConsumerTests(TransactionTestCase):
         self.assertTrue(await MatchmakingQueue.objects.filter(user=user).aexists())
         await ws.disconnect()
         self.assertFalse(await MatchmakingQueue.objects.filter(user=user).aexists())
+
+    def test_ws_match_found_when_second_player_joins(self):
+        async_to_sync(self._test_ws_match_found_when_second_player_joins)()
+
+    async def _test_ws_match_found_when_second_player_joins(self):
+        from apps.games.models import MatchmakingQueue
+        from apps.games.services import MatchmakingService
+
+        user_a = await User.objects.acreate(username="mm_ws_a", password="x")
+        user_b = await User.objects.acreate(username="mm_ws_b", password="x")
+
+        @database_sync_to_async
+        def seed_queue():
+            MatchmakingService().join_queue(
+                user_a, "blitz", 1200, is_rated=False, time_control="3+2"
+            )
+
+        await seed_queue()
+
+        token_a = str(AccessToken.for_user(user_a))
+        token_b = str(AccessToken.for_user(user_b))
+        ws_a = WebsocketCommunicator(application, f"/ws/matchmaking/?token={token_a}")
+        ws_b = WebsocketCommunicator(application, f"/ws/matchmaking/?token={token_b}")
+        self.assertTrue((await ws_a.connect())[0])
+        self.assertTrue((await ws_b.connect())[0])
+        await ws_a.receive_json_from()
+        await ws_b.receive_json_from()
+
+        await ws_b.send_json_to(
+            {
+                "event": "rejoindre_file",
+                "mode": "blitz",
+                "is_timed": True,
+                "is_rated": False,
+                "time_control": "3+2",
+                "variant": "standard",
+            }
+        )
+        msg_b = await ws_b.receive_json_from()
+        self.assertEqual(msg_b["event"], "match_found")
+        self.assertIn("game_id", msg_b["data"])
+
+        msg_a = await ws_a.receive_json_from()
+        self.assertEqual(msg_a["event"], "match_found")
+        self.assertEqual(msg_a["data"]["game_id"], msg_b["data"]["game_id"])
+        self.assertFalse(await MatchmakingQueue.objects.aexists())
+
+        await ws_a.disconnect()
+        await ws_b.disconnect()
