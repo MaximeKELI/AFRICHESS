@@ -410,7 +410,7 @@ function ChessBoardInner({
     }
 
     return styles;
-  }, [lastMove, reviewHighlight, selectedSquare, legalTargets, game, squareStyles, lowBandwidth, focusSquare, disabled, theme.accent, isCoarse]);
+  }, [lastMove, reviewHighlight, selectedSquare, legalTargets, activeChess, game, squareStyles, lowBandwidth, focusSquare, disabled, theme.accent, isCoarse]);
 
   const notationStyle = useMemo(
     () => ({
