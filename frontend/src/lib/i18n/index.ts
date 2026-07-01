@@ -262,6 +262,7 @@ const fr: Record<string, string> = {
   "auth.register.privacyPolicy": "En créant un compte, vous acceptez notre",
   "auth.register.privacyLink": "politique de confidentialité",
   "common.loading": "Chargement…",
+  "common.skipLink": "Aller au contenu principal",
   "common.close": "Fermer",
   "common.cancel": "Annuler",
   "common.save": "Enregistrer",
