@@ -145,6 +145,7 @@ class GameSerializer(serializers.ModelSerializer):
             "is_vs_ai", "ai_difficulty", "ai_target_elo",
             "white_elo", "black_elo",
             "white_elo_provisional", "black_elo_provisional",
+            "rating_changes",
             "moves", "analysis",
             "termination_reason",
             "created_at", "started_at", "ended_at",
@@ -185,6 +186,24 @@ def serialize_game_move_delta(game: Game, result: dict) -> dict:
         payload["result"] = result["result"]
     if result.get("termination_reason"):
         payload["termination_reason"] = result["termination_reason"]
+    if game.status == Game.Status.COMPLETED or result.get("game_over"):
+        changes = rating_changes_for_game(game)
+        if changes:
+            payload["rating_changes"] = changes
+            payload["white_elo"] = player_rating_info(
+                game.white_player, _game_rating_mode(game)
+            )["elo"] if game.white_player_id else None
+            payload["black_elo"] = player_rating_info(
+                game.black_player, _game_rating_mode(game)
+            )["elo"] if game.black_player_id else None
+            if game.white_player_id:
+                payload["white_elo_provisional"] = player_rating_info(
+                    game.white_player, _game_rating_mode(game)
+                )["is_provisional"]
+            if game.black_player_id:
+                payload["black_elo_provisional"] = player_rating_info(
+                    game.black_player, _game_rating_mode(game)
+                )["is_provisional"]
     return payload
 
 
