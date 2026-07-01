@@ -151,6 +151,34 @@ class RatingDistributionTests(TestCase):
         accept_draw(game, self.black)
         self.assertEqual(RatingHistory.objects.filter(game=game).count(), 2)
 
+    def test_game_serializer_exposes_rating_changes(self):
+        from apps.games.serializers import GameSerializer
+
+        game = _rated_game(self.white, self.black)
+        resign_game(game, self.white)
+        game.refresh_from_db()
+
+        data = GameSerializer(game).data
+        self.assertIsNotNone(data["rating_changes"])
+        self.assertLess(data["rating_changes"]["white"]["change"], 0)
+        self.assertGreater(data["rating_changes"]["black"]["change"], 0)
+        self.assertEqual(
+            data["rating_changes"]["white"]["elo_after"],
+            data["white_elo"],
+        )
+
+    def test_move_delta_includes_rating_changes_on_game_over(self):
+        from apps.games.serializers import serialize_game_move_delta
+
+        game = _rated_game(self.white, self.black)
+        resign_game(game, self.white)
+        game.refresh_from_db()
+
+        payload = serialize_game_move_delta(game, {"game_over": True})
+        self.assertIn("rating_changes", payload)
+        self.assertIn("white", payload["rating_changes"])
+        self.assertIn("black", payload["rating_changes"])
+
 
 @override_settings(K_FACTOR_BULLET=40, K_FACTOR_BLITZ=32, K_FACTOR_RAPID=24)
 class RatingModeKFactorTests(TestCase):
