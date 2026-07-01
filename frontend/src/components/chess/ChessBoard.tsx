@@ -11,6 +11,7 @@ import { customPiecesForSet } from "@/lib/pieceSets";
 import { usePreferencesStore } from "@/store/preferences";
 import { PromotionDialog } from "./PromotionDialog";
 import { MoveClassPieceBadge } from "./MoveClassPieceBadge";
+import { PuzzleHintArrow } from "@/components/puzzles/PuzzleHintArrow";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useBoardSize, useCoarsePointer } from "@/hooks/useBoardSize";
 
@@ -45,6 +46,8 @@ interface ChessBoardProps {
   } | null;
   /** Badge de classification sur la pièce du coup analysé (revue Chess.com). */
   moveClassBadge?: { square: string; moveClass: string } | null;
+  /** Flèche verte d'indice puzzle (from → to). */
+  hintArrow?: { from: string; to: string } | null;
 }
 
 function normalizeFenForDisplay(fen: string): string {
