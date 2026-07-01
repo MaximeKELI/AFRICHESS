@@ -143,8 +143,10 @@ function ChessBoardInner({
   }, [theme, dotScale]);
 
   const displayFen = normalizeFenForDisplay(fen);
-
-  useEffect(() => {
+  const positionChess = useMemo(() => chessFromDisplayFen(displayFen), [displayFen]);
+  /** En mode puzzle (serverValidated), le FEN affiché est la source de vérité — évite le décalage au 2e puzzle. */
+  const activeChess = serverValidated && positionChess ? positionChess : game;
+  const activeTurn = activeChess.turn();
     try {
       const g = new Chess(displayFen === "start" ? undefined : displayFen);
       const plies = g.history().length;
@@ -171,8 +173,6 @@ function ChessBoardInner({
       /* invalid fen */
     }
   }, [displayFen, playSoundOnFenChange, soundsOn, onMovePlayed]);
-
-  const turnColor = game.turn();
 
   useEffect(() => {
     if (game.isCheckmate()) {
