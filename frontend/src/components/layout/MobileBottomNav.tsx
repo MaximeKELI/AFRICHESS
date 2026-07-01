@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { BookOpen, Menu, Play, Puzzle, Radio } from "lucide-react";
 import clsx from "clsx";
 import { useTranslation } from "@/hooks/useTranslation";
+import { isImmersiveRoute } from "@/lib/immersiveRoutes";
 
 const TABS = [
   { href: "/play", key: "nav.play", icon: Play, match: (p: string) => p.startsWith("/play") },
@@ -20,6 +21,8 @@ interface MobileBottomNavProps {
 export function MobileBottomNav({ onMenuOpen }: MobileBottomNavProps) {
   const pathname = usePathname();
   const { t } = useTranslation();
+
+  if (isImmersiveRoute(pathname)) return null;
 
   return (
     <nav

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
-import { Navbar } from "@/components/layout/Navbar";
+import { BodyLayoutClasses } from "@/components/layout/BodyLayoutClasses";
 import { FooterGate } from "@/components/layout/FooterGate";
+import { Navbar } from "@/components/layout/Navbar";
+import { SkipLink } from "@/components/layout/SkipLink";
 
 export const metadata: Metadata = {
   title: "AFRICHESS — Global Chess Platform",
@@ -17,8 +19,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html suppressHydrationWarning>
       <body className="min-h-screen flex flex-col font-body has-mobile-nav">
         <Providers>
+          <SkipLink />
+          <BodyLayoutClasses />
           <Navbar />
-          <main className="flex-1 min-w-0">{children}</main>
+          <main id="main-content" tabIndex={-1} className="flex-1 min-w-0 outline-none">
+            {children}
+          </main>
           <FooterGate />
         </Providers>
       </body>
