@@ -49,14 +49,21 @@ export default function PlayScreen() {
   const [aiCommentsEnabled, setAiCommentsEnabled] = useState(true);
   const [isRated, setIsRated] = useState(false);
   const [fairplayConsent, setFairplayConsent] = useState<boolean | null>(null);
+  const [fairplayExempt, setFairplayExempt] = useState(false);
   const turnStartRef = useRef(Date.now());
 
   useEffect(() => {
     if (!user || playMode !== "human") return;
     gamesApi
       .fairplayStatus()
-      .then(({ data }) => setFairplayConsent(Boolean(data.consent_given)))
-      .catch(() => setFairplayConsent(false));
+      .then(({ data }) => {
+        setFairplayExempt(Boolean(data.exempt));
+        setFairplayConsent(Boolean(data.consent_given));
+      })
+      .catch(() => {
+        setFairplayConsent(false);
+        setFairplayExempt(false);
+      });
   }, [user, playMode]);
 
   useEffect(() => {
