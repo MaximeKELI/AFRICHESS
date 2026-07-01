@@ -231,7 +231,7 @@ export default function PuzzlesPage() {
     setResult(null);
     setPuzzleFailed(false);
     setUciMoves([]);
-    setHintSquare(null);
+    setHintRevealed(false);
     setHintOffered(false);
     setUsedHint(false);
     setStartTime(Date.now());
@@ -350,7 +350,7 @@ export default function PuzzlesPage() {
     setResult(null);
     setPuzzleFailed(false);
     setUciMoves([]);
-    setHintSquare(null);
+    setHintRevealed(false);
     setHintOffered(false);
     setUsedHint(false);
     setStartTime(Date.now());
@@ -573,7 +573,7 @@ export default function PuzzlesPage() {
             rush: "",
           })
         );
-        setHintSquare(null);
+        setHintRevealed(false);
         setHintOffered(false);
         setUsedHint(false);
 
@@ -665,11 +665,8 @@ export default function PuzzlesPage() {
 
   const revealHint = () => {
     if (!puzzle) return;
-    const nextMove = puzzle.solution_moves[localPlayed.length];
-    if (nextMove) {
-      setHintSquare(nextMove.slice(0, 2));
-      setUsedHint(true);
-    }
+    setHintRevealed(true);
+    setUsedHint(true);
   };
 
   const reviewPuzzle = async (puzzleId: number) => {
@@ -683,7 +680,7 @@ export default function PuzzlesPage() {
       setUciMoves([]);
       setResult(null);
       setPuzzleFailed(false);
-      setHintSquare(null);
+      setHintRevealed(false);
       setHintOffered(false);
       setUsedHint(false);
       setStartTime(Date.now());
@@ -698,7 +695,7 @@ export default function PuzzlesPage() {
     setLocalPlayed([]);
     setResult(null);
     setPuzzleFailed(false);
-    setHintSquare(null);
+    setHintRevealed(false);
     setStartTime(Date.now());
     setBoardKey((k) => k + 1);
   };
@@ -930,7 +927,7 @@ export default function PuzzlesPage() {
                 onWrong={handlePuzzleWrong}
                 onPlayedChange={setLocalPlayed}
                 disabled={puzzleSolved && tab !== "rush" && tab !== "survival"}
-                hintSquare={hintSquare}
+                hintRevealed={hintRevealed}
               />
               <PuzzleSolveCelebration
                 data={celebration}
@@ -966,7 +963,7 @@ export default function PuzzlesPage() {
             <button type="button" onClick={reset} className="px-6 py-2 border rounded-lg">
               {t("puzzles.reset")}
             </button>
-            {hintOffered && !hintSquare && !puzzleSolved && tab !== "rush" && tab !== "survival" && (
+            {hintOffered && !hintRevealed && !puzzleSolved && tab !== "rush" && tab !== "survival" && (
               <button
                 type="button"
                 onClick={revealHint}
