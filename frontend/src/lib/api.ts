@@ -201,6 +201,10 @@ export const gamesApi = {
       variant?: string;
     }
   ) => api.post("/games/matchmaking/", { mode, ...opts }),
+  matchmakingStatus: () =>
+    api.get<{ searching_players: number; redis_enabled: boolean }>(
+      "/games/matchmaking/status/"
+    ),
   leaveQueue: () => api.delete("/games/matchmaking/"),
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),
   analyzeAsync: (id: string) => api.post(`/games/${id}/analyze/async/`),
