@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 
+from .fairplay_exempt import user_is_fairplay_exempt
 from .fairplay_service import merge_telemetry
 from .fairplay_telemetry import sanitize_telemetry_patch, user_has_fairplay_consent
 from .models import Game, Move
