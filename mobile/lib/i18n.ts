@@ -54,6 +54,9 @@ const fr: Dict = {
   "puzzles.rush.done": "Rush terminé — score : {score}",
   "puzzles.rush.timeout": "Temps écoulé — score : {score}",
   "puzzles.rush.threeMisses": "3 erreurs — score : {score}",
+  "puzzles.celebrate.daily": "Daily puzzle réussi !",
+  "puzzles.celebrate.progress": "problèmes résolus",
+  "puzzles.celebrate.streak": "Série {n} j",
 
   "learning.title": "Apprentissage",
   "learning.subtitle": "Cours, vidéos et progression",
