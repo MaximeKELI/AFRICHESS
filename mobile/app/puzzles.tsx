@@ -161,9 +161,11 @@ export default function PuzzlesScreen() {
           if (solved) {
             setPuzzleSolved(true);
             setResult(t("puzzles.bravo", { streak: data.daily_streak ?? streak }));
+            playPuzzleSuccess();
           } else {
             setPuzzleFailed(true);
             setResult(t("puzzles.wrongLine"));
+            playPuzzleWrong();
           }
         }
       } catch {
@@ -186,6 +188,7 @@ export default function PuzzlesScreen() {
       if (outcome.wrong) {
         setPuzzleFailed(true);
         setResult(t("puzzles.wrongLine"));
+        playPuzzleWrong();
         return;
       }
       setUciMoves(outcome.moves);
