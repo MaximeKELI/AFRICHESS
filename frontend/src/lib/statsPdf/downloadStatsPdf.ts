@@ -1,7 +1,6 @@
 "use client";
 
 import type { StatsExportData } from "@/lib/statsExport";
-import { downloadFile } from "@/lib/statsExport";
 import { terminationLabel } from "@/lib/i18n/labels";
 import { buildStatsPdfLabels } from "./buildLabels";
 
