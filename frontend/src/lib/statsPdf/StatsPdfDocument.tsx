@@ -256,7 +256,7 @@ export function StatsPdfDocument({
             <KpiCard value={`${summary.total_play_time_hours ?? 0}h`} label={labels.playTime} />
             <KpiCard value={summary.puzzles_solved ?? 0} label={labels.puzzles} />
             <KpiCard
-              value={(data.ai_stats as { games_vs_ai?: number })?.games_vs_ai ?? 0}
+              value={data.ai_stats?.games_vs_ai ?? 0}
               label={labels.vsAi}
               accent="gold"
             />
@@ -395,10 +395,10 @@ export function StatsPdfDocument({
                 const row = g as Record<string, unknown>;
                 return [
                   formatDate(String(row.date ?? ""), locale),
-                  String(row.opponent ?? "").slice(0, 28),
-                  String(row.mode ?? ""),
+                  cell(String(row.opponent ?? "").slice(0, 28)),
+                  cell(row.mode),
                   outcomeText(labels, String(row.outcome ?? "")),
-                  row.move_count ?? 0,
+                  cell(row.move_count),
                 ];
               })}
             />
@@ -415,7 +415,7 @@ export function StatsPdfDocument({
               widths={["50%", "16%", "16%", "18%"]}
               rows={data.openings.slice(0, 12).map((o) => {
                 const row = o as Record<string, unknown>;
-                return [String(row.name ?? "").slice(0, 40), row.played ?? 0, row.won ?? 0, `${row.win_rate ?? 0}%`];
+                return [cell(String(row.name ?? "").slice(0, 40)), cell(row.played), cell(row.won), `${row.win_rate ?? 0}%`];
               })}
             />
           </Section>
