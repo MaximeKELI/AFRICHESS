@@ -738,7 +738,21 @@ function PlayContent() {
 
   const handleMove = useCallback(
     async (uci: string) => {
-      if (!gameId || gameCompleted || !isMyTurn) return;
+      if (!gameId || gameCompleted) return;
+      if (isVoteChess) {
+        if (movePending) return;
+        setMovePending(true);
+        try {
+          await gamesApi.castVote(gameId, uci);
+          setStatus(t("vote.recorded"));
+        } catch {
+          setStatus(t("vote.applyFailed"));
+        } finally {
+          setMovePending(false);
+        }
+        return;
+      }
+      if (!isMyTurn) return;
       if (isVsAi && movePending) return;
       if (isVsAi) unlockAiSpeech();
       setDropPiece(null);
