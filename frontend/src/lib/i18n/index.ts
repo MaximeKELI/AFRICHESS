@@ -2438,6 +2438,7 @@ const en: Record<string, string> = {
   "puzzles.celebrate.progress": "puzzles solved",
   "puzzles.celebrate.streak": "Streak {n}d",
   "puzzles.celebrate.hint": "Next puzzle…",
+  "puzzles.celebrate.quiz": "Quiz passed!",
   "puzzles.next": "Next →",
   "puzzles.nextRush": "Next rush →",
   "tournaments.africanOnly": "African cups only",
