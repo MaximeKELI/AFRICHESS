@@ -412,14 +412,21 @@ export function GameReview({
             )}
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
-            {layout === "page" && (
+            {layout === "page" ? (
               <Link
                 href="/profile"
                 className="text-xs px-2.5 py-1 rounded-lg border border-white/20 opacity-80 hover:opacity-100"
               >
                 {t("chess.review.backProfile")}
               </Link>
-            )}
+            ) : (
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-xs px-2.5 py-1 rounded-lg border border-white/20 opacity-80 hover:opacity-100"
+              >
+                {t("chess.review.close")}
+              </button>
             {isAiSpeechSupported() && analysis && (
               <>
                 <button
@@ -455,13 +462,6 @@ export function GameReview({
                 </button>
               </>
             )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-xs px-2.5 py-1 rounded-lg border border-white/20 opacity-80 hover:opacity-100"
-            >
-              {layout === "page" ? t("chess.review.backProfile") : t("chess.review.close")}
-            </button>
           </div>
         </div>
 
@@ -549,12 +549,27 @@ export function GameReview({
                 onSelect={setSelectedIdx}
               />
 
+              {!staticMode && user?.is_premium && (
+                <button
+                  type="button"
+                  onClick={() => void runDeepAnalysis()}
+                  disabled={asyncRunning || loading}
+                  className="w-full py-2 text-sm rounded-xl african-gradient text-white disabled:opacity-40"
+                >
+                  {asyncRunning ? t("chess.analysis.cloudRunning") : t("chess.analysis.cloudRun")}
+                </button>
+              )}
+              {asyncError && (
+                <p className="text-xs text-africhess-terracotta text-center">{asyncError}</p>
+              )}
+
               <div className="max-w-[min(100%,820px)] mx-auto">
                 <CapturedBoardStack captured={reviewCaptured} orientation={orientation}>
                   <ChessBoard
                     fen={boardState.fen}
                     orientation={orientation}
-                    disabled
+                    disabled={!boardState.interactive}
+                    onMove={boardState.interactive ? handleRetryMove : undefined}
                     lastMove={boardState.lastMove}
                     playSoundOnFenChange={false}
                     reviewHighlight={boardState.reviewHighlight}
@@ -562,6 +577,23 @@ export function GameReview({
                   />
                 </CapturedBoardStack>
               </div>
+
+              {retryIdx != null && (
+                <div className="rounded-xl border border-africhess-gold/30 bg-africhess-gold/5 p-3 text-sm space-y-1">
+                  <p className="font-medium">{t("chess.analysis.retryHint")}</p>
+                  <p className="text-xs opacity-70">{t("chess.review.playBestMove")}</p>
+                  {retryFeedback && (
+                    <p className="text-africhess-gold">{retryFeedback}</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setRetryIdx(null)}
+                    className="text-xs opacity-60 hover:opacity-100"
+                  >
+                    {t("common.close")}
+                  </button>
+                </div>
+              )}
 
               {selectedMove && (
                 <div className="rounded-xl border border-africhess-green/25 bg-gradient-to-br from-africhess-green/8 to-transparent p-4 space-y-2">
@@ -589,6 +621,16 @@ export function GameReview({
                     {selectedMove.eval != null && (
                       <span className="text-xs font-mono opacity-60 ml-auto">
                         {formatEvalDisplay(selectedMove.eval)}
+                      </span>
+                    )}
+                    {winPercent != null && (
+                      <span className="text-xs opacity-50">
+                        {t("chess.review.winChance")}: {formatWinPercent(winPercent)}%
+                      </span>
+                    )}
+                    {selectedMove.phase && (
+                      <span className="text-[10px] uppercase tracking-wide opacity-40">
+                        {t(phaseLabelKey(selectedMove.phase))}
                       </span>
                     )}
                     {isAiSpeechSupported() && voiceOn && (
