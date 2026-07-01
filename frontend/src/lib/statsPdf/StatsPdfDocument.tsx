@@ -182,6 +182,8 @@ function cell(value: unknown): string | number {
   if (typeof value === "number" || typeof value === "string") return value;
   return String(value ?? "");
 }
+
+function outcomeText(labels: StatsPdfLabels, outcome: string): string {
   if (outcome === "win") return labels.outcomeWin;
   if (outcome === "loss") return labels.outcomeLoss;
   return labels.outcomeDraw;
