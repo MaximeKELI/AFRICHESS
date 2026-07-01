@@ -384,7 +384,7 @@ function ChessBoardInner({
     }
 
     for (const target of legalTargets) {
-      const pieceOnTarget = game.get(target);
+      const pieceOnTarget = activeChess.get(target);
       styles[target] = pieceOnTarget
         ? { ...squareStyles.captureRing }
         : { ...squareStyles.legalDot };
