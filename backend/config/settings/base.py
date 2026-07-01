@@ -271,3 +271,10 @@ DISCONNECT_FORFEIT_SECONDS = config("DISCONNECT_FORFEIT_SECONDS", default=90, ca
 
 # Low-bandwidth mode threshold (KB/s hint from client)
 LOW_BANDWIDTH_THRESHOLD = 500
+
+# Push notifications (Expo → APNs/FCM, Web Push VAPID)
+PUSH_NOTIFICATIONS_ENABLED = config("PUSH_NOTIFICATIONS_ENABLED", default=True, cast=bool)
+EXPO_ACCESS_TOKEN = config("EXPO_ACCESS_TOKEN", default="")
+VAPID_PUBLIC_KEY = config("VAPID_PUBLIC_KEY", default="")
+VAPID_PRIVATE_KEY = config("VAPID_PRIVATE_KEY", default="")
+VAPID_CONTACT = config("VAPID_CONTACT", default="mailto:admin@africhess.com")
