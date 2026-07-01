@@ -665,7 +665,7 @@ export default function PuzzlesPage() {
 
   const revealHint = () => {
     if (!puzzle) return;
-    const nextMove = puzzle.solution_moves[uciMoves.length];
+    const nextMove = puzzle.solution_moves[localPlayed.length];
     if (nextMove) {
       setHintSquare(nextMove.slice(0, 2));
       setUsedHint(true);
@@ -695,6 +695,7 @@ export default function PuzzlesPage() {
 
   const reset = () => {
     setUciMoves([]);
+    setLocalPlayed([]);
     setResult(null);
     setPuzzleFailed(false);
     setHintSquare(null);

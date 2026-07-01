@@ -99,7 +99,7 @@ export function PuzzleBoard({
         onComplete(result.moves, false);
       }
     },
-    [disabled, puzzle.fen, solution, played, onComplete, onWrong, t, lowBandwidth]
+    [disabled, puzzle.fen, solution, played, onComplete, onWrong, onPlayedChange, t, lowBandwidth]
   );
 
   const progress = solution.length ? Math.round((played.length / solution.length) * 100) : 0;
