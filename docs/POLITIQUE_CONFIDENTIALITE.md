@@ -1,7 +1,9 @@
 # Politique de confidentialité — AFRICHESS
 
 **Dernière mise à jour :** 4 juin 2026  
-**Version :** 1.0
+**Version :** 1.0  
+
+> Version anglaise : [PRIVACY_POLICY.md](./PRIVACY_POLICY.md) · Page web : `/legal/privacy`
 
 ---
 
