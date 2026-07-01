@@ -1949,6 +1949,7 @@ const en: Record<string, string> = {
   "play.status.drawRepetition": "Draw — same position 3 times (repetition)",
   "play.status.gameEnd": "Game over: {result}",
   "play.status.gameEndGeneric": "Finished",
+  "play.rating.beforeAfter": "{before} → {after}",
   "play.status.opponentFound": "Opponent found — live game!",
   "play.status.gameLoaded": "Game loaded",
   "play.status.gameNotFound": "Game not found",
