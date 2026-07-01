@@ -62,6 +62,7 @@ import { PgnExportButton } from "@/components/chess/PgnExportButton";
 import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { GameChat } from "@/components/social/GameChat";
+import { VoteChessPanel } from "@/components/play/VoteChessPanel";
 import {
   opponentAndSelfPlayers,
   type GameBotPublic,
@@ -92,6 +93,7 @@ interface GameState {
   is_timed?: boolean;
   time_control_minutes?: number | null;
   is_vs_ai?: boolean;
+  is_vote_chess?: boolean;
   is_rated?: boolean;
   move_count?: number;
   takeback_requested_by?: number | null;
