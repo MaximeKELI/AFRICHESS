@@ -239,8 +239,10 @@ export const gamesApi = {
   createSimul: (title: string, max_boards = 10) =>
     api.post("/games/simul/", { title, max_boards }),
   joinSimul: (id: number) => api.post(`/games/simul/${id}/join/`),
+  simulDetail: (id: number) => api.get(`/games/simul/${id}/`),
   createVoteGame: (club_white: string, club_black: string, mode = "rapid") =>
     api.post("/games/vote/create/", { club_white, club_black, mode }),
+  getVoteStatus: (gameId: string) => api.get(`/games/${gameId}/vote/status/`),
   castVote: (gameId: string, move_uci: string) =>
     api.post(`/games/${gameId}/vote/`, { move_uci }),
   applyVote: (gameId: string) => api.post(`/games/${gameId}/vote/apply/`),

@@ -47,6 +47,8 @@ export const learningApi = {
   badges: () => api.get("/learning/badges/"),
   myBadges: () => api.get("/learning/badges/mine/"),
   progress: () => api.get("/learning/progress/"),
+  endgameDrills: (theme?: string) =>
+    api.get("/learning/endgames/", { params: theme ? { theme } : {} }),
 };
 
 export const marketplaceApi = {
