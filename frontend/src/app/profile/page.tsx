@@ -172,6 +172,7 @@ export default function ProfilePage() {
       </div>
 
       <div id="profile-appearance" className="space-y-4 scroll-mt-20">
+        <h2 className="font-semibold text-lg">{t("profile.appearance.title")}</h2>
         <OptionSection
           title={t("board.picker.title")}
           description={t("board.picker.hint")}
@@ -196,7 +197,8 @@ export default function ProfilePage() {
         <CommentsToggle />
       </div>
 
-      <div className="flex justify-between items-center">
+      <div id="profile-ratings" className="scroll-mt-20 space-y-4">
+        <div className="flex justify-between items-center">
         <h2 className="font-semibold text-lg">{t("profile.ratings.title")}</h2>
         <Link
           href="/stats"
