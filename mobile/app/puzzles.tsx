@@ -361,6 +361,7 @@ export default function PuzzlesScreen() {
       rushMisses,
       survivalSessionId,
       survivalScore,
+      battleId,
       streak,
       advanceTraining,
       t,
@@ -431,8 +432,11 @@ export default function PuzzlesScreen() {
       {tab === "survival" && survivalSessionId && (
         <Text style={styles.streak}>{t("puzzles.rush.done", { score: survivalScore })}</Text>
       )}
-      {tab === "battle" && battleStatus === "waiting" && (
-        <Text style={styles.streak}>{battleOpponent ?? t("puzzles.none")}</Text>
+      {tab === "battle" && battleId && (
+        <Text style={styles.streak}>
+          {battleScoreYou} - {battleScoreOpp}
+          {battleStatus === "waiting" ? " · …" : ""}
+        </Text>
       )}
       {tab === "rush" && rushSessionId && (
         <>
