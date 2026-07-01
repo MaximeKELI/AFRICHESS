@@ -117,6 +117,11 @@ export function useGameAnalysis({
   useEffect(() => {
     if (initialAnalysis) {
       setAnalysis((prev) => prev ?? initialAnalysis);
+      if (cachePollStartedRef.current) {
+        abortRef.current?.abort();
+        cachePollStartedRef.current = false;
+        setLoading(false);
+      }
     }
   }, [initialAnalysis]);
 
