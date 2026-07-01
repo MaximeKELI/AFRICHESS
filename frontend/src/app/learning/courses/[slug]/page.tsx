@@ -43,7 +43,14 @@ export default function CoursePage() {
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [quizAnswers, setQuizAnswers] = useState<number[]>([]);
   const [quizResult, setQuizResult] = useState<string | null>(null);
+  const [quizCelebration, setQuizCelebration] = useState<PuzzleCelebrationData | null>(null);
   const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    const warm = () => preloadPuzzleSounds();
+    window.addEventListener("pointerdown", warm, { once: true, passive: true });
+    return () => window.removeEventListener("pointerdown", warm);
+  }, []);
 
   useEffect(() => {
     if (!slug) return;
@@ -70,17 +77,27 @@ export default function CoursePage() {
     }
   };
 
-  const submitQuiz = async (quizId: number) => {
+  const submitQuiz = async (quizId: number, questionCount: number) => {
     if (!user) return;
     try {
       const { data } = await learningApi.submitQuiz(quizId, quizAnswers);
-      setQuizResult(
-        data.passed
-          ? `Réussi (${data.score}%) — +${data.xp_gained} XP`
-          : `Score ${data.score}% — minimum ${data.passed ? 0 : 66}% requis`
-      );
+      if (data.passed) {
+        setQuizResult(
+          t("learning.quiz.passed", { score: data.score, xp: data.xp_gained })
+        );
+        setQuizCelebration({
+          id: Date.now(),
+          current: data.correct,
+          total: data.total ?? questionCount,
+          mode: "quiz",
+        });
+      } else {
+        setQuizResult(
+          t("learning.quiz.failed", { score: data.score, min: 66 })
+        );
+      }
     } catch {
-      setQuizResult("Erreur lors de l'envoi");
+      setQuizResult(t("learning.quiz.error"));
     }
   };
 
