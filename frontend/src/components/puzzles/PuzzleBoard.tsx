@@ -39,7 +39,7 @@ export function PuzzleBoard({
   onComplete,
   onWrong,
   disabled,
-  hintSquare,
+  hintRevealed,
   reviewHighlight,
   onPlayedChange,
 }: PuzzleBoardProps) {
