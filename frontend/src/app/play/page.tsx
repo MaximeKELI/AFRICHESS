@@ -1289,6 +1289,7 @@ function PlayContent() {
               orientation={orientation}
               initialAnalysis={gameData.analysis ?? null}
               result={gameData.result}
+              cacheFirst={Boolean(gameData.analysis)}
               onClose={() => setReviewOpen(false)}
             />
           )}
