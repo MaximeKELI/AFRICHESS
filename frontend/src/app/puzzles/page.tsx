@@ -198,6 +198,43 @@ export default function PuzzlesPage() {
     fn?.();
   }, []);
 
+  const captureSessionRecapIfNeeded = useCallback(() => {
+    const recap = sessionRef.current.buildRecap();
+    sessionRecapSnapshotRef.current = recap;
+    setSessionRecap(recap);
+    return recap;
+  }, []);
+
+  const finishTrainingSession = useCallback(() => {
+    const recap = sessionRecapSnapshotRef.current ?? sessionRef.current.buildRecap();
+    setSessionRecap(recap);
+    setRecapOpen(true);
+    sessionRecapSnapshotRef.current = null;
+    sessionRef.current.reset();
+  }, []);
+
+  const recordTrainingSolve = useCallback(
+    (moves: string[], puzzleData: Puzzle) => {
+      const time = Math.floor((Date.now() - startTime) / 1000);
+      sessionRef.current.recordSolveOnce({
+        puzzleId: puzzleData.id,
+        rating: puzzleData.rating,
+        themes: puzzleData.themes ?? [],
+        difficulty: puzzleData.difficulty,
+        wrongAttempts: sessionRef.current.getWrongCount(puzzleData.id),
+        timeSeconds: time,
+        usedHint: usedHintRef.current,
+      });
+      const idx = trainingIndexRef.current;
+      const queue = trainingQueueRef.current;
+      if (queue.length > 0 && idx + 1 >= queue.length) {
+        captureSessionRecapIfNeeded();
+      }
+      return alignMovesToSolution(moves, puzzleData.solution_moves ?? []);
+    },
+    [startTime, captureSessionRecapIfNeeded]
+  );
+
   useEffect(() => {
     const warm = () => preloadPuzzleSounds();
     window.addEventListener("pointerdown", warm, { once: true, passive: true });
@@ -388,6 +425,8 @@ export default function PuzzlesPage() {
     setUsedHint(false);
     setStartTime(Date.now());
     setLoadError(null);
+    setRecapOpen(false);
+    sessionRecapSnapshotRef.current = null;
     sessionRef.current.reset();
     puzzlesApi
       .training(difficulty, 10, theme || undefined)
