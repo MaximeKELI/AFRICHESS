@@ -795,7 +795,25 @@ export function GameReview({
             </>
           )}
         </div>
+    </div>
+  );
+
+  if (layout === "page") {
+    return (
+      <div className="min-h-screen px-4" role="main" aria-labelledby="game-review-title">
+        {shell}
       </div>
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 p-0 sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="game-review-title"
+    >
+      {shell}
     </div>
   );
 }

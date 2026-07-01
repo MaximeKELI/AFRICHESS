@@ -116,22 +116,30 @@ export function RecentGamesList({ limit = 15, showTitle = true }: RecentGamesLis
               g.status === "active"
                 ? `/play?game=${g.id}&mode=${g.mode}`
                 : `/watch/${g.id}`;
+            const reviewHref = `/games/${g.id}/review`;
             return (
               <li key={g.id}>
-                <Link
-                  href={href}
-                  className="flex items-center justify-between gap-3 py-2.5 px-2 rounded-lg hover:bg-white/5 border border-transparent hover:border-white/10 transition-colors"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate capitalize">
-                      {g.mode} · {opponentLabel(g, user.id, t)}
-                    </p>
-                    <p className="text-xs opacity-50">{when}</p>
-                  </div>
-                  <span className={`text-sm font-semibold shrink-0 ${outcomeClass(outcome, t)}`}>
-                    {outcome}
-                  </span>
-                </Link>
+                <div className="flex items-center gap-2 py-2.5 px-2 rounded-lg hover:bg-white/5 border border-transparent hover:border-white/10 transition-colors">
+                  <Link href={href} className="flex-1 flex items-center justify-between gap-3 min-w-0">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate capitalize">
+                        {g.mode} · {opponentLabel(g, user.id, t)}
+                      </p>
+                      <p className="text-xs opacity-50">{when}</p>
+                    </div>
+                    <span className={`text-sm font-semibold shrink-0 ${outcomeClass(outcome, t)}`}>
+                      {outcome}
+                    </span>
+                  </Link>
+                  {g.status === "completed" && (
+                    <Link
+                      href={reviewHref}
+                      className="shrink-0 text-[11px] px-2 py-1 rounded border border-africhess-gold/40 text-africhess-gold hover:bg-africhess-gold/10"
+                    >
+                      {t("chess.review.open")}
+                    </Link>
+                  )}
+                </div>
               </li>
             );
           })}
