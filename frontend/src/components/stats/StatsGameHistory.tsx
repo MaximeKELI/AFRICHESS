@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Bot, ChevronRight, Clock, Swords, User } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useInView } from "@/hooks/useInView";
+import { formatLocaleDate, modeLabel, terminationLabel } from "@/lib/i18n/labels";
 
 export interface StatsGameRow {
   id: string;
