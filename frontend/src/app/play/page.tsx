@@ -374,6 +374,18 @@ function PlayContent() {
       .catch(() => {});
   }, [gameCompleted, user, gameData.is_rated, gameData.rating_changes, mode]);
 
+  useEffect(() => {
+    if (!user || gameId) return;
+    const loadPool = () => {
+      gamesApi.matchmakingStatus().then(({ data }) => {
+        setSearchingPool(data.searching_players ?? 0);
+      }).catch(() => {});
+    };
+    loadPool();
+    const timer = window.setInterval(loadPool, 8000);
+    return () => window.clearInterval(timer);
+  }, [user, gameId]);
+
   const aiPlayMode = useMemo(
     () => (useClock ? playModeFromPreset(timePreset) : resolveAiPlayMode(mode)),
     [useClock, timePreset, mode]
