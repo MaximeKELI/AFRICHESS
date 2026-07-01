@@ -40,3 +40,20 @@ export function isProvisionalRating(r: RatingRow | undefined): boolean {
   if (r.is_provisional != null) return r.is_provisional;
   return (r.games_count ?? 0) < PROVISIONAL_GAMES_REQUIRED;
 }
+
+export interface GameRatingChange {
+  user_id: number;
+  elo_before: number;
+  elo_after: number;
+  change: number;
+}
+
+export interface GameRatingChanges {
+  white?: GameRatingChange;
+  black?: GameRatingChange;
+}
+
+export function formatRatingChange(change: number): string {
+  if (change > 0) return `+${change}`;
+  return String(change);
+}
