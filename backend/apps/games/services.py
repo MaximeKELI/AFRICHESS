@@ -449,10 +449,6 @@ class GameService:
 
         if is_over:
             self._finalize_game(game)
-        elif game.status == Game.Status.COMPLETED:
-            pass
-        else:
-            pass
 
         if pending_comment_specs:
             schedule_move_comments(str(game.id), pending_comment_specs)

@@ -105,10 +105,7 @@ def accept_draw(game: Game, user) -> dict:
     game.termination_reason = "draw_agreement"
     game.draw_offered_by = None
     game.save()
-    if game.white_player and game.black_player:
-        GameService().rating_service.update_ratings(game)
-    on_game_completed(game)
-    _record_tournament_result(game)
+    GameService()._after_human_game_finished(game)
     return {"ok": True, "result": "1/2-1/2"}
 
 
