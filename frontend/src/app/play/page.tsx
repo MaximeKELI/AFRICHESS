@@ -166,21 +166,29 @@ function PlayContent() {
   }, [gameCompleted, gameId]);
 
   const [fairplayConsent, setFairplayConsent] = useState<boolean | null>(null);
+  const [fairplayExempt, setFairplayExempt] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
 
   useEffect(() => {
     if (!user) {
       setFairplayConsent(null);
+      setFairplayExempt(false);
       return;
     }
     gamesApi
       .fairplayStatus()
-      .then(({ data }) => setFairplayConsent(Boolean(data.consent_given)))
-      .catch(() => setFairplayConsent(false));
+      .then(({ data }) => {
+        setFairplayExempt(Boolean(data.exempt));
+        setFairplayConsent(Boolean(data.consent_given));
+      })
+      .catch(() => {
+        setFairplayConsent(false);
+        setFairplayExempt(false);
+      });
   }, [user?.id]);
 
   const isLiveHuman = Boolean(gameId && !isVsAi);
-  const telemetryEnabled = isLiveHuman && fairplayConsent === true;
+  const telemetryEnabled = isLiveHuman && fairplayConsent === true && !fairplayExempt;
   const { consumePatch: consumeFairPlayPatch, notePremove } = useFairPlayTelemetry(telemetryEnabled);
   const gameIsTimed = gameData.is_timed !== false;
   useEffect(() => {
@@ -788,7 +796,7 @@ function PlayContent() {
   );
 
   const findMatch = async () => {
-    if (isRated && fairplayConsent !== true) {
+    if (isRated && fairplayConsent !== true && !fairplayExempt) {
       setShowConsentModal(true);
       setStatus(t("fairplay.consent.required"));
       return;
