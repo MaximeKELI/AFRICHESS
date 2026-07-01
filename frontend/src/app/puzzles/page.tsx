@@ -70,6 +70,29 @@ export default function PuzzlesPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [puzzleFailed, setPuzzleFailed] = useState(false);
+  const [celebration, setCelebration] = useState<PuzzleCelebrationData | null>(null);
+  const pendingAfterCelebration = useRef<(() => void) | null>(null);
+
+  const triggerCelebration = useCallback(
+    (payload: Omit<PuzzleCelebrationData, "id">, after?: () => void) => {
+      pendingAfterCelebration.current = after ?? null;
+      setCelebration({ ...payload, id: Date.now() });
+    },
+    []
+  );
+
+  const handleCelebrationDone = useCallback(() => {
+    setCelebration(null);
+    const fn = pendingAfterCelebration.current;
+    pendingAfterCelebration.current = null;
+    fn?.();
+  }, []);
+
+  useEffect(() => {
+    const warm = () => preloadPuzzleSounds();
+    window.addEventListener("pointerdown", warm, { once: true, passive: true });
+    return () => window.removeEventListener("pointerdown", warm);
+  }, []);
 
   useEffect(() => {
     puzzlesApi.themes().then(({ data }) => {
