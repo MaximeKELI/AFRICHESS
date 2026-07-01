@@ -55,7 +55,7 @@ export function loadUnlockedBadges(userId: number | null): Set<PuzzleBadgeId> {
 
 export function saveUnlockedBadges(userId: number | null, ids: Set<PuzzleBadgeId>) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(storageKey(userId), JSON.stringify([...ids]));
+  localStorage.setItem(storageKey(userId), JSON.stringify(Array.from(ids)));
 }
 
 export function evaluateNewBadges(

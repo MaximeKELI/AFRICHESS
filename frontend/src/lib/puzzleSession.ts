@@ -100,7 +100,7 @@ export class PuzzleSessionTracker {
         rating: e.rating,
       })),
       perfectStreak: this.perfectStreak,
-      totalWrongAttempts: [...this.wrongByPuzzle.values()].reduce((a, b) => a + b, 0),
+      totalWrongAttempts: Array.from(this.wrongByPuzzle.values()).reduce((a, b) => a + b, 0),
     };
   }
 }
