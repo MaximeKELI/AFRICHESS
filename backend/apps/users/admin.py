@@ -47,6 +47,7 @@ class UserAdmin(BaseUserAdmin):
                     "preferred_language",
                     "is_african_highlight",
                     "low_bandwidth_mode",
+                    "fairplay_exempt",
                     "title",
                     "fide_id",
                 )
