@@ -114,19 +114,6 @@ def decline_draw(game: Game, user) -> dict:
     return {"ok": True}
 
 
-def _record_tournament_result(game: Game) -> None:
-    try:
-        from apps.tournaments.services import TournamentEngine
-
-        TournamentEngine().record_result(game)
-    except Exception as exc:
-        import logging
-
-        logging.getLogger(__name__).warning(
-            "Tournament result not recorded for game %s: %s", game.id, exc
-        )
-
-
 def resign_game(game: Game, user) -> dict:
     if game.status != Game.Status.ACTIVE:
         return {"error": "Partie terminée"}
