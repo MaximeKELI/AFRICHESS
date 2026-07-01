@@ -14,6 +14,7 @@ import { useTranslation } from "../context/LocaleContext";
 import { type Puzzle, puzzlesApi } from "../lib/api";
 import { buildFenFromUciMoves, lastMoveFromUci } from "../lib/puzzleDisplay";
 import { applyPuzzleMove } from "../lib/puzzleEngine";
+import { playPuzzleSuccess, playPuzzleWrong } from "../lib/puzzleSounds";
 
 type Tab = "daily" | "rush";
 
