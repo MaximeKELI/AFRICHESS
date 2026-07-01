@@ -190,6 +190,7 @@ function PlayContent() {
   }, [user?.id]);
 
   const isLiveHuman = Boolean(gameId && !isVsAi);
+  const isVoteChess = Boolean(gameData.is_vote_chess);
   const telemetryEnabled = isLiveHuman && fairplayConsent === true && !fairplayExempt;
   const { consumePatch: consumeFairPlayPatch, notePremove } = useFairPlayTelemetry(telemetryEnabled);
   const gameIsTimed = gameData.is_timed !== false;
@@ -575,7 +576,10 @@ function PlayContent() {
     ((turn === "w" && playerIsWhite) || (turn === "b" && !playerIsWhite));
 
   const boardDisabled =
-    !gameId || gameCompleted || !isMyTurn || (isLiveHuman && movePending);
+    !gameId ||
+    gameCompleted ||
+    (isVoteChess ? movePending : !isMyTurn) ||
+    (isLiveHuman && movePending && !isVoteChess);
 
   const applyOptimisticUci = useCallback((uci: string) => {
     setGameData((prev) => {
