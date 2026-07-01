@@ -28,6 +28,7 @@ import {
   type PuzzleBadgeId,
 } from "@/lib/puzzleBadges";
 import { PuzzleSessionTracker, type PuzzleSessionRecap } from "@/lib/puzzleSession";
+import { alignMovesToSolution } from "@/lib/puzzleEngine";
 import {
   getLifetimePuzzleSolved,
   incrementLifetimePuzzleSolved,
@@ -90,6 +91,7 @@ export default function PuzzlesPage() {
   const [celebration, setCelebration] = useState<PuzzleCelebrationData | null>(null);
   const pendingAfterCelebration = useRef<(() => void) | null>(null);
   const sessionRef = useRef(new PuzzleSessionTracker());
+  const sessionRecapSnapshotRef = useRef<PuzzleSessionRecap | null>(null);
   const unlockedBadgesRef = useRef<Set<PuzzleBadgeId>>(new Set());
   const [showMiniError, setShowMiniError] = useState(false);
   const [hintRevealed, setHintRevealed] = useState(false);
@@ -102,6 +104,10 @@ export default function PuzzlesPage() {
   const [localPlayed, setLocalPlayed] = useState<string[]>([]);
   const trainingQueueRef = useRef(trainingQueue);
   trainingQueueRef.current = trainingQueue;
+  const trainingIndexRef = useRef(trainingIndex);
+  trainingIndexRef.current = trainingIndex;
+  const usedHintRef = useRef(usedHint);
+  usedHintRef.current = usedHint;
 
   const resetPuzzleUiForNewPuzzle = useCallback(() => {
     setUciMoves([]);
