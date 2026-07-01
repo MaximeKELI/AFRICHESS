@@ -102,6 +102,7 @@ export function PuzzleBoard({ puzzle, onComplete, onWrong, disabled }: PuzzleBoa
         {playerColor === "w" ? t("puzzles.findWhiteMove") : t("puzzles.findBlackMove")}
       </p>
       <ChessBoard
+        key={boardNonce}
         fen={fen}
         orientation={orientation}
         onMove={handleMove}
@@ -109,6 +110,7 @@ export function PuzzleBoard({ puzzle, onComplete, onWrong, disabled }: PuzzleBoa
         disabled={disabled || !isPlayerTurn(puzzle.fen, played)}
         lastMove={lastMove}
         playSoundOnFenChange
+        serverValidated
       />
       {feedback && (
         <p className={`text-sm text-center ${feedback.includes("!") ? "text-africhess-green" : "text-africhess-terracotta"}`}>

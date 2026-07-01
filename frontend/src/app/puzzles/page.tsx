@@ -121,6 +121,7 @@ export default function PuzzlesPage() {
 
   const loadDaily = () => {
     setResult(null);
+    setPuzzleFailed(false);
     setUciMoves([]);
     setStartTime(Date.now());
     setLoadError(null);
