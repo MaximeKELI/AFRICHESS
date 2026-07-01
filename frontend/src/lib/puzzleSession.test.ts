@@ -23,8 +23,9 @@ describe("PuzzleSessionTracker", () => {
     const tracker = new PuzzleSessionTracker();
     tracker.recordSolveOnce(baseEntry);
     tracker.reviseOutcome(1, false);
-    expect(tracker.buildRecap().solved).toBe(0);
-    expect(tracker.buildRecap().failed).toBe(0);
-    expect(tracker.buildRecap().total).toBe(1);
+    const recap = tracker.buildRecap();
+    expect(recap.solved).toBe(0);
+    expect(recap.failed).toBe(1);
+    expect(recap.total).toBe(1);
   });
 });
