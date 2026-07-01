@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import { Chess, type Square } from "chess.js";
 import {
-  buildHintArrowPathD,
   hintArrowWaypoints,
   toBoardPercent,
   squareToFileRank,
@@ -23,24 +22,28 @@ export function PuzzleHintArrow({
   fen,
   orientation = "white",
 }: PuzzleHintArrowProps) {
-  const { segments, origin, dest } = useMemo(() => {
-    const chess = chessFromDisplayFen(fen);
-    const pieceType = chess?.get(from as Square)?.type ?? "q";
+  const { segments, origin } = useMemo(() => {
+    let pieceType = "q";
+    try {
+      const chess = new Chess(fen === "start" ? undefined : fen);
+      pieceType = chess.get(from as Square)?.type ?? "q";
+    } catch {
+      /* keep default */
+    }
     const waypoints = hintArrowWaypoints(from, to, pieceType);
-    const pathD = buildHintArrowPathD(waypoints, orientation);
-    const origin = toBoardPercent(squareToFileRank(from), orientation);
+    const originPt = toBoardPercent(squareToFileRank(from), orientation);
 
-    const segments: string[] = [];
+    const segs: string[] = [];
     for (let i = 0; i < waypoints.length - 1; i++) {
       const a = toBoardPercent(waypoints[i], orientation);
       const b = toBoardPercent(waypoints[i + 1], orientation);
-      segments.push(`M ${a.x.toFixed(2)} ${a.y.toFixed(2)} L ${b.x.toFixed(2)} ${b.y.toFixed(2)}`);
+      segs.push(`M ${a.x.toFixed(2)} ${a.y.toFixed(2)} L ${b.x.toFixed(2)} ${b.y.toFixed(2)}`);
     }
 
-    return { pathD, origin, segments };
+    return { segments: segs, origin: originPt };
   }, [from, to, fen, orientation]);
 
-  if (!pathD) return null;
+  if (!segments.length) return null;
 
   const markerId = `puzzle-hint-arrow-${from}-${to}`.replace(/[^a-z0-9-]/gi, "");
 
