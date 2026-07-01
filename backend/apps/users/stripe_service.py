@@ -53,7 +53,7 @@ def get_or_create_customer(user) -> str | None:
 def create_checkout_session(user, plan_id: str) -> dict:
     price_id = PLAN_PRICES.get(plan_id)
     if not stripe_enabled() or not price_id:
-        return {"mode": "demo"}
+        return {"mode": "unavailable"}
     stripe = _client()
     customer_id = get_or_create_customer(user)
     session_kwargs = {
