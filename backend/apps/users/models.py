@@ -78,6 +78,10 @@ class User(AbstractUser):
         help_text="Featured African chess player on homepage",
     )
     low_bandwidth_mode = models.BooleanField(default=False)
+    fairplay_exempt = models.BooleanField(
+        default=False,
+        help_text="Exempté de télémétrie, anti-triche et sanctions Fair Play automatiques",
+    )
 
     class SubscriptionTier(models.TextChoices):
         FREE = "free", "Free"
