@@ -146,6 +146,30 @@ html.has-site-background nav {
   padding-top: env(safe-area-inset-top);
 }
 
+:focus-visible {
+  outline: 2px solid var(--africhess-gold);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 200;
+  padding: 0.75rem 1rem;
+  background: var(--card);
+  color: var(--text);
+  border: 2px solid var(--africhess-gold);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.skip-link:focus {
+  left: 0.75rem;
+  top: 0.75rem;
+}
+
 .has-mobile-nav main {
   padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
 }
