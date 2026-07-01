@@ -199,58 +199,62 @@ export default function ProfilePage() {
 
       <div id="profile-ratings" className="scroll-mt-20 space-y-4">
         <div className="flex justify-between items-center">
-        <h2 className="font-semibold text-lg">{t("profile.ratings.title")}</h2>
-        <Link
-          href="/stats"
-          className="text-sm text-africhess-gold hover:underline"
-        >
-          {t("profile.ratings.detailed")}
-        </Link>
-      </div>
+          <h2 className="font-semibold text-lg">{t("profile.ratings.title")}</h2>
+          <Link
+            href="/stats"
+            className="text-sm text-africhess-gold hover:underline"
+          >
+            {t("profile.ratings.detailed")}
+          </Link>
+        </div>
 
-      <RecentGamesList />
+        <RecentGamesList />
 
-      <div>
-        <h2 className="font-semibold mb-2">{t("profile.ratings.elo")}</h2>
-        <p className="text-xs opacity-55 mb-4">{t("profile.ratings.provisionalNote")}</p>
-        {ratingsError && <InlineAlert className="mb-3">{ratingsError}</InlineAlert>}
-        <div className="space-y-2">
-          {ratings.map((r) => {
-            const provisional = isProvisionalRating(r);
-            const remaining =
-              r.games_until_established ??
-              Math.max(0, 5 - (r.games_count ?? 0));
-            return (
-              <div key={r.mode} className="glass-card p-4">
-                <div className="flex justify-between items-start gap-3">
-                  <span className="capitalize">{modeLabel(t, r.mode)}</span>
-                  <div className="text-right">
-                    <span className="font-mono font-bold">{formatElo(r.elo, provisional)}</span>
-                    {r.peak_elo != null && (
-                      <span className="text-sm opacity-50 block">
-                        {t("profile.ratings.peak", { elo: r.peak_elo })}
-                      </span>
-                    )}
+        <div>
+          <h2 className="font-semibold mb-2">{t("profile.ratings.elo")}</h2>
+          <p className="text-xs opacity-55 mb-4">{t("profile.ratings.provisionalNote")}</p>
+          {ratingsError && <InlineAlert className="mb-3">{ratingsError}</InlineAlert>}
+          <div className="space-y-2">
+            {ratings.map((r) => {
+              const provisional = isProvisionalRating(r);
+              const remaining =
+                r.games_until_established ??
+                Math.max(0, 5 - (r.games_count ?? 0));
+              return (
+                <div key={r.mode} className="glass-card p-4">
+                  <div className="flex justify-between items-start gap-3">
+                    <span className="capitalize">{modeLabel(t, r.mode)}</span>
+                    <div className="text-right">
+                      <span className="font-mono font-bold">{formatElo(r.elo, provisional)}</span>
+                      {r.peak_elo != null && (
+                        <span className="text-sm opacity-50 block">
+                          {t("profile.ratings.peak", { elo: r.peak_elo })}
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  {provisional && (
+                    <p className="text-xs text-africhess-gold/90 mt-2">
+                      {t("profile.ratings.provisional")} —{" "}
+                      {t("profile.ratings.gamesUntil", {
+                        count: remaining,
+                        mode: modeLabel(t, r.mode),
+                      })}
+                    </p>
+                  )}
                 </div>
-                {provisional && (
-                  <p className="text-xs text-africhess-gold/90 mt-2">
-                    {t("profile.ratings.provisional")} —{" "}
-                    {t("profile.ratings.gamesUntil", {
-                      count: remaining,
-                      mode: modeLabel(t, r.mode),
-                    })}
-                  </p>
-                )}
-              </div>
-            );
-          })}
-          {ratings.length === 0 && (
-            <p className="opacity-60">{t("profile.ratings.empty")}</p>
-          )}
+              );
+            })}
+            {ratings.length === 0 && (
+              <p className="opacity-60">{t("profile.ratings.empty")}</p>
+            )}
+          </div>
         </div>
       </div>
-      <FairPlayAppealPanel />
+
+      <div id="profile-fairplay" className="scroll-mt-20">
+        <FairPlayAppealPanel />
+      </div>
       <p className="text-center">
         <Link href="/settings/security" className="text-sm text-africhess-gold hover:underline">
           {t("security.2fa.title")}

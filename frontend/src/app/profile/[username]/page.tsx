@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { usersApi, ratingsApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { UserAvatar } from "@/components/profile/UserAvatar";
 import { useTranslation } from "@/hooks/useTranslation";
 import { chessLevelLabel, formatLocaleDate, modeLabel } from "@/lib/i18n/labels";
