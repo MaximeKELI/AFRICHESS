@@ -304,7 +304,7 @@ def build_user_stats_payload(user) -> dict[str, Any]:
     )[:12]
 
     recent = []
-    for g in qs.order_by("-ended_at", "-created_at")[:20]:
+    for g in qs.order_by("-ended_at", "-created_at")[:50]:
         sans = [m.san for m in g.moves.all()]
         if g.is_vs_ai:
             opponent = f"IA ~{g.ai_target_elo}" if g.ai_target_elo else "IA"
