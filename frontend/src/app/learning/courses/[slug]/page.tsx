@@ -5,9 +5,14 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { LessonReader } from "@/components/learning/LessonReader";
 import { VideoEmbed } from "@/components/learning/VideoEmbed";
+import {
+  PuzzleSolveCelebration,
+  type PuzzleCelebrationData,
+} from "@/components/puzzles/PuzzleSolveCelebration";
 import { learningApi } from "@/lib/learningApi";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
+import { preloadPuzzleSounds } from "@/lib/puzzleSounds";
 
 interface Lesson {
   id: number;
