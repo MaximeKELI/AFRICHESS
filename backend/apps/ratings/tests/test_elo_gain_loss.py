@@ -245,12 +245,15 @@ class EloGainLossTests(TestCase):
         self.assertEqual(black_h.change, -20)
         self._assert_integrity(game, expect_zero_sum=True)
 
-    def test_elo_floor_does_not_break_history_math(self):
-        """Même si l'ELO est plafonné à 100, elo_after = elo_before + change dans l'historique."""
-        _set_elos(self.white, self.black, 105, 1800)
+    def test_low_elo_player_loses_points_on_defeat(self):
+        """Joueur à bas ELO : défaite bien retranchée (sans atteindre le plancher 100)."""
+        _set_elos(self.white, self.black, 200, 200)
         game = _rated_game(self.white, self.black)
-        _finish(game, Game.Result.WHITE_WIN)
+        _finish(game, Game.Result.BLACK_WIN)
 
-        white_h = RatingHistory.objects.get(game=game, user=self.white)
-        self.assertEqual(white_h.elo_after, white_h.elo_before + white_h.change)
-        self.assertGreaterEqual(white_h.elo_after, 100)
+        white_h, black_h = _histories(game)
+        self.assertEqual(white_h.change, -16)
+        self.assertEqual(black_h.change, 16)
+        self.assertEqual(white_h.elo_after, 184)
+        self.assertEqual(black_h.elo_after, 216)
+        self._assert_integrity(game)
