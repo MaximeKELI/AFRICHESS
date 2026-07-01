@@ -17,14 +17,22 @@ import { buildFenFromUciMoves, lastMoveFromUci } from "../lib/puzzleDisplay";
 import { applyPuzzleMove } from "../lib/puzzleEngine";
 import { playPuzzleSuccess, playPuzzleWrong } from "../lib/puzzleSounds";
 
-type Tab = "daily" | "rush";
+type Tab = "daily" | "rush" | "training" | "battle" | "survival";
+const TABS: Tab[] = ["daily", "rush", "training", "battle", "survival"];
 
 export default function PuzzlesScreen() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>("daily");
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
+  const [trainingQueue, setTrainingQueue] = useState<Puzzle[]>([]);
+  const [trainingIndex, setTrainingIndex] = useState(0);
   const [rushSessionId, setRushSessionId] = useState<number | null>(null);
+  const [survivalSessionId, setSurvivalSessionId] = useState<number | null>(null);
+  const [survivalScore, setSurvivalScore] = useState(0);
+  const [battleId, setBattleId] = useState<number | null>(null);
+  const [battleStatus, setBattleStatus] = useState("idle");
+  const [battleOpponent, setBattleOpponent] = useState<string | null>(null);
   const [rushScore, setRushScore] = useState(0);
   const [rushMisses, setRushMisses] = useState(0);
   const [rushTimeLeft, setRushTimeLeft] = useState(180);
@@ -95,10 +103,86 @@ export default function PuzzlesScreen() {
       .finally(() => setLoading(false));
   }, [user, t]);
 
+  const loadTraining = useCallback(() => {
+    if (!user) {
+      setError(t("puzzles.loginLink"));
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    reset();
+    setTrainingIndex(0);
+    puzzlesApi
+      .training("medium", 10)
+      .then(({ data }) => {
+        const list = Array.isArray(data) ? data : [];
+        setTrainingQueue(list);
+        setPuzzle(list[0] ?? null);
+      })
+      .catch(() => {
+        setPuzzle(null);
+        setError(t("puzzles.error.load"));
+      })
+      .finally(() => setLoading(false));
+  }, [user, t]);
+
+  const loadSurvival = useCallback(() => {
+    if (!user) {
+      setError(t("puzzles.error.rushLogin"));
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    reset();
+    setSurvivalScore(0);
+    setSurvivalSessionId(null);
+    puzzlesApi
+      .survivalStart()
+      .then(({ data }) => {
+        setSurvivalSessionId(data.session_id);
+        setPuzzle(data.puzzle);
+      })
+      .catch(() => {
+        setPuzzle(null);
+        setError(t("puzzles.error.load"));
+      })
+      .finally(() => setLoading(false));
+  }, [user, t]);
+
+  const loadBattle = useCallback(() => {
+    if (!user) {
+      setError(t("puzzles.loginLink"));
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    reset();
+    setBattleId(null);
+    setBattleStatus("waiting");
+    puzzlesApi
+      .battleQueue()
+      .then(({ data }) => {
+        setBattleId(data.battle_id);
+        setBattleStatus(data.status);
+        setBattleOpponent(data.opponent ?? null);
+        if (data.status === "active") loadTraining();
+        else setLoading(false);
+      })
+      .catch(() => {
+        setBattleStatus("idle");
+        setError(t("puzzles.error.load"));
+        setLoading(false);
+      });
+  }, [user, t, loadTraining]);
+
   useEffect(() => {
     if (tab === "daily") loadDaily();
-    else loadRush();
-  }, [tab, loadDaily, loadRush]);
+    else if (tab === "rush") loadRush();
+    else if (tab === "training") loadTraining();
+    else if (tab === "survival") loadSurvival();
+    else if (tab === "battle") loadBattle();
+  }, [tab, loadDaily, loadRush, loadTraining, loadSurvival, loadBattle]);
 
   useEffect(() => {
     if (!user) return;
@@ -116,12 +200,36 @@ export default function PuzzlesScreen() {
     return () => clearInterval(id);
   }, [tab, rushSessionId, rushTimeLeft]);
 
+  useEffect(() => {
+    if (tab !== "battle" || !battleId || battleStatus !== "waiting") return;
+    const poll = setInterval(() => {
+      puzzlesApi.battleGet(battleId).then(({ data }) => {
+        setBattleStatus(data.status);
+        setBattleOpponent(data.opponent ?? null);
+        if (data.status === "active") loadTraining();
+      }).catch(() => {});
+    }, 3000);
+    return () => clearInterval(poll);
+  }, [tab, battleId, battleStatus, loadTraining]);
+
   const displayFen = useMemo(() => {
     if (!puzzle) return "";
     return buildFenFromUciMoves(puzzle.fen, uciMoves);
   }, [puzzle, uciMoves]);
 
   const lastMove = useMemo(() => lastMoveFromUci(uciMoves), [uciMoves]);
+
+  const advanceTraining = useCallback(() => {
+    const next = trainingIndex + 1;
+    if (next < trainingQueue.length) {
+      setTrainingIndex(next);
+      setPuzzle(trainingQueue[next]);
+      reset();
+    } else {
+      setResult(t("puzzles.correct"));
+      setPuzzle(null);
+    }
+  }, [trainingIndex, trainingQueue, t]);
 
   const submitWithMoves = useCallback(
     async (moves: string[]) => {
@@ -159,6 +267,38 @@ export default function PuzzlesScreen() {
               reset();
             }, 600);
           }
+        } else if (tab === "survival" && survivalSessionId) {
+          const { data } = await puzzlesApi.survivalSubmit(survivalSessionId, moves, time);
+          setSurvivalScore(data.score ?? survivalScore);
+          const solved = Boolean(data.solved);
+          if (data.completed) {
+            setResult(t("puzzles.rush.done", { score: data.score ?? survivalScore }));
+            setPuzzle(null);
+            setSurvivalSessionId(null);
+            return;
+          }
+          setResult(solved ? t("puzzles.correct") : t("puzzles.wrong"));
+          if (solved) playPuzzleSuccess();
+          else playPuzzleWrong();
+          if (!solved) setPuzzleFailed(true);
+          if (data.next_puzzle) {
+            setTimeout(() => {
+              setPuzzle(data.next_puzzle!);
+              reset();
+            }, 600);
+          }
+        } else if (tab === "training") {
+          const { data } = await puzzlesApi.submit(puzzle.id, moves, time);
+          if (data.solved) {
+            setPuzzleSolved(true);
+            playPuzzleSuccess();
+            setResult(t("puzzles.correct"));
+            setTimeout(advanceTraining, 600);
+          } else {
+            setPuzzleFailed(true);
+            setResult(t("puzzles.wrongLine"));
+            playPuzzleWrong();
+          }
         } else {
           const { data } = await puzzlesApi.submit(puzzle.id, moves, time);
           if (data.daily_streak != null) setStreak(data.daily_streak);
@@ -181,7 +321,20 @@ export default function PuzzlesScreen() {
         setSubmitting(false);
       }
     },
-    [puzzle, user, startTime, tab, rushSessionId, rushScore, rushMisses, streak, t]
+    [
+      puzzle,
+      user,
+      startTime,
+      tab,
+      rushSessionId,
+      rushScore,
+      rushMisses,
+      survivalSessionId,
+      survivalScore,
+      streak,
+      advanceTraining,
+      t,
+    ]
   );
 
   const submitRef = useRef(submitWithMoves);
@@ -211,24 +364,45 @@ export default function PuzzlesScreen() {
     await submitWithMoves(uciMoves);
   };
 
+  const reload = () => {
+    if (tab === "daily") loadDaily();
+    else if (tab === "rush") loadRush();
+    else if (tab === "training") loadTraining();
+    else if (tab === "survival") loadSurvival();
+    else loadBattle();
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.tabs}>
-        {(["daily", "rush"] as const).map((tabKey) => (
-          <Pressable
-            key={tabKey}
-            onPress={() => setTab(tabKey)}
-            style={[styles.tab, tab === tabKey && styles.tabActive]}
-          >
-            <Text style={tab === tabKey ? styles.tabTextActive : styles.tabText}>
-              {t(`puzzles.tab.${tabKey}`)}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "100%" }}>
+        <View style={styles.tabs}>
+          {TABS.map((tabKey) => (
+            <Pressable
+              key={tabKey}
+              onPress={() => setTab(tabKey)}
+              style={[styles.tab, tab === tabKey && styles.tabActive]}
+            >
+              <Text style={tab === tabKey ? styles.tabTextActive : styles.tabText}>
+                {t(`puzzles.tab.${tabKey}`)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </ScrollView>
 
       {streak > 0 && tab === "daily" && (
         <Text style={styles.streak}>{t("puzzles.streak", { count: streak })}</Text>
+      )}
+      {tab === "training" && trainingQueue.length > 0 && (
+        <Text style={styles.streak}>
+          {trainingIndex + 1}/{trainingQueue.length}
+        </Text>
+      )}
+      {tab === "survival" && survivalSessionId && (
+        <Text style={styles.streak}>{t("puzzles.rush.done", { score: survivalScore })}</Text>
+      )}
+      {tab === "battle" && battleStatus === "waiting" && (
+        <Text style={styles.streak}>{battleOpponent ?? t("puzzles.none")}</Text>
       )}
       {tab === "rush" && rushSessionId && (
         <>
@@ -248,7 +422,7 @@ export default function PuzzlesScreen() {
       ) : !puzzle ? (
         <View style={styles.centerBlock}>
           <Text style={styles.error}>{error ?? t("puzzles.none")}</Text>
-          <Pressable style={styles.btn} onPress={tab === "daily" ? loadDaily : loadRush}>
+          <Pressable style={styles.btn} onPress={reload}>
             <Text style={styles.btnText}>{t("puzzles.retry")}</Text>
           </Pressable>
         </View>
@@ -299,7 +473,7 @@ export default function PuzzlesScreen() {
         </>
       )}
 
-      {!user && (
+      {!user && tab !== "daily" && (
         <Link href="/login" asChild>
           <Pressable style={styles.linkBtn}>
             <Text style={styles.linkText}>{t("puzzles.loginLink")}</Text>
@@ -314,9 +488,9 @@ export default function PuzzlesScreen() {
 
 const styles = StyleSheet.create({
   container: { padding: 16, backgroundColor: "#0D1117", alignItems: "center", flexGrow: 1 },
-  tabs: { flexDirection: "row", gap: 8, marginBottom: 12, width: "100%" },
+  tabs: { flexDirection: "row", gap: 8, marginBottom: 12 },
   tab: {
-    flex: 1,
+    minWidth: 72,
     padding: 10,
     borderRadius: 8,
     borderWidth: 1,
@@ -324,8 +498,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabActive: { backgroundColor: "#1B7A3D", borderColor: "#D4A017" },
-  tabText: { color: "#aaa", fontWeight: "600" },
-  tabTextActive: { color: "#fff", fontWeight: "700" },
+  tabText: { color: "#aaa", fontWeight: "600", fontSize: 12 },
+  tabTextActive: { color: "#fff", fontWeight: "700", fontSize: 12 },
   streak: { color: "#1B7A3D", marginBottom: 12, fontSize: 14 },
   centerBlock: { alignItems: "center", marginTop: 40, gap: 12 },
   meta: { flexDirection: "row", gap: 8, marginBottom: 16 },
