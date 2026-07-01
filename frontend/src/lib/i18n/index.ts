@@ -1712,6 +1712,7 @@ const en: Record<string, string> = {
   "stats.loginRequired": "Sign in to view your statistics",
   "stats.backProfile": "← Profile",
   "stats.tabs.charts": "Charts",
+  "stats.tabs.label": "Statistics sections",
   "stats.tabs.tables": "Tables",
   "stats.export.csv": "Download CSV",
   "stats.export.json": "Download JSON",
