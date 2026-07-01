@@ -356,7 +356,7 @@ export function StatsPdfDocument({
               widths={["25%", "25%", "25%", "25%"]}
               rows={data.ratings.map((r) => {
                 const row = r as Record<string, unknown>;
-                return [String(row.mode ?? ""), row.elo ?? 0, row.peak_elo ?? 0, row.games_count ?? 0];
+                return [cell(row.mode), cell(row.elo), cell(row.peak_elo), cell(row.games_count)];
               })}
             />
           </Section>
@@ -376,9 +376,9 @@ export function StatsPdfDocument({
                 const sign = change > 0 ? `+${change}` : String(change);
                 return [
                   formatDate(String(row.created_at ?? ""), locale),
-                  String(row.mode ?? ""),
-                  row.elo_before ?? 0,
-                  row.elo_after ?? 0,
+                  cell(row.mode),
+                  cell(row.elo_before),
+                  cell(row.elo_after),
                   sign,
                 ];
               })}
