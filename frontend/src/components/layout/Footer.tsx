@@ -12,10 +12,13 @@ export function Footer() {
           <p className="font-display text-lg font-bold text-africhess-gold">AFRICHESS</p>
           <p className="mt-1">{t("footer.tagline")}</p>
         </div>
-        <div className="text-center md:text-right">
+        <div className="text-center md:text-right space-y-1">
           <p>© {new Date().getFullYear()} AFRICHESS</p>
-          <p className="mt-1">Developer: Maxime Dzidula KELI</p>
-          <a href="https://wa.me/33754830039" className="text-africhess-green hover:underline">
+          <p>Developer: Maxime Dzidula KELI</p>
+          <a href="/legal/privacy" className="text-africhess-gold hover:underline block">
+            {t("footer.privacy")}
+          </a>
+          <a href="https://wa.me/33754830039" className="text-africhess-green hover:underline block">
             WhatsApp: +33 754830039
           </a>
         </div>
