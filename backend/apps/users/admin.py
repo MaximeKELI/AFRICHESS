@@ -31,6 +31,7 @@ class UserAdmin(BaseUserAdmin):
         "preferred_language",
         "chess_level",
         "is_african_highlight",
+        "fairplay_exempt",
         "is_staff",
     ]
     fieldsets = BaseUserAdmin.fieldsets + (
