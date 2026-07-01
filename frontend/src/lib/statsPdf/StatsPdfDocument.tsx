@@ -14,7 +14,7 @@ function PageChrome({
 }: {
   labels: StatsPdfLabels;
   displayName: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <Page size="A4" style={s.page}>
@@ -43,7 +43,7 @@ function Section({
 }: {
   n: number;
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <View style={s.section}>
