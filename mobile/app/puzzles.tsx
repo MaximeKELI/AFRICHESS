@@ -210,12 +210,16 @@ export default function PuzzlesScreen() {
     const poll = setInterval(() => {
       puzzlesApi.battleGet(battleId).then(({ data }) => {
         setBattleStatus(data.status);
-        setBattleOpponent(data.opponent ?? null);
-        if (data.status === "active") loadTraining();
+        setBattleScoreYou(data.score1);
+        setBattleScoreOpp(data.score2);
+        if (data.puzzle) {
+          setPuzzle(data.puzzle);
+          setLoading(false);
+        }
       }).catch(() => {});
     }, 3000);
     return () => clearInterval(poll);
-  }, [tab, battleId, battleStatus, loadTraining]);
+  }, [tab, battleId, battleStatus]);
 
   const displayFen = useMemo(() => {
     if (!puzzle) return "";
@@ -280,6 +284,27 @@ export default function PuzzlesScreen() {
             setResult(t("puzzles.rush.done", { score: data.score ?? survivalScore }));
             setPuzzle(null);
             setSurvivalSessionId(null);
+            return;
+          }
+          setResult(solved ? t("puzzles.correct") : t("puzzles.wrong"));
+          if (solved) playPuzzleSuccess();
+          else playPuzzleWrong();
+          if (!solved) setPuzzleFailed(true);
+          if (data.next_puzzle) {
+            setTimeout(() => {
+              setPuzzle(data.next_puzzle!);
+              reset();
+            }, 600);
+          }
+        } else if (tab === "battle" && battleId) {
+          const { data } = await puzzlesApi.battleSubmit(battleId, moves, time);
+          setBattleScoreYou(data.score1);
+          setBattleScoreOpp(data.score2);
+          const solved = Boolean(data.solved);
+          if (data.completed) {
+            setResult(`${data.score1} - ${data.score2}`);
+            setPuzzle(null);
+            setBattleId(null);
             return;
           }
           setResult(solved ? t("puzzles.correct") : t("puzzles.wrong"));
