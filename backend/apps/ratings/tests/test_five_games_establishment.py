@@ -289,6 +289,7 @@ class FiveHumanGamesEstablishmentTests(TestCase):
 
         self._play_win(player)
         self._play_win(player)
+        self._play_win(player)
 
         rating = PlayerRating.objects.get(user=player, mode="blitz")
         self.assertEqual(rating.games_count, PROVISIONAL_GAMES_REQUIRED)
