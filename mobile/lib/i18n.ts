@@ -35,6 +35,9 @@ const fr: Dict = {
 
   "puzzles.tab.daily": "Du jour",
   "puzzles.tab.rush": "Rush",
+  "puzzles.tab.training": "Entraîn.",
+  "puzzles.tab.battle": "Duel",
+  "puzzles.tab.survival": "Survie",
   "puzzles.streak": "Série : {count} jour(s)",
   "puzzles.rush.progress": "{current} · Score {score} · {time}s",
   "puzzles.rush.misses": "Erreurs : {count}/3",
@@ -127,6 +130,9 @@ const en: Dict = {
 
   "puzzles.tab.daily": "Daily",
   "puzzles.tab.rush": "Rush",
+  "puzzles.tab.training": "Train",
+  "puzzles.tab.battle": "Battle",
+  "puzzles.tab.survival": "Survival",
   "puzzles.streak": "Streak: {count} day(s)",
   "puzzles.rush.progress": "{current} · Score {score} · {time}s",
   "puzzles.rush.misses": "Misses: {count}/3",
