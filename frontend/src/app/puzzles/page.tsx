@@ -1011,6 +1011,13 @@ export default function PuzzlesPage() {
       ) : tab !== "leaderboard" && tab !== "battle" ? (
         <p>{t("puzzles.loading")}</p>
       ) : null}
+
+      <PuzzleSessionRecapModal
+        open={recapOpen}
+        recap={sessionRecap}
+        onClose={() => setRecapOpen(false)}
+        onReviewPuzzle={reviewPuzzle}
+      />
     </div>
   );
 }
