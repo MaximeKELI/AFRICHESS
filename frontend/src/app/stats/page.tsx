@@ -661,7 +661,7 @@ export default function StatsPage() {
                   emptyMessage={t("stats.table.noActivity")}
                 />
               </section>
-            </>
+            </div>
           )}
 
           <section className="glass-card p-4 flex flex-wrap items-center justify-between gap-3">
