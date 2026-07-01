@@ -29,7 +29,7 @@ interface PuzzleBoardProps {
   onComplete: (moves: string[], wrong: boolean) => void;
   onWrong?: (played: string[]) => void;
   disabled?: boolean;
-  hintSquare?: string | null;
+  hintRevealed?: boolean;
   reviewHighlight?: { played?: { from: string; to: string }; best?: { from: string; to: string } } | null;
   onPlayedChange?: (played: string[]) => void;
 }

@@ -191,21 +191,10 @@ function ChessBoardInner({
 
   const highlightTargets = useCallback(
     (from: Square) => {
-      if (serverValidated) {
-        const squares: Square[] = [];
-        for (let f = 0; f < 8; f++) {
-          for (let r = 1; r <= 8; r++) {
-            const sq = `${String.fromCharCode(97 + f)}${r}` as Square;
-            if (sq !== from) squares.push(sq);
-          }
-        }
-        setLegalTargets(squares);
-        return;
-      }
       const moves = game.moves({ square: from, verbose: true });
       setLegalTargets(moves.map((m) => m.to as Square));
     },
-    [game, serverValidated]
+    [game]
   );
 
   const applyMoveServer = useCallback(

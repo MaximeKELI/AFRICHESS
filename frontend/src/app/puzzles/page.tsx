@@ -92,7 +92,7 @@ export default function PuzzlesPage() {
   const sessionRef = useRef(new PuzzleSessionTracker());
   const unlockedBadgesRef = useRef<Set<PuzzleBadgeId>>(new Set());
   const [showMiniError, setShowMiniError] = useState(false);
-  const [hintSquare, setHintSquare] = useState<string | null>(null);
+  const [hintRevealed, setHintRevealed] = useState(false);
   const [hintOffered, setHintOffered] = useState(false);
   const [usedHint, setUsedHint] = useState(false);
   const [badgeQueue, setBadgeQueue] = useState<PuzzleBadgeId[]>([]);
