@@ -459,7 +459,10 @@ export default function PuzzlesPage() {
       return;
     }
     if (!user) return;
-    setUciMoves(moves);
+    const submitMoves = puzzle.solution_moves?.length
+      ? alignMovesToSolution(moves, puzzle.solution_moves)
+      : moves;
+    setUciMoves(submitMoves);
     const time = Math.floor((Date.now() - startTime) / 1000);
     try {
       if (tab === "rush" && rushSessionId) {
@@ -597,7 +600,7 @@ export default function PuzzlesPage() {
         return;
       }
 
-      const { data } = await puzzlesApi.submit(puzzle.id, moves, time);
+      const { data } = await puzzlesApi.submit(puzzle.id, submitMoves, time);
       if (data.puzzle_elo != null) setPuzzleElo(data.puzzle_elo);
       const solved = Boolean(data.solved);
       const nextStreak = tab === "daily" && data.daily_streak != null
@@ -611,15 +614,22 @@ export default function PuzzlesPage() {
       if (solved) {
         const wrongAttempts = sessionRef.current.getWrongCount(puzzle.id);
         const lifetime = incrementLifetimePuzzleSolved() ?? getLifetimePuzzleSolved();
-        sessionRef.current.recordSolve({
+        sessionRef.current.recordSolveOnce({
           puzzleId: puzzle.id,
           rating: puzzle.rating,
           themes: puzzle.themes,
           difficulty: puzzle.difficulty,
           wrongAttempts,
           timeSeconds: time,
-          usedHint,
+          usedHint: usedHintRef.current,
         });
+        if (tab === "training") {
+          const idx = trainingIndexRef.current;
+          const queue = trainingQueueRef.current;
+          if (queue.length > 0 && idx + 1 >= queue.length) {
+            captureSessionRecapIfNeeded();
+          }
+        }
         const sessionStreak = sessionRef.current.getPerfectStreak();
         const sessionSolved = sessionRef.current.getSolvedCount();
         const trainingCurrent = tab === "training" ? trainingIndex + 1 : 1;
@@ -676,8 +686,8 @@ export default function PuzzlesPage() {
                   resetPuzzleUiForNewPuzzle();
                   return next;
                 }
-                setSessionRecap(sessionRef.current.buildRecap());
                 setRecapOpen(true);
+                sessionRecapSnapshotRef.current = null;
                 sessionRef.current.reset();
                 return idx;
               });
@@ -686,6 +696,14 @@ export default function PuzzlesPage() {
         );
       } else {
         playPuzzleWrong(puzzleSoundsActive(lowBandwidth));
+        if (tab === "training") {
+          sessionRef.current.reviseOutcome(puzzle.id, false);
+          const idx = trainingIndexRef.current;
+          const queue = trainingQueueRef.current;
+          if (queue.length > 0 && idx + 1 >= queue.length) {
+            captureSessionRecapIfNeeded();
+          }
+        }
         sessionRef.current.recordFail({
           puzzleId: puzzle.id,
           rating: puzzle.rating,
@@ -705,10 +723,12 @@ export default function PuzzlesPage() {
 
   const handlePuzzleComplete = useCallback(
     (moves: string[]) => {
-      void submitWithMoves(moves);
+      const aligned =
+        puzzle && tab === "training" ? recordTrainingSolve(moves, puzzle) : moves;
+      void submitWithMoves(aligned);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [puzzle, user, tab, rushSessionId, survivalSessionId, battleId, startTime]
+    [puzzle, user, tab, rushSessionId, survivalSessionId, battleId, startTime, recordTrainingSolve]
   );
 
   const handlePuzzleWrong = useCallback(
@@ -790,7 +810,7 @@ export default function PuzzlesPage() {
       setPuzzle(trainingQueue[next]);
       reset();
     } else {
-      loadTraining();
+      finishTrainingSession();
     }
   };
 
