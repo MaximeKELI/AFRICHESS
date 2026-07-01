@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface Column<T> {
   key: keyof T | string;
