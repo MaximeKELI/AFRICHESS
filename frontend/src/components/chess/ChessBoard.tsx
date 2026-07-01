@@ -72,6 +72,7 @@ function ChessBoardInner({
   extraBottom = 0,
   reviewHighlight = null,
   moveClassBadge = null,
+  hintArrow = null,
 }: ChessBoardProps) {
   const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
@@ -446,7 +447,7 @@ function ChessBoardInner({
       style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
     >
       <div
-        className="chess-board-frame mx-auto rounded-lg overflow-hidden shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold"
+        className="chess-board-frame mx-auto rounded-lg overflow-hidden shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold relative"
         style={{
           width: boardWidth,
           height: boardWidth,
@@ -487,6 +488,14 @@ function ChessBoardInner({
           {...(reviewSquareRenderer ? { customSquare: reviewSquareRenderer } : {})}
           {...(customPieces ? { customPieces } : {})}
         />
+        {hintArrow && (
+          <PuzzleHintArrow
+            from={hintArrow.from}
+            to={hintArrow.to}
+            fen={displayFen}
+            orientation={orientation}
+          />
+        )}
       </div>
       <p className="sr-only" aria-live="polite" aria-atomic="true">
         {boardStatus}

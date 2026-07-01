@@ -105,12 +105,12 @@ export function PuzzleBoard({
 
   const progress = solution.length ? Math.round((played.length / solution.length) * 100) : 0;
 
-  const hintHighlight = useMemo(() => {
-    if (!hintRevealed) return reviewHighlight ?? null;
+  const hintArrow = useMemo(() => {
+    if (!hintRevealed) return null;
     const uci = nextPlayerSolutionMove(solution, played);
-    if (!uci) return reviewHighlight ?? null;
-    return { best: { from: uci.slice(0, 2), to: uci.slice(2, 4) } };
-  }, [hintRevealed, solution, played, reviewHighlight]);
+    if (!uci) return null;
+    return { from: uci.slice(0, 2), to: uci.slice(2, 4) };
+  }, [hintRevealed, solution, played]);
 
   return (
     <div className={`space-y-2 relative ${shake ? "puzzle-fx-shake" : ""}`}>
@@ -144,10 +144,11 @@ export function PuzzleBoard({
         lastMove={lastMove}
         playSoundOnFenChange
         serverValidated
-        reviewHighlight={hintHighlight}
+        reviewHighlight={reviewHighlight}
+        hintArrow={hintArrow}
       />
       </div>
-      {hintRevealed && hintHighlight?.best && (
+      {hintRevealed && hintArrow && (
         <p className="text-xs text-center text-africhess-gold/80">{t("puzzles.hint.active")}</p>
       )}
       {feedback && (
