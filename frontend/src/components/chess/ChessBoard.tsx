@@ -187,26 +187,26 @@ function ChessBoardInner({
   const canSelectSquare = useCallback(
     (square: Square) => {
       if (disabled) return false;
-      const piece = game.get(square);
+      const piece = activeChess.get(square);
       if (!piece) return false;
       if (playerColor) {
         if (piece.color !== playerColor) return false;
-        if (enablePremoves && piece.color !== turnColor) return true;
-        if (piece.color !== turnColor) return false;
+        if (enablePremoves && piece.color !== activeTurn) return true;
+        if (piece.color !== activeTurn) return false;
         return true;
       }
-      if (piece.color !== turnColor) return false;
+      if (piece.color !== activeTurn) return false;
       return true;
     },
-    [disabled, game, playerColor, turnColor, enablePremoves]
+    [disabled, activeChess, playerColor, activeTurn, enablePremoves]
   );
 
   const highlightTargets = useCallback(
     (from: Square) => {
-      const moves = game.moves({ square: from, verbose: true });
+      const moves = activeChess.moves({ square: from, verbose: true });
       setLegalTargets(moves.map((m) => m.to as Square));
     },
-    [game]
+    [activeChess]
   );
 
   const applyMoveServer = useCallback(
@@ -215,13 +215,13 @@ function ChessBoardInner({
       setSelectedSquare(null);
       setLegalTargets([]);
       setPromotionPending(null);
-      if (enablePremoves && playerColor && playerColor !== turnColor) {
+      if (enablePremoves && playerColor && playerColor !== activeTurn) {
         onPremove?.();
       }
       onMove?.(uci);
       return true;
     },
-    [onMove, onPremove, enablePremoves, playerColor, turnColor]
+    [onMove, onPremove, enablePremoves, playerColor, activeTurn]
   );
 
   const applyMove = useCallback(
