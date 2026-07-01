@@ -74,6 +74,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <SiteBackground />
       <ActivityTracker />
       <PwaInstallPrompt />
+      <PushRegistration />
       {children}
     </>
   );

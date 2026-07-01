@@ -1,12 +1,20 @@
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { AuthProvider } from "../context/AuthContext";
+import { AuthProvider, useAuth } from "../context/AuthContext";
 import { LocaleProvider } from "../context/LocaleContext";
+import { usePushNotifications } from "../hooks/usePushNotifications";
+
+function PushBootstrap() {
+  const { user } = useAuth();
+  usePushNotifications(user?.id);
+  return null;
+}
 
 export default function RootLayout() {
   return (
     <LocaleProvider>
       <AuthProvider>
+        <PushBootstrap />
         <StatusBar style="light" />
         <Stack
           screenOptions={{
