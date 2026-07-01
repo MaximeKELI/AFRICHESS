@@ -416,10 +416,19 @@ export default function PuzzlesPage() {
     [tab, puzzle]
   );
 
-  const retryPuzzle = () => {
+  const reset = () => {
+    setUciMoves([]);
+    setResult(null);
     setPuzzleFailed(false);
+    setStartTime(Date.now());
+    setBoardKey((k) => k + 1);
+  };
+
+  const retryPuzzle = () => {
     reset();
   };
+
+  const puzzleSolved = Boolean(result?.startsWith("✓"));
 
   const nextRush = () => {
     const next = rushIndex + 1;
@@ -628,7 +637,7 @@ export default function PuzzlesPage() {
                 puzzle={puzzle}
                 onComplete={(moves) => handlePuzzleComplete(moves)}
                 onWrong={handlePuzzleWrong}
-                disabled={Boolean(result?.startsWith("✓") && tab !== "rush" && tab !== "survival")}
+                disabled={puzzleSolved && tab !== "rush" && tab !== "survival"}
               />
             </div>
             <OptionSection
@@ -645,7 +654,16 @@ export default function PuzzlesPage() {
             <button type="button" onClick={reset} className="px-6 py-2 border rounded-lg">
               {t("puzzles.reset")}
             </button>
-            {tab === "training" && result?.startsWith("✓") && (
+            {puzzleFailed && tab !== "rush" && tab !== "survival" && (
+              <button
+                type="button"
+                onClick={retryPuzzle}
+                className="px-6 py-2 african-gradient text-white rounded-lg font-medium"
+              >
+                {t("puzzles.retry")}
+              </button>
+            )}
+            {tab === "training" && puzzleSolved && (
               <button
                 type="button"
                 onClick={nextTraining}
@@ -654,7 +672,7 @@ export default function PuzzlesPage() {
                 {t("puzzles.next")}
               </button>
             )}
-            {tab === "daily" && result?.startsWith("✓") && (
+            {tab === "daily" && puzzleSolved && (
               <button type="button" onClick={loadDaily} className="px-6 py-2 border rounded-lg">
                 {t("puzzles.daily.reload")}
               </button>

@@ -1129,6 +1129,7 @@ const fr: Record<string, string> = {
   "puzzles.loading": "Chargement du problème…",
   "puzzles.validate": "Valider",
   "puzzles.reset": "Recommencer",
+  "puzzles.retry": "Réessayer",
   "puzzles.next": "Suivant →",
   "puzzles.nextRush": "Suivant rush →",
   "tournaments.africanOnly": "Coupes africaines uniquement",
