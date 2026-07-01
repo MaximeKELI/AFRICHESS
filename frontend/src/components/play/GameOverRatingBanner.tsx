@@ -32,7 +32,7 @@ export function GameOverRatingBanner({
 
   return (
     <div
-      className="glass-card p-4 text-center border border-africhess-gold/30 animate-in fade-in duration-500"
+      className="glass-card p-4 text-center border border-africhess-gold/30"
       role="status"
       aria-live="polite"
     >

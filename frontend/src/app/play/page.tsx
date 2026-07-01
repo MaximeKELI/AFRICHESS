@@ -12,6 +12,7 @@ import { AiTauntBubble } from "@/components/chess/AiTauntBubble";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { GameReview } from "@/components/chess/GameReview";
 import { PlayBoardSection } from "@/components/play/PlayBoardSection";
+import { GameOverRatingBanner } from "@/components/play/GameOverRatingBanner";
 import { movesMissingComments, pollPendingMoveComments } from "@/lib/pollGameComments";
 import { useAuthStore } from "@/store/auth";
 import { unlockAiSpeech, speakComment, bindAiSpeechToUserGestures } from "@/lib/aiSpeech";
