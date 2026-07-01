@@ -984,7 +984,7 @@ export default function PuzzlesPage() {
                 {t("puzzles.retry")}
               </button>
             )}
-            {tab === "training" && puzzleSolved && (
+            {tab === "training" && puzzleSolved && !celebration && (
               <button
                 type="button"
                 onClick={nextTraining}
