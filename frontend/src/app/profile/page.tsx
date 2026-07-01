@@ -171,8 +171,7 @@ export default function ProfilePage() {
         {saveError && <InlineAlert>{saveError}</InlineAlert>}
       </div>
 
-      <div className="space-y-4">
-        <h2 className="font-semibold text-lg">{t("profile.appearance.title")}</h2>
+      <div id="profile-appearance" className="space-y-4 scroll-mt-20">
         <OptionSection
           title={t("board.picker.title")}
           description={t("board.picker.hint")}
