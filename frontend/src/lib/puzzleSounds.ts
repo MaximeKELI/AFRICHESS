@@ -1,30 +1,38 @@
 /**
- * Sons puzzle — fichiers MP3 + repli synthétique Web Audio.
+ * Sons puzzle — MP3 + volume utilisateur + repli synthétique.
  */
+
+import { usePuzzlePreferencesStore } from "@/store/puzzlePreferences";
 
 const PUZZLE_SOUND_PATHS = {
   success: "/sounds/puzzle-success.mp3",
   wrong: "/sounds/puzzle-wrong.mp3",
   advance: "/sounds/puzzle-advance.mp3",
+  streak: "/sounds/puzzle-streak.mp3",
 } as const;
 
 type PuzzleSoundKey = keyof typeof PUZZLE_SOUND_PATHS;
 
-const VOLUME: Record<PuzzleSoundKey, number> = {
+const BASE_VOLUME: Record<PuzzleSoundKey, number> = {
   success: 0.85,
   wrong: 0.75,
   advance: 0.55,
+  streak: 0.9,
 };
 
 const audioCache = new Map<PuzzleSoundKey, HTMLAudioElement>();
 let useFileSounds = true;
+
+function effectiveVolume(key: PuzzleSoundKey): number {
+  const { soundVolume } = usePuzzlePreferencesStore.getState();
+  return BASE_VOLUME[key] * soundVolume;
+}
 
 function getAudio(key: PuzzleSoundKey): HTMLAudioElement {
   let audio = audioCache.get(key);
   if (!audio) {
     audio = new Audio(PUZZLE_SOUND_PATHS[key]);
     audio.preload = "auto";
-    audio.volume = VOLUME[key];
     audio.addEventListener("error", () => {
       useFileSounds = false;
     }, { once: true });
@@ -36,7 +44,7 @@ function getAudio(key: PuzzleSoundKey): HTMLAudioElement {
 function playFileSound(key: PuzzleSoundKey) {
   const base = getAudio(key);
   const node = base.cloneNode(true) as HTMLAudioElement;
-  node.volume = VOLUME[key];
+  node.volume = effectiveVolume(key);
   node.currentTime = 0;
   void node.play().catch(() => {
     useFileSounds = false;
@@ -50,30 +58,22 @@ function getContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
   if (!audioCtx) {
     audioCtx = new (window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext })
-        .webkitAudioContext)();
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
   }
-  if (audioCtx.state === "suspended") {
-    audioCtx.resume().catch(() => {});
-  }
+  if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
   return audioCtx;
 }
 
-function tone(
-  freq: number,
-  duration: number,
-  volume = 0.14,
-  type: OscillatorType = "sine",
-  delayMs = 0
-) {
+function tone(freq: number, duration: number, volume = 0.14, type: OscillatorType = "sine", delayMs = 0) {
   const ctx = getContext();
   if (!ctx) return;
+  const vol = volume * usePuzzlePreferencesStore.getState().soundVolume;
   const start = ctx.currentTime + delayMs / 1000;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = type;
   osc.frequency.value = freq;
-  gain.gain.setValueAtTime(volume, start);
+  gain.gain.setValueAtTime(vol, start);
   gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
   osc.connect(gain);
   gain.connect(ctx.destination);
@@ -84,6 +84,11 @@ function tone(
 function playSuccessSynthetic() {
   [392, 523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, 0.16, 0.16, "triangle", i * 70));
   tone(1318.51, 0.35, 0.1, "sine", 420);
+}
+
+function playStreakSynthetic() {
+  [523, 659, 784, 988, 1175, 1319].forEach((f, i) => tone(f, 0.14, 0.18, "triangle", i * 55));
+  tone(1568, 0.5, 0.12, "sine", 380);
 }
 
 function playWrongSynthetic() {
@@ -97,7 +102,8 @@ function playAdvanceSynthetic() {
 }
 
 function playSynthetic(key: PuzzleSoundKey) {
-  if (key === "success") playSuccessSynthetic();
+  if (key === "streak") playStreakSynthetic();
+  else if (key === "success") playSuccessSynthetic();
   else if (key === "wrong") playWrongSynthetic();
   else playAdvanceSynthetic();
 }
@@ -105,12 +111,18 @@ function playSynthetic(key: PuzzleSoundKey) {
 function play(key: PuzzleSoundKey, enabled = true) {
   if (!enabled || typeof window === "undefined") return;
   preloadPuzzleSounds();
-  if (useFileSounds) playFileSound(key);
-  else playSynthetic(key);
+  if (useFileSounds && key !== "streak") playFileSound(key);
+  else if (useFileSounds && key === "streak") {
+    playFileSound("streak");
+  } else playSynthetic(key);
 }
 
 export function playPuzzleSuccess(enabled = true) {
   play("success", enabled);
+}
+
+export function playPuzzleStreakFanfare(enabled = true) {
+  play("streak", enabled);
 }
 
 export function playPuzzleWrong(enabled = true) {
