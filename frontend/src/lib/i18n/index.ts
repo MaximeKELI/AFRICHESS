@@ -844,6 +844,7 @@ const fr: Record<string, string> = {
   "stats.pdf.page": "Page",
   "stats.pdf.of": "sur",
   "stats.pdf.confidential": "AFRICHESS · Document personnel",
+  "stats.export.hint": "Téléchargez toutes vos données pour analyse externe (Excel, Google Sheets…)",
   "stats.termination.resignation": "Abandon",
   "stats.termination.timeout": "Temps écoulé",
   "stats.termination.draw_agreement": "Nulle acceptée",
