@@ -200,7 +200,7 @@ def match_or_enqueue(
         elo_min = elo - elo_range
         elo_max = elo + elo_range
         user_key = f"{USER_KEY_PREFIX}{user_id}"
-        result = _get_client().register_script(MATCH_OR_ENQUEUE_LUA)(
+        result = _match_script(
             keys=[pool],
             args=[
                 str(user_id),
@@ -228,7 +228,7 @@ def leave_user(user_id: int) -> bool:
         return False
     try:
         user_key = f"{USER_KEY_PREFIX}{user_id}"
-        _get_client().register_script(LEAVE_QUEUE_LUA)(keys=[user_key], args=[str(user_id)])
+        _leave_script(keys=[user_key], args=[str(user_id)])
         return True
     except Exception as exc:
         logger.warning("Redis leave_user failed: %s", exc)
