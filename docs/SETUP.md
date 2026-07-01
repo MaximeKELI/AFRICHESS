@@ -41,7 +41,7 @@ pip install -r requirements.txt
 # Start PostgreSQL & Redis, then:
 export DJANGO_SETTINGS_MODULE=config.settings.development
 python manage.py migrate
-python manage.py seed_puzzles
+python manage.py seed_puzzles --download   # 10 000+ puzzles Lichess (premier démarrage ~5–15 min)
 python manage.py createsuperuser
 daphne -b 0.0.0.0 -p 8000 config.asgi:application
 ```

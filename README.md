@@ -280,7 +280,7 @@ Segments **où Chess.com domine** :
 |---|------|--------|
 | Routes | 6 | 54 |
 | Transport | REST seul | REST + 4 WebSockets |
-| Puzzles | Daily · 3 seed | 7 modes · 300+ |
+| Puzzles | Daily · 3 seed | 7 modes · 10 000+ |
 | Social | — | Amis · clubs · forum |
 | Score estimé vs Chess.com | ~15 % | ~64 % |
 
@@ -355,7 +355,7 @@ flowchart LR
 ### Données de démo
 
 ```bash
-docker compose exec backend python manage.py seed_puzzles --download   # 300+ puzzles (Lichess CC0)
+docker compose exec backend python manage.py seed_puzzles --download   # 10 000+ puzzles (Lichess CC0)
 docker compose exec backend python manage.py seed_learning
 docker compose exec backend python manage.py seed_full_curriculum      # 40 leçons long format
 docker compose exec backend python manage.py seed_tournaments
@@ -553,7 +553,7 @@ AFRICHESS/
 | **Training** | Lots de 10 par difficulté / thème, bilan de session |
 | **Rush** | Enchaînement chronométré, score + misses |
 | **Survival / Battle** | Modes compétitifs avancés |
-| **Catalogue** | 300+ puzzles (seed Lichess CC0 + catalogue local) |
+| **Catalogue** | 10 000+ puzzles (seed Lichess CC0 + catalogue local) |
 | **Curriculum** | 40 leçons long format (~20 pages/doc) |
 | **Coach IA** | Conseils dashboard + analyse PGN |
 | **Progression** | XP, badges, ELO puzzle |
@@ -840,7 +840,7 @@ timeline
         Matchmaking Celery : Forfait déconnexion
         Tournois : Arène · Suisses · Observateur
     section Train
-        Puzzles : Daily · Rush · 300+ catalogue
+        Puzzles : Daily · Rush · 10 000+ catalogue
         Learning : 40 documents · UI leçons
     section Platform
         OAuth Google GitHub : Notifications push WS
