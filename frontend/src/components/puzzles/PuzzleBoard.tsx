@@ -6,6 +6,7 @@ import {
   applyPuzzleMove,
   buildPuzzleFen,
   isPlayerTurn,
+  nextPlayerSolutionMove,
   puzzleOrientation,
   solverColor,
 } from "@/lib/puzzleEngine";

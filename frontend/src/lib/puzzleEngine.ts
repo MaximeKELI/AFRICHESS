@@ -74,3 +74,12 @@ export function isPlayerTurn(startFen: string, playedMoves: string[]): boolean {
 export function puzzleOrientation(startFen: string): "white" | "black" {
   return solverColor(startFen) === "w" ? "white" : "black";
 }
+
+/** Prochain coup attendu du joueur dans la ligne solution. */
+export function nextPlayerSolutionMove(
+  solutionMoves: string[],
+  playedMoves: string[]
+): string | null {
+  const uci = solutionMoves[playedMoves.length];
+  return uci ? uci.toLowerCase() : null;
+}
