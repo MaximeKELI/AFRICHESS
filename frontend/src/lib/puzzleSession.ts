@@ -44,6 +44,10 @@ export class PuzzleSessionTracker {
     return this.wrongByPuzzle.get(puzzleId) ?? 0;
   }
 
+  hasEntry(puzzleId: number): boolean {
+    return this.entries.some((e) => e.puzzleId === puzzleId);
+  }
+
   shouldOfferHint(puzzleId: number, threshold = 1): boolean {
     return this.getWrongCount(puzzleId) >= threshold;
   }

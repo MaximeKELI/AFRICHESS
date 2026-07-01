@@ -697,7 +697,7 @@ export default function PuzzlesPage() {
       } else {
         playPuzzleWrong(puzzleSoundsActive(lowBandwidth));
         if (tab === "training") {
-          if (sessionRef.current.entries.some((e) => e.puzzleId === puzzle.id)) {
+          if (sessionRef.current.hasEntry(puzzle.id)) {
             sessionRef.current.reviseOutcome(puzzle.id, false);
           } else {
             sessionRef.current.recordFail({
