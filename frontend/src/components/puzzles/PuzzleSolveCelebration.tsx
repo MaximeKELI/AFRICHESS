@@ -153,7 +153,12 @@ export function PuzzleSolveCelebration({
                   className={`puzzle-garden-step ${done ? "puzzle-garden-step-done" : ""} ${
                     active ? "puzzle-garden-step-active" : ""
                   } ${upcoming ? "puzzle-garden-step-upcoming" : ""}`}
-                  style={{ "--step-index": stepNum } as React.CSSProperties}
+                  style={
+                    {
+                      "--step-index": stepNum,
+                      "--step-steps-total": visibleSteps,
+                    } as React.CSSProperties
+                  }
                 >
                   <span className="puzzle-garden-step-num">{stepNum}</span>
                   {done && <span className="puzzle-garden-step-check" aria-hidden>✓</span>}

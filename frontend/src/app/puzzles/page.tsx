@@ -705,7 +705,7 @@ export default function PuzzlesPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(160px,200px)] gap-4 lg:gap-6 items-start">
-            <div className="w-full min-w-0 relative min-h-[280px]">
+            <div className="w-full min-w-0 relative min-h-[360px]">
               <PuzzleBoard
                 puzzle={puzzle}
                 onComplete={(moves) => handlePuzzleComplete(moves)}
