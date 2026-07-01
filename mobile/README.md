@@ -56,5 +56,5 @@ rm -rf node_modules package-lock.json && npm install
 ## Prochaines étapes
 
 - Matchmaking humain (WebSocket file d'attente)
-- Push notifications (FCM)
+  mobile/README.md
 - Pièces SVG / images africaines

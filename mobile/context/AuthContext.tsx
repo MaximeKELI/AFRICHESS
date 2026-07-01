@@ -12,6 +12,7 @@ import * as WebBrowser from "expo-web-browser";
 import { LoginError, authApi } from "../lib/api";
 import { oauthLoginUrl, oauthRedirectUri, parseOAuthCode } from "../lib/oauth";
 import { clearTokens, getAccessToken, setTokens } from "../lib/storage";
+import { unregisterPushToken } from "../hooks/usePushNotifications";
 
 interface User {
   id: number;
@@ -112,7 +113,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    const { unregisterPushToken } = await import("../hooks/usePushNotifications");
     await unregisterPushToken().catch(() => {});
     await clearTokens();
     setUser(null);
