@@ -8,6 +8,7 @@ from typing import Any
 
 import requests
 from django.conf import settings
+from django.utils import timezone
 
 from .models import DeviceToken, Notification
 
@@ -124,4 +125,4 @@ def deliver_notification_push(notification: Notification) -> None:
         user_id=notification.user_id,
         is_active=True,
         token__in=[t["token"] for t in tokens],
-    ).update(last_used_at=notification.created_at)
+    ).update(last_used_at=timezone.now())

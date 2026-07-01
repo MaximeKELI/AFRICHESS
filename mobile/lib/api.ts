@@ -257,6 +257,18 @@ export const puzzlesApi = {
   battleLeave: () => api.delete("/puzzles/battle/queue/"),
 };
 
+export const notificationsApi = {
+  registerDevice: (payload: {
+    token: string;
+    platform: "ios" | "android" | "web";
+    kind: "expo" | "webpush";
+    device_id?: string;
+    subscription?: Record<string, unknown>;
+  }) => api.post("/notifications/devices/", payload),
+  unregisterDevice: (payload: { token?: string; device_id?: string }) =>
+    api.delete("/notifications/devices/unregister/", { data: payload }),
+};
+
 export interface CourseSummary {
   id: number;
   slug: string;

@@ -112,6 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
+    const { unregisterPushToken } = await import("../hooks/usePushNotifications");
+    await unregisterPushToken().catch(() => {});
     await clearTokens();
     setUser(null);
   }, []);

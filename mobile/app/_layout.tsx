@@ -1,4 +1,4 @@
-import { Stack, router } from "expo-router";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { AuthProvider, useAuth } from "../context/AuthContext";
 import { LocaleProvider } from "../context/LocaleContext";

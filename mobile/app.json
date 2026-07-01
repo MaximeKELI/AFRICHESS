@@ -24,7 +24,16 @@
       "package": "com.africhess.app",
       "usesCleartextTraffic": true
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#D4A017"
+        }
+      ]
+    ],
     "extra": {
       "apiUrl": "http://10.0.2.2:8000/api",
       "wsUrl": "ws://10.0.2.2:8000",
