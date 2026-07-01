@@ -658,6 +658,15 @@ export default function StatsPage() {
               </button>
               <button
                 type="button"
+                onClick={handlePdfExport}
+                disabled={pdfLoading}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-africhess-green/50 text-africhess-green text-sm hover:bg-africhess-green/10 disabled:opacity-50"
+              >
+                <FileText size={14} />
+                {pdfLoading ? t("stats.export.pdfGenerating") : t("stats.export.pdf")}
+              </button>
+              <button
+                type="button"
                 onClick={() => downloadStatsJson(toExportData(data), username)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm hover:bg-white/5"
               >
