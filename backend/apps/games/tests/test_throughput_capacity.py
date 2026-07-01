@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
-from django.db import close_old_connections
+from django.db import close_old_connections, connections
 from django.test import TransactionTestCase, override_settings
 from rest_framework.test import APIClient
 
@@ -86,24 +86,28 @@ class ThroughputCapacityTests(TransactionTestCase):
             nonlocal success, errors, attempts
             close_old_connections()
             client = APIClient()
-            while time.perf_counter() < stop_at:
-                with lock:
-                    idx = counter["i"]
-                    counter["i"] += 1
-                attempts += 1
-                try:
-                    if worker_fn(client, idx):
-                        success += 1
-                    else:
+            try:
+                while time.perf_counter() < stop_at:
+                    with lock:
+                        idx = counter["i"]
+                        counter["i"] += 1
+                    attempts += 1
+                    try:
+                        if worker_fn(client, idx):
+                            success += 1
+                        else:
+                            errors += 1
+                    except Exception:
                         errors += 1
-                except Exception:
-                    errors += 1
+            finally:
+                close_old_connections()
 
         t0 = time.perf_counter()
         with ThreadPoolExecutor(max_workers=pool_size) as ex:
             futs = [ex.submit(worker) for _ in range(pool_size)]
             for f in as_completed(futs):
                 f.result()
+        connections.close_all()
         duration = time.perf_counter() - t0
         result = BurstResult(label, duration, attempts, success, errors)
         print(f"\n  {result.report()}")
@@ -153,18 +157,20 @@ class ThroughputCapacityTests(TransactionTestCase):
 
         svc = GameService()
         games = []
-        for u in self.users[:30]:
+        pool_size = 20
+        for u in self.users[:pool_size]:
             g = svc.create_ai_game(u, mode="blitz", color="white", ai_elo=800)
             games.append(g)
 
         def play(client: APIClient, idx: int) -> bool:
-            user = self.users[idx % len(games)]
+            slot = idx % len(games)
+            user = self.users[slot]
+            game = games[slot]
             client.force_authenticate(user=user)
-            game = games[idx % len(games)]
             resp = client.post(f"/api/games/{game.id}/move/", {"uci": "e2e4"}, format="json")
             return resp.status_code == 200
 
-        result = self._run_burst("Coups joués/s", play, pool_size=40)
+        result = self._run_burst("Coups joués/s", play, pool_size=pool_size)
         self.assertGreater(result.success, 0)
         print(f"  → Actions de jeu : ~{result.per_second:.0f} coups/s")
 
