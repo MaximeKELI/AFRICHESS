@@ -37,7 +37,13 @@ def validate_move_timing(
     if last:
         delta = (timezone.now() - last.created_at).total_seconds() * 1000
         same_side = last.played_by_white == (game.white_player_id == user.id)
-        if delta < MIN_MOVE_INTERVAL_MS and same_side:
+        too_fast_server = delta < MIN_MOVE_INTERVAL_MS and same_side
+        too_fast_client = (
+            think_ms is not None
+            and think_ms < MIN_MOVE_INTERVAL_MS
+            and same_side
+        )
+        if too_fast_server or too_fast_client:
             return {"error": "Coup trop rapide", "code": "anticheat"}
     return None
 
@@ -86,11 +92,7 @@ def validate_move_fairplay(
     """Contrôles temps réel — pas de verdict moteur en cours de partie."""
     if user_is_fairplay_exempt(user):
         return None
-    for check in (
-        lambda: validate_move_timing(game, user, think_ms=think_ms),
-        lambda: validate_move_telemetry(game, user, telemetry),
-    ):
-        err = check()
-        if err:
-            return err
-    return None
+    err = validate_move_timing(game, user, think_ms=think_ms)
+    if err is not None:
+        return err
+    return validate_move_telemetry(game, user, telemetry)
