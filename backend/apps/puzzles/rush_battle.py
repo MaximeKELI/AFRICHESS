@@ -69,6 +69,7 @@ def start_survival_session(user) -> PuzzleRushSession:
         user=user,
         mode=PuzzleRushSession.Mode.SURVIVAL,
         puzzle_ids=[p.id for p in puzzles],
+        ends_at=timezone.now() + timedelta(hours=2),
     )
 
 
