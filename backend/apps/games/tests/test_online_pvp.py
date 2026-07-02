@@ -166,6 +166,7 @@ class MatchmakingApiTests(TestCase):
     """Endpoints HTTP /api/games/matchmaking/."""
 
     def setUp(self):
+        reset_matchmaking_state()
         self.user = User.objects.create_user(username="mm_api_pvp", password="x")
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
@@ -216,6 +217,7 @@ class MatchmakingCeleryTests(TestCase):
     """Pairing automatique via tâche Celery."""
 
     def setUp(self):
+        reset_matchmaking_state()
         self.a = User.objects.create_user(username="cel_a", password="x")
         self.b = User.objects.create_user(username="cel_b", password="x")
 

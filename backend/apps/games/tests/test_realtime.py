@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
+from apps.games.models import Game, GameRoom, MatchmakingQueue
 from apps.games.tests.mm_test_utils import reset_matchmaking_state
 from apps.games.room_utils import ensure_game_room, uci_to_squares
 from apps.games.services import MatchmakingService
