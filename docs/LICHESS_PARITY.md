@@ -43,13 +43,17 @@
 | **Glicko ± RD** | `rating_display` API + profil / leaderboard |
 | **Status pools** | `/api/games/matchmaking/status/` → `pools` |
 
-### Phase 3 — à venir
-- Broadcast relay multi-board (lecture seule)
-- Lichess TV (rotation parties live top Elo)
-- Import/export PGN Studies ↔ Lichess format
-- Opening explorer cache local (réduire dépendance API)
+### Phase 3 — livré
 
-### Phase 4 — Variantes & mobile (4–6 semaines)
+| Fonctionnalité | Détail |
+|----------------|--------|
+| **Broadcast relay** | Modèles `Broadcast` / `BroadcastBoard`, API `/api/games/broadcasts/`, sync tournoi |
+| **Lichess TV** | `/api/games/live/tv/` — rotation 30 s par canal (best, bullet, blitz, rapid, classical) |
+| **Team Battle** | Format `team_battle`, scores agrégés par club, `/team-scores/` |
+| **Studies I/O** | Import/export PGN multi-chapitres (format Lichess) |
+| **Explorer cache** | Déjà actif (`LICHESS_EXPLORER_CACHE_SECONDS`) |
+
+### Phase 4 — à venir
 - Antichess, Horde, Racing Kings
 - Mobile : matchmaking WS, Studies, review
 - Blind mode / clavier (accessibilité)
