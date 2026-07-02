@@ -24,6 +24,7 @@ urlpatterns = [
     path("<uuid:game_id>/vote/status/", extra_views.VoteStatusView.as_view(), name="vote-status"),
     path("<uuid:game_id>/vote/apply/", extra_views.ApplyVoteMoveView.as_view(), name="vote-apply"),
     path("openings/lookup/", views.opening_lookup, name="opening-lookup"),
+    path("openings/explorer/", views.lichess_opening_explorer, name="lichess-opening-explorer"),
     path("engine/eval/", views.engine_eval, name="engine-eval"),
     path("engine/tablebase/", views.tablebase_probe, name="engine-tablebase"),
     path("<uuid:id>/", views.GameDetailView.as_view(), name="game-detail"),

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import level3_views, views
+from . import level3_views, shared_studies_views, views
 
 urlpatterns = [
     path("dashboard/", views.DashboardView.as_view(), name="learning-dashboard"),
@@ -46,4 +46,16 @@ urlpatterns = [
     path("classroom/", level3_views.ClassroomListCreateView.as_view(), name="learning-classroom"),
     path("classroom/<str:code>/", level3_views.ClassroomDetailView.as_view(), name="learning-classroom-detail"),
     path("endgames/", views.EndgameDrillsView.as_view(), name="learning-endgames"),
+    path("studies/", shared_studies_views.SharedStudyListCreateView.as_view(), name="shared-studies"),
+    path("studies/<int:study_id>/", shared_studies_views.SharedStudyDetailView.as_view(), name="shared-study-detail"),
+    path(
+        "studies/<int:study_id>/chapters/",
+        shared_studies_views.StudyChapterView.as_view(),
+        name="shared-study-chapters",
+    ),
+    path(
+        "studies/<int:study_id>/chapters/<int:chapter_id>/",
+        shared_studies_views.StudyChapterView.as_view(),
+        name="shared-study-chapter-edit",
+    ),
 ]
