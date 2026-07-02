@@ -179,6 +179,54 @@ class PuzzleRushSubmitView(APIView):
         return Response(result)
 
 
+class PuzzleStormStartView(APIView):
+    """Puzzle Storm — 3 min, flux illimité (parité Lichess Storm)."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        from apps.users.premium_utils import can_start_puzzle_rush, record_puzzle_rush_start
+
+        from .storm import start_storm_session
+
+        ok, code = can_start_puzzle_rush(request.user)
+        if not ok:
+            return Response({"error": "Limite storm atteinte", "code": code}, status=403)
+        record_puzzle_rush_start(request.user)
+        session = start_storm_session(request.user)
+        first = Puzzle.objects.get(pk=session.puzzle_ids[0])
+        return Response(
+            {
+                "session_id": session.id,
+                "mode": "storm",
+                "puzzle": PuzzleSerializer(first).data,
+                "ends_at": session.ends_at.isoformat(),
+                "duration": 180,
+            },
+            status=201,
+        )
+
+
+class PuzzleStormSubmitView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, session_id):
+        from .storm import storm_submit
+
+        try:
+            session = PuzzleRushSession.objects.get(pk=session_id, user=request.user)
+        except PuzzleRushSession.DoesNotExist:
+            return Response({"error": "Session introuvable"}, status=404)
+
+        ser = SubmitPuzzleSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        result = storm_submit(session, ser.validated_data["moves"])
+        if result.get("next_puzzle_id"):
+            p = Puzzle.objects.get(pk=result["next_puzzle_id"])
+            result["next_puzzle"] = PuzzleSerializer(p).data
+        return Response(result)
+
+
 class PuzzleBattleQueueView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 

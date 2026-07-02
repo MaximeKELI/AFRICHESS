@@ -66,8 +66,8 @@ def start_survival_session(user) -> PuzzleRushSession:
     puzzles = random_queryset(Puzzle.objects.all(), 50)
     return PuzzleRushSession.objects.create(
         user=user,
+        mode=PuzzleRushSession.Mode.SURVIVAL,
         puzzle_ids=[p.id for p in puzzles],
-        ends_at=timezone.now() + timedelta(hours=2),
     )
 
 
