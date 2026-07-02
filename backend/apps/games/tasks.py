@@ -60,7 +60,7 @@ def pair_correspondence_queues():
     return paired
 
 
-@shared_task
+@shared_task(queue="realtime")
 def forfeit_overdue_correspondence_games():
     """Forfait daily chess si échéance dépassée (hors vacances)."""
     import chess
@@ -83,7 +83,7 @@ def forfeit_overdue_correspondence_games():
         _award_forfeit(game, winner_white=winner_white, reason="timeout")
 
 
-@shared_task
+@shared_task(queue="analysis")
 def auto_analyze_completed_game(game_id: str):
     """Analyse Stockfish en arrière-plan dès qu'une partie se termine."""
     from .analysis_async import run_auto_game_analysis
@@ -98,7 +98,7 @@ def schedule_auto_game_analysis(game_id: str) -> None:
         auto_analyze_completed_game(game_id)
 
 
-@shared_task
+@shared_task(queue="analysis")
 def analyze_game_async(game_id: str, job_id: int):
     """Analyse cloud profonde en arrière-plan."""
     from .analysis_async import run_analyze_game_job
@@ -106,7 +106,7 @@ def analyze_game_async(game_id: str, job_id: int):
     run_analyze_game_job(game_id, job_id)
 
 
-@shared_task
+@shared_task(queue="fairplay")
 def analyze_fairplay_async(game_id: str):
     """Analyse anti-triche complète (C++) pour les deux joueurs."""
     from .fairplay_service import analyze_and_store
@@ -136,7 +136,7 @@ def schedule_fairplay_analysis(game_id: str) -> None:
         analyze_fairplay_async(game_id)
 
 
-@shared_task
+@shared_task(queue="fairplay")
 def expire_fairplay_sanctions_task():
     """Réactive les comptes suspendus temporairement et expire les sanctions."""
     from .fairplay_review import expire_fairplay_sanctions
@@ -144,7 +144,7 @@ def expire_fairplay_sanctions_task():
     return expire_fairplay_sanctions()
 
 
-@shared_task
+@shared_task(queue="analysis")
 def generate_move_comments_async(game_id: str, specs: list[dict]):
     """Commentaires coach/IA après un coup — ne bloque pas la réponse move."""
     try:
