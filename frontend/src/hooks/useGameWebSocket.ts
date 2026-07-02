@@ -90,6 +90,19 @@ export interface WsAnalysisReadyPayload {
 
 type AnalysisReadyHandler = (payload: WsAnalysisReadyPayload) => void;
 
+export interface VoteTallyPayload {
+  tally: Record<string, number>;
+  tally_san?: Record<string, string>;
+  ply: number;
+  votes: number;
+  my_vote?: string | null;
+  my_vote_san?: string | null;
+  club_white?: string;
+  club_black?: string;
+}
+
+type VoteUpdateHandler = (payload: VoteTallyPayload) => void;
+
 const MAX_WS_RETRIES = 5;
 
 export function useGameWebSocket(
@@ -98,7 +111,8 @@ export function useGameWebSocket(
   onUpdate: WsHandler,
   onGameOver?: WsHandler,
   onGamePatch?: WsPatchHandler,
-  onAnalysisReady?: AnalysisReadyHandler
+  onAnalysisReady?: AnalysisReadyHandler,
+  onVoteUpdate?: VoteUpdateHandler
 ) {
   const [connected, setConnected] = useState(false);
   const [wsError, setWsError] = useState<string | null>(null);
