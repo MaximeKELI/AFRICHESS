@@ -1,16 +1,14 @@
 "use client";
 
 import { useState, useCallback, Suspense, useEffect, useMemo, useRef } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { Chess } from "chess.js";
 import { MessageCircle } from "lucide-react";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { PlaySetupOptions, type PlaySetupCategory } from "@/components/chess/PlaySetupOptions";
 import { OptionSection } from "@/components/ui/OptionSection";
-import { AiCommentaryPanel } from "@/components/chess/AiCommentaryPanel";
-import { AiTauntBubble } from "@/components/chess/AiTauntBubble";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
-import { GameReview } from "@/components/chess/GameReview";
 import { PlayBoardSection } from "@/components/play/PlayBoardSection";
 import { GameOverRatingBanner } from "@/components/play/GameOverRatingBanner";
 import { movesMissingComments, pollPendingMoveComments } from "@/lib/pollGameComments";
@@ -48,7 +46,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { getAiAvatarSrc, pickAiAvatar } from "@/lib/avatars";
 import { useFairPlayTelemetry } from "@/hooks/useFairPlayTelemetry";
-import { FairPlayConsentModal } from "@/components/fairplay/FairPlayConsentModal";
 import { useTranslation } from "@/hooks/useTranslation";
 import { chessLevelLabel, modeLabel } from "@/lib/i18n/labels";
 import {
@@ -59,10 +56,7 @@ import {
   type RatingRow,
 } from "@/lib/ratings";
 import { PgnExportButton } from "@/components/chess/PgnExportButton";
-import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { InlineAlert } from "@/components/ui/InlineAlert";
-import { GameChat } from "@/components/social/GameChat";
-import { VoteChessPanel } from "@/components/play/VoteChessPanel";
 import {
   opponentAndSelfPlayers,
   type GameBotPublic,

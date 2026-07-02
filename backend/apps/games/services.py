@@ -264,7 +264,8 @@ class GameService:
             board.push_uci(m.uci)
         game.fen = board.fen()
         game.move_count = game.moves.count()
-        game.save(update_fields=["fen", "move_count"])
+        game.repetition_counts = rebuild_repetition_counts(game)
+        game.save(update_fields=["fen", "move_count", "repetition_counts"])
         return {"ok": True, "undone": n}
 
     @transaction.atomic
