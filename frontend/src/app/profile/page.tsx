@@ -255,7 +255,10 @@ export default function ProfilePage() {
       <div id="profile-fairplay" className="scroll-mt-20">
         <FairPlayAppealPanel />
       </div>
-      <p className="text-center">
+      <p className="text-center flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
+        <Link href="/settings/subscription" className="text-sm text-africhess-gold hover:underline">
+          {t("settings.subscription.title")}
+        </Link>
         <Link href="/settings/security" className="text-sm text-africhess-gold hover:underline">
           {t("security.2fa.title")}
         </Link>

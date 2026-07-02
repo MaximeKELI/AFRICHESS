@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { usersApi } from "@/lib/api";
@@ -18,6 +18,15 @@ interface Plan {
 }
 
 export default function PremiumPage() {
+  const { t } = useTranslation();
+  return (
+    <Suspense fallback={<p className="max-w-4xl mx-auto px-4 py-12 opacity-60">{t("common.loading")}</p>}>
+      <PremiumContent />
+    </Suspense>
+  );
+}
+
+function PremiumContent() {
   const searchParams = useSearchParams();
   const { t, locale } = useTranslation();
   const { user, fetchProfile } = useAuthStore();

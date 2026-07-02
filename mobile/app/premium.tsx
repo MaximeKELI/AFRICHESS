@@ -23,6 +23,7 @@ export default function PremiumScreen() {
   const { user, loading: authLoading, refreshProfile } = useAuth();
   const { t } = useTranslation();
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [stripeEnabled, setStripeEnabled] = useState(false);
   const [status, setStatus] = useState<{
     tier: string;
     is_premium: boolean;
@@ -43,7 +44,10 @@ export default function PremiumScreen() {
   useEffect(() => {
     usersApi
       .subscriptionPlans()
-      .then(({ data }) => setPlans(data.plans ?? []))
+      .then(({ data }) => {
+        setPlans(data.plans ?? []);
+        setStripeEnabled(Boolean(data.stripe_enabled));
+      })
       .catch(() => setError(t("premium.error.load")))
       .finally(() => setLoading(false));
   }, [t]);
@@ -131,21 +135,29 @@ export default function PremiumScreen() {
                 </Text>
               ))}
               <Pressable
-                style={styles.btn}
-                disabled={Boolean(subscribing) || status?.tier === plan.id}
+                style={[styles.btn, !stripeEnabled && styles.btnDisabled]}
+                disabled={!stripeEnabled || Boolean(subscribing) || status?.tier === plan.id}
                 onPress={() => void subscribe(plan.id as "gold" | "diamond")}
               >
                 {subscribing === plan.id ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <Text style={styles.btnText}>
-                    {status?.tier === plan.id ? t("premium.current") : t("premium.subscribe")}
+                    {!stripeEnabled
+                      ? t("premium.unavailable")
+                      : status?.tier === plan.id
+                        ? t("premium.current")
+                        : t("premium.subscribe")}
                   </Text>
                 )}
               </Pressable>
             </View>
           ))
       )}
+
+      {!stripeEnabled && !loading ? (
+        <Text style={styles.note}>{t("premium.unavailable")}</Text>
+      ) : null}
 
       <Link href="/" style={styles.link}>
         <Text style={styles.linkText}>←</Text>
@@ -190,6 +202,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   btnText: { color: "#fff", fontWeight: "700" },
+  btnDisabled: { opacity: 0.5 },
+  note: { color: "#888", fontSize: 12, textAlign: "center" },
   link: { alignSelf: "center", marginTop: 16 },
   linkText: { color: "#D4A017" },
 });

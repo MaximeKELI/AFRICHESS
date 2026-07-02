@@ -74,14 +74,21 @@ class StripeWebhookTests(TestCase):
     @patch("apps.users.stripe_service.activate_plan")
     @patch("apps.users.stripe_service._client")
     def test_handle_webhook_checkout_completed(self, mock_client, mock_activate):
-        mock_client.return_value = MagicMock()
-        mock_client.return_value.Webhook.construct_event.return_value = {
+        mock_stripe = MagicMock()
+        mock_client.return_value = mock_stripe
+        mock_stripe.Webhook.construct_event.return_value = {
             "type": "checkout.session.completed",
             "data": {
                 "object": {
                     "metadata": {"plan": "gold", "user_id": str(self.user.id)},
+                    "subscription": "sub_checkout_1",
+                    "customer": "cus_checkout_1",
                 }
             },
+        }
+        mock_stripe.Subscription.retrieve.return_value = {
+            "current_period_end": 1893456000,
+            "metadata": {"plan": "gold"},
         }
         from apps.users.stripe_service import handle_webhook
 
@@ -90,6 +97,60 @@ class StripeWebhookTests(TestCase):
         self.assertIsNone(err)
         self.assertEqual(event["type"], "checkout.session.completed")
         mock_activate.assert_called_once()
+        _, kwargs = mock_activate.call_args
+        self.assertEqual(kwargs.get("subscription_id"), "sub_checkout_1")
+
+    def test_activate_plan_stores_subscription_id(self):
+        from apps.users.stripe_service import activate_plan
+
+        activate_plan(self.user, "gold", subscription_id="sub_act_1")
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.subscription_tier, "gold")
+        self.assertEqual(self.user.stripe_subscription_id, "sub_act_1")
+
+    def test_resolve_user_by_customer_id(self):
+        self.user.stripe_customer_id = "cus_lookup"
+        self.user.save(update_fields=["stripe_customer_id"])
+        from apps.users.stripe_service import _resolve_user
+
+        user = _resolve_user(customer_id="cus_lookup")
+        self.assertEqual(user, self.user)
+
+    def test_resolve_user_by_subscription_id(self):
+        self.user.stripe_subscription_id = "sub_lookup"
+        self.user.save(update_fields=["stripe_subscription_id"])
+        from apps.users.stripe_service import _resolve_user
+
+        user = _resolve_user(subscription_id="sub_lookup")
+        self.assertEqual(user, self.user)
+
+    @patch("apps.users.stripe_service.activate_plan")
+    @patch("apps.users.stripe_service._client")
+    def test_handle_webhook_subscription_updated(self, mock_client, mock_activate):
+        self.user.stripe_subscription_id = "sub_upd_1"
+        self.user.save(update_fields=["stripe_subscription_id"])
+        mock_client.return_value = MagicMock()
+        mock_client.return_value.Webhook.construct_event.return_value = {
+            "type": "customer.subscription.updated",
+            "data": {
+                "object": {
+                    "id": "sub_upd_1",
+                    "status": "active",
+                    "current_period_end": 1893456000,
+                    "metadata": {"plan": "diamond", "user_id": str(self.user.id)},
+                    "customer": "cus_upd",
+                }
+            },
+        }
+        from apps.users.stripe_service import handle_webhook
+
+        with patch("apps.users.stripe_service.STRIPE_WEBHOOK_SECRET", "whsec_test"):
+            event, err = handle_webhook(b"{}", "sig")
+        self.assertIsNone(err)
+        mock_activate.assert_called_once()
+        args, kwargs = mock_activate.call_args
+        self.assertEqual(args[1], "diamond")
+        self.assertEqual(kwargs.get("subscription_id"), "sub_upd_1")
 
     @patch("apps.users.stripe_service.stripe_enabled", return_value=True)
     @patch("apps.users.stripe_service._client")

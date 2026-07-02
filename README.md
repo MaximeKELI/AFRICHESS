@@ -158,7 +158,7 @@ xychart-beta
 | | Sanctions automatiques | PART review humaine admin | OK bans · shadow · pools | **Chess.com +** |
 | **Produit** | Auth JWT + OAuth + 2FA | OK | OK + recovery mature | **Parité** sécurité |
 | | i18n | PART FR/EN complets · AR/PT/SW overlays | OK 20+ langues | **Chess.com +** |
-| | Premium / Stripe | PART gating OK · Stripe requis prod | OK modèle éprouvé | **Parité** modèle · Chess.com + revenus |
+| | Premium / Stripe | OK Checkout · webhooks · portail client | OK modèle éprouvé | **Parité** modèle · Chess.com + revenus |
 | | PWA low-bandwidth | OK | N/A app-first | **AFRICHESS +** web léger |
 | | API Swagger documentée | OK | N/A fermé | **AFRICHESS +** transparence dev |
 | | CI 280+ tests + E2E | OK | OK QA massive | **Parité** approche · Chess.com + scale QA |
@@ -207,7 +207,6 @@ flowchart TB
 | Haute | Liquidité matchmaking | Friction n°1 — **Redis livré** |
 | Haute | Vote chess sans UI de vote in-game | `castVote` dans `api.ts` jamais appelé depuis `/play` |
 | Moyenne | Simul = join 1v1, pas tableau simultané | `simul/page.tsx` + `extra_views.py` |
-| Moyenne | Stripe requis pour premium prod | `503` si Stripe off · message demo en dev |
 | Moyenne | Vidéos learning = URLs placeholder | `learning/i18n_meta.py` |
 | Moyenne | Mobile ~40 % du web | Expo : pas battle/survival/training/DM/clubs |
 | Basse | i18n AR/PT/SW = overlays partiels | `localeOverlays.ts` vs catalogue FR/EN complet |
@@ -270,7 +269,7 @@ Segments **où Chess.com domine** :
 | Couvre-t-il le parcours joueur standard ? | **Oui** — jouer · s'entraîner · progresser · socialiser · compétition amateur |
 | Score de maturité relative | **~64 %** du périmètre Chess.com (score pondéré 3,2/5 vs 5/5) |
 | Positionnement | Alternative régionale modern stack, pas clone 1:1 |
-| Prochaines priorités pour réduire l'écart | Puzzle builder · vote UI · Stripe prod · mobile parité · i18n complet · anti-triche auto |
+| Prochaines priorités pour réduire l'écart | Vote UI · mobile parité · i18n complet · anti-triche auto · +20 leçons |
 
 > Cette comparaison est **rigoureuse et conservative** : un critère n'est marqué `OK` que si route + API + UX minimale existent dans le dépôt. Les scores Chess.com reflètent le leader du marché, pas une note de qualité absolue d'AFRICHESS.
 
