@@ -1,0 +1,50 @@
+{
+  "family": "africhess-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "2048",
+  "memory": "4096",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::123456789012:role/africhessTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "123456789012.dkr.ecr.af-south-1.amazonaws.com/africhess-backend:latest",
+      "essential": true,
+      "command": ["/app/docker-entrypoint.sh"],
+      "portMappings": [
+        { "containerPort": 8000, "protocol": "tcp" }
+      ],
+      "environment": [
+        { "name": "DJANGO_SETTINGS_MODULE", "value": "config.settings.production" },
+        { "name": "AFRICHESS_TIER", "value": "api" },
+        { "name": "PORT", "value": "8000" },
+        { "name": "GUNICORN_WORKERS", "value": "4" },
+        { "name": "PGBOUNCER_HOST", "value": "pgbouncer.africhess.local" },
+        { "name": "PGBOUNCER_PORT", "value": "6432" },
+        { "name": "USE_READ_REPLICA", "value": "true" },
+        { "name": "PROMETHEUS_METRICS_ENABLED", "value": "true" }
+      ],
+      "secrets": [
+        { "name": "SECRET_KEY", "valueFrom": "arn:aws:secretsmanager:af-south-1:123456789012:secret:africhess/prod:SECRET_KEY::" },
+        { "name": "POSTGRES_PASSWORD", "valueFrom": "arn:aws:secretsmanager:af-south-1:123456789012:secret:africhess/prod:POSTGRES_PASSWORD::" },
+        { "name": "REDIS_URL", "valueFrom": "arn:aws:secretsmanager:af-south-1:123456789012:secret:africhess/prod:REDIS_URL::" }
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8000/api/health/ || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/africhess-api",
+          "awslogs-region": "af-south-1",
+          "awslogs-stream-prefix": "api"
+        }
+      }
+    }
+  ]
+}
