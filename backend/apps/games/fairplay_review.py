@@ -356,16 +356,17 @@ def apply_auto_sanction(case: FairPlayReviewCase, recommendation) -> dict[str, A
     )
 
     user = case.report.user
-    Notification.objects.create(
-        user=user,
-        type=Notification.Type.SYSTEM,
-        title="Fair Play — mesure automatique",
-        body=(
-            "Une mesure graduée a été appliquée suite à l'analyse post-partie. "
-            "Vous pouvez contester via votre profil (appel Fair Play)."
-        ),
-        data={"kind": "fairplay_auto", "case_id": case.id},
-    )
+    if decision == FairPlayReviewCase.Decision.MATCHMAKING_BLOCK:
+        Notification.objects.create(
+            user=user,
+            type=Notification.Type.SYSTEM,
+            title="Fair Play — mesure automatique",
+            body=(
+                "Le matchmaking classé est temporairement restreint suite à l'analyse post-partie. "
+                "Vous pouvez contester via votre profil (appel Fair Play)."
+            ),
+            data={"kind": "fairplay_auto", "case_id": case.id},
+        )
 
     return {
         "ok": True,

@@ -268,7 +268,7 @@ Segments **où Chess.com domine** :
 | Couvre-t-il le parcours joueur standard ? | **Oui** — jouer · s'entraîner · progresser · socialiser · compétition amateur |
 | Score de maturité relative | **~64 %** du périmètre Chess.com (score pondéré 3,2/5 vs 5/5) |
 | Positionnement | Alternative régionale modern stack, pas clone 1:1 |
-| Prochaines priorités pour réduire l'écart | Vote UI · mobile parité · i18n complet · anti-triche auto · +20 leçons |
+| Prochaines priorités pour réduire l'écart | Mobile parité · i18n complet · simul tableau · WebSocket vote chess |
 
 > Cette comparaison est **rigoureuse et conservative** : un critère n'est marqué `OK` que si route + API + UX minimale existent dans le dépôt. Les scores Chess.com reflètent le leader du marché, pas une note de qualité absolue d'AFRICHESS.
 
