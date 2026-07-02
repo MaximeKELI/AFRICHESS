@@ -83,12 +83,20 @@ function ChessBoardInner({
   reviewHighlight = null,
   moveClassBadge = null,
   hintArrow = null,
+  blindMode = false,
 }: ChessBoardProps) {
   const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
   const boardThemeId = usePreferencesStore((s) => s.boardTheme);
   const pieceSet = usePreferencesStore((s) => s.pieceSet);
-  const customPieces = useMemo(() => customPiecesForSet(pieceSet), [pieceSet]);
+  const customPieces = useMemo(() => {
+    if (!blindMode) return customPiecesForSet(pieceSet);
+    const hidden = () => (
+      <div aria-hidden style={{ width: "100%", height: "100%", opacity: 0 }} />
+    );
+    const keys = ["wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK"] as const;
+    return Object.fromEntries(keys.map((k) => [k, hidden]));
+  }, [blindMode, pieceSet]);
   const theme = getBoardTheme(boardThemeId);
   const soundsOn = !lowBandwidth;
   const isCoarse = useCoarsePointer();
@@ -511,7 +519,8 @@ function ChessBoardInner({
       </div>
       <p className="sr-only" aria-live="polite" aria-atomic="true">
         {boardStatus}
-        {selectedSquare ? ` Case sélectionnée : ${selectedSquare}` : ""}
+        {blindMode ? ` ${t("chess.board.focus")} ${focusSquare}` : ""}
+        {selectedSquare ? ` ${t("chess.board.selected")} ${selectedSquare}` : ""}
         {focusSquare ? ` Focus : ${focusSquare}` : ""}
       </p>
       {promotionPending && (

@@ -144,7 +144,7 @@ function PlayContent() {
   const [setupCategory, setSetupCategory] = useState<PlaySetupCategory>("game");
   const [aiStarting, setAiStarting] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
-  const { aiCommentsEnabled } = usePreferencesStore();
+  const { aiCommentsEnabled, blindMode, setBlindMode } = usePreferencesStore();
   const turnStartRef = useRef(Date.now());
 
   useEffect(() => {
@@ -954,6 +954,17 @@ function PlayContent() {
       </div>
       <div className="mb-3 border-t border-white/10 pt-3">
         <VariantPicker value={variant} onChange={setVariant} />
+        <label className="flex items-center gap-2 text-sm mt-3">
+          <input
+            type="checkbox"
+            checked={blindMode}
+            onChange={(e) => setBlindMode(e.target.checked)}
+          />
+          {t("play.blindMode")}
+        </label>
+        {blindMode && (
+          <p className="text-xs opacity-60 mt-1">{t("play.keyboardHelp")}</p>
+        )}
       </div>
       {selectedBot ? (
         <div className="mb-3 p-2 rounded-lg border border-africhess-gold/30 text-sm flex items-center gap-3">
@@ -1279,6 +1290,7 @@ function PlayContent() {
             topPlayer={topPlayerConfig}
             bottomPlayer={bottomPlayerConfig}
             captured={panelDisplay.captured}
+            blindMode={blindMode}
           />
           </div>
           {gameCompleted &&

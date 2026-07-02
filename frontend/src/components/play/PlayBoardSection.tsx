@@ -36,6 +36,7 @@ interface PlayBoardSectionProps {
   bottomPlayer?: PlayerStripConfig;
   extraBottom?: number;
   captured?: CapturedState;
+  blindMode?: boolean;
 }
 
 function PlayBoardSectionInner({
@@ -60,6 +61,7 @@ function PlayBoardSectionInner({
   bottomPlayer,
   extraBottom = 0,
   captured,
+  blindMode = false,
 }: PlayBoardSectionProps) {
   const turn = turnFromFen(fen);
   const lastMove = useMemo(() => lastMoveFromMoves(moves), [moves]);
@@ -98,6 +100,7 @@ function PlayBoardSectionInner({
           extraBottom={extraBottom}
           captured={captured}
           lastMove={lastMove}
+          blindMode={blindMode}
         />
         {bottomPlayer && (
           <ClockedPlayerStrip

@@ -155,7 +155,7 @@ export const gamesApi = {
     color: string;
     ai_elo?: number;
     bot_slug?: string;
-    variant?: "standard" | "chess960" | "crazyhouse" | "kingofthehill" | "threecheck";
+    variant?: "standard" | "chess960" | "crazyhouse" | "kingofthehill" | "threecheck" | "atomic" | "antichess" | "horde" | "racingkings";
     include_comments?: boolean;
     is_timed?: boolean;
     time_minutes?: number | null;

@@ -97,6 +97,7 @@ export interface PlayBoardCoreProps {
   extraBottom?: number;
   captured?: CapturedState;
   lastMove: { from: string; to: string } | null;
+  blindMode?: boolean;
 }
 
 function PlayBoardCoreInner({
@@ -113,6 +114,7 @@ function PlayBoardCoreInner({
   extraBottom = 0,
   captured,
   lastMove,
+  blindMode = false,
 }: PlayBoardCoreProps) {
   return (
     <CapturedBoardStack captured={captured} orientation={orientation}>
@@ -130,6 +132,7 @@ function PlayBoardCoreInner({
         pendingDrop={pendingDrop}
         onDropAtSquare={onDropAtSquare}
         extraBottom={extraBottom}
+        blindMode={blindMode}
       />
     </CapturedBoardStack>
   );
