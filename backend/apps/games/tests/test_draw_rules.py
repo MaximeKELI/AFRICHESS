@@ -34,6 +34,9 @@ class ThreefoldRepetitionTests(TestCase):
                 to_square=uci[2:4],
                 played_by_white=i % 2 == 1,
             )
+        game.fen = self._play_ucis_on_board(self.REPEAT_UCIS)
+        game.move_count = len(self.REPEAT_UCIS)
+        game.save()
         self.assertTrue(can_claim_threefold_from_game(game))
         self.assertTrue(board_from_game_moves(game).can_claim_threefold_repetition())
 

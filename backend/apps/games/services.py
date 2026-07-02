@@ -571,6 +571,18 @@ class MatchmakingService:
             if not user_has_fairplay_consent(user):
                 raise ValueError("Consentement Fair Play requis pour les parties classées")
 
+    def _resolve_redis_opponent(self, opponent_id: int):
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        try:
+            return User.objects.get(pk=opponent_id)
+        except User.DoesNotExist:
+            from . import matchmaking_redis as mmr
+
+            mmr.leave_user(opponent_id)
+            return None
+
     def _resolve_time_control(
         self,
         mode: str,
@@ -673,17 +685,18 @@ class MatchmakingService:
                 enqueue_if_no_match=True,
             )
             if result and result.status == "paired" and result.opponent_id:
-                opponent = User.objects.get(pk=result.opponent_id)
-                return self._create_match(
-                    user,
-                    opponent,
-                    mode,
-                    is_timed=is_timed,
-                    time_minutes=time_minutes,
-                    time_control=tc_key,
-                    is_rated=is_rated,
-                    variant=variant,
-                )
+                opponent = self._resolve_redis_opponent(result.opponent_id)
+                if opponent is not None:
+                    return self._create_match(
+                        user,
+                        opponent,
+                        mode,
+                        is_timed=is_timed,
+                        time_minutes=time_minutes,
+                        time_control=tc_key,
+                        is_rated=is_rated,
+                        variant=variant,
+                    )
             MatchmakingQueue.objects.update_or_create(
                 user=user,
                 defaults={
@@ -847,18 +860,19 @@ class MatchmakingService:
                 enqueue_if_no_match=False,
             )
             if result and result.status == "paired" and result.opponent_id:
-                opponent = User.objects.get(pk=result.opponent_id)
-                return self._create_match(
-                    user,
-                    opponent,
-                    mode,
-                    is_timed=is_timed,
-                    time_minutes=time_minutes,
-                    time_control=tc_key,
-                    is_rated=is_rated,
-                    variant=variant,
-                )
-            return None
+                opponent = self._resolve_redis_opponent(result.opponent_id)
+                if opponent is not None:
+                    return self._create_match(
+                        user,
+                        opponent,
+                        mode,
+                        is_timed=is_timed,
+                        time_minutes=time_minutes,
+                        time_control=tc_key,
+                        is_rated=is_rated,
+                        variant=variant,
+                    )
+                mmr.leave_user(result.opponent_id)
 
         return self._find_match_pg(
             user,
@@ -1006,6 +1020,7 @@ class MatchmakingService:
                         best.user,
                         mode,
                         is_timed=a.is_timed,
+                        time_minutes=a.time_control_minutes if a.is_timed else None,
                         time_control=a.time_control or None,
                         is_rated=a.is_rated,
                         variant=a.variant,

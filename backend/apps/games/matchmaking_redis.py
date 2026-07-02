@@ -296,3 +296,15 @@ def reset_availability_cache() -> None:
     _client = None
     _match_script = None
     _leave_script = None
+
+
+def flush_all_pools() -> None:
+    """Tests / maintenance — vide les files Redis matchmaking."""
+    if not is_redis_matchmaking_available():
+        return
+    try:
+        client = _get_client()
+        for key in client.scan_iter("mm:*"):
+            client.delete(key)
+    except Exception as exc:
+        logger.warning("Redis flush_all_pools failed: %s", exc)
