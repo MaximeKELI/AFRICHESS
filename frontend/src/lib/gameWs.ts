@@ -10,6 +10,10 @@ export function wsMatchmakingUrl(): string {
   return `${WS_URL}/ws/matchmaking/`;
 }
 
+export function wsSimulUrl(sessionId: number): string {
+  return `${WS_URL}/ws/simul/${sessionId}/`;
+}
+
 export function wsNotificationsUrl(): string {
   return `${WS_URL}/ws/notifications/`;
 }
