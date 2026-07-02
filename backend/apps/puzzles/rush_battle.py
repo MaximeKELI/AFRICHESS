@@ -14,6 +14,7 @@ def start_rush_session(user, duration_seconds: int = 180) -> PuzzleRushSession:
     puzzles = random_queryset(Puzzle.objects.all(), 20)
     return PuzzleRushSession.objects.create(
         user=user,
+        mode=PuzzleRushSession.Mode.RUSH,
         puzzle_ids=[p.id for p in puzzles],
         ends_at=timezone.now() + timedelta(seconds=duration_seconds),
     )
