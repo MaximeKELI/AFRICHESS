@@ -1,0 +1,32 @@
+# Nécessite Prometheus Operator installé sur le cluster.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: africhess-api
+  namespace: africhess
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: africhess-api
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: africhess-ws
+  namespace: africhess
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: africhess-ws
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
