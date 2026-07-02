@@ -623,8 +623,10 @@ class MatchmakingService:
         from django.contrib.auth import get_user_model
 
         from . import matchmaking_redis as mmr
+        from .fairplay_integrity import user_in_shadow_pool
 
         User = get_user_model()
+        shadow = user_in_shadow_pool(user) if is_rated else False
         if mmr.is_redis_matchmaking_available():
             pool = mmr.pool_key(
                 mode=mode,
@@ -633,6 +635,7 @@ class MatchmakingService:
                 is_rated=is_rated,
                 time_control=tc_key or "",
                 time_control_minutes=tcm,
+                shadow_pool=shadow,
             )
             meta = {
                 "mode": mode,
@@ -792,8 +795,10 @@ class MatchmakingService:
         from django.contrib.auth import get_user_model
 
         from . import matchmaking_redis as mmr
+        from .fairplay_integrity import user_in_shadow_pool
 
         User = get_user_model()
+        shadow = user_in_shadow_pool(user) if is_rated else False
         if mmr.is_redis_matchmaking_available():
             pool = mmr.pool_key(
                 mode=mode,
@@ -802,6 +807,7 @@ class MatchmakingService:
                 is_rated=is_rated,
                 time_control=tc_key or "",
                 time_control_minutes=tcm,
+                shadow_pool=shadow,
             )
             meta = {
                 "mode": mode,
