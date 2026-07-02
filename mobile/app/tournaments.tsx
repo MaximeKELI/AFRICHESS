@@ -86,6 +86,15 @@ const styles = StyleSheet.create({
   cardMeta: { color: "#888", fontSize: 12, marginTop: 4 },
   cardDesc: { color: "#aaa", fontSize: 13, marginTop: 6 },
   badge: { color: "#1B7A3D", fontSize: 12, marginTop: 4, fontWeight: "600" },
+  registerBtn: {
+    marginTop: 10,
+    alignSelf: "flex-start",
+    backgroundColor: "#1B7A3D",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  registerText: { color: "#fff", fontWeight: "600", fontSize: 13 },
   empty: { color: "#666", fontStyle: "italic", marginTop: 16 },
   error: { color: "#E07A5F", marginTop: 16, textAlign: "center" },
 });

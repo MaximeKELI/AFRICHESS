@@ -30,6 +30,9 @@ export default function RootLayout() {
           <Stack.Screen name="learning" options={{ title: "Apprentissage" }} />
           <Stack.Screen name="tournaments" options={{ title: "Tournois" }} />
           <Stack.Screen name="friends" options={{ title: "Amis" }} />
+          <Stack.Screen name="leaderboard" options={{ title: "Classements" }} />
+          <Stack.Screen name="clubs" options={{ title: "Clubs" }} />
+          <Stack.Screen name="clubs/[slug]" options={{ title: "Club" }} />
           <Stack.Screen name="login" options={{ title: "Connexion" }} />
           <Stack.Screen name="register" options={{ title: "Inscription" }} />
           <Stack.Screen name="premium" options={{ title: "Premium" }} />
