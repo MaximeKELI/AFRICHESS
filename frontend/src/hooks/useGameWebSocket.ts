@@ -22,6 +22,15 @@ export interface WsGamePayload {
       to_square?: string;
       played_by_white: boolean;
     }>;
+    delta?: boolean;
+    new_moves?: Array<{
+      san: string;
+      uci: string;
+      from_square?: string;
+      to_square?: string;
+      played_by_white: boolean;
+      move_number?: number;
+    }>;
     white_player?: { id: number; username: string };
     black_player?: { id: number; username: string };
     is_vs_ai?: boolean;

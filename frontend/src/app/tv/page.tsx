@@ -44,7 +44,7 @@ export default function TvPage() {
 
   useEffect(() => {
     load();
-    const id = setInterval(load, 8000);
+    const id = setInterval(load, 30000);
     return () => clearInterval(id);
   }, [load]);
 

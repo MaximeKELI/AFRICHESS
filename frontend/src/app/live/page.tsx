@@ -56,7 +56,7 @@ export default function LiveGamesPage() {
           : []
       );
     }).catch(() => setStreamers([]));
-    const id = setInterval(load, 15000);
+    const id = setInterval(load, 30000);
     return () => clearInterval(id);
   }, [t]);
 

@@ -91,17 +91,21 @@ def detect_clock_drift_ms(
     game: Game,
     user,
     think_ms: int | None,
+    *,
+    last_move=None,
 ) -> int | None:
     """Compare temps client vs delta serveur depuis le dernier coup du joueur."""
     if think_ms is None or think_ms <= 0:
         return None
     from .models import Move
 
-    last_own = (
-        Move.objects.filter(game=game)
-        .order_by("-move_number")
-        .first()
-    )
+    last_own = last_move
+    if last_own is None:
+        last_own = (
+            Move.objects.filter(game=game)
+            .order_by("-move_number")
+            .first()
+        )
     if not last_own:
         return None
     is_white = game.white_player_id == user.id

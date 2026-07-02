@@ -135,12 +135,15 @@ def retry_all_waiting_pools() -> int:
 
 def pool_stats() -> dict[str, Any]:
     """Stats pools pour monitoring / UI."""
+    from django.db.models import Count
+
     total = mmr.searching_count()
     pg = MatchmakingQueue.objects.count()
-    by_mode: dict[str, int] = {}
-    for row in MatchmakingQueue.objects.values("mode").distinct():
-        mode = row["mode"]
-        by_mode[mode] = MatchmakingQueue.objects.filter(mode=mode).count()
+    by_mode = dict(
+        MatchmakingQueue.objects.values("mode")
+        .annotate(n=Count("id"))
+        .values_list("mode", "n")
+    )
     shadow_profiles = 0
     redis_shadow = 0
     if mmr.is_redis_matchmaking_available():

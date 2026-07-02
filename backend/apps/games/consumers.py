@@ -14,7 +14,7 @@ from apps.common.ws_connect import accept_websocket
 from apps.common.ws_ratelimit import allow_ws_event
 
 from .models import Game
-from .realtime_services import build_ws_payload
+from .realtime_services import build_ws_move_payload, build_ws_payload
 from .room_utils import ensure_game_room, set_player_connected, try_start_game
 from .services import GameService, MatchmakingService
 
@@ -377,7 +377,9 @@ class ChessConsumer(AsyncWebsocketConsumer):
             return result
         game.refresh_from_db()
         last_move = None
-        m = game.moves.order_by("-move_number").first()
+        player_move = result.get("move")
+        ai_move = result.get("ai_move_record")
+        m = ai_move or player_move
         if m:
             last_move = {
                 "san": m.san,
@@ -386,8 +388,9 @@ class ChessConsumer(AsyncWebsocketConsumer):
                 "to_square": m.to_square,
                 "played_by_white": m.played_by_white,
             }
-        return build_ws_payload(
+        return build_ws_move_payload(
             game,
+            result,
             {
                 "last_move": last_move,
                 "game_over": result.get("game_over")

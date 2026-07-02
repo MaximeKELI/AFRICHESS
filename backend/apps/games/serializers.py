@@ -211,6 +211,50 @@ def serialize_game_move_delta(game: Game, result: dict) -> dict:
     return payload
 
 
+class LiveGameSerializer(serializers.ModelSerializer):
+    """Partie live sans coups ni analyse — pour /live et /tv."""
+
+    white_player = UserPublicSerializer(read_only=True)
+    black_player = UserPublicSerializer(read_only=True)
+    white_elo = serializers.SerializerMethodField()
+    black_elo = serializers.SerializerMethodField()
+
+    def _elo_for(self, obj: Game, player_id: int | None, player) -> int | None:
+        if not player_id:
+            return None
+        mode = _game_rating_mode(obj)
+        elo_map = self.context.get("elo_map") or {}
+        if (player_id, mode) in elo_map:
+            return elo_map[(player_id, mode)]
+        if player is not None:
+            return player.initial_elo
+        return 1200
+
+    def get_white_elo(self, obj: Game):
+        return self._elo_for(obj, obj.white_player_id, obj.white_player)
+
+    def get_black_elo(self, obj: Game):
+        return self._elo_for(obj, obj.black_player_id, obj.black_player)
+
+    class Meta:
+        model = Game
+        fields = [
+            "id",
+            "fen",
+            "mode",
+            "variant",
+            "status",
+            "move_count",
+            "white_player",
+            "black_player",
+            "white_elo",
+            "black_elo",
+            "white_time_ms",
+            "black_time_ms",
+            "is_timed",
+        ]
+
+
 class GameListSerializer(serializers.ModelSerializer):
     white_player = UserPublicSerializer(read_only=True)
     black_player = UserPublicSerializer(read_only=True)

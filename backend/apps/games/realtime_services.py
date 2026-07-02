@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from .models import Game
 from .room_utils import current_turn, ensure_game_room
-from .serializers import GameSerializer
+from .serializers import GameSerializer, serialize_game_move_delta
 from .services import MatchmakingService, create_matchmaking_game as _create_mm_game
 
 
@@ -22,6 +22,21 @@ def serialize_game(game: Game) -> dict:
 
 def build_ws_payload(game: Game, extra: dict | None = None) -> dict:
     payload = {"game": serialize_game(game)}
+    if extra:
+        payload.update(extra)
+    return payload
+
+
+def build_ws_move_payload(
+    game: Game,
+    result: dict,
+    extra: dict | None = None,
+) -> dict:
+    """Broadcast léger après un coup (delta, pas toute la partie)."""
+    delta = serialize_game_move_delta(game, result)
+    delta["turn"] = current_turn(game)
+    delta["room_id"] = str(ensure_game_room(game).room_id)
+    payload = {"game": delta}
     if extra:
         payload.update(extra)
     return payload

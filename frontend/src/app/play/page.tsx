@@ -376,18 +376,6 @@ function PlayContent() {
       .catch(() => {});
   }, [gameCompleted, user, gameData.is_rated, gameData.rating_changes, mode]);
 
-  useEffect(() => {
-    if (!user || gameId) return;
-    const loadPool = () => {
-      gamesApi.matchmakingStatus().then(({ data }) => {
-        setSearchingPool(data.searching_players ?? 0);
-      }).catch(() => {});
-    };
-    loadPool();
-    const timer = window.setInterval(loadPool, 8000);
-    return () => window.clearInterval(timer);
-  }, [user, gameId]);
-
   const aiPlayMode = useMemo(
     () => (useClock ? playModeFromPreset(timePreset) : resolveAiPlayMode(mode)),
     [useClock, timePreset, mode]
@@ -527,7 +515,9 @@ function PlayContent() {
         const g = p.game;
         applyGameResponse({
           fen: g.fen,
-          moves: (g.moves ?? []) as ApiMove[],
+          delta: g.delta,
+          new_moves: g.new_moves,
+          moves: g.delta ? undefined : ((g.moves ?? []) as ApiMove[]),
           white_time_ms: g.white_time_ms,
           black_time_ms: g.black_time_ms,
           increment_ms: g.increment_ms,
@@ -594,6 +584,18 @@ function PlayContent() {
 
   const { searching: wsSearching, mmError, search: wsSearch, cancel: wsCancel } =
     useMatchmakingWebSocket(Boolean(user), mode, handleMatchFound, timeOpts);
+
+  useEffect(() => {
+    if (!user || gameId || wsSearching) return;
+    const loadPool = () => {
+      gamesApi.matchmakingStatus().then(({ data }) => {
+        setSearchingPool(data.searching_players ?? 0);
+      }).catch(() => {});
+    };
+    loadPool();
+    const timer = window.setInterval(loadPool, 30000);
+    return () => window.clearInterval(timer);
+  }, [user, gameId, wsSearching]);
 
   const isMyTurn =
     gameActive &&

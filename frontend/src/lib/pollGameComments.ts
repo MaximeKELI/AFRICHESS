@@ -23,7 +23,7 @@ export async function pollPendingMoveComments(
   opts?: { maxAttempts?: number; intervalMs?: number }
 ): Promise<void> {
   const maxAttempts = opts?.maxAttempts ?? 120;
-  const intervalMs = opts?.intervalMs ?? 600;
+  const intervalMs = opts?.intervalMs ?? 1200;
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     await sleep(intervalMs);

@@ -23,38 +23,46 @@ _TAB_BLUR_MSG = (
 _PASTE_MSG = "Copier-coller excessif détecté"
 
 
+def _recent_moves_context(game: Game) -> tuple[Move | None, int]:
+    """Dernier coup + coups dans la dernière minute (une requête)."""
+    since = timezone.now() - timedelta(minutes=1)
+    moves = list(
+        Move.objects.filter(game=game).order_by("-move_number")[
+            : MAX_MOVES_PER_MINUTE + 1
+        ]
+    )
+    last = moves[0] if moves else None
+    recent = sum(1 for move in moves if move.created_at >= since)
+    return last, recent
+
+
 def validate_move_timing(
     game: Game,
     user,
     think_ms: int | None = None,
+    *,
+    last_move: Move | None = None,
+    recent_count: int | None = None,
 ) -> dict | None:
     """Retourne {"error": ...} si suspect, None si OK."""
     if user_is_fairplay_exempt(user):
         return None
     if game.is_vs_ai:
         return None
-    since = timezone.now() - timedelta(minutes=1)
-    recent = Move.objects.filter(
-        game=game,
-        created_at__gte=since,
-    ).count()
-    if recent >= MAX_MOVES_PER_MINUTE:
+    if last_move is None or recent_count is None:
+        last_move, recent_count = _recent_moves_context(game)
+    if recent_count >= MAX_MOVES_PER_MINUTE:
         return {
             "error": "Trop de coups — activité suspecte",
             "code": "anticheat",
         }
-    last = (
-        Move.objects.filter(game=game)
-        .order_by("-created_at")
-        .first()
-    )
-    if last:
-        delta = (timezone.now() - last.created_at).total_seconds() * 1000
+    if last_move:
+        delta = (timezone.now() - last_move.created_at).total_seconds() * 1000
         is_white = (
             game.white_player is not None
             and game.white_player.pk == user.pk
         )
-        same_side = last.played_by_white == is_white
+        same_side = last_move.played_by_white == is_white
         too_fast_server = (
             delta < MIN_MOVE_INTERVAL_MS and same_side
         )
@@ -116,6 +124,8 @@ def validate_clock_drift(
     game: Game,
     user,
     think_ms: int | None = None,
+    *,
+    last_move: Move | None = None,
 ) -> dict | None:
     """Bloque les écarts extrêmes client vs serveur (spoofing temps)."""
     from django.conf import settings
@@ -124,7 +134,7 @@ def validate_clock_drift(
 
     if game.is_vs_ai:
         return None
-    drift = detect_clock_drift_ms(game, user, think_ms)
+    drift = detect_clock_drift_ms(game, user, think_ms, last_move=last_move)
     if drift is None:
         return None
     block_ms = int(getattr(settings, "FAIRPLAY_CLOCK_DRIFT_BLOCK_MS", 12000))
@@ -146,9 +156,15 @@ def validate_move_fairplay(
     """Anti-triche temps réel (pas de verdict moteur en partie)."""
     if user_is_fairplay_exempt(user):
         return None
+    last_move, recent_count = _recent_moves_context(game)
     for check in (
-        lambda: validate_move_timing(game, user, think_ms=think_ms),
-        lambda: validate_clock_drift(game, user, think_ms=think_ms),
+        lambda: validate_move_timing(
+            game, user, think_ms=think_ms,
+            last_move=last_move, recent_count=recent_count,
+        ),
+        lambda: validate_clock_drift(
+            game, user, think_ms=think_ms, last_move=last_move,
+        ),
         lambda: validate_move_telemetry(game, user, telemetry),
     ):
         err = check()

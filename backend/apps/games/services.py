@@ -277,6 +277,7 @@ class GameService:
         if cheat:
             return cheat
 
+        complexity_pre = None
         if not game.is_vs_ai:
             from .fairplay_service import estimate_complexity_cp
             from .fairplay_integrity import record_live_move_integrity
@@ -332,9 +333,7 @@ class GameService:
 
         new_fen, san, is_over = result
         fen_before_player = game.fen
-        from .fairplay_service import estimate_complexity_cp
-
-        complexity_cp = estimate_complexity_cp(fen_before_player) if not game.is_vs_ai else None
+        complexity_cp = complexity_pre if not game.is_vs_ai else None
         pending_comment_specs: list[dict] = []
         game.fen = new_fen
         move = self._record_move(

@@ -413,9 +413,11 @@ class LiveGamesView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        from .live_tv import build_tv_payload
+        from .live_tv import batch_player_elos, build_tv_payload
+        from .serializers import LiveGameSerializer
 
-        games = list(live_games_queryset())
+        games = list(live_games_queryset()[:30])
+        elo_ctx = {"elo_map": batch_player_elos(games)}
         tv = build_tv_payload("best")
         featured_ids = set(tv.get("queue_game_ids") or [])
         featured = [g for g in games if str(g.id) in featured_ids][:5]
@@ -432,8 +434,8 @@ class LiveGamesView(APIView):
         return Response(
             {
                 "channel": "AFRICHESS Live TV",
-                "games": GameSerializer(games, many=True).data,
-                "featured": GameSerializer(featured, many=True).data,
+                "games": LiveGameSerializer(games, many=True, context=elo_ctx).data,
+                "featured": LiveGameSerializer(featured, many=True, context=elo_ctx).data,
                 "tv": tv,
             }
         )
@@ -445,18 +447,22 @@ class LiveTvView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        from .live_tv import TV_CHANNELS, build_tv_payload
+        from .live_tv import TV_CHANNELS, batch_player_elos, build_tv_payload
+        from .serializers import LiveGameSerializer
 
         channel = request.query_params.get("channel", "best")
         payload = build_tv_payload(channel)
         current_id = payload.get("current_game_id")
-        games = list(live_games_queryset())
+        games = list(live_games_queryset()[:50])
         by_id = {str(g.id): g for g in games}
+        elo_ctx = {"elo_map": batch_player_elos(games)}
         current = by_id.get(current_id) if current_id else None
         queue = [by_id[g_id] for g_id in payload.get("queue_game_ids", []) if g_id in by_id]
         payload["channels"] = list(TV_CHANNELS)
-        payload["current"] = GameSerializer(current).data if current else None
-        payload["queue"] = GameSerializer(queue, many=True).data
+        payload["current"] = (
+            LiveGameSerializer(current, context=elo_ctx).data if current else None
+        )
+        payload["queue"] = LiveGameSerializer(queue, many=True, context=elo_ctx).data
         return Response(payload)
 
 

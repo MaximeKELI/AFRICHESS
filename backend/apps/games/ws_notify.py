@@ -27,10 +27,14 @@ def notify_game_room(game_id, handler: str, payload: dict) -> None:
 def notify_move_made(game, result: dict) -> None:
     """Broadcast coup joué via HTTP aux clients WebSocket de la partie."""
     from .models import Game
-    from .realtime_services import build_ws_payload
+    from .realtime_services import build_ws_move_payload
 
     last_move = None
-    m = game.moves.order_by("-move_number").first()
+    player_move = result.get("move")
+    ai_move = result.get("ai_move_record")
+    m = ai_move or player_move
+    if m is None:
+        m = game.moves.order_by("-move_number").first()
     if m:
         last_move = {
             "san": m.san,
@@ -39,8 +43,9 @@ def notify_move_made(game, result: dict) -> None:
             "to_square": m.to_square,
             "played_by_white": m.played_by_white,
         }
-    payload = build_ws_payload(
+    payload = build_ws_move_payload(
         game,
+        result,
         {
             "last_move": last_move,
             "game_over": bool(result.get("game_over"))
