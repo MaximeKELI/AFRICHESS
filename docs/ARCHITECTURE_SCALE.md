@@ -126,6 +126,11 @@ En production AWS :
 
 ### Grafana
 - Dashboards : WS actives, p99 matchmaking, backlog Celery par queue, connexions DB vs `max_connections`
+- **Alertes provisionnées** : voir `infra/grafana/ALERTS.md`
+  - WS > 200k (critical), > 150k (warning)
+  - Matchmaking p99 > 500 ms
+  - Celery analysis backlog (p95 > 5 min)
+  - Postgres > 80 % connexions
 
 ## Cloudflare (frontal Afrique)
 

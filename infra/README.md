@@ -16,6 +16,7 @@ docker compose -f docker-compose.production.yml --env-file .env.production up -d
 - Grafana : `http://localhost:3001` (admin / mot de passe `.env`)
   - Dashboard **AFRICHESS — Scale 100M/jour** auto-provisionné
   - Import manuel : `grafana/dashboards/africhess-scale.json`
+  - **Alertes** : dossier « AFRICHESS Alerts » (voir `grafana/ALERTS.md`)
 
 ## Kubernetes / ECS
 

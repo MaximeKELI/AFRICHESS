@@ -211,7 +211,7 @@ groups:
       # ── Celery analysis ──────────────────────────────────────
       - uid: africhess-celery-analysis-backlog
         title: Celery analysis — backlog (p95 > 5 min)
-        condition: C
+        condition: E
         data:
           - refId: A
             relativeTimeRange:
@@ -233,6 +233,15 @@ groups:
               expr: sum(rate(africhess_celery_tasks_total{queue="analysis"}[5m]))
               instant: true
               refId: B
+          - refId: E
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: math
+              expression: ($A > 300 && $B > 0.5) ? 1 : 0
+              refId: E
           - refId: C
             relativeTimeRange:
               from: 0
@@ -241,7 +250,7 @@ groups:
             model:
               conditions:
                 - evaluator:
-                    params: [300]
+                    params: [0]
                     type: gt
                   operator:
                     type: and
@@ -254,32 +263,8 @@ groups:
               datasource:
                 type: __expr__
                 uid: __expr__
-              expression: A
+              expression: E
               refId: C
-              type: threshold
-          - refId: D
-            relativeTimeRange:
-              from: 0
-              to: 0
-            datasourceUid: __expr__
-            model:
-              conditions:
-                - evaluator:
-                    params: [0.5]
-                    type: gt
-                  operator:
-                    type: and
-                  query:
-                    params: [D]
-                  reducer:
-                    params: []
-                    type: last
-                  type: query
-              datasource:
-                type: __expr__
-                uid: __expr__
-              expression: B
-              refId: D
               type: threshold
         noDataState: OK
         execErrState: Alerting

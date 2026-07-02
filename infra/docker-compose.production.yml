@@ -240,6 +240,13 @@ services:
     image: grafana/grafana:11.2.0
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_UNIFIED_ALERTING_ENABLED: "true"
+      # Email (optionnel — décommenter et configurer pour alertes ops)
+      # GF_SMTP_ENABLED: "true"
+      # GF_SMTP_HOST: smtp.example.com:587
+      # GF_SMTP_USER: alerts@africhess.com
+      # GF_SMTP_PASSWORD: ${GRAFANA_SMTP_PASSWORD:-}
+      # GF_SMTP_FROM_ADDRESS: alerts@africhess.com
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
