@@ -37,8 +37,14 @@ def configure_media_storage(settings_module) -> None:
             f"https://{bucket}.s3.{region}.amazonaws.com/media/"
         )
 
+    existing_storages = getattr(settings_module, "STORAGES", None) or {
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
     settings_module.STORAGES = {
-        **getattr(settings_module, "STORAGES", {}),
+        **existing_storages,
         "default": {
             "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
             "OPTIONS": {

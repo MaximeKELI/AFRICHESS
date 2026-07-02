@@ -105,6 +105,8 @@ jobs:
           POSTGRES_PASSWORD: africhess
           REDIS_URL: redis://localhost:6379/0
           REDIS_CACHE_URL: redis://localhost:6379/4
+          REDIS_MATCHMAKING_URL: redis://localhost:6379/3
+          MATCHMAKING_REDIS_ENABLED: "true"
           DJANGO_SETTINGS_MODULE: config.settings.development
           SECRET_KEY: ci-secret-key-32-bytes-minimum!!
           STOCKFISH_PATH: /usr/games/stockfish
