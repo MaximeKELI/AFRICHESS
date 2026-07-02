@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
@@ -198,6 +199,7 @@ def subscription_status(request):
             "is_diamond": user.is_diamond,
             "premium_until": user.premium_until,
             "has_billing_portal": bool(user.stripe_customer_id) and stripe_enabled(),
+            "stripe_enabled": stripe_enabled(),
         }
     )
 
