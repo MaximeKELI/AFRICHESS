@@ -1,5 +1,6 @@
 import type { Locale, MessageParams } from "./types";
 import { arOverlay, ptOverlay, swOverlay } from "./localeOverlays";
+import { arOverlayM3, ptOverlayM3, swOverlayM3 } from "./localeOverlaysM3";
 
 export type { Locale, MessageParams } from "./types";
 
