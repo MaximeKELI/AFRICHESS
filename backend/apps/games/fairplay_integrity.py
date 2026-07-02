@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import math
 from typing import Any
+
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 

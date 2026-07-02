@@ -252,7 +252,9 @@ def analyze_and_store(game: Game, user) -> FairPlayReport | None:
     result, error_reason = run_fairplay_analysis(game, user, analysis_mode="full")
     if error_reason:
         _notify_ops_engine_failure(game, user, error_reason)
-        return persist_fairplay_report(game, user, result)
+        report = persist_fairplay_report(game, user, result)
+        post_fairplay_integrity_sync(game, user)
+        return report
     baseline = player_baseline(user, game)
     if int(baseline["games_analyzed"]) >= 10:
         avg_hist = float(baseline["avg_overall_score"])
