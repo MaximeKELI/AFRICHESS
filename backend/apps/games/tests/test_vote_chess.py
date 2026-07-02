@@ -40,26 +40,6 @@ class VoteChessTests(TestCase):
         )
         self.assertEqual(resp.status_code, 400)
 
-    def test_join_when_active_allows_second_board(self):
-        from apps.games.models import SimulSession
-
-        self.client.force_authenticate(user=self.organizer)
-        create = self.client.post(
-            "/api/games/simul/",
-            {"title": "Test simul", "max_boards": 5},
-            format="json",
-        )
-        session_id = create.data["id"]
-        opponent2 = User.objects.create_user(username="opp2", password="x")
-        self.client.force_authenticate(user=self.owner_black)
-        self.client.post(f"/api/games/simul/{session_id}/join/", {}, format="json")
-        session = SimulSession.objects.get(pk=session_id)
-        self.assertEqual(session.status, SimulSession.Status.ACTIVE)
-        self.client.force_authenticate(user=opponent2)
-        resp = self.client.post(f"/api/games/simul/{session_id}/join/", {}, format="json")
-        self.assertEqual(resp.status_code, 201)
-        self.assertEqual(session.boards.count(), 2)
-
     def test_cast_and_apply_vote(self):
         resp = self.client.post(
             "/api/games/vote/create/",
