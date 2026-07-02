@@ -1,0 +1,22 @@
+# Règles prometheus-adapter pour HPA sur connexions WS actives.
+# Prérequis : prometheus-adapter installé (Helm chart prometheus-community/prometheus-adapter).
+# Le ServiceMonitor africhess-ws doit alimenter Prometheus avec africhess_ws_connections_active{tier="ws"}.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-adapter-ws-hpa
+  namespace: africhess
+  labels:
+    app: prometheus-adapter
+data:
+  config.yaml: |
+    rules:
+      - seriesQuery: 'africhess_ws_connections_active{tier="ws",namespace!="",pod!=""}'
+        resources:
+          overrides:
+            namespace: {resource: "namespace"}
+            pod: {resource: "pod"}
+        name:
+          matches: "^africhess_ws_connections_active"
+          as: "africhess_ws_connections_active"
+        metricsQuery: sum(<<.Series>>{<<.LabelMatchers>>}) by (<<.GroupBy>>)

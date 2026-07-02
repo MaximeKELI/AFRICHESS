@@ -142,6 +142,7 @@ Activer les sanctions réelles : `FAIRPLAY_AUTO_SANCTIONS_ENABLED=true` + shadow
 
 ### Grafana
 - Dashboards : WS actives, p99 matchmaking, backlog Celery par queue, connexions DB vs `max_connections`
+- **HPA WS** (`infra/k8s/hpa.yaml`) : scale sur `africhess_ws_connections_active` (~8000 conn/pod) via prometheus-adapter (`infra/k8s/prometheus-adapter-ws.yaml`), CPU en secours
 - **Alertes provisionnées** : voir `infra/grafana/ALERTS.md`
   - WS > 200k (critical), > 150k (warning)
   - Matchmaking p99 > 500 ms

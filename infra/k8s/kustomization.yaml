@@ -13,6 +13,7 @@ resources:
   - ingress.yaml
   - hpa.yaml
   - servicemonitor.yaml
+  - prometheus-adapter-ws.yaml
 
 images:
   - name: 123456789012.dkr.ecr.af-south-1.amazonaws.com/africhess-backend
