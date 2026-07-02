@@ -14,6 +14,13 @@ docker compose -f docker-compose.production.yml --env-file .env.production up -d
 - WS : `ws://localhost/ws/`
 - Prometheus : `http://localhost:9090`
 - Grafana : `http://localhost:3001` (admin / mot de passe `.env`)
+  - Dashboard **AFRICHESS — Scale 100M/jour** auto-provisionné
+  - Import manuel : `grafana/dashboards/africhess-scale.json`
+
+## Kubernetes / ECS
+
+- **EKS** : `infra/k8s/` — `kubectl apply -k infra/k8s`
+- **ECS** : `infra/ecs/` — task definitions Fargate + EC2 CPU
 
 ## Tiers
 

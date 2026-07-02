@@ -167,7 +167,10 @@ Optimisations : Reserved Instances, Spot pour workers analysis, autoscaling HPA 
 | `backend/config/asgi_ws.py` | Tier WebSocket seul |
 | `backend/config/db_router.py` | Lectures → réplica |
 | `backend/apps/common/metrics.py` | Métriques Prometheus |
-| `infra/docker-compose.production.yml` | Stack multi-rôles |
+| `infra/docker-compose.production.yml` | Stack multi-rôles (Docker) |
+| `infra/k8s/` | Manifestes EKS (HPA, Ingress ALB) |
+| `infra/ecs/` | Task definitions ECS Fargate/EC2 |
+| `infra/grafana/dashboards/africhess-scale.json` | Dashboard Grafana prêt à importer |
 | `infra/nginx/nginx.conf` | Routage `/api` vs `/ws` |
 
 ## Migration depuis mono-Daphne
