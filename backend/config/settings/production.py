@@ -38,6 +38,34 @@ if len(SECRET_KEY) < 50 or SECRET_KEY in _INSECURE_SECRET_KEYS:  # noqa: F405
         "SECRET_KEY must be a unique random string of at least 50 characters in production."
     )
 
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())  # noqa: F405
+
+CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="", cast=Csv())  # noqa: F405
+if not CSRF_TRUSTED_ORIGINS:  # noqa: F405
+    CSRF_TRUSTED_ORIGINS = [  # noqa: F405
+        origin
+        for origin in CORS_ALLOWED_ORIGINS  # noqa: F405
+        if origin.startswith("https://")
+    ]
+
+# --- Email (verification obligatoire en prod) ---
+EMAIL_BACKEND = config(
+    "EMAIL_BACKEND",
+    default="django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_HOST = config("EMAIL_HOST", default="")
+EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@africhess.com")
+SERVER_EMAIL = config("SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
+
+if not EMAIL_HOST:
+    raise ImproperlyConfigured(
+        "EMAIL_HOST must be set in production (ACCOUNT_EMAIL_VERIFICATION=mandatory)."
+    )
+
 # --- Postgres via PgBouncer (écritures) + réplica lecture ---
 _pgbouncer_host = config("PGBOUNCER_HOST", default="")
 _db_host = _pgbouncer_host or config("POSTGRES_HOST", default="localhost")  # noqa: F405
