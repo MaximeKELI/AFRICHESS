@@ -51,6 +51,7 @@ class GameAnalysisSerializer(serializers.ModelSerializer):
             "move_accuracy_white", "move_accuracy_black",
             "blunders_white", "blunders_black",
             "best_moves_json", "summary_fr", "summary_en", "key_moments_json",
+            "deep_review_json", "analysis_depth_used",
         ]
 
     def to_representation(self, instance):
