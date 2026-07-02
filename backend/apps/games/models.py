@@ -242,6 +242,8 @@ class GameAnalysis(models.Model):
     summary_fr = models.TextField(blank=True)
     summary_en = models.TextField(blank=True)
     key_moments_json = models.JSONField(default=list)
+    deep_review_json = models.JSONField(default=dict, blank=True)
+    analysis_depth_used = models.PositiveSmallIntegerField(default=0)
     evaluated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
