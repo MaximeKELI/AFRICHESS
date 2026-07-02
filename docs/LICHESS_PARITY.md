@@ -26,7 +26,7 @@
 | Studies collaboratives | Absent | **v1** (chapitres PGN, partage) |
 | Puzzle Storm (3 min, flux infini) | Rush 20 puzzles fixe | **Storm** (puzzles dynamiques) |
 | Puzzle Racer | Battle 1v1 | Déjà **Battle** — renommage UX à faire |
-| Broadcasts / TV | Absent | Phase 3 |
+| Broadcasts / TV | Absent | **Phase 3** (relay + TV rotation) |
 | Antichess / Horde / Racing Kings | Absent | Phase 4 |
 | Liquidité joueurs | N/A code | Croissance communauté |
 
