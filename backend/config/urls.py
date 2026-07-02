@@ -14,6 +14,7 @@ from rest_framework_simplejwt.views import TokenVerifyView
 
 from config.auth_views import registration_deprecated
 from apps.common.health import health_check
+from apps.common.prometheus_views import prometheus_metrics
 from apps.users.auth_views import CookieTokenRefreshView, SecureLoginView, SecureLogoutView
 
 if settings.DEBUG and getattr(settings, "ALLOW_PUBLIC_API_DOCS", False):
@@ -25,6 +26,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("admin/", admin.site.urls),
     path("api/health/", health_check, name="health"),
+    path("metrics", prometheus_metrics, name="prometheus-metrics"),
     path(
         "api/schema/",
         SpectacularAPIView.as_view(permission_classes=_doc_permissions),

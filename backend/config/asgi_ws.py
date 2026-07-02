@@ -11,6 +11,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
 # Initialise Django avant imports apps.*
 django_asgi_app = get_asgi_application()
 
+from apps.common.ws_metrics_middleware import WsMetricsMiddleware  # noqa: E402
 from apps.games.middleware import JwtAuthMiddlewareStack  # noqa: E402
 from apps.games.routing import websocket_urlpatterns  # noqa: E402
 from apps.notifications.routing import (  # noqa: E402
@@ -21,11 +22,13 @@ from apps.social.routing import social_websocket_urlpatterns  # noqa: E402
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
-        "websocket": JwtAuthMiddlewareStack(
-            URLRouter(
-                websocket_urlpatterns
-                + social_websocket_urlpatterns
-                + notifications_ws
+        "websocket": WsMetricsMiddleware(
+            JwtAuthMiddlewareStack(
+                URLRouter(
+                    websocket_urlpatterns
+                    + social_websocket_urlpatterns
+                    + notifications_ws
+                )
             )
         ),
     }
