@@ -548,6 +548,31 @@ class FairPlayAppeal(models.Model):
         indexes = [models.Index(fields=["status", "-created_at"])]
 
 
+class FairPlayIntegrityProfile(models.Model):
+    """Profil AIE — score de confiance, empreinte timing, shadow pool."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="fairplay_integrity",
+    )
+    trust_score = models.FloatField(default=85.0)
+    games_tracked = models.PositiveIntegerField(default=0)
+    clean_streak = models.PositiveIntegerField(default=0)
+    live_integrity_avg = models.FloatField(default=0.0)
+    last_fusion_score = models.FloatField(default=0.0)
+    timing_signature_json = models.JSONField(default=dict, blank=True)
+    shadow_pool = models.BooleanField(default=False)
+    certificate_level = models.CharField(max_length=16, default="silver")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["shadow_pool", "-trust_score"]),
+            models.Index(fields=["-trust_score"]),
+        ]
+
+
 class FairPlayAuditLog(models.Model):
     """Journal d'audit staff immuable (ISO 27001 / FIDE evidence chain)."""
 
