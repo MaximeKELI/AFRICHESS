@@ -5,6 +5,7 @@ from django.test import TransactionTestCase, override_settings
 from rest_framework_simplejwt.tokens import AccessToken
 
 from apps.games.models import Game
+from apps.games.tests.mm_test_utils import reset_matchmaking_state
 from apps.social.models import ChatMessage
 from config.asgi import application
 
@@ -184,6 +185,9 @@ class ChessConsumerTests(TransactionTestCase):
 
 @override_settings(CHANNEL_LAYERS=IN_MEMORY_CHANNEL, WS_ALLOW_QUERY_TOKEN=True)
 class MatchmakingConsumerTests(TransactionTestCase):
+    def setUp(self):
+        reset_matchmaking_state()
+
     def test_disconnect_keeps_http_queue_entry(self):
         async_to_sync(self._test_disconnect_keeps_http_queue_entry)()
 
