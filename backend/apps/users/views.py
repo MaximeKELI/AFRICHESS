@@ -281,6 +281,7 @@ def registration_deprecated(request):
     )
 
 
+@csrf_exempt
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def stripe_webhook(request):

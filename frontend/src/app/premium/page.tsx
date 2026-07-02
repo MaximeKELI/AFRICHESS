@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { usersApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
@@ -16,20 +18,27 @@ interface Plan {
 }
 
 export default function PremiumPage() {
-  const { t } = useTranslation();
-  const { user } = useAuthStore();
+  const searchParams = useSearchParams();
+  const { t, locale } = useTranslation();
+  const { user, fetchProfile } = useAuthStore();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [stripeEnabled, setStripeEnabled] = useState(false);
   const [status, setStatus] = useState<{
     tier: string;
     is_premium: boolean;
     has_billing_portal?: boolean;
+    premium_until?: string | null;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+
+  const loadStatus = () => {
+    if (!user) return;
+    usersApi.subscriptionStatus().then(({ data }) => setStatus(data)).catch(() => {});
+  };
 
   useEffect(() => {
     usersApi
@@ -43,12 +52,29 @@ export default function PremiumPage() {
   }, [t]);
 
   useEffect(() => {
-    if (!user) return;
-    usersApi.subscriptionStatus().then(({ data }) => setStatus(data)).catch(() => {});
+    loadStatus();
   }, [user]);
+
+  useEffect(() => {
+    const success = searchParams.get("success");
+    const plan = searchParams.get("plan");
+    const canceled = searchParams.get("canceled");
+    if (canceled === "1") {
+      setMsg(t("premium.canceled"));
+      return;
+    }
+    if (success === "1" && user) {
+      void fetchProfile().then(loadStatus);
+      setMsg(t("premium.success", { tier: plan ?? status?.tier ?? "Premium" }));
+    }
+  }, [searchParams, user, fetchProfile, t, status?.tier]);
 
   const subscribe = async (planId: "gold" | "diamond") => {
     if (!user) return;
+    if (!stripeEnabled) {
+      setError(t("premium.unavailable"));
+      return;
+    }
     setSubscribing(planId);
     setError(null);
     try {
@@ -57,8 +83,7 @@ export default function PremiumPage() {
         window.location.href = data.checkout_url;
         return;
       }
-      setStatus({ tier: data.tier, is_premium: data.is_premium });
-      setMsg(data.message || t("premium.subscribed"));
+      setError(t("premium.unavailable"));
     } catch (err) {
       setError(formatApiError(err, t("premium.error.subscribe")));
     } finally {
@@ -82,6 +107,13 @@ export default function PremiumPage() {
     }
   };
 
+  const premiumUntilLabel =
+    status?.premium_until && status.is_premium
+      ? t("premium.until", {
+          date: new Date(status.premium_until).toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US"),
+        })
+      : null;
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold mb-2">{t("premium.title")}</h1>
@@ -89,9 +121,14 @@ export default function PremiumPage() {
 
       {status?.is_premium && (
         <div className="glass-card p-4 mb-6 border border-africhess-gold/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <p className="text-africhess-gold font-medium">
-            {t("premium.active", { tier: status.tier })}
-          </p>
+          <div>
+            <p className="text-africhess-gold font-medium">
+              {t("premium.active", { tier: status.tier })}
+            </p>
+            {premiumUntilLabel && (
+              <p className="text-xs opacity-60 mt-1">{premiumUntilLabel}</p>
+            )}
+          </div>
           {status.has_billing_portal && stripeEnabled && (
             <button
               type="button"
@@ -148,15 +185,17 @@ export default function PremiumPage() {
             {plan.id !== "free" && user && (
               <button
                 type="button"
-                disabled={subscribing === plan.id || status?.tier === plan.id}
+                disabled={!stripeEnabled || subscribing === plan.id || status?.tier === plan.id}
                 onClick={() => subscribe(plan.id as "gold" | "diamond")}
                 className="w-full py-2 rounded-lg african-gradient text-white font-medium disabled:opacity-50"
               >
-                {subscribing === plan.id
-                  ? t("premium.subscribing")
-                  : status?.tier === plan.id
-                    ? t("premium.current")
-                    : t("premium.subscribe")}
+                {!stripeEnabled
+                  ? t("premium.unavailable")
+                  : subscribing === plan.id
+                    ? t("premium.subscribing")
+                    : status?.tier === plan.id
+                      ? t("premium.current")
+                      : t("premium.subscribe")}
               </button>
             )}
             {plan.id !== "free" && !user && (
