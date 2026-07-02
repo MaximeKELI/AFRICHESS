@@ -93,4 +93,18 @@ AUTO_GAME_ANALYSIS_MIN_MOVES=2
 - Les clients reçoivent `analysis_ready` sur le WebSocket de la partie.
 - Désactiver : `AUTO_GAME_ANALYSIS_ENABLED=false`
 
+## Matchmaking Redis (pairing instantané)
+
+La file d'attente utilise **Redis** (sorted sets + script Lua atomique) pour apparier les joueurs en **< 500 ms** dès qu'un adversaire compatible rejoint.
+
+```bash
+MATCHMAKING_REDIS_ENABLED=true   # défaut
+MATCHMAKING_ELO_RANGE=200
+REDIS_URL=redis://:password@localhost:6379/0
+```
+
+- **API statut** : `GET /api/games/matchmaking/status/` → `{ searching_players, redis_enabled }`
+- **Fallback** : si Redis est indisponible, PostgreSQL + réconciliation Celery (60 s)
+- **Docker** : le service `redis` et `celery` doivent tourner (`docker compose up`)
+
 Chat in-game : événement `{ "event": "chat", "message": "..." }` sur le canal partie (pas `ws/chat/`).
