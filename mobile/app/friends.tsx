@@ -19,6 +19,9 @@ export default function FriendsScreen() {
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("");
+  const [dmUser, setDmUser] = useState<string | null>(null);
+  const [dmMessages, setDmMessages] = useState<{ id: number; content: string; sender: { username: string } }[]>([]);
+  const [dmText, setDmText] = useState("");
 
   const load = useCallback(() => {
     setLoading(true);
@@ -39,6 +42,14 @@ export default function FriendsScreen() {
     if (user) load();
   }, [user, load]);
 
+  useEffect(() => {
+    if (!dmUser) return;
+    socialApi
+      .directMessages(dmUser)
+      .then(({ data }) => setDmMessages(data.messages ?? []))
+      .catch(() => setDmMessages([]));
+  }, [dmUser]);
+
   const sendRequest = async () => {
     if (!username.trim()) return;
     setStatus("");
@@ -58,6 +69,28 @@ export default function FriendsScreen() {
       load();
     } catch {
       setStatus("Acceptation impossible");
+    }
+  };
+
+  const challenge = async (name: string) => {
+    try {
+      const { data } = await socialApi.challengeFriend(name, "blitz");
+      if (data.game_id) router.push(`/play?game=${data.game_id}`);
+      else setStatus("Défi envoyé");
+    } catch {
+      setStatus("Défi impossible");
+    }
+  };
+
+  const sendDm = async () => {
+    if (!dmUser || !dmText.trim()) return;
+    try {
+      await socialApi.sendDirectMessage(dmUser, dmText.trim());
+      setDmText("");
+      const { data } = await socialApi.directMessages(dmUser);
+      setDmMessages(data.messages ?? []);
+    } catch {
+      setStatus("Message impossible");
     }
   };
 
@@ -83,6 +116,38 @@ export default function FriendsScreen() {
         <Text style={styles.btnText}>Ajouter un ami</Text>
       </Pressable>
       {status ? <Text style={styles.status}>{status}</Text> : null}
+
+      {dmUser && (
+        <View style={styles.dmBox}>
+          <Text style={styles.section}>DM — {dmUser}</Text>
+          <FlatList
+            data={dmMessages}
+            keyExtractor={(m) => String(m.id)}
+            style={{ maxHeight: 160 }}
+            renderItem={({ item }) => (
+              <Text style={styles.dmLine}>
+                <Text style={styles.dmAuthor}>{item.sender.username}: </Text>
+                {item.content}
+              </Text>
+            )}
+          />
+          <View style={styles.dmRow}>
+            <TextInput
+              style={[styles.input, styles.flex]}
+              placeholder="Message…"
+              placeholderTextColor="#666"
+              value={dmText}
+              onChangeText={setDmText}
+            />
+            <Pressable style={styles.smallBtn} onPress={() => void sendDm()}>
+              <Text style={styles.btnText}>→</Text>
+            </Pressable>
+          </View>
+          <Pressable onPress={() => setDmUser(null)}>
+            <Text style={styles.link}>Fermer</Text>
+          </Pressable>
+        </View>
+      )}
 
       {loading ? (
         <ActivityIndicator color="#D4A017" style={{ marginTop: 24 }} />
@@ -113,13 +178,19 @@ export default function FriendsScreen() {
             keyExtractor={(item) => String(item.id)}
             ListEmptyComponent={<Text style={styles.empty}>Aucun ami pour l'instant</Text>}
             renderItem={({ item }) => {
-              const other =
-                item.user?.id === user.id ? item.friend : item.user;
+              const other = item.user?.id === user.id ? item.friend : item.user;
+              const name = other?.username ?? "";
               return (
                 <View style={styles.card}>
-                  <Text style={styles.name}>
-                    {other?.display_name || other?.username}
-                  </Text>
+                  <Text style={styles.name}>{other?.display_name || name}</Text>
+                  <View style={styles.actions}>
+                    <Pressable style={styles.actionBtn} onPress={() => void challenge(name)}>
+                      <Text style={styles.actionText}>Défi</Text>
+                    </Pressable>
+                    <Pressable style={styles.actionBtn} onPress={() => setDmUser(name)}>
+                      <Text style={styles.actionText}>DM</Text>
+                    </Pressable>
+                  </View>
                 </View>
               );
             }}
@@ -142,11 +213,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#161B22",
     marginBottom: 8,
   },
+  flex: { flex: 1 },
   btn: {
     backgroundColor: "#1B7A3D",
     padding: 12,
     borderRadius: 10,
     alignItems: "center",
+  },
+  smallBtn: {
+    backgroundColor: "#1B7A3D",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 10,
   },
   btnText: { color: "#fff", fontWeight: "700" },
   status: { color: "#aaa", textAlign: "center", marginVertical: 8, fontSize: 13 },
@@ -162,8 +240,24 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  name: { color: "#fff", fontWeight: "600" },
+  name: { color: "#fff", fontWeight: "600", flex: 1 },
+  actions: { flexDirection: "row", gap: 6 },
+  actionBtn: { paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: "#D4A017", borderRadius: 6 },
+  actionText: { color: "#D4A017", fontSize: 12, fontWeight: "600" },
   accept: { paddingHorizontal: 10, paddingVertical: 6, backgroundColor: "#1B7A3D", borderRadius: 6 },
   acceptText: { color: "#fff", fontSize: 12, fontWeight: "600" },
   empty: { color: "#666", textAlign: "center", marginTop: 20 },
+  dmBox: {
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#30363d",
+    backgroundColor: "#161B22",
+    gap: 8,
+  },
+  dmRow: { flexDirection: "row", gap: 8, alignItems: "center" },
+  dmLine: { color: "#ccc", fontSize: 13, marginBottom: 4 },
+  dmAuthor: { color: "#D4A017", fontWeight: "600" },
+  link: { color: "#888", fontSize: 12, textAlign: "center" },
 });

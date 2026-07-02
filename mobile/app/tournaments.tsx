@@ -42,6 +42,19 @@ export default function TournamentsScreen() {
             <Text style={styles.cardMeta}>
               {statusLabel(item.status, t)} · {item.format} · {item.participant_count} joueurs
             </Text>
+            {item.status === "registration" && (
+              <Pressable
+                style={styles.registerBtn}
+                onPress={() =>
+                  void tournamentsApi
+                    .register(item.slug)
+                    .then(() => setError(null))
+                    .catch(() => setError(t("tournaments.registerError")))
+                }
+              >
+                <Text style={styles.registerText}>{t("tournaments.register")}</Text>
+              </Pressable>
+            )}
             {item.is_african_cup ? (
               <Text style={styles.badge}>African Cup</Text>
             ) : null}
