@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
@@ -11,12 +12,8 @@ import { UserAvatarUpload } from "@/components/profile/UserAvatarUpload";
 import { FlairPicker } from "@/components/profile/FlairPicker";
 import { LevelPicker } from "@/components/profile/LevelPicker";
 import { UserFlair } from "@/components/profile/UserFlair";
-import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
-import { BackgroundPicker } from "@/components/chess/BackgroundPicker";
 import { OptionSection } from "@/components/ui/OptionSection";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
-import { FairPlayAppealPanel } from "@/components/fairplay/FairPlayAppealPanel";
-import { RecentGamesList } from "@/components/game/RecentGamesList";
 import { type ChessLevelId } from "@/lib/avatars";
 import { useTranslation } from "@/hooks/useTranslation";
 import { chessLevelLabel, modeLabel } from "@/lib/i18n/labels";
