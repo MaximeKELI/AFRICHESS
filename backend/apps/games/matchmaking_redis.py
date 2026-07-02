@@ -136,7 +136,9 @@ def pool_key(
 
 
 def _redis_client() -> redis.Redis:
-    url = getattr(settings, "REDIS_URL", "redis://127.0.0.1:6379/0")
+    url = getattr(settings, "REDIS_MATCHMAKING_URL", "") or getattr(
+        settings, "REDIS_URL", "redis://127.0.0.1:6379/0"
+    )
     parsed = urlparse(url)
     db = int((parsed.path or "/0").lstrip("/") or 0)
     return redis.Redis(
