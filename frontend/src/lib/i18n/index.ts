@@ -2675,6 +2675,8 @@ const en: Record<string, string> = {
   "tournaments.status.startFailed": "Cannot start (permissions or not enough players)",
   "tournaments.status.noActiveGame": "No active game for you in this tournament",
   "tournaments.status.findGameError": "Error finding game",
+  "tournaments.teamScores": "Team scores",
+  "tournaments.members": "players",
   "watch.loading": "Loading game…",
   "watch.error": "Game not found or access denied.",
   "watch.backLive": "← Live games",
