@@ -155,3 +155,53 @@ class StudyChapterView(APIView):
         ch.save()
         study.save(update_fields=["updated_at"])
         return Response({"id": ch.id, "title": ch.title, "pgn": ch.pgn})
+
+
+class StudyExportView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, study_id):
+        try:
+            study = SharedStudy.objects.prefetch_related("chapters").get(pk=study_id)
+        except SharedStudy.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        if not _can_view(study, request.user):
+            return Response({"error": "Forbidden"}, status=403)
+        chapters = study.chapters.order_by("order")
+        pgn = export_study_pgn(study, chapters)
+        return Response({"pgn": pgn, "format": "lichess_multi_pgn"})
+
+
+class StudyImportView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, study_id):
+        try:
+            study = SharedStudy.objects.get(pk=study_id)
+        except SharedStudy.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        if not _can_edit(study, request.user):
+            return Response({"error": "Forbidden"}, status=403)
+        pgn = request.data.get("pgn") or ""
+        replace = bool(request.data.get("replace"))
+        chapters_data = import_study_pgn(pgn)
+        if not chapters_data:
+            return Response({"error": "PGN vide ou invalide"}, status=400)
+        if replace:
+            study.chapters.all().delete()
+        base_order = 0 if replace else study.chapters.count()
+        created = []
+        for i, ch_data in enumerate(chapters_data):
+            ch = StudyChapter.objects.create(
+                study=study,
+                title=ch_data["title"],
+                order=base_order + i,
+                pgn=ch_data["pgn"],
+                initial_fen=ch_data["initial_fen"] or StudyChapter._meta.get_field("initial_fen").default,
+            )
+            created.append(ch.id)
+        study.save(update_fields=["updated_at"])
+        return Response(
+            {"imported": len(created), "chapter_ids": created},
+            status=status.HTTP_201_CREATED,
+        )

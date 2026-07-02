@@ -58,4 +58,14 @@ urlpatterns = [
         shared_studies_views.StudyChapterView.as_view(),
         name="shared-study-chapter-edit",
     ),
+    path(
+        "studies/<int:study_id>/export/",
+        shared_studies_views.StudyExportView.as_view(),
+        name="shared-study-export",
+    ),
+    path(
+        "studies/<int:study_id>/import/",
+        shared_studies_views.StudyImportView.as_view(),
+        name="shared-study-import",
+    ),
 ]
