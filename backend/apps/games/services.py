@@ -287,6 +287,19 @@ class GameService:
         if cheat:
             return cheat
 
+        if not game.is_vs_ai:
+            from .fairplay_service import estimate_complexity_cp
+            from .fairplay_integrity import record_live_move_integrity
+
+            complexity_pre = estimate_complexity_cp(game.fen)
+            record_live_move_integrity(
+                game,
+                user,
+                think_ms=spent_ms,
+                telemetry=telemetry,
+                complexity_cp=complexity_pre,
+            )
+
         is_white_turn = " w " in game.fen
         if is_white_turn and game.white_player != user:
             return {"error": "Not your turn"}
@@ -708,7 +721,9 @@ class MatchmakingService:
             time_control=time_control,
         )
         from . import matchmaking_redis as mmr
+        from .fairplay_integrity import user_in_shadow_pool
 
+        shadow = user_in_shadow_pool(user) if is_rated else False
         if mmr.is_redis_matchmaking_available():
             pool = mmr.pool_key(
                 mode=mode,
@@ -717,6 +732,7 @@ class MatchmakingService:
                 is_rated=is_rated,
                 time_control=tc_key or "",
                 time_control_minutes=tcm,
+                shadow_pool=shadow,
             )
             meta = {
                 "mode": mode,

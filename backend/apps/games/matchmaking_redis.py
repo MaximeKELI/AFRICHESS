@@ -121,14 +121,18 @@ def pool_key(
     is_rated: bool,
     time_control: str,
     time_control_minutes: int | None,
+    shadow_pool: bool = False,
 ) -> str:
     prefix = getattr(settings, "MATCHMAKING_REDIS_PREFIX", "mm:pool")
     tcm = time_control_minutes if time_control_minutes is not None else "none"
     tc = time_control or ""
-    return (
+    base = (
         f"{prefix}:{mode}:{variant}:"
         f"{'t' if is_timed else 'u'}:{'r' if is_rated else 'c'}:{tcm}:{tc}"
     )
+    if shadow_pool:
+        return f"{base}:shadow"
+    return base
 
 
 def _redis_client() -> redis.Redis:
