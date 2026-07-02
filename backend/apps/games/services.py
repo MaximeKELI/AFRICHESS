@@ -32,7 +32,13 @@ from django.utils import timezone
 from apps.ratings.services import RatingService
 
 from .anticheat import validate_move_fairplay
-from .draw_rules import can_claim_threefold_from_game, finalize_repetition_draw
+from .draw_rules import (
+    bump_repetition_count,
+    can_claim_threefold_from_game,
+    finalize_repetition_draw,
+    init_repetition_counts,
+    rebuild_repetition_counts,
+)
 from .time_control import normalize_matchmaking_time_control, resolve_time_fields
 from .clock_service import (
     apply_increment_after_move,
@@ -210,6 +216,7 @@ class GameService:
             chess960_position_id=chess960_pos,
             status=Game.Status.ACTIVE,
             fen=fen,
+            repetition_counts=init_repetition_counts(fen, variant),
             is_timed=timed,
             time_control_minutes=tcm,
             white_time_ms=white_ms,
@@ -359,6 +366,7 @@ class GameService:
             )
         game.move_count += 1
         game.pgn = (game.pgn or "") + f" {game.move_count}. {san}" if is_white_turn else f" {san}"
+        bump_repetition_count(game)
         if not game.is_vs_ai and not is_correspondence:
             apply_increment_after_move(game, is_white_turn)
             tick_turn_started(game)

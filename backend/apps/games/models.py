@@ -148,6 +148,11 @@ class Game(models.Model):
         related_name="takeback_requests_made",
     )
     conditional_moves = models.JSONField(default=list, blank=True)
+    repetition_counts = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Occurrences par clé de transposition (répétition triple incrémentale).",
+    )
     rematch_of = models.ForeignKey(
         "self",
         on_delete=models.SET_NULL,
