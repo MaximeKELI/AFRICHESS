@@ -98,13 +98,19 @@ def _coaching_plan(
         f"Focus: {phase_en} (avg loss ~{avg_loss:.0f} cp/move). "
     )
     if blunders >= 2:
-        plan_fr += "Travaillez le calcul des variantes forcées avant les coups critiques."
+        plan_fr += (
+            "Travaillez le calcul des variantes forcées avant les coups critiques."
+        )
         plan_en += "Practice forcing lines before critical moves."
     elif mistakes >= 3:
-        plan_fr += "Affinez la sélection des candidats : 2–3 coups max avant de jouer."
+        plan_fr += (
+            "Affinez la sélection des candidats : 2–3 coups max avant de jouer."
+        )
         plan_en += "Narrow candidate moves: pick 2–3 options before committing."
     elif (accuracy_white or 0) >= 85 or (accuracy_black or 0) >= 85:
-        plan_fr += "Niveau solide — approfondissez les finales et la conversion d'avantage."
+        plan_fr += (
+            "Niveau solide — approfondissez les finales et la conversion d'avantage."
+        )
         plan_en += "Solid level — deepen endgames and advantage conversion."
     else:
         plan_fr += "Révisez les moments clés ci-dessous coup par coup."
@@ -124,8 +130,14 @@ def _move_coaching(moves: list[dict]) -> list[dict]:
         side_fr = "Blancs" if m.get("played_by_white") else "Noirs"
         side_en = "White" if m.get("played_by_white") else "Black"
         if cls == "brilliant":
-            fr = f"{side_fr} : coup brillant {m.get('san')} — initiative ou sacrifice justifié."
-            en = f"{side_en}: brilliant {m.get('san')} — initiative or justified sacrifice."
+            fr = (
+                f"{side_fr} : coup brillant {m.get('san')} — "
+                "initiative ou sacrifice justifié."
+            )
+            en = (
+                f"{side_en}: brilliant {m.get('san')} — "
+                "initiative or justified sacrifice."
+            )
         elif cls == "blunder":
             hint = f" Mieux : {best}." if best else ""
             fr = f"{side_fr} : gaffe sur {m.get('san')} (~{cp} cp).{hint}"

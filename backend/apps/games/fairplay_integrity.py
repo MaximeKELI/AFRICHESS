@@ -66,7 +66,13 @@ def compute_live_move_score(
     score = 100.0
     if clock_drift_ms is not None and clock_drift_ms > 2500:
         score -= min(35.0, clock_drift_ms / 200.0)
-    if think_ms is not None and complexity_cp and think_ms < 300 and complexity_cp > 180:
+    instant_complex = (
+        think_ms is not None
+        and complexity_cp is not None
+        and think_ms < 300
+        and complexity_cp > 180
+    )
+    if instant_complex:
         score -= 22.0
     if telemetry:
         if int(telemetry.get("tab_blur", 0) or 0) > 0:
