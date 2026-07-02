@@ -198,14 +198,21 @@ def _result_counts(games_qs, user_id: int) -> dict[str, Any]:
     }
 
 
+STATS_WINDOW_DAYS = 365
+STATS_MAX_GAMES = 500
+
+
 def user_games_qs(user):
+    since = timezone.now() - timedelta(days=STATS_WINDOW_DAYS)
     return (
         Game.objects.filter(
             status=Game.Status.COMPLETED,
+            ended_at__gte=since,
         )
         .filter(Q(white_player=user) | Q(black_player=user))
         .select_related("white_player", "black_player")
         .prefetch_related("moves", "analysis")
+        .order_by("-ended_at", "-created_at")[:STATS_MAX_GAMES]
     )
 
 

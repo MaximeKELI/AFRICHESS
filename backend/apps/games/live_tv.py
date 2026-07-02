@@ -8,7 +8,7 @@ from typing import Any
 from django.conf import settings
 from django.core.cache import cache
 
-from apps.ratings.models import PlayerRating
+from apps.ratings.batch import batch_player_ratings
 
 from .game_actions import live_games_queryset
 from .models import Game
@@ -20,18 +20,7 @@ ROTATION_SECONDS = getattr(settings, "LIVE_TV_ROTATION_SECONDS", 30)
 
 def batch_player_elos(games: list[Game]) -> dict[tuple[int, str], int]:
     """ELO par (user_id, mode) en une requête."""
-    keys: set[tuple[int, str]] = set()
-    for game in games:
-        mode = _game_rating_mode(game)
-        for uid in (game.white_player_id, game.black_player_id):
-            if uid:
-                keys.add((uid, mode))
-    if not keys:
-        return {}
-    user_ids = {k[0] for k in keys}
-    modes = {k[1] for k in keys}
-    ratings = PlayerRating.objects.filter(user_id__in=user_ids, mode__in=modes)
-    return {(r.user_id, r.mode): r.elo for r in ratings}
+    return {k: v["elo"] for k, v in batch_player_ratings(games).items()}
 
 
 def _avg_elo(game: Game, elo_map: dict[tuple[int, str], int]) -> int:
@@ -52,24 +41,31 @@ def _avg_elo(game: Game, elo_map: dict[tuple[int, str], int]) -> int:
     return total // max(count, 1)
 
 
-def tv_games_for_channel(channel: str) -> list[Game]:
-    qs = live_games_queryset()
-    if channel != "best":
-        qs = qs.filter(mode=channel)
-    games = list(qs[:50])
+def tv_games_for_channel(channel: str, games: list[Game] | None = None) -> list[Game]:
+    if games is None:
+        qs = live_games_queryset()
+        if channel != "best":
+            qs = qs.filter(mode=channel)
+        games = list(qs[:50])
+    elif channel != "best":
+        games = [g for g in games if g.mode == channel][:50]
     elo_map = batch_player_elos(games)
     games.sort(key=lambda g: (_avg_elo(g, elo_map), g.move_count), reverse=True)
     return games
 
 
-def build_tv_payload(channel: str) -> dict[str, Any]:
+def build_tv_payload(
+    channel: str,
+    games: list[Game] | None = None,
+) -> dict[str, Any]:
     channel = channel if channel in TV_CHANNELS else "best"
     cache_key = f"live_tv:meta:{channel}"
-    cached = cache.get(cache_key)
-    if cached is not None:
-        return cached
+    if games is None:
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
 
-    games = tv_games_for_channel(channel)
+    games = tv_games_for_channel(channel, games=games)
     if not games:
         payload = {
             "channel": channel,

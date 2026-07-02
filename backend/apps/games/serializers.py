@@ -28,6 +28,19 @@ def _ai_side_elo(game: Game) -> int:
     return game.ai_target_elo
 
 
+def _rating_from_context(serializer, obj: Game, player_id: int | None, player):
+    if not player_id:
+        return None
+    mode = _game_rating_mode(obj)
+    rating_map = serializer.context.get("rating_map") or {}
+    cached = rating_map.get((player_id, mode))
+    if cached is not None:
+        return cached
+    if player is not None:
+        return player_rating_info(player, mode)
+    return {"elo": 1200, "is_provisional": True}
+
+
 class MoveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Move
@@ -112,14 +125,14 @@ class GameSerializer(serializers.ModelSerializer):
 
     def get_white_elo(self, obj: Game):
         if obj.white_player_id:
-            return player_rating_info(obj.white_player, _game_rating_mode(obj))["elo"]
+            return _rating_from_context(self, obj, obj.white_player_id, obj.white_player)["elo"]
         if obj.is_vs_ai:
             return _ai_side_elo(obj)
         return None
 
     def get_black_elo(self, obj: Game):
         if obj.black_player_id:
-            return player_rating_info(obj.black_player, _game_rating_mode(obj))["elo"]
+            return _rating_from_context(self, obj, obj.black_player_id, obj.black_player)["elo"]
         if obj.is_vs_ai:
             return _ai_side_elo(obj)
         return None
@@ -127,12 +140,12 @@ class GameSerializer(serializers.ModelSerializer):
     def get_white_elo_provisional(self, obj: Game) -> bool:
         if not obj.white_player_id:
             return False
-        return player_rating_info(obj.white_player, _game_rating_mode(obj))["is_provisional"]
+        return _rating_from_context(self, obj, obj.white_player_id, obj.white_player)["is_provisional"]
 
     def get_black_elo_provisional(self, obj: Game) -> bool:
         if not obj.black_player_id:
             return False
-        return player_rating_info(obj.black_player, _game_rating_mode(obj))["is_provisional"]
+        return _rating_from_context(self, obj, obj.black_player_id, obj.black_player)["is_provisional"]
 
     def get_rating_changes(self, obj: Game):
         return rating_changes_for_game(obj)
@@ -193,21 +206,23 @@ def serialize_game_move_delta(game: Game, result: dict) -> dict:
     if game.status == Game.Status.COMPLETED or result.get("game_over"):
         changes = rating_changes_for_game(game)
         if changes:
+            from apps.ratings.batch import batch_player_ratings
+
+            rating_map = batch_player_ratings([game])
+            mode = _game_rating_mode(game)
             payload["rating_changes"] = changes
-            payload["white_elo"] = player_rating_info(
-                game.white_player, _game_rating_mode(game)
-            )["elo"] if game.white_player_id else None
-            payload["black_elo"] = player_rating_info(
-                game.black_player, _game_rating_mode(game)
-            )["elo"] if game.black_player_id else None
             if game.white_player_id:
-                payload["white_elo_provisional"] = player_rating_info(
-                    game.white_player, _game_rating_mode(game)
-                )["is_provisional"]
+                w = rating_map.get((game.white_player_id, mode))
+                payload["white_elo"] = (
+                    w["elo"] if w else game.white_player.initial_elo
+                )
+                payload["white_elo_provisional"] = w["is_provisional"] if w else True
             if game.black_player_id:
-                payload["black_elo_provisional"] = player_rating_info(
-                    game.black_player, _game_rating_mode(game)
-                )["is_provisional"]
+                b = rating_map.get((game.black_player_id, mode))
+                payload["black_elo"] = (
+                    b["elo"] if b else game.black_player.initial_elo
+                )
+                payload["black_elo_provisional"] = b["is_provisional"] if b else True
     return payload
 
 

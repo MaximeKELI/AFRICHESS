@@ -78,7 +78,17 @@ class GameDetailView(generics.RetrieveAPIView):
             from rest_framework.exceptions import PermissionDenied
 
             raise PermissionDenied("Vous n'avez pas accès à cette partie.")
+        self._rating_context_game = game
         return game
+
+    def get_serializer_context(self):
+        from apps.ratings.batch import batch_player_ratings
+
+        context = super().get_serializer_context()
+        game = getattr(self, "_rating_context_game", None)
+        if game is not None:
+            context["rating_map"] = batch_player_ratings([game])
+        return context
 
 
 @extend_schema(
@@ -350,18 +360,24 @@ class MatchmakingStatusView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
+        from django.core.cache import cache
+
         from . import matchmaking_redis as mmr
         from .matchmaking_pools import pool_stats
 
+        cached = cache.get("mm:status")
+        if cached is not None:
+            return Response(cached)
+
         svc = MatchmakingService()
         stats = pool_stats()
-        return Response(
-            {
-                "searching_players": svc.searching_count(),
-                "redis_enabled": mmr.is_redis_matchmaking_available(),
-                "pools": stats,
-            }
-        )
+        payload = {
+            "searching_players": svc.searching_count(),
+            "redis_enabled": mmr.is_redis_matchmaking_available(),
+            "pools": stats,
+        }
+        cache.set("mm:status", payload, 3)
+        return Response(payload)
 
 
 @extend_schema(
@@ -416,11 +432,11 @@ class LiveGamesView(APIView):
         from .live_tv import batch_player_elos, build_tv_payload
         from .serializers import LiveGameSerializer
 
-        games = list(live_games_queryset()[:30])
+        games = list(live_games_queryset()[:50])
         elo_ctx = {"elo_map": batch_player_elos(games)}
-        tv = build_tv_payload("best")
+        tv = build_tv_payload("best", games=games)
         featured_ids = set(tv.get("queue_game_ids") or [])
-        featured = [g for g in games if str(g.id) in featured_ids][:5]
+        featured = [g for g in games[:30] if str(g.id) in featured_ids][:5]
         if not featured:
             featured = sorted(
                 games,
@@ -434,7 +450,7 @@ class LiveGamesView(APIView):
         return Response(
             {
                 "channel": "AFRICHESS Live TV",
-                "games": LiveGameSerializer(games, many=True, context=elo_ctx).data,
+                "games": LiveGameSerializer(games[:30], many=True, context=elo_ctx).data,
                 "featured": LiveGameSerializer(featured, many=True, context=elo_ctx).data,
                 "tv": tv,
             }

@@ -11,10 +11,13 @@ from .services import MatchmakingService, create_matchmaking_game as _create_mm_
 
 
 def serialize_game(game: Game) -> dict:
+    from apps.ratings.batch import batch_player_ratings
+
     game = Game.objects.prefetch_related("moves").select_related(
         "white_player", "black_player"
     ).get(pk=game.pk)
-    data = GameSerializer(game).data
+    ctx = {"rating_map": batch_player_ratings([game])}
+    data = GameSerializer(game, context=ctx).data
     data["turn"] = current_turn(game)
     data["room_id"] = str(ensure_game_room(game).room_id)
     return data
