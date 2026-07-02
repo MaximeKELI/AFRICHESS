@@ -205,7 +205,6 @@ flowchart TB
 | Priorité | Lacune | Preuve |
 |----------|--------|--------|
 | Haute | Liquidité matchmaking | Friction n°1 — **Redis livré** |
-| Haute | Vote chess sans UI de vote in-game | `castVote` dans `api.ts` jamais appelé depuis `/play` |
 | Moyenne | Simul = join 1v1, pas tableau simultané | `simul/page.tsx` + `extra_views.py` |
 | Moyenne | Vidéos learning = URLs placeholder | `learning/i18n_meta.py` |
 | Moyenne | Mobile ~40 % du web | Expo : pas battle/survival/training/DM/clubs |
