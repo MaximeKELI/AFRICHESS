@@ -15,6 +15,30 @@ export interface AnalysisMove {
   explanation_fr?: string;
 }
 
+export interface DeepReviewData {
+  analysis_depth?: number;
+  coaching_plan_fr?: string;
+  coaching_plan_en?: string;
+  phase_report?: Record<
+    string,
+    {
+      white_accuracy?: number | null;
+      black_accuracy?: number | null;
+      summary_fr?: string;
+      summary_en?: string;
+    }
+  >;
+  turning_points?: {
+    ply: number;
+    san?: string;
+    eval_swing_cp?: number;
+    text_fr: string;
+    text_en: string;
+  }[];
+  move_coaching?: { ply: number; coach_fr: string; coach_en: string; class: string }[];
+  integrity_flags?: { code: string; text_fr: string; text_en: string }[];
+}
+
 export interface GameAnalysisData {
   accuracy_white: number | null;
   accuracy_black: number | null;
@@ -26,6 +50,8 @@ export interface GameAnalysisData {
   summary_fr?: string;
   summary_en?: string;
   key_moments_json?: { ply: number; san: string; text: string; text_en?: string }[];
+  deep_review_json?: DeepReviewData | null;
+  analysis_depth_used?: number;
 }
 
 export function resolveMoveAccuracies(data: GameAnalysisData) {
