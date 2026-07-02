@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta, timezone as dt_timezone
 
 from decouple import config
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 STRIPE_SECRET_KEY = config("STRIPE_SECRET_KEY", default="")
 STRIPE_WEBHOOK_SECRET = config("STRIPE_WEBHOOK_SECRET", default="")
@@ -66,6 +69,7 @@ def create_checkout_session(user, plan_id: str) -> dict:
         "line_items": [{"price": price_id, "quantity": 1}],
         "success_url": f"{FRONTEND_URL}/premium?success=1&plan={plan_id}",
         "cancel_url": f"{FRONTEND_URL}/premium?canceled=1",
+        "allow_promotion_codes": True,
     }
     if customer_id:
         session_kwargs["customer"] = customer_id
@@ -84,7 +88,7 @@ def create_billing_portal_session(user) -> dict:
     stripe = _client()
     session = stripe.billing_portal.Session.create(
         customer=customer_id,
-        return_url=f"{FRONTEND_URL}/premium",
+        return_url=f"{FRONTEND_URL}/settings/subscription",
     )
     return {"portal_url": session.url}
 
@@ -95,7 +99,13 @@ def _premium_until_from_period_end(period_end: int | None, fallback_days: int = 
     return timezone.now() + timedelta(days=fallback_days)
 
 
-def activate_plan(user, plan_id: str, days: int = 30, period_end: int | None = None):
+def activate_plan(
+    user,
+    plan_id: str,
+    days: int = 30,
+    period_end: int | None = None,
+    subscription_id: str | None = None,
+):
     from .models import User
 
     tier_map = {
@@ -106,15 +116,23 @@ def activate_plan(user, plan_id: str, days: int = 30, period_end: int | None = N
         return
     user.subscription_tier = tier_map[plan_id]
     user.premium_until = _premium_until_from_period_end(period_end, days=days)
-    user.save(update_fields=["subscription_tier", "premium_until"])
+    update_fields = ["subscription_tier", "premium_until"]
+    if subscription_id:
+        user.stripe_subscription_id = subscription_id
+        update_fields.append("stripe_subscription_id")
+    user.save(update_fields=update_fields)
 
 
-def deactivate_plan(user):
+def deactivate_plan(user, *, clear_subscription: bool = True):
     from .models import User
 
     user.subscription_tier = User.SubscriptionTier.FREE
     user.premium_until = None
-    user.save(update_fields=["subscription_tier", "premium_until"])
+    update_fields = ["subscription_tier", "premium_until"]
+    if clear_subscription:
+        user.stripe_subscription_id = ""
+        update_fields.append("stripe_subscription_id")
+    user.save(update_fields=update_fields)
 
 
 def _plan_from_subscription(subscription: dict) -> str | None:
@@ -144,9 +162,42 @@ def _user_from_metadata(metadata: dict):
         return None
 
 
+def _user_from_customer_id(customer_id: str | None):
+    if not customer_id:
+        return None
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    return User.objects.filter(stripe_customer_id=customer_id).first()
+
+
+def _user_from_subscription_id(subscription_id: str | None):
+    if not subscription_id:
+        return None
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    return User.objects.filter(stripe_subscription_id=subscription_id).first()
+
+
+def _resolve_user(*, metadata: dict | None = None, customer_id: str | None = None, subscription_id: str | None = None):
+    user = _user_from_metadata(metadata or {})
+    if user:
+        return user
+    user = _user_from_subscription_id(subscription_id)
+    if user:
+        return user
+    return _user_from_customer_id(customer_id)
+
+
 def _handle_subscription_updated(subscription: dict):
     status = subscription.get("status")
-    user = _user_from_metadata(subscription.get("metadata") or {})
+    sub_id = subscription.get("id")
+    user = _resolve_user(
+        metadata=subscription.get("metadata") or {},
+        customer_id=subscription.get("customer"),
+        subscription_id=sub_id,
+    )
     if not user:
         return
     plan_id = _plan_from_subscription(subscription)
@@ -155,13 +206,15 @@ def _handle_subscription_updated(subscription: dict):
             user,
             plan_id,
             period_end=subscription.get("current_period_end"),
+            subscription_id=sub_id,
         )
     elif status in ("canceled", "unpaid", "past_due", "incomplete_expired"):
         if subscription.get("cancel_at_period_end") and status == "active":
             activate_plan(
                 user,
-                plan_id or "gold",
+                plan_id or user.subscription_tier,
                 period_end=subscription.get("current_period_end"),
+                subscription_id=sub_id,
             )
         else:
             deactivate_plan(user)
@@ -178,6 +231,7 @@ def handle_webhook(payload: bytes, sig_header: str | None):
 
     event_type = event["type"]
     obj = event["data"]["object"]
+    logger.info("Stripe webhook received: %s", event_type)
 
     if event_type == "checkout.session.completed":
         plan = (obj.get("metadata") or {}).get("plan")
@@ -192,19 +246,28 @@ def handle_webhook(payload: bytes, sig_header: str | None):
                     plan = _plan_from_subscription(sub)
             except Exception:
                 pass
-        if plan and user_id:
+        user = _resolve_user(
+            metadata=obj.get("metadata") or {},
+            customer_id=obj.get("customer"),
+            subscription_id=sub_id,
+        )
+        if not user and user_id:
             from django.contrib.auth import get_user_model
 
             User = get_user_model()
             try:
                 user = User.objects.get(pk=int(user_id))
-                customer_id = obj.get("customer")
-                if customer_id and not user.stripe_customer_id:
-                    user.stripe_customer_id = customer_id
-                    user.save(update_fields=["stripe_customer_id"])
-                activate_plan(user, plan, period_end=period_end)
             except User.DoesNotExist:
-                pass
+                user = None
+        if user and plan:
+            customer_id = obj.get("customer")
+            update_fields = []
+            if customer_id and not user.stripe_customer_id:
+                user.stripe_customer_id = customer_id
+                update_fields.append("stripe_customer_id")
+            if update_fields:
+                user.save(update_fields=update_fields)
+            activate_plan(user, plan, period_end=period_end, subscription_id=sub_id)
     elif event_type in ("customer.subscription.updated", "customer.subscription.deleted"):
         _handle_subscription_updated(obj)
     elif event_type == "invoice.payment_failed":
@@ -213,7 +276,11 @@ def handle_webhook(payload: bytes, sig_header: str | None):
             try:
                 sub = stripe.Subscription.retrieve(sub_id)
                 if sub.get("status") in ("unpaid", "past_due", "canceled"):
-                    user = _user_from_metadata(sub.get("metadata") or {})
+                    user = _resolve_user(
+                        metadata=sub.get("metadata") or {},
+                        customer_id=sub.get("customer"),
+                        subscription_id=sub_id,
+                    )
                     if user:
                         deactivate_plan(user)
             except Exception:
