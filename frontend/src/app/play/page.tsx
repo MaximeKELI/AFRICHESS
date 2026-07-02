@@ -1349,9 +1349,12 @@ function PlayContent() {
           {isVoteChess && gameId && gameActive && (
             <VoteChessPanel
               gameId={gameId}
+              fen={gameData.fen}
               canApply={Boolean(isMyTurn)}
+              refreshToken={voteRefreshToken}
               onApplied={() => {
                 gamesApi.get(gameId).then(({ data }) => applyGameResponse(data)).catch(() => {});
+                setVoteRefreshToken((n) => n + 1);
                 setStatus("");
               }}
             />
