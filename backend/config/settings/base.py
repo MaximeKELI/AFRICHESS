@@ -193,6 +193,7 @@ USE_READ_REPLICA = config("USE_READ_REPLICA", default=False, cast=bool)
 USE_GLICKO2 = config("USE_GLICKO2", default=True, cast=bool)
 LICHESS_EXPLORER_URL = config("LICHESS_EXPLORER_URL", default="https://explorer.lichess.ovh")
 LICHESS_EXPLORER_CACHE_SECONDS = config("LICHESS_EXPLORER_CACHE_SECONDS", default=3600, cast=int)
+LIVE_TV_ROTATION_SECONDS = config("LIVE_TV_ROTATION_SECONDS", default=30, cast=int)
 
 # CORS
 CORS_ALLOWED_ORIGINS = config(
