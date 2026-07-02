@@ -1,8 +1,8 @@
+from django.conf import settings
 from rest_framework import serializers
 
-from apps.users.serializers import UserPublicSerializer
-
 from .constants import PROVISIONAL_GAMES_REQUIRED
+from .display import format_rating_display
 from .models import LeagueSeason, LeagueStanding, PlayerRating, RatingHistory
 from .provisional import games_until_established, is_provisional
 
@@ -11,19 +11,25 @@ class PlayerRatingSerializer(serializers.ModelSerializer):
     is_provisional = serializers.SerializerMethodField()
     games_until_established = serializers.SerializerMethodField()
     is_established = serializers.SerializerMethodField()
+    rating_display = serializers.SerializerMethodField()
 
     class Meta:
         model = PlayerRating
         fields = [
             "mode",
             "elo",
+            "rd",
             "peak_elo",
             "games_count",
             "updated_at",
             "is_provisional",
             "games_until_established",
             "is_established",
+            "rating_display",
         ]
+
+    def get_rating_display(self, obj: PlayerRating) -> str:
+        return format_rating_display(obj.elo, obj.rd, obj.games_count)
 
     def get_is_provisional(self, obj: PlayerRating) -> bool:
         return is_provisional(obj)
@@ -38,13 +44,17 @@ class PlayerRatingSerializer(serializers.ModelSerializer):
 class LeaderboardEntrySerializer(serializers.ModelSerializer):
     user = UserPublicSerializer(read_only=True)
     is_provisional = serializers.SerializerMethodField()
+    rating_display = serializers.SerializerMethodField()
 
     class Meta:
         model = PlayerRating
-        fields = ["user", "mode", "elo", "peak_elo", "games_count", "is_provisional"]
+        fields = ["user", "mode", "elo", "rd", "peak_elo", "games_count", "is_provisional", "rating_display"]
 
     def get_is_provisional(self, obj: PlayerRating) -> bool:
         return is_provisional(obj)
+
+    def get_rating_display(self, obj: PlayerRating) -> str:
+        return format_rating_display(obj.elo, obj.rd, obj.games_count)
 
 
 class RatingHistorySerializer(serializers.ModelSerializer):

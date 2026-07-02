@@ -173,6 +173,7 @@ CELERY_TASK_QUEUES = {
     "fairplay": {"exchange": "fairplay", "routing_key": "fairplay"},
 }
 CELERY_TASK_ROUTES = {
+    "apps.games.tasks.retry_matchmaking_pools": {"queue": "realtime"},
     "apps.games.tasks.pair_matchmaking_queues": {"queue": "realtime"},
     "apps.games.tasks.forfeit_disconnected_games": {"queue": "realtime"},
     "apps.games.tasks.pair_correspondence_queues": {"queue": "realtime"},
@@ -296,8 +297,15 @@ K_FACTOR_BULLET = 40
 MATCHMAKING_ELO_RANGE = config("MATCHMAKING_ELO_RANGE", default=200, cast=int)
 MATCHMAKING_REDIS_ENABLED = config("MATCHMAKING_REDIS_ENABLED", default=True, cast=bool)
 MATCHMAKING_REDIS_PREFIX = config("MATCHMAKING_REDIS_PREFIX", default="mm:pool")
+MATCHMAKING_POOL_EXPAND_SECONDS = config("MATCHMAKING_POOL_EXPAND_SECONDS", default=3, cast=int)
+MATCHMAKING_POOL_EXPAND_STEP = config("MATCHMAKING_POOL_EXPAND_STEP", default=50, cast=int)
+MATCHMAKING_POOL_MAX_RANGE = config("MATCHMAKING_POOL_MAX_RANGE", default=500, cast=int)
 
 CELERY_BEAT_SCHEDULE = {
+    "retry-matchmaking-pools": {
+        "task": "apps.games.tasks.retry_matchmaking_pools",
+        "schedule": 2.0,
+    },
     "pair-matchmaking": {
         "task": "apps.games.tasks.pair_matchmaking_queues",
         "schedule": 5.0,

@@ -331,7 +331,6 @@ class MatchmakingView(APIView):
         except ValueError as exc:
             return Response({"error": str(exc), "code": "fairplay_sanction"}, status=403)
         if game:
-            svc._notify_match(game.white_player_id, game.black_player_id, game)
             return Response(GameSerializer(game).data, status=201)
         return Response({
             "status": "searching",
@@ -352,12 +351,15 @@ class MatchmakingStatusView(APIView):
 
     def get(self, request):
         from . import matchmaking_redis as mmr
+        from .matchmaking_pools import pool_stats
 
         svc = MatchmakingService()
+        stats = pool_stats()
         return Response(
             {
                 "searching_players": svc.searching_count(),
                 "redis_enabled": mmr.is_redis_matchmaking_available(),
+                "pools": stats,
             }
         )
 

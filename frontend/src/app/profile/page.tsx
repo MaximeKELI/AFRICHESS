@@ -225,7 +225,9 @@ export default function ProfilePage() {
                   <div className="flex justify-between items-start gap-3">
                     <span className="capitalize">{modeLabel(t, r.mode)}</span>
                     <div className="text-right">
-                      <span className="font-mono font-bold">{formatElo(r.elo, provisional)}</span>
+                      <span className="font-mono font-bold">
+                        {formatElo(r.elo, provisional, r.rating_display)}
+                      </span>
                       {r.peak_elo != null && (
                         <span className="text-sm opacity-50 block">
                           {t("profile.ratings.peak", { elo: r.peak_elo })}

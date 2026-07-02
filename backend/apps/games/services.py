@@ -588,7 +588,7 @@ class MatchmakingService:
     ):
         self.leave_queue(user_a)
         self.leave_queue(user_b)
-        return create_matchmaking_game(
+        game = create_matchmaking_game(
             white=user_a,
             black=user_b,
             mode=mode,
@@ -598,6 +598,8 @@ class MatchmakingService:
             is_rated=is_rated,
             variant=variant,
         )
+        self._notify_match(user_a.id, user_b.id, game)
+        return game
 
     def search(
         self,
@@ -624,6 +626,7 @@ class MatchmakingService:
 
         from . import matchmaking_redis as mmr
         from .fairplay_integrity import user_in_shadow_pool
+        from .matchmaking_pools import elo_range_for_wait
 
         User = get_user_model()
         shadow = user_in_shadow_pool(user) if is_rated else False
@@ -650,7 +653,7 @@ class MatchmakingService:
                 elo=elo,
                 pool=pool,
                 meta=meta,
-                elo_range=self.ELO_RANGE,
+                elo_range=elo_range_for_wait(0),
                 enqueue_if_no_match=True,
             )
             if result and result.status == "paired" and result.opponent_id:
@@ -725,6 +728,7 @@ class MatchmakingService:
         )
         from . import matchmaking_redis as mmr
         from .fairplay_integrity import user_in_shadow_pool
+        from .matchmaking_pools import elo_range_for_wait
 
         shadow = user_in_shadow_pool(user) if is_rated else False
         if mmr.is_redis_matchmaking_available():
@@ -750,7 +754,7 @@ class MatchmakingService:
                 elo=elo,
                 pool=pool,
                 meta=meta,
-                elo_range=self.ELO_RANGE,
+                elo_range=elo_range_for_wait(0),
                 enqueue_if_no_match=True,
             )
         MatchmakingQueue.objects.update_or_create(
@@ -796,6 +800,7 @@ class MatchmakingService:
 
         from . import matchmaking_redis as mmr
         from .fairplay_integrity import user_in_shadow_pool
+        from .matchmaking_pools import elo_range_for_wait
 
         User = get_user_model()
         shadow = user_in_shadow_pool(user) if is_rated else False
@@ -822,7 +827,7 @@ class MatchmakingService:
                 elo=elo,
                 pool=pool,
                 meta=meta,
-                elo_range=self.ELO_RANGE,
+                elo_range=elo_range_for_wait(0),
                 enqueue_if_no_match=False,
             )
             if result and result.status == "paired" and result.opponent_id:
@@ -939,9 +944,10 @@ class MatchmakingService:
         """Réconciliation PG (+ Redis si disponible)."""
         self.cleanup_stale()
         from . import matchmaking_redis as mmr
+        from .matchmaking_pools import retry_all_waiting_pools
 
         if mmr.is_redis_matchmaking_available():
-            return self._pair_all_waiting_pg()
+            retry_all_waiting_pools()
         return self._pair_all_waiting_pg()
 
     def _pair_all_waiting_pg(self):
@@ -987,7 +993,7 @@ class MatchmakingService:
                         is_rated=a.is_rated,
                         variant=a.variant,
                     )
-                    self._notify_match(a.user_id, best.user_id, game)
+                    # _notify_match déjà appelé dans _create_match
 
     def searching_count(self) -> int:
         from . import matchmaking_redis as mmr

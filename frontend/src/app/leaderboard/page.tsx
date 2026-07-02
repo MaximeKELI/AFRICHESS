@@ -13,6 +13,8 @@ import { countryFlag } from "@/lib/worldCountries";
 interface Entry {
   user: { username: string; display_name: string; country: string; title?: string };
   elo: number;
+  rd?: number;
+  rating_display?: string;
   games_count: number;
 }
 
@@ -91,7 +93,7 @@ export default function LeaderboardPage() {
               <th className="text-left p-4">{t("leaderboard.col.rank")}</th>
               <th className="text-left p-4">{t("leaderboard.col.player")}</th>
               <th className="text-left p-4">{t("leaderboard.col.country")}</th>
-              <th className="text-right p-4">{t("leaderboard.col.elo")}</th>
+              <th className="text-right p-4">{t("leaderboard.col.rating") || "Rating"}</th>
               <th className="text-right p-4">{t("leaderboard.col.games")}</th>
             </tr>
           </thead>
@@ -111,7 +113,9 @@ export default function LeaderboardPage() {
                     <span>{displayCountry(e.user.country, locale)}</span>
                   </span>
                 </td>
-                <td className="p-4 text-right font-mono font-bold">{e.elo}</td>
+                <td className="p-4 text-right font-mono font-bold">
+                  {e.rating_display ?? e.elo}
+                </td>
                 <td className="p-4 text-right opacity-60">{e.games_count}</td>
               </tr>
             ))}

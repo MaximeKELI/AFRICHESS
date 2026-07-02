@@ -34,13 +34,16 @@
 
 ## Phases restantes (estimation)
 
-### Phase 2 — Jeu & rating (4–6 semaines)
-- Pools matchmaking par TC (concept Lichess, implémentation Redis)
-- Seek instantané (< 1 s) sans attendre Celery
-- Affichage rating ± RD dans profil / classements
-- Team battles tournoi
+### Phase 2 — livré
 
-### Phase 3 — Contenu & diffusion (6–8 semaines)
+| Fonctionnalité | Détail |
+|----------------|--------|
+| **Pools matchmaking** | Retry Celery **2 s**, élargissement ELO +50 / 3 s (max 500) |
+| **Notifications WS** | Centralisées dans `_create_match` |
+| **Glicko ± RD** | `rating_display` API + profil / leaderboard |
+| **Status pools** | `/api/games/matchmaking/status/` → `pools` |
+
+### Phase 3 — à venir
 - Broadcast relay multi-board (lecture seule)
 - Lichess TV (rotation parties live top Elo)
 - Import/export PGN Studies ↔ Lichess format

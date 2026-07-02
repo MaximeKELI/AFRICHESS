@@ -14,6 +14,14 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task(queue="realtime")
+def retry_matchmaking_pools():
+    """Retry rapide des pools Redis (élargissement ELO)."""
+    from .matchmaking_pools import retry_all_waiting_pools
+
+    return retry_all_waiting_pools()
+
+
+@shared_task(queue="realtime")
 def pair_matchmaking_queues():
     """Réconciliation file matchmaking (Redis primary, PG fallback)."""
     MatchmakingService().pair_all_waiting()

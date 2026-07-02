@@ -5,27 +5,33 @@ export const PROVISIONAL_GAMES_REQUIRED = 5;
 export interface RatingRow {
   mode: string;
   elo: number;
+  rd?: number;
   peak_elo?: number;
   games_count?: number;
   is_provisional?: boolean;
   games_until_established?: number;
   is_established?: boolean;
+  rating_display?: string;
 }
 
 export function formatElo(
   elo: number | null | undefined,
-  provisional = false
+  provisional = false,
+  ratingDisplay?: string | null
 ): string {
+  if (ratingDisplay) return ratingDisplay;
   if (elo == null) return "—";
   return provisional ? `${elo}?` : String(elo);
 }
 
 export function formatEloParen(
   elo: number | null | undefined,
-  provisional = false
+  provisional = false,
+  ratingDisplay?: string | null
 ): string {
-  if (elo == null) return "";
-  return `(${formatElo(elo, provisional)})`;
+  if (elo == null && !ratingDisplay) return "";
+  const inner = formatElo(elo, provisional, ratingDisplay);
+  return inner === "—" ? "" : `(${inner})`;
 }
 
 export function ratingForMode(

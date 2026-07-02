@@ -133,7 +133,7 @@ export default function PublicProfilePage() {
               <div key={r.mode} className="flex justify-between text-sm border-b border-white/5 pb-2">
                 <span className="capitalize opacity-70">{modeLabel(t, r.mode)}</span>
                 <span className="font-mono font-bold text-africhess-gold">
-                  {formatElo(r.elo, isProvisionalRating(r))}
+                  {formatElo(r.elo, isProvisionalRating(r), r.rating_display)}
                 </span>
               </div>
             ))}

@@ -10,7 +10,7 @@ import {
 describe("formatElo", () => {
   it("shows question mark for provisional ratings", () => {
     expect(formatElo(1200, true)).toBe("1200?");
-    expect(formatElo(1200, false)).toBe("1200");
+    expect(formatElo(1200, false, "1847 ± 42")).toBe("1847 ± 42");
     expect(formatElo(null)).toBe("—");
   });
 });

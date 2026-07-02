@@ -511,16 +511,8 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
                     )
                 )
             return
-        game_id, room_id, mode, opponent_id = result
-        payload = {
-            "type": "match_found",
-            "game_id": game_id,
-            "room_id": room_id,
-            "mode": mode,
-        }
-        await self.channel_layer.group_send(f"user_{self.user.id}", payload)
-        if opponent_id:
-            await self.channel_layer.group_send(f"user_{opponent_id}", payload)
+        game_id, room_id, mode, _opponent_id = result
+        # Notification WS : _create_match → _notify_match (les deux joueurs)
 
     @database_sync_to_async
     def _try_match(
