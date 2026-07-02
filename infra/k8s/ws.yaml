@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: africhess-ws
+  namespace: africhess
+  labels:
+    app: africhess-ws
+    tier: ws
+spec:
+  replicas: 8
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 2
+  selector:
+    matchLabels:
+      app: africhess-ws
+  template:
+    metadata:
+      labels:
+        app: africhess-ws
+        tier: ws
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8001"
+        prometheus.io/path: "/metrics"
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: africhess-ws
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: ws
+          image: 123456789012.dkr.ecr.af-south-1.amazonaws.com/africhess-backend:latest
+          imagePullPolicy: Always
+          command: ["/app/docker-entrypoint.sh"]
+          envFrom:
+            - configMapRef:
+                name: africhess-config
+            - secretRef:
+                name: africhess-secrets
+          env:
+            - name: AFRICHESS_TIER
+              value: ws
+            - name: PORT
+              value: "8001"
+          ports:
+            - name: http
+              containerPort: 8001
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: "2000m"
+              memory: "4Gi"
+            limits:
+              cpu: "4000m"
+              memory: "8Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: africhess-ws
+  namespace: africhess
+  labels:
+    app: africhess-ws
+spec:
+  type: ClusterIP
+  selector:
+    app: africhess-ws
+  ports:
+    - name: http
+      port: 8001
+      targetPort: http
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600

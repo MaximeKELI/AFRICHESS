@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: africhess-api
+  namespace: africhess
+  labels:
+    app: africhess-api
+    tier: api
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: africhess-api
+  template:
+    metadata:
+      labels:
+        app: africhess-api
+        tier: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: api
+          image: 123456789012.dkr.ecr.af-south-1.amazonaws.com/africhess-backend:latest
+          imagePullPolicy: Always
+          command: ["/app/docker-entrypoint.sh"]
+          envFrom:
+            - configMapRef:
+                name: africhess-config
+            - secretRef:
+                name: africhess-secrets
+          env:
+            - name: AFRICHESS_TIER
+              value: api
+            - name: PORT
+              value: "8000"
+          ports:
+            - name: http
+              containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /api/health/
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health/
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "2Gi"
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: africhess-api
+  namespace: africhess
+  labels:
+    app: africhess-api
+spec:
+  type: ClusterIP
+  selector:
+    app: africhess-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
