@@ -1,0 +1,27 @@
+# Job one-shot — lancer avant chaque déploiement :
+# kubectl apply -f infra/k8s/migrate-job.yaml
+# kubectl wait --for=condition=complete job/africhess-migrate -n africhess --timeout=300s
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: africhess-migrate
+  namespace: africhess
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: africhess-migrate
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: 123456789012.dkr.ecr.af-south-1.amazonaws.com/africhess-backend:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "manage.py", "migrate", "--noinput"]
+          envFrom:
+            - configMapRef:
+                name: africhess-config
+            - secretRef:
+                name: africhess-secrets
