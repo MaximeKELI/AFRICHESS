@@ -42,12 +42,29 @@ class FairPlayStatusView(APIView):
                 FairPlayReviewCase.Status.ESCALATED,
             ),
         ).select_related("report__game")[:10]
+        from .fairplay_integrity import get_or_create_profile
+
+        profile = None
+        if not exempt:
+            profile = get_or_create_profile(user)
         return Response(
             {
                 "exempt": exempt,
                 "consent_given": exempt or user_has_fairplay_consent(user),
                 "consent_version": FairPlayUserConsent.CONSENT_VERSION,
                 "restrictions": restrictions,
+                "integrity": (
+                    None
+                    if profile is None
+                    else {
+                        "trust_score": round(profile.trust_score, 1),
+                        "certificate_level": profile.certificate_level,
+                        "clean_streak": profile.clean_streak,
+                        "shadow_pool": profile.shadow_pool,
+                        "games_tracked": profile.games_tracked,
+                        "live_integrity_avg": round(profile.live_integrity_avg, 1),
+                    }
+                ),
                 "appealable_cases": pending_cases.count(),
                 "review_cases": [
                     {
