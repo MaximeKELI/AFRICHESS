@@ -1,0 +1,7 @@
+{
+  "include": ["apps", "config"],
+  "exclude": ["**/migrations", "**/__pycache__"],
+  "reportAttributeAccessIssue": "none",
+  "reportMissingImports": "warning",
+  "pythonVersion": "3.12"
+}

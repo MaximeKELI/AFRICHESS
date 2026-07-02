@@ -43,10 +43,17 @@ def validate_move_timing(
             "error": "Trop de coups — activité suspecte",
             "code": "anticheat",
         }
-    last = game.moves.order_by("-created_at").first()
+    last = (
+        Move.objects.filter(game=game)
+        .order_by("-created_at")
+        .first()
+    )
     if last:
         delta = (timezone.now() - last.created_at).total_seconds() * 1000
-        is_white = game.white_player_id == user.id
+        is_white = (
+            game.white_player is not None
+            and game.white_player.pk == user.pk
+        )
         same_side = last.played_by_white == is_white
         too_fast_server = (
             delta < MIN_MOVE_INTERVAL_MS and same_side
@@ -69,6 +76,7 @@ def validate_move_telemetry(
     user,
     telemetry: dict | None,
 ) -> dict | None:
+    """Valide la télémétrie client (onglet, copier-coller)."""
     if user_is_fairplay_exempt(user):
         return None
     if game.is_vs_ai or not telemetry:
