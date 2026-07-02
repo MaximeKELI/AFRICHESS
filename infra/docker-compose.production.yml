@@ -1,0 +1,267 @@
+# AFRICHESS — stack production (rôles séparés)
+# Région cible : af-south-1 (Le Cap) + Cloudflare CDN en frontal
+#
+# Usage local/staging :
+#   cp infra/.env.production.example infra/.env.production
+#   docker compose -f infra/docker-compose.production.yml --env-file infra/.env.production up -d
+#
+# Scale horizontal (Kubernetes/ECS) : dupliquer api-* et ws-* ; workers CPU sur nœuds dédiés.
+
+x-backend-env: &backend-env
+  DJANGO_SETTINGS_MODULE: config.settings.production
+  AFRICHESS_TIER: all
+  RUN_MIGRATIONS: "false"
+  RUN_SEED: "false"
+  POSTGRES_HOST: postgres-primary
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: ${POSTGRES_DB:-africhess}
+  POSTGRES_USER: ${POSTGRES_USER:-africhess}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+  POSTGRES_REPLICA_HOST: ${POSTGRES_REPLICA_HOST:-postgres-replica}
+  POSTGRES_REPLICA_PORT: "5432"
+  USE_READ_REPLICA: ${USE_READ_REPLICA:-true}
+  PGBOUNCER_HOST: pgbouncer
+  PGBOUNCER_PORT: "6432"
+  REDIS_URL: redis://:${REDIS_PASSWORD:?set REDIS_PASSWORD}@redis:6379/0
+  REDIS_CHANNELS_URLS: ${REDIS_CHANNELS_URLS:-redis://:${REDIS_PASSWORD}@redis:6379/1}
+  REDIS_CELERY_URL: redis://:${REDIS_PASSWORD}@redis:6379/2
+  REDIS_MATCHMAKING_URL: redis://:${REDIS_PASSWORD}@redis:6379/3
+  SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY}
+  ALLOWED_HOSTS: ${ALLOWED_HOSTS:-api.africhess.com,ws.africhess.com}
+  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://africhess.com}
+  FRONTEND_URL: ${FRONTEND_URL:-https://africhess.com}
+  FAIRPLAY_BIN: /usr/local/bin/africhess-fairplay
+  STOCKFISH_PATH: /usr/games/stockfish
+  PROMETHEUS_METRICS_ENABLED: "true"
+
+services:
+  # --- Données ---
+  postgres-primary:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-africhess}
+      POSTGRES_USER: ${POSTGRES_USER:-africhess}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pg_primary:/var/lib/postgresql/data
+      - ./postgres/primary-init.sh:/docker-entrypoint-initdb.d/01-replication.sh:ro
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=10
+      - -c
+      - max_replication_slots=10
+      - -c
+      - hot_standby=on
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-africhess}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  postgres-replica:
+    image: postgres:16-alpine
+    environment:
+      PGUSER: ${POSTGRES_USER:-africhess}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pg_replica:/var/lib/postgresql/data
+      - ./postgres/replica-entrypoint.sh:/replica-entrypoint.sh:ro
+    entrypoint: ["/bin/sh", "/replica-entrypoint.sh"]
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+
+  pgbouncer:
+    image: edoburu/pgbouncer:1.22.1-p0
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-africhess}:${POSTGRES_PASSWORD}@postgres-primary:5432/${POSTGRES_DB:-africhess}
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 2000
+      DEFAULT_POOL_SIZE: 50
+      RESERVE_POOL_SIZE: 25
+      SERVER_RESET_QUERY: DISCARD ALL
+    volumes:
+      - ./pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    ports:
+      - "127.0.0.1:6432:6432"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD} --maxmemory 2gb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # --- Tiers applicatifs ---
+  api:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    entrypoint: ["/app/docker-entrypoint.sh"]
+    environment:
+      <<: *backend-env
+      AFRICHESS_TIER: api
+      PORT: "8000"
+      GUNICORN_WORKERS: ${API_WORKERS:-4}
+    deploy:
+      replicas: ${API_REPLICAS:-2}
+    depends_on:
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    expose:
+      - "8000"
+
+  ws:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    entrypoint: ["/app/docker-entrypoint.sh"]
+    environment:
+      <<: *backend-env
+      AFRICHESS_TIER: ws
+      PORT: "8001"
+    deploy:
+      replicas: ${WS_REPLICAS:-2}
+    depends_on:
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    expose:
+      - "8001"
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    command: python manage.py migrate --noinput
+    environment:
+      <<: *backend-env
+      POSTGRES_HOST: postgres-primary
+      PGBOUNCER_HOST: ""
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    restart: "no"
+
+  celery-realtime:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    command: celery -A config worker -l info -Q realtime -c ${CELERY_REALTIME_CONCURRENCY:-4}
+    environment:
+      <<: *backend-env
+      AFRICHESS_TIER: worker
+    depends_on:
+      - redis
+      - pgbouncer
+
+  celery-analysis:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    command: celery -A config worker -l info -Q analysis -c ${CELERY_ANALYSIS_CONCURRENCY:-2}
+    environment:
+      <<: *backend-env
+      AFRICHESS_TIER: worker
+    deploy:
+      replicas: ${CELERY_ANALYSIS_REPLICAS:-2}
+    depends_on:
+      - redis
+      - pgbouncer
+
+  celery-fairplay:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    command: celery -A config worker -l info -Q fairplay -c ${CELERY_FAIRPLAY_CONCURRENCY:-2}
+    environment:
+      <<: *backend-env
+      AFRICHESS_TIER: worker
+    deploy:
+      replicas: ${CELERY_FAIRPLAY_REPLICAS:-2}
+    depends_on:
+      - redis
+      - pgbouncer
+
+  celery-default:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    command: celery -A config worker -l info -Q default -c ${CELERY_DEFAULT_CONCURRENCY:-2}
+    environment:
+      <<: *backend-env
+      AFRICHESS_TIER: worker
+    depends_on:
+      - redis
+      - pgbouncer
+
+  celery-beat:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    command: celery -A config beat -l info
+    environment:
+      <<: *backend-env
+      AFRICHESS_TIER: beat
+    depends_on:
+      - redis
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+      - ws
+
+  # --- Observabilité ---
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "127.0.0.1:9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "127.0.0.1:3001:3000"
+    depends_on:
+      - prometheus
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.62.0
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    depends_on:
+      - redis
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    environment:
+      DATA_SOURCE_NAME: postgresql://${POSTGRES_USER:-africhess}:${POSTGRES_PASSWORD}@postgres-primary:5432/${POSTGRES_DB:-africhess}?sslmode=disable
+    depends_on:
+      - postgres-primary
+
+volumes:
+  pg_primary:
+  pg_replica:
