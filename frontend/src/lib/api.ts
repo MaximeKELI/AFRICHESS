@@ -239,6 +239,10 @@ export const gamesApi = {
     api.get("/games/openings/lookup/", {
       params: { moves: moves.join(","), lang },
     }),
+  openingExplorer: (fen: string, source = "lichess", ratings?: number[]) =>
+    api.get("/games/openings/explorer/", {
+      params: { fen, source, ratings: ratings?.join(",") },
+    }),
   simulList: () => api.get("/games/simul/"),
   createSimul: (title: string, max_boards = 10) =>
     api.post("/games/simul/", { title, max_boards }),
