@@ -690,6 +690,35 @@ def opening_lookup(request):
     return Response(lookup_opening(moves, locale=locale))
 
 
+@extend_schema(summary="Opening Explorer Lichess (proxy API publique)")
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def lichess_opening_explorer(request):
+    from .lichess_explorer import fetch_opening_explorer, normalize_explorer_moves
+
+    fen = request.query_params.get("fen")
+    if not fen:
+        return Response({"error": "fen required"}, status=400)
+    source = request.query_params.get("source", "lichess")
+    ratings_raw = request.query_params.get("ratings", "")
+    ratings = [int(x) for x in ratings_raw.split(",") if x.strip().isdigit()] or None
+    data = fetch_opening_explorer(fen, source=source, ratings=ratings)
+    if data is None:
+        return Response({"available": False, "moves": []})
+    return Response(
+        {
+            "available": True,
+            "source": source,
+            "white": data.get("white"),
+            "draws": data.get("draws"),
+            "black": data.get("black"),
+            "opening": data.get("opening"),
+            "moves": normalize_explorer_moves(data),
+            "topGames": data.get("topGames") or [],
+        }
+    )
+
+
 @extend_schema(summary="Probe tablebase Syzygy (≤7 pièces, API Lichess)")
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
