@@ -98,3 +98,11 @@ if REDIS_CELERY_URL:  # noqa: F405
 
 # Observabilité
 PROMETHEUS_METRICS_ENABLED = config("PROMETHEUS_METRICS_ENABLED", default=True, cast=bool)
+
+from config.media_storage import configure_media_storage  # noqa: E402
+
+configure_media_storage(sys.modules[__name__])  # noqa: E402
+
+from config.sentry_init import init_sentry  # noqa: E402
+
+init_sentry()  # noqa: E402
