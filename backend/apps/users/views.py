@@ -93,6 +93,17 @@ class UserDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
     lookup_field = "username"
 
+    def retrieve(self, request, *args, **kwargs):
+        from .profile_cache import get_public_profile, set_public_profile
+
+        username = kwargs.get(self.lookup_field, "")
+        cached = get_public_profile(username)
+        if cached is not None:
+            return Response(cached)
+        response = super().retrieve(request, *args, **kwargs)
+        set_public_profile(username, response.data)
+        return response
+
 
 class AfricanPlayersView(generics.ListAPIView):
     """Highlighted African chess players."""
@@ -100,7 +111,21 @@ class AfricanPlayersView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        return User.objects.filter(is_african_highlight=True).order_by("-date_joined")[:50]
+        return (
+            User.objects.filter(is_african_highlight=True)
+            .select_related("stats")
+            .order_by("-date_joined")[:50]
+        )
+
+    def list(self, request, *args, **kwargs):
+        from .profile_cache import get_featured_african, set_featured_african
+
+        cached = get_featured_african()
+        if cached is not None:
+            return Response(cached)
+        response = super().list(request, *args, **kwargs)
+        set_featured_african(response.data)
+        return response
 
 
 @api_view(["GET"])
