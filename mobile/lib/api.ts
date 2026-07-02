@@ -307,6 +307,8 @@ export const learningApi = {
 
 export const tournamentsApi = {
   list: () => api.get<TournamentSummary[]>("/tournaments/"),
+  register: (slug: string) => api.post(`/tournaments/${slug}/register/`),
+  standings: (slug: string) => api.get(`/tournaments/${slug}/standings/`),
 };
 
 export const gamesApi = {
@@ -390,4 +392,36 @@ export const socialApi = {
   pending: () => api.get<FriendRow[]>("/social/friends/pending/"),
   request: (username: string) => api.post("/social/friends/request/", { username }),
   accept: (id: number) => api.post(`/social/friends/${id}/accept/`),
+  challengeFriend: (username: string, mode = "blitz") =>
+    api.post<{ game_id?: string }>("/social/friends/challenge/", { username, mode }),
+  directMessages: (username: string) =>
+    api.get<{ messages: { id: number; content: string; sender: FriendUser; created_at: string }[] }>(
+      `/social/messages/${username}/`
+    ),
+  sendDirectMessage: (username: string, message: string) =>
+    api.post(`/social/messages/${username}/`, { message }),
+  clubs: (country?: string) =>
+    api.get<{ id: number; name: string; slug: string; description: string; country: string; member_count: number; is_member?: boolean }[]>(
+      "/social/clubs/",
+      { params: country ? { country } : undefined }
+    ),
+  club: (slug: string) => api.get(`/social/clubs/${slug}/`),
+  joinClub: (slug: string) => api.post(`/social/clubs/${slug}/join/`),
 };
+
+export const ratingsApi = {
+  globalLeaderboard: (mode = "blitz") =>
+    api.get<{ results?: LeaderboardEntry[] } | LeaderboardEntry[]>("/ratings/leaderboard/global/", {
+      params: { mode },
+    }),
+  africanLeaderboard: (mode = "blitz", country?: string) =>
+    api.get<{ results?: LeaderboardEntry[] } | LeaderboardEntry[]>("/ratings/leaderboard/african/", {
+      params: { mode, country },
+    }),
+};
+
+export interface LeaderboardEntry {
+  user: { username: string; display_name: string; country: string; title?: string };
+  elo: number;
+  games_count: number;
+}
