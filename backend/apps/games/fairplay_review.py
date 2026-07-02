@@ -481,6 +481,7 @@ def _apply_sanction(
         is_active=True,
         notes=case.notes,
         created_by=staff_user,
+        is_automated=is_automated,
     )
 
 
