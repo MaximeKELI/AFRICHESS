@@ -371,7 +371,22 @@ def _lesson_specs() -> dict:
         (60, vol15, "Vision AFRICHESS et scène continentale", "60-vision-africhess.md", "écosystème AFRICHESS", "talents, fédérations"),
     ]
 
-    return {f: spec(*args) for args in mapping for f in [args[3]]}
+    for args in mapping:
+        s = spec(*args)
+        add(
+            args[3],
+            build_lesson(
+                s["title"],
+                s["volume"],
+                s["doc_num"],
+                s["intro"],
+                s["sections"],
+                s["exercises"],
+                s["summary"],
+            ),
+        )
+
+    return lessons
 
 
 def write_all_markdown(output_dir: Path) -> dict[str, int]:
