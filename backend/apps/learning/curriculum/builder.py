@@ -303,6 +303,11 @@ def _lesson_specs() -> dict:
     vol8 = "Volume 8 — Finales"
     vol9 = "Volume 9 — Compétition"
     vol10 = "Volume 10 — Maîtrise"
+    vol11 = "Volume 11 — Tactique avancée"
+    vol12 = "Volume 12 — Finales avancées"
+    vol13 = "Volume 13 — Répertoire compétitif"
+    vol14 = "Volume 14 — Entraînement & performance"
+    vol15 = "Volume 15 — Leadership échecs africain"
 
     mapping = [
         (2, vol1, "L'échiquier, les pièces et le but du jeu", "02-echiquier-pieces-objectif.md", "échiquier et pièces", "mouvements, objectif mat, coordination"),
@@ -344,6 +349,26 @@ def _lesson_specs() -> dict:
         (38, vol10, "Puzzles", "38-entrainement-puzzles.md", "puzzles", "thèmes, streak"),
         (39, vol10, "IA entraînement", "39-ia-entrainement.md", "ordinateur", "niveaux 800-5000"),
         (40, vol10, "Scène africaine", "40-scene-africaine-clubs.md", "clubs africains", "fédérations, événements"),
+        (41, vol11, "Déviations et sacrifices", "41-deviations-sacrifices.md", "sacrifice positionnel", "déviations, gain de temps"),
+        (42, vol11, "Zwischenzug et coups intermédiaires", "42-zwischenzug.md", "zwischenzug", "tempo, surprise tactique"),
+        (43, vol11, "Défense prophylactique avancée", "43-prophylaxie-tactique.md", "prophylaxie", "menaces, prévention"),
+        (44, vol11, "Combinaisons de mat complexe", "44-mats-complexes.md", "mat complexe", "attraction, élimination défense"),
+        (45, vol12, "Finales fou contre cavalier", "45-fou-cavalier.md", "fou vs cavalier", "bloc central, zugzwang"),
+        (46, vol12, "Finales pion de tour", "46-pion-tour.md", "pion de tour", "Lucena, Philidor, Vancura"),
+        (47, vol12, "Finales deux pions", "47-deux-pions.md", "deux pions", "majorité, opposition"),
+        (48, vol12, "Finales dames actives", "48-dames-actives.md", "dame active", "perpétuel, technique gagnante"),
+        (49, vol13, "Construire un répertoire cohérent", "49-repertoire-coherent.md", "répertoire", "transpositions, files"),
+        (50, vol13, "Préparation contre adversaire connu", "50-prep-adversaire.md", "préparation ciblée", "bases PGN, surprises"),
+        (51, vol13, "Gestion des nouveautés", "51-nouveautes.md", "nouveautés", "théorie, mémorisation"),
+        (52, vol13, "Adaptation en milieu de partie", "52-adaptation-milieu.md", "adaptation", "plans B, structures"),
+        (53, vol14, "Planification hebdomadaire", "53-plan-hebdo.md", "planification", "volume, récupération"),
+        (54, vol14, "Analyse assistée par moteur", "54-analyse-moteur.md", "analyse Stockfish", "profondeur, biais"),
+        (55, vol14, "Résilience après une défaite", "55-resilience.md", "résilience", "tilt, routines"),
+        (56, vol14, "Nutrition et sommeil en tournoi", "56-sommeil-tournoi.md", "condition physique", "énergie, concentration"),
+        (57, vol15, "Organiser un club local", "57-club-local.md", "club local", "adhésions, événements"),
+        (58, vol15, "Arbitrage et fair-play communautaire", "58-arbitrage-communautaire.md", "arbitrage", "règles, conflits"),
+        (59, vol15, "Mentorat et transmission", "59-mentorat.md", "mentorat", "jeunes, progression"),
+        (60, vol15, "Vision AFRICHESS et scène continentale", "60-vision-africhess.md", "écosystème AFRICHESS", "talents, fédérations"),
     ]
 
     return {f: spec(*args) for args in mapping for f in [args[3]]}
