@@ -94,6 +94,7 @@ export default function ReviewScreen() {
           disabled
           lastMove={lastMove}
           serverValidated={game.variant !== "standard"}
+          onMove={() => {}}
         />
       </View>
       <View style={styles.controls}>

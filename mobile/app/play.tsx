@@ -724,6 +724,13 @@ export default function PlayScreen() {
             <Text style={styles.dangerText}>Abandonner</Text>
           </Pressable>
         )}
+        {game.status === "completed" && (
+          <Link href={`/review/${game.id}`} asChild>
+            <Pressable style={styles.secondaryBtn}>
+              <Text style={styles.secondaryText}>Revoir la partie</Text>
+            </Pressable>
+          </Link>
+        )}
         <Pressable
           style={styles.secondaryBtn}
           onPress={() => {

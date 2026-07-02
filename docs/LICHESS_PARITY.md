@@ -27,7 +27,7 @@
 | Puzzle Storm (3 min, flux infini) | Rush 20 puzzles fixe | **Storm** (puzzles dynamiques) |
 | Puzzle Racer | Battle 1v1 | Déjà **Battle** — renommage UX à faire |
 | Broadcasts / TV | Absent | **Phase 3** (relay + TV rotation) |
-| Antichess / Horde / Racing Kings | Absent | Phase 4 |
+| Antichess / Horde / Racing Kings | Absent | **Phase 4** |
 | Liquidité joueurs | N/A code | Croissance communauté |
 
 ---
@@ -53,10 +53,16 @@
 | **Studies I/O** | Import/export PGN multi-chapitres (format Lichess) |
 | **Explorer cache** | Déjà actif (`LICHESS_EXPLORER_CACHE_SECONDS`) |
 
-### Phase 4 — à venir
-- Antichess, Horde, Racing Kings
-- Mobile : matchmaking WS, Studies, review
-- Blind mode / clavier (accessibilité)
+### Phase 4 — livré
+
+| Fonctionnalité | Détail |
+|----------------|--------|
+| **Antichess / Horde / Racing Kings** | `python-chess` + UI web/mobile + matchmaking |
+| **Finalisation variantes** | `_finalize_game` via `board.outcome()` pour toutes variantes |
+| **Mode aveugle + clavier** | Préférence `blindMode`, pièces masquées, flèches/Entrée |
+| **Mobile Studies** | `/studies` + détail chapitres PGN |
+| **Mobile Review** | `/review/[id]` avec navigation coups (`fen_after`) |
+| **Mobile matchmaking WS** | Déjà actif — variantes Phase 4 exposées |
 
 ### Phase 5 — Scale (continu)
 - Infra documentée (`docs/ARCHITECTURE_SCALE.md`, K8s, alertes)
