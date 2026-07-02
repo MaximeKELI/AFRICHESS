@@ -5,6 +5,7 @@ from rest_framework.test import APIClient
 
 from apps.games.models import FairPlayUserConsent, Game, MatchmakingQueue
 from apps.games.services import MatchmakingService
+from apps.games.tests.mm_test_utils import reset_matchmaking_state
 
 User = get_user_model()
 
@@ -23,6 +24,7 @@ class MatchmakingJoinQueueTests(TestCase):
     """join_queue doit toujours persister time_control (jamais NULL en base)."""
 
     def setUp(self):
+        reset_matchmaking_state()
         self.svc = MatchmakingService()
         self.user = User.objects.create_user(username="mm_join", password="x")
 
@@ -85,6 +87,7 @@ class MatchmakingJoinQueueTests(TestCase):
 
 class MatchmakingPairingTests(TestCase):
     def setUp(self):
+        reset_matchmaking_state()
         self.svc = MatchmakingService()
         self.a = User.objects.create_user(username="mm_a", password="x")
         self.b = User.objects.create_user(username="mm_b", password="x")
@@ -144,6 +147,7 @@ class MatchmakingPairingTests(TestCase):
 
 class MatchmakingApiTests(TestCase):
     def setUp(self):
+        reset_matchmaking_state()
         self.user = User.objects.create_user(username="mm_api", password="x")
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)

@@ -24,6 +24,7 @@ from apps.games.models import FairPlayUserConsent, Game, GameRoom, MatchmakingQu
 from apps.games.services import GameService, MatchmakingService, create_matchmaking_game
 from apps.games.tasks import pair_matchmaking_queues
 from apps.games.tests.test_matchmaking import grant_fairplay_consent
+from apps.games.tests.mm_test_utils import reset_matchmaking_state
 
 User = get_user_model()
 
@@ -85,6 +86,7 @@ class MatchmakingPairingRulesTests(TestCase):
     """Règles métier d'appariement dans MatchmakingService."""
 
     def setUp(self):
+        reset_matchmaking_state()
         self.svc = MatchmakingService()
         self.a = User.objects.create_user(username="pvp_a", password="x")
         self.b = User.objects.create_user(username="pvp_b", password="x")

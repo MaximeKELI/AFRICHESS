@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from apps.games.models import Game, GameRoom, MatchmakingQueue
+from apps.games.tests.mm_test_utils import reset_matchmaking_state
 from apps.games.room_utils import ensure_game_room, uci_to_squares
 from apps.games.services import MatchmakingService
 
@@ -20,6 +20,9 @@ class RealtimeUtilsTests(TestCase):
 
 
 class MatchmakingPairTests(TestCase):
+    def setUp(self):
+        reset_matchmaking_state()
+
     def test_pair_all_waiting(self):
         a = User.objects.create_user(username="p1", password="x")
         b = User.objects.create_user(username="p2", password="x")

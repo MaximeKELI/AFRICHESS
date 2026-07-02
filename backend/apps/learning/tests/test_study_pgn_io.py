@@ -2,6 +2,7 @@
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from rest_framework.test import APIClient
 
 from apps.learning.models import SharedStudy, StudyChapter
 from apps.learning.study_pgn_io import export_study_pgn, import_study_pgn
@@ -25,8 +26,13 @@ SAMPLE_PGN = """[Event "Opening trap"]
 
 class StudyPgnIoTests(TestCase):
     def setUp(self):
+        self.client = APIClient()
         self.user = User.objects.create_user(username="study_io", password="x")
-        self.study = SharedStudy.objects.create(owner=self.user, title="Test Study")
+        self.study = SharedStudy.objects.create(
+            owner=self.user,
+            title="Test Study",
+            visibility=SharedStudy.Visibility.PUBLIC,
+        )
         StudyChapter.objects.create(
             study=self.study, title="Ch1", order=0, pgn="1. e4 e5"
         )
@@ -44,11 +50,11 @@ class StudyPgnIoTests(TestCase):
         self.assertEqual(imported[0]["title"], "Ch1")
 
     def test_import_api(self):
-        self.client.force_login(self.user)
+        self.client.force_authenticate(user=self.user)
         res = self.client.post(
             f"/api/learning/studies/{self.study.id}/import/",
             {"pgn": SAMPLE_PGN, "replace": True},
-            content_type="application/json",
+            format="json",
         )
         self.assertEqual(res.status_code, 201)
         self.assertEqual(self.study.chapters.count(), 2)

@@ -11,6 +11,7 @@ from apps.games.fairplay_review import user_fairplay_restrictions, user_has_acti
 from apps.games.fairplay_service import analyze_and_store, merge_telemetry
 from apps.games.models import Game
 from apps.games.services import MatchmakingService
+from apps.games.tests.mm_test_utils import reset_matchmaking_state
 
 User = get_user_model()
 
@@ -18,6 +19,7 @@ User = get_user_model()
 @override_settings(FAIRPLAY_EXEMPT_USERNAMES=["Maxime_KELI"])
 class FairPlayExemptTests(TestCase):
     def setUp(self):
+        reset_matchmaking_state()
         self.exempt = User.objects.create_user(
             username="Maxime_KELI",
             password="test-only",
