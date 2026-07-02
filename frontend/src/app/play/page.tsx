@@ -137,6 +137,7 @@ function PlayContent() {
   const [resumeOffer, setResumeOffer] = useState<ReturnType<typeof loadActiveGame>>(null);
   const [movePending, setMovePending] = useState(false);
   const [voteRefreshToken, setVoteRefreshToken] = useState(0);
+  const [wsVoteTally, setWsVoteTally] = useState<import("@/hooks/useGameWebSocket").VoteTallyPayload | null>(null);
   const [dropPiece, setDropPiece] = useState<string | null>(null);
   const [activeVariant, setActiveVariant] = useState<GameVariant>("standard");
   const [mobileTab, setMobileTab] = useState<"board" | "moves" | "chat" | "setup">("setup");
