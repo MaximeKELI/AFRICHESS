@@ -311,6 +311,70 @@ def user_fairplay_summary(user_id: int) -> dict[str, Any] | None:
     }
 
 
+def apply_auto_sanction(case: FairPlayReviewCase, recommendation) -> dict[str, Any]:
+    """Applique une sanction graduée sans intervention staff (warn / matchmaking_block court)."""
+    if case.status == FairPlayReviewCase.Status.CONFIRMED:
+        return {"skipped": True, "reason": "already_confirmed"}
+
+    decision = recommendation.decision
+    if decision not in (
+        FairPlayReviewCase.Decision.WARN,
+        FairPlayReviewCase.Decision.MATCHMAKING_BLOCK,
+    ):
+        return {"skipped": True, "reason": "decision_not_auto_eligible"}
+
+    case.status = FairPlayReviewCase.Status.CONFIRMED
+    case.decision = decision
+    case.decision_source = "auto"
+    case.auto_recommended_decision = decision
+    case.auto_confidence = recommendation.confidence
+    case.notes = case.notes or f"Auto: {recommendation.reason}"
+    case.decided_at = timezone.now()
+    case.save()
+
+    block_days = getattr(recommendation, "block_days", 7)
+    sanction = _apply_sanction(
+        case,
+        None,
+        decision,
+        suspend_days=block_days,
+        is_automated=True,
+    )
+
+    log_fairplay_audit(
+        action=FairPlayAuditLog.Action.AUTO_SANCTION,
+        staff=None,
+        target_type="case",
+        target_id=case.id,
+        metadata={
+            "decision": decision,
+            "confidence": recommendation.confidence,
+            "reason": recommendation.reason,
+            "sanction_id": sanction.id if sanction else None,
+            "user_id": case.report.user_id,
+        },
+    )
+
+    user = case.report.user
+    Notification.objects.create(
+        user=user,
+        type=Notification.Type.SYSTEM,
+        title="Fair Play — mesure automatique",
+        body=(
+            "Une mesure graduée a été appliquée suite à l'analyse post-partie. "
+            "Vous pouvez contester via votre profil (appel Fair Play)."
+        ),
+        data={"kind": "fairplay_auto", "case_id": case.id},
+    )
+
+    return {
+        "ok": True,
+        "case_id": case.id,
+        "decision": decision,
+        "sanction_id": sanction.id if sanction else None,
+    }
+
+
 def apply_review_decision(
     case_id: int,
     staff_user,
@@ -372,6 +436,7 @@ def _apply_sanction(
     decision: str,
     *,
     suspend_days: int | None,
+    is_automated: bool = False,
 ) -> FairPlaySanction | None:
     user = case.report.user
     until = None

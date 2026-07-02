@@ -233,6 +233,11 @@ def persist_fairplay_report(game: Game, user, result: dict[str, Any]) -> FairPla
     from .fairplay_review import open_review_case
 
     open_review_case(report)
+    from .fairplay_auto_policy import maybe_apply_auto_sanction
+
+    case = FairPlayReviewCase.objects.filter(report=report).first()
+    if case:
+        maybe_apply_auto_sanction(report, case)
     return report
 
 

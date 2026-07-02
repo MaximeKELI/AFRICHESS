@@ -446,6 +446,13 @@ class FairPlayReviewCase(models.Model):
         help_text="Écart de score Fair Play vs adversaire dans la même partie",
     )
     decided_at = models.DateTimeField(null=True, blank=True)
+    decision_source = models.CharField(
+        max_length=16,
+        choices=[("human", "Human"), ("auto", "Auto")],
+        default="human",
+    )
+    auto_recommended_decision = models.CharField(max_length=30, blank=True, default="")
+    auto_confidence = models.FloatField(default=0.0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -476,6 +483,7 @@ class FairPlaySanction(models.Model):
     until = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     notes = models.TextField(blank=True)
+    is_automated = models.BooleanField(default=False)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -550,6 +558,8 @@ class FairPlayAuditLog(models.Model):
         ENGINE_FAILURE = "engine_failure", "Engine failure"
         SANCTION_EXPIRED = "sanction_expired", "Sanction expired"
         APPEAL_RESOLVED = "appeal_resolved", "Appeal resolved"
+        AUTO_RECOMMEND = "auto_recommend", "Auto recommend"
+        AUTO_SANCTION = "auto_sanction", "Auto sanction"
 
     staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
