@@ -16,7 +16,7 @@ User = get_user_model()
 def _completed_game(**kwargs) -> Game:
     defaults = {
         "status": Game.Status.COMPLETED,
-        "result": Game.Result.WHITE_WINS,
+        "result": Game.Result.WHITE_WIN,
         "mode": Game.Mode.BLITZ,
         "move_count": 10,
     }

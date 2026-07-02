@@ -232,4 +232,4 @@ def create_rematch(game: Game, user) -> Game | None:
 def live_games_queryset():
     return Game.objects.filter(
         status=Game.Status.ACTIVE, is_vs_ai=False
-    ).select_related("white_player", "black_player")[:30]
+    ).select_related("white_player", "black_player")
