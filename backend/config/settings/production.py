@@ -1,5 +1,7 @@
 from django.core.exceptions import ImproperlyConfigured
 
+import sys
+
 from .base import *  # noqa: F401, F403
 
 DEBUG = False
