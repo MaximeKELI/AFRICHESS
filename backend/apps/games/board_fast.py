@@ -58,12 +58,26 @@ def apply_standard_move(
         return None
 
 
+def complexity_cp(fen: str) -> int:
+    """Heuristique complexité — C++ si dispo, sinon un seul parse Python."""
+    from .board_native import complexity_cp_native
+
+    native = complexity_cp_native(fen)
+    if native is not None:
+        return native
+    try:
+        board = chess.Board(fen)
+        return _complexity_from_board(board)
+    except ValueError:
+        return 0
+
+
 def try_standard_move(
     fen: str,
     uci: str,
     *,
     with_complexity: bool = True,
-) -> dict[str, Any] | None:
+) -> dict[str, Any]:
     """Native C++ d'abord, sinon Python unifié."""
     from .board_native import try_standard_move as native_try
 
