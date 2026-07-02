@@ -14,6 +14,8 @@ class PlayerRating(models.Model):
     mode = models.CharField(max_length=20, choices=Mode.choices)
     elo = models.PositiveIntegerField(default=1200)
     peak_elo = models.PositiveIntegerField(default=1200)
+    rd = models.FloatField(default=350.0)
+    volatility = models.FloatField(default=0.06)
     games_count = models.PositiveIntegerField(default=0)
     updated_at = models.DateTimeField(auto_now=True)
 
