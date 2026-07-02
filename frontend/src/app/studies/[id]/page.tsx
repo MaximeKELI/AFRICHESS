@@ -26,6 +26,8 @@ export default function StudyDetailPage({ params }: { params: { id: string } }) 
   const [study, setStudy] = useState<StudyDetail | null>(null);
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
   const [pgnDraft, setPgnDraft] = useState("");
+  const [importPgn, setImportPgn] = useState("");
+  const [ioStatus, setIoStatus] = useState("");
 
   const load = useCallback(() => {
     api

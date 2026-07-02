@@ -61,6 +61,7 @@ function TournamentsPageContent() {
   const [status, setStatus] = useState("");
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const [standings, setStandings] = useState<StandingRow[]>([]);
+  const [teamScores, setTeamScores] = useState<TeamScoreRow[]>([]);
 
   useEffect(() => {
     const open = searchParams.get("open");
