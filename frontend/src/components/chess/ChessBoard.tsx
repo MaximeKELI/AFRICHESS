@@ -48,6 +48,8 @@ interface ChessBoardProps {
   moveClassBadge?: { square: string; moveClass: string } | null;
   /** Flèche verte d'indice puzzle (from → to). */
   hintArrow?: { from: string; to: string } | null;
+  /** Mode aveugle : pièces masquées, navigation clavier. */
+  blindMode?: boolean;
 }
 
 function normalizeFenForDisplay(fen: string): string {

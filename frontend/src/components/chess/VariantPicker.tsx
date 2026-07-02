@@ -9,7 +9,10 @@ export type GameVariant =
   | "crazyhouse"
   | "kingofthehill"
   | "threecheck"
-  | "atomic";
+  | "atomic"
+  | "antichess"
+  | "horde"
+  | "racingkings";
 
 const VARIANTS: GameVariant[] = [
   "standard",
@@ -18,6 +21,9 @@ const VARIANTS: GameVariant[] = [
   "kingofthehill",
   "threecheck",
   "atomic",
+  "antichess",
+  "horde",
+  "racingkings",
 ];
 
 export function VariantPicker({ value, onChange }: VariantPickerProps) {

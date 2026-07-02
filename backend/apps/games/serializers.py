@@ -7,6 +7,7 @@ from apps.ratings.provisional import player_rating_info
 
 from .elo_config import get_user_elo
 from .models import ChessBot, Game, GameAnalysis, Move
+from .variant_utils import VARIANT_CHOICES
 
 
 def _game_rating_mode(game: Game) -> str:
@@ -240,7 +241,7 @@ class CreateAIGameSerializer(serializers.Serializer):
     ai_elo = serializers.IntegerField(min_value=100, max_value=5000, required=False)
     bot_slug = serializers.SlugField(required=False, allow_blank=True)
     variant = serializers.ChoiceField(
-        choices=["standard", "chess960", "crazyhouse", "kingofthehill", "threecheck"],
+        choices=VARIANT_CHOICES,
         default="standard",
         required=False,
     )
@@ -285,7 +286,7 @@ class MatchmakingJoinSerializer(serializers.Serializer):
         default="blitz",
     )
     variant = serializers.ChoiceField(
-        choices=["standard", "chess960", "crazyhouse", "kingofthehill", "threecheck"],
+        choices=VARIANT_CHOICES,
         default="standard",
         required=False,
     )

@@ -112,20 +112,10 @@ class GameService:
 
         start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         chess960_pos = None
-        if variant == Game.Variant.CHESS960:
-            start_fen, chess960_pos = generate_chess960_start()
-        elif variant == Game.Variant.CRAZYHOUSE:
-            import chess.variant
+        if variant != Game.Variant.STANDARD:
+            from .variant_utils import starting_position_for_variant
 
-            start_fen = chess.variant.CrazyhouseBoard().fen()
-        elif variant == Game.Variant.KING_OF_THE_HILL:
-            import chess.variant
-
-            start_fen = chess.variant.KingOfTheHillBoard().fen()
-        elif variant == Game.Variant.THREE_CHECK:
-            import chess.variant
-
-            start_fen = chess.variant.ThreeCheckBoard().fen()
+            start_fen, chess960_pos = starting_position_for_variant(variant)
 
         game = Game.objects.create(
             white_player=user if color == "white" else None,
@@ -527,14 +517,20 @@ class GameService:
                 )
 
     def _finalize_game(self, game: Game):
-        import chess
-        board = chess.Board(game.fen)
-        if board.is_checkmate():
-            winner_color = "black" if board.turn == chess.WHITE else "white"
-            game.result = Game.Result.WHITE_WIN if winner_color == "white" else Game.Result.BLACK_WIN
-            game.winner = game.white_player if winner_color == "white" else game.black_player
-        elif board.is_stalemate() or board.is_insufficient_material() or board.can_claim_draw():
-            game.result = Game.Result.DRAW
+        from .variant_utils import board_from_fen
+
+        board = board_from_fen(game.fen, game.variant)
+        outcome = board.outcome(claim_draw=True)
+        if outcome:
+            if outcome.winner is True:
+                game.result = Game.Result.WHITE_WIN
+                game.winner = game.white_player
+            elif outcome.winner is False:
+                game.result = Game.Result.BLACK_WIN
+                game.winner = game.black_player
+            else:
+                game.result = Game.Result.DRAW
+                game.winner = None
         game.status = Game.Status.COMPLETED
         game.ended_at = timezone.now()
         game.save()

@@ -8,6 +8,19 @@ import chess
 import chess.variant
 
 
+VARIANT_CHOICES = [
+    "standard",
+    "chess960",
+    "crazyhouse",
+    "kingofthehill",
+    "threecheck",
+    "atomic",
+    "antichess",
+    "horde",
+    "racingkings",
+]
+
+
 def generate_chess960_start(position_id: int | None = None) -> tuple[str, int]:
     """Return (fen, position_id) for a Chess960 starting position."""
     pos_id = position_id if position_id is not None else random.randint(0, 959)
@@ -28,6 +41,12 @@ def starting_position_for_variant(variant: str = "standard") -> tuple[str, int |
         return chess.variant.ThreeCheckBoard().fen(), None
     if variant == "atomic":
         return chess.variant.AtomicBoard().fen(), None
+    if variant == "antichess":
+        return chess.variant.AntichessBoard().fen(), None
+    if variant == "horde":
+        return chess.variant.HordeBoard().fen(), None
+    if variant == "racingkings":
+        return chess.variant.RacingKingsBoard().fen(), None
     return "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", None
 
 
@@ -42,6 +61,12 @@ def board_from_fen(fen: str, variant: str = "standard") -> chess.Board:
         return chess.variant.ThreeCheckBoard(fen)
     if variant == "atomic":
         return chess.variant.AtomicBoard(fen)
+    if variant == "antichess":
+        return chess.variant.AntichessBoard(fen)
+    if variant == "horde":
+        return chess.variant.HordeBoard(fen)
+    if variant == "racingkings":
+        return chess.variant.RacingKingsBoard(fen)
     return chess.Board(fen)
 
 

@@ -229,7 +229,7 @@ class ChessEngineService:
         target_elo: Optional[int] = None,
         variant: str = "standard",
     ) -> Optional[EngineMove]:
-        if variant in ("chess960", "crazyhouse"):
+        if variant != "standard":
             elo = clamp_elo(target_elo) if target_elo else 1200
             uci = pick_variant_move(fen, variant, elo)
             if not uci:
@@ -420,7 +420,7 @@ class ChessEngineService:
         self, fen: str, uci: str, variant: str = "standard"
     ) -> Optional[tuple[str, str, bool]]:
         """Returns (new_fen, san, is_game_over) or None if illegal."""
-        if variant in ("chess960", "crazyhouse", "kingofthehill", "threecheck"):
+        if variant != "standard":
             return variant_apply_move(fen, uci, variant)
         board = chess.Board(fen)
         try:

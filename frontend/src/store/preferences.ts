@@ -19,6 +19,7 @@ const BOARD_BACKGROUND_KEY = "board_background";
 const AI_COMMENTS_KEY = "ai_comments";
 const PIECE_SET_KEY = "piece_set";
 const ZEN_KEY = "zen_mode";
+const BLIND_KEY = "blind_mode";
 
 export type PieceSetId = "classic" | "african" | "african-svg";
 
@@ -55,6 +56,11 @@ function readZenMode(): boolean {
   return localStorage.getItem(preferenceStorageKey(ZEN_KEY)) === "1";
 }
 
+function readBlindMode(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(preferenceStorageKey(BLIND_KEY)) === "1";
+}
+
 /** Recharge thème, arrière-plan, etc. après connexion / déconnexion. */
 export function syncPreferencesForUser(userId: number | null) {
   setPreferenceScopeUserId(userId);
@@ -68,6 +74,7 @@ export function syncPreferencesForUser(userId: number | null) {
     pieceSet: readPieceSet(),
     aiCommentsEnabled: readAiComments(),
     zenMode,
+    blindMode: readBlindMode(),
   });
 }
 
@@ -77,11 +84,13 @@ interface PreferencesState {
   pieceSet: PieceSetId;
   aiCommentsEnabled: boolean;
   zenMode: boolean;
+  blindMode: boolean;
   setBoardTheme: (id: BoardThemeId) => void;
   setBoardBackground: (id: BoardBackgroundId) => void;
   setPieceSet: (id: PieceSetId) => void;
   setAiCommentsEnabled: (enabled: boolean) => void;
   setZenMode: (enabled: boolean) => void;
+  setBlindMode: (enabled: boolean) => void;
 }
 
 export const usePreferencesStore = create<PreferencesState>((set) => ({
@@ -90,6 +99,7 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
   pieceSet: readPieceSet(),
   aiCommentsEnabled: readAiComments(),
   zenMode: readZenMode(),
+  blindMode: readBlindMode(),
   setBoardTheme: (id) => {
     localStorage.setItem(preferenceStorageKey(BOARD_THEME_KEY), id);
     set({ boardTheme: id });
@@ -112,5 +122,9 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
       document.documentElement.classList.toggle("zen-mode", enabled);
     }
     set({ zenMode: enabled });
+  },
+  setBlindMode: (enabled) => {
+    localStorage.setItem(preferenceStorageKey(BLIND_KEY), enabled ? "1" : "0");
+    set({ blindMode: enabled });
   },
 }));

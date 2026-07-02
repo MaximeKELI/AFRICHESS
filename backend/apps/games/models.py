@@ -37,6 +37,9 @@ class Game(models.Model):
         KING_OF_THE_HILL = "kingofthehill", "King of the Hill"
         THREE_CHECK = "threecheck", "Three-check"
         ATOMIC = "atomic", "Atomic"
+        ANTICHESS = "antichess", "Antichess"
+        HORDE = "horde", "Horde"
+        RACING_KINGS = "racingkings", "Racing Kings"
 
     class Status(models.TextChoices):
         WAITING = "waiting", "Waiting for opponent"
