@@ -328,7 +328,3 @@ class StudyCollaborator(models.Model):
 
     class Meta:
         unique_together = ["study", "user"]
-
-
-class ClassroomSessionMetaFix:
-    pass

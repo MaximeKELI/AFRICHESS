@@ -44,13 +44,19 @@ class Puzzle(models.Model):
 
 
 class PuzzleRushSession(models.Model):
-    """Session Puzzle Rush côté serveur."""
+    """Session Puzzle Rush / Storm côté serveur."""
+
+    class Mode(models.TextChoices):
+        RUSH = "rush", "Rush"
+        STORM = "storm", "Storm"
+        SURVIVAL = "survival", "Survival"
 
     class Status(models.TextChoices):
         ACTIVE = "active", "Active"
         COMPLETED = "completed", "Completed"
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    mode = models.CharField(max_length=20, choices=Mode.choices, default=Mode.RUSH)
     puzzle_ids = models.JSONField(default=list)
     current_index = models.PositiveSmallIntegerField(default=0)
     score = models.PositiveSmallIntegerField(default=0)
