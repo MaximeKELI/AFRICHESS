@@ -25,8 +25,12 @@
 
 ```bash
 docker compose exec backend python manage.py migrate
-docker compose exec backend python manage.py seed_learning
+docker compose exec backend python manage.py seed_full_curriculum
+# optionnel : regénérer les .md depuis builder.py
+# docker compose exec backend python manage.py seed_full_curriculum --regenerate
 ```
+
+Parcours : **15 volumes**, **60 leçons** (~6 000 mots chacune), fichiers source dans `backend/apps/learning/curriculum/`.
 
 ## Frontend
 
