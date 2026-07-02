@@ -613,17 +613,19 @@ function PlayContent() {
   const { searching: wsSearching, mmError, search: wsSearch, cancel: wsCancel } =
     useMatchmakingWebSocket(Boolean(user), mode, handleMatchFound, timeOpts);
 
-  useEffect(() => {
-    if (!user || gameId || wsSearching) return;
-    const loadPool = () => {
-      gamesApi.matchmakingStatus().then(({ data }) => {
-        setSearchingPool(data.searching_players ?? 0);
-      }).catch(() => {});
-    };
-    loadPool();
-    const timer = window.setInterval(loadPool, 30000);
-    return () => window.clearInterval(timer);
-  }, [user, gameId, wsSearching]);
+  const chessCtorRef = useRef<ChessCtor | null>(null);
+
+  const loadMatchmakingPool = useCallback(() => {
+    gamesApi.matchmakingStatus().then(({ data }) => {
+      setSearchingPool(data.searching_players ?? 0);
+    }).catch(() => {});
+  }, []);
+
+  useVisibilityInterval(
+    loadMatchmakingPool,
+    30000,
+    Boolean(user) && !gameId && !wsSearching
+  );
 
   const isMyTurn =
     gameActive &&
