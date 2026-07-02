@@ -335,11 +335,18 @@ class GameService:
                 self._after_human_game_finished(game)
                 return {"error": "Time out", "game_over": True}
 
-        result = self.engine.apply_move(game.fen, uci, variant=game.variant)
-        if not result:
-            return {"error": "Illegal move"}
+        if game.variant == Game.Variant.STANDARD:
+            from .board_fast import try_standard_move
 
-        new_fen, san, is_over = result
+            fast = try_standard_move(game.fen, uci, with_complexity=False)
+            if not fast.get("ok"):
+                return {"error": "Illegal move"}
+            new_fen, san, is_over = fast["fen"], fast["san"], fast["game_over"]
+        else:
+            result = self.engine.apply_move(game.fen, uci, variant=game.variant)
+            if not result:
+                return {"error": "Illegal move"}
+            new_fen, san, is_over = result
         fen_before_player = game.fen
         complexity_cp = complexity_pre if not game.is_vs_ai else None
         pending_comment_specs: list[dict] = []

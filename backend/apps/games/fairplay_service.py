@@ -181,6 +181,14 @@ def run_fairplay_analysis(
 ) -> tuple[dict[str, Any], str | None]:
     """Retourne (result, error_reason). error_reason non-None si moteur indisponible."""
     payload = build_game_input(game, user, analysis_mode=analysis_mode)
+    try:
+        from .board_native import fairplay_analyze_inprocess
+
+        inproc = fairplay_analyze_inprocess(payload)
+        if inproc is not None and "error" not in inproc:
+            return inproc, None
+    except Exception:
+        logger.debug("FairPlay in-process unavailable, falling back to subprocess", exc_info=True)
     binary = _fairplay_bin()
     if not binary:
         reason = "FairPlay binary not found"
@@ -336,28 +344,7 @@ def merge_telemetry(game: Game, user, patch: dict[str, Any]) -> GameFairPlayTele
 
 
 def estimate_complexity_cp(fen: str) -> int:
-    """Heuristique instantanée — pas d'appel moteur sur le chemin critique du coup."""
-    try:
-        import chess
+    """Heuristique instantanée — C++ natif ou parse Python unique."""
+    from .board_fast import complexity_cp
 
-        board = chess.Board(fen)
-        piece_vals = {
-            chess.PAWN: 100,
-            chess.KNIGHT: 320,
-            chess.BISHOP: 330,
-            chess.ROOK: 500,
-            chess.QUEEN: 900,
-        }
-        material = 0
-        for piece in board.piece_map().values():
-            v = piece_vals.get(piece.piece_type, 0)
-            material += v if piece.color == chess.WHITE else -v
-        complexity = min(
-            800,
-            abs(material) // 2 + board.fullmove_number * 6 + len(list(board.legal_moves)) * 2,
-        )
-        if board.is_check():
-            complexity += 100
-        return complexity
-    except Exception:
-        return 0
+    return complexity_cp(fen)

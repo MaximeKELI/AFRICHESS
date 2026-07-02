@@ -23,7 +23,9 @@ RUN mkdir -p /anticheat-cpp/build \
     && cd /anticheat-cpp/build \
     && cmake .. \
     && make -j"$(nproc)" \
-    && install -m 0755 africhess-fairplay /usr/local/bin/africhess-fairplay
+    && install -m 0755 africhess-fairplay /usr/local/bin/africhess-fairplay \
+    && install -m 0755 libafrichess_native.so* /usr/local/lib/ \
+    && ldconfig
 
 RUN chmod +x /app/docker-entrypoint.sh
 
