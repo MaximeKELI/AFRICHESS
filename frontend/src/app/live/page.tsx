@@ -88,7 +88,15 @@ export default function LiveGamesPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold mb-1">{t("live.title")}</h1>
-      {channel && <p className="text-sm text-africhess-gold mb-6">{channel}</p>}
+      {channel && <p className="text-sm text-africhess-gold mb-2">{channel}</p>}
+      <div className="flex gap-4 mb-6 text-sm">
+        <Link href="/tv" className="text-africhess-gold hover:underline">
+          {t("tv.title")} →
+        </Link>
+        <Link href="/broadcasts" className="text-africhess-gold hover:underline">
+          {t("broadcasts.title")} →
+        </Link>
+      </div>
 
       {error && (
         <InlineAlert className="mb-4" onDismiss={() => setError(null)}>

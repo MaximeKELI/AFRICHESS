@@ -30,8 +30,18 @@ interface Tournament {
   prize_pool: string;
   starts_at: string;
   country: string;
+  club_a_name?: string | null;
+  club_b_name?: string | null;
   created_by?: { id: number; username: string };
   standings?: StandingRow[];
+}
+
+interface TeamScoreRow {
+  club_name: string;
+  club_slug: string;
+  score: number;
+  wins: number;
+  members: number;
 }
 
 export default function TournamentsPage() {
