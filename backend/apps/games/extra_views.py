@@ -117,6 +117,26 @@ class VoteGameCreateView(APIView):
         return Response(GameSerializer(game).data, status=201)
 
 
+def _vote_san_labels(game: Game, tally: dict[str, int]) -> dict[str, str]:
+    import chess
+
+    try:
+        board = chess.Board(game.fen or chess.STARTING_FEN)
+    except Exception:
+        return {uci: uci for uci in tally}
+    labels: dict[str, str] = {}
+    for uci in tally:
+        try:
+            move = board.parse_uci(uci)
+            if move in board.legal_moves:
+                labels[uci] = board.san(move)
+            else:
+                labels[uci] = uci
+        except Exception:
+            labels[uci] = uci
+    return labels
+
+
 def _vote_tally(game: Game, user=None) -> dict:
     try:
         meta = game.vote_meta
@@ -133,9 +153,11 @@ def _vote_tally(game: Game, user=None) -> dict:
         my_vote = row.move_uci if row else None
     return {
         "tally": tally,
+        "tally_san": _vote_san_labels(game, tally),
         "ply": ply,
         "votes": votes.count(),
         "my_vote": my_vote,
+        "my_vote_san": _vote_san_labels(game, {my_vote: 1}).get(my_vote) if my_vote else None,
         "club_white": meta.club_white.name if meta else None,
         "club_black": meta.club_black.name if meta else None,
     }

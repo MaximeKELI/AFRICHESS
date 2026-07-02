@@ -1,25 +1,46 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Chess } from "chess.js";
 import { gamesApi } from "@/lib/api";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface VoteTally {
   tally: Record<string, number>;
+  tally_san?: Record<string, string>;
   ply: number;
   votes: number;
   my_vote?: string | null;
+  my_vote_san?: string | null;
   club_white?: string;
   club_black?: string;
 }
 
 interface VoteChessPanelProps {
   gameId: string;
+  fen: string;
   canApply: boolean;
+  refreshToken?: number;
   onApplied: () => void;
 }
 
-export function VoteChessPanel({ gameId, canApply, onApplied }: VoteChessPanelProps) {
+function uciToSan(fen: string, uci: string): string {
+  try {
+    const chess = new Chess(fen === "start" ? undefined : fen);
+    const move = chess.move(uci);
+    return move?.san ?? uci;
+  } catch {
+    return uci;
+  }
+}
+
+export function VoteChessPanel({
+  gameId,
+  fen,
+  canApply,
+  refreshToken = 0,
+  onApplied,
+}: VoteChessPanelProps) {
   const { t } = useTranslation();
   const [data, setData] = useState<VoteTally | null>(null);
   const [loading, setLoading] = useState(false);
@@ -36,7 +57,7 @@ export function VoteChessPanel({ gameId, canApply, onApplied }: VoteChessPanelPr
     refresh();
     const id = window.setInterval(refresh, 4000);
     return () => window.clearInterval(id);
-  }, [refresh]);
+  }, [refresh, refreshToken]);
 
   const apply = async () => {
     setLoading(true);
@@ -53,6 +74,7 @@ export function VoteChessPanel({ gameId, canApply, onApplied }: VoteChessPanelPr
   };
 
   const entries = Object.entries(data?.tally ?? {}).sort((a, b) => b[1] - a[1]);
+  const labelFor = (uci: string) => data?.tally_san?.[uci] ?? uciToSan(fen, uci);
 
   return (
     <div className="glass-card p-4 space-y-3 border border-africhess-gold/30">
@@ -67,22 +89,22 @@ export function VoteChessPanel({ gameId, canApply, onApplied }: VoteChessPanelPr
       </p>
       {data?.my_vote && (
         <p className="text-xs text-africhess-green">
-          {t("vote.yourVote")}: <span className="font-mono">{data.my_vote}</span>
+          {t("vote.yourVote")}: <span className="font-mono">{data.my_vote_san ?? labelFor(data.my_vote)}</span>
         </p>
       )}
       {entries.length > 0 ? (
-        <ul className="space-y-1 text-sm font-mono">
+        <ul className="space-y-1 text-sm">
           {entries.map(([uci, n]) => (
-            <li key={uci} className="flex justify-between">
-              <span>{uci}</span>
-              <span className="text-africhess-gold">{n}</span>
+            <li key={uci} className="flex justify-between gap-2">
+              <span className="font-mono">{labelFor(uci)}</span>
+              <span className="text-africhess-gold shrink-0">{n}</span>
             </li>
           ))}
         </ul>
       ) : (
         <p className="text-xs opacity-50">{t("vote.noVotes")}</p>
       )}
-      {canApply && (
+      {canApply ? (
         <button
           type="button"
           onClick={apply}
@@ -91,6 +113,8 @@ export function VoteChessPanel({ gameId, canApply, onApplied }: VoteChessPanelPr
         >
           {t("vote.apply")}
         </button>
+      ) : (
+        <p className="text-xs opacity-50">{t("vote.waitRep")}</p>
       )}
       {error && <p className="text-xs text-africhess-terracotta">{error}</p>}
       <p className="text-xs opacity-40">{t("vote.hint")}</p>

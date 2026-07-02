@@ -136,6 +136,7 @@ function PlayContent() {
   const [isVsAi, setIsVsAi] = useState(false);
   const [resumeOffer, setResumeOffer] = useState<ReturnType<typeof loadActiveGame>>(null);
   const [movePending, setMovePending] = useState(false);
+  const [voteRefreshToken, setVoteRefreshToken] = useState(0);
   const [dropPiece, setDropPiece] = useState<string | null>(null);
   const [activeVariant, setActiveVariant] = useState<GameVariant>("standard");
   const [mobileTab, setMobileTab] = useState<"board" | "moves" | "chat" | "setup">("setup");
@@ -765,6 +766,7 @@ function PlayContent() {
         setMovePending(true);
         try {
           await gamesApi.castVote(gameId, uci);
+          setVoteRefreshToken((n) => n + 1);
           setStatus(t("vote.recorded"));
         } catch {
           setStatus(t("vote.applyFailed"));
@@ -992,6 +994,9 @@ function PlayContent() {
       )}
       <Link href="/bots" className="text-xs text-africhess-gold hover:underline block mb-3">
         {t("play.browseBots")}
+      </Link>
+      <Link href="/play/vote" className="text-xs text-africhess-gold hover:underline block mb-3">
+        {t("vote.createLink")}
       </Link>
       <select
         value={orientation}

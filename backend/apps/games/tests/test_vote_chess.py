@@ -39,3 +39,33 @@ class VoteChessTests(TestCase):
             format="json",
         )
         self.assertEqual(resp.status_code, 400)
+
+    def test_cast_and_apply_vote(self):
+        resp = self.client.post(
+            "/api/games/vote/create/",
+            {"club_white": "club-a", "club_black": "club-b", "mode": "rapid"},
+            format="json",
+        )
+        game_id = resp.data["id"]
+        voter = User.objects.create_user(username="voter_a", password="x")
+        self.club_white.members.add(voter)
+        self.client.force_authenticate(user=voter)
+
+        cast = self.client.post(
+            f"/api/games/{game_id}/vote/",
+            {"move_uci": "e2e4"},
+            format="json",
+        )
+        self.assertEqual(cast.status_code, 200)
+        self.assertEqual(cast.data["tally"]["e2e4"], 1)
+        self.assertIn("tally_san", cast.data)
+        self.assertEqual(cast.data["tally_san"]["e2e4"], "e4")
+
+        status = self.client.get(f"/api/games/{game_id}/vote/status/")
+        self.assertEqual(status.status_code, 200)
+        self.assertEqual(status.data["my_vote"], "e2e4")
+
+        self.client.force_authenticate(user=self.owner_white)
+        apply_resp = self.client.post(f"/api/games/{game_id}/vote/apply/", {}, format="json")
+        self.assertEqual(apply_resp.status_code, 200)
+        self.assertGreaterEqual(apply_resp.data["move_count"], 1)
