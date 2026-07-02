@@ -563,7 +563,7 @@ function PlayContent() {
 
   const { connected: wsConnected, wsError, sendMove: wsSendMove, resign: wsResign, sendChat: wsSendChat, subscribeChat: wsSubscribeChat } = useGameWebSocket(
     gameId,
-    isLiveHuman,
+    isLiveHuman || isVoteChess,
     handleWsUpdate,
     (payload) => {
       setStatus(
@@ -573,7 +573,8 @@ function PlayContent() {
       );
     },
     handleWsGamePatch,
-    handleAnalysisReady
+    handleAnalysisReady,
+    (payload) => setWsVoteTally(payload)
   );
 
   const handleMatchFound = useCallback(
@@ -1353,6 +1354,7 @@ function PlayContent() {
               fen={gameData.fen}
               canApply={Boolean(isMyTurn)}
               refreshToken={voteRefreshToken}
+              wsVote={wsVoteTally}
               onApplied={() => {
                 gamesApi.get(gameId).then(({ data }) => applyGameResponse(data)).catch(() => {});
                 setVoteRefreshToken((n) => n + 1);
