@@ -27,6 +27,8 @@ data:
   EMAIL_PORT: "587"
   EMAIL_USE_TLS: "true"
   DEFAULT_FROM_EMAIL: "noreply@africhess.com"
+  USE_S3_MEDIA: "true"
+  AWS_S3_REGION_NAME: "af-south-1"
   FAIRPLAY_BIN: "/usr/local/bin/africhess-fairplay"
   FAIRPLAY_AUTO_SANCTIONS_SHADOW: "true"
   FAIRPLAY_SHADOW_BATCH_SIZE: "500"
