@@ -60,7 +60,7 @@ def try_pair_waiting_user(user_id: int, svc, users: dict | None = None) -> bool:
         return False
 
     try:
-        user = User.objects.get(pk=user_id)
+        user = users[user_id] if users and user_id in users else User.objects.get(pk=user_id)
     except User.DoesNotExist:
         mmr.leave_user(user_id)
         return False
@@ -91,7 +91,11 @@ def try_pair_waiting_user(user_id: int, svc, users: dict | None = None) -> bool:
         return False
 
     try:
-        opponent = User.objects.get(pk=opponent_id)
+        opponent = (
+            users[opponent_id]
+            if users and opponent_id in users
+            else User.objects.get(pk=opponent_id)
+        )
     except User.DoesNotExist:
         return False
 
@@ -124,9 +128,15 @@ def retry_all_waiting_pools() -> int:
         return 0
 
     paired = 0
+    user_ids = [int(u) for u in waiting]
+    users = (
+        {u.pk: u for u in User.objects.filter(pk__in=user_ids)}
+        if user_ids
+        else {}
+    )
     for uid_str in waiting:
         try:
-            if try_pair_waiting_user(int(uid_str), svc):
+            if try_pair_waiting_user(int(uid_str), svc, users=users):
                 paired += 1
         except Exception as exc:
             logger.warning("try_pair_waiting_user(%s): %s", uid_str, exc)
