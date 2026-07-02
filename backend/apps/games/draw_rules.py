@@ -55,6 +55,9 @@ def rebuild_repetition_counts(game: Game) -> dict[str, int]:
 
 
 def can_claim_threefold_from_game(game) -> bool:
+    """True si le joueur au trait peut revendiquer la nulle (règles FIDE + python-chess)."""
+    if game.moves.exists():
+        return board_from_game_moves(game).can_claim_threefold_repetition()
     counts = game.repetition_counts
     if not counts and game.move_count > 0:
         counts = rebuild_repetition_counts(game)

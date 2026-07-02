@@ -472,9 +472,9 @@ class LiveTvView(APIView):
         from .serializers import LiveGameSerializer
 
         channel = request.query_params.get("channel", "best")
-        payload = build_tv_payload(channel)
-        current_id = payload.get("current_game_id")
         games = list(live_games_queryset()[:50])
+        payload = build_tv_payload(channel, games=games)
+        current_id = payload.get("current_game_id")
         by_id = {str(g.id): g for g in games}
         elo_ctx = {"elo_map": batch_player_elos(games)}
         current = by_id.get(current_id) if current_id else None
