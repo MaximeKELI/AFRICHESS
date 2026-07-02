@@ -262,7 +262,19 @@ def analyze_and_store(game: Game, user) -> FairPlayReport | None:
             result["verdict"] = "review"
         if avg_hist < 12.0 and verdict == "likely_cheat" and score < 88.0:
             result["verdict"] = "suspicious"
-    return persist_fairplay_report(game, user, result)
+    report = persist_fairplay_report(game, user, result)
+    post_fairplay_integrity_sync(game, user)
+    return report
+
+
+def post_fairplay_integrity_sync(game: Game, user) -> None:
+    """AIE : profil joueur + deep review après rapport Fair Play."""
+    from .fairplay_integrity import update_integrity_after_game
+    from .game_analysis_service import refresh_deep_review_integrity
+
+    report = FairPlayReport.objects.filter(game=game, user=user).first()
+    update_integrity_after_game(game, user, report)
+    refresh_deep_review_integrity(game)
 
 
 def merge_telemetry(game: Game, user, patch: dict[str, Any]) -> GameFairPlayTelemetry:
