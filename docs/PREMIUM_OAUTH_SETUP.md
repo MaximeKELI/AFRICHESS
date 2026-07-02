@@ -114,5 +114,5 @@ Sans clés Stripe : l'API renvoie **503** — configurez Stripe pour activer les
 - [ ] `CORS_ALLOWED_ORIGINS` inclut le frontend
 - [ ] `ALLOWED_HOSTS` inclut l'API
 - [ ] OAuth redirect URIs validés
-- [ ] Webhook Stripe testé (Stripe CLI : `stripe listen --forward-to localhost:8000/api/users/subscription/webhook/`)
+- [ ] Webhook Stripe testé avec `checkout.session.completed`, `customer.subscription.updated/deleted`, `invoice.payment_failed` (Stripe CLI : `stripe listen --forward-to localhost:8000/api/users/subscription/webhook/`)
 - [ ] `NEXT_PUBLIC_OAUTH_ENABLED=true` en production
