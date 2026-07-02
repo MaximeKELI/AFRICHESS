@@ -638,18 +638,28 @@ function PlayContent() {
     (!isVoteChess && !isMyTurn);
 
   const applyOptimisticUci = useCallback((uci: string) => {
-    setGameData((prev) => {
-      try {
-        const chess = new Chess(prev.fen === "start" ? undefined : prev.fen);
-        const from = uci.slice(0, 2);
-        const to = uci.slice(2, 4);
-        const promotion = uci.length > 4 ? (uci[4] as "q" | "r" | "b" | "n") : undefined;
-        const m = chess.move({ from, to, promotion });
-        if (!m) return prev;
-        return { ...prev, fen: chess.fen() };
-      } catch {
-        return prev;
-      }
+    const apply = (ChessClass: ChessCtor) => {
+      setGameData((prev) => {
+        try {
+          const chess = new ChessClass(prev.fen === "start" ? undefined : prev.fen);
+          const from = uci.slice(0, 2);
+          const to = uci.slice(2, 4);
+          const promotion = uci.length > 4 ? (uci[4] as "q" | "r" | "b" | "n") : undefined;
+          const m = chess.move({ from, to, promotion });
+          if (!m) return prev;
+          return { ...prev, fen: chess.fen() };
+        } catch {
+          return prev;
+        }
+      });
+    };
+    if (chessCtorRef.current) {
+      apply(chessCtorRef.current);
+      return;
+    }
+    void import("chess.js").then(({ Chess }) => {
+      chessCtorRef.current = Chess;
+      apply(Chess);
     });
   }, []);
 
