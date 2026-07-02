@@ -207,10 +207,23 @@ class ChessConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def _can_spectate(self):
         try:
-            game = Game.objects.get(id=self.game_id)
-            return game.status == Game.Status.ACTIVE and not game.is_vs_ai
+            game = Game.objects.select_related("vote_meta__club_white", "vote_meta__club_black").get(
+                id=self.game_id
+            )
         except Game.DoesNotExist:
             return False
+        if game.is_vote_chess:
+            try:
+                meta = game.vote_meta
+            except Exception:
+                meta = None
+            if meta:
+                club_ids = [c.id for c in [meta.club_white, meta.club_black] if c]
+                from apps.social.models import Club
+
+                if Club.objects.filter(pk__in=club_ids, members=self.user).exists():
+                    return True
+        return game.status == Game.Status.ACTIVE and not game.is_vs_ai
 
     async def _handle_draw_offer(self):
         result = await self._draw_offer()
