@@ -53,6 +53,30 @@ export default function StudyDetailPage({ params }: { params: { id: string } }) 
     load();
   };
 
+  const exportStudy = async () => {
+    if (!study) return;
+    const { data } = await api.get<{ pgn: string }>(`/learning/studies/${study.id}/export/`);
+    const blob = new Blob([data.pgn], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${study.title.replace(/\s+/g, "-")}.pgn`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setIoStatus(t("studies.exported") || "Exporté");
+  };
+
+  const importStudy = async () => {
+    if (!study || !importPgn.trim()) return;
+    await api.post(`/learning/studies/${study.id}/import/`, {
+      pgn: importPgn,
+      replace: false,
+    });
+    setImportPgn("");
+    setIoStatus(t("studies.imported") || "Importé");
+    load();
+  };
+
   if (!study) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -67,6 +91,24 @@ export default function StudyDetailPage({ params }: { params: { id: string } }) 
         ← {t("studies.back") || "Studies"}
       </Link>
       <h1 className="font-display text-2xl font-bold">{study.title}</h1>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={exportStudy} className="px-3 py-1 rounded-lg text-sm border border-white/20">
+          {t("studies.export") || "Exporter PGN"}
+        </button>
+      </div>
+      {ioStatus && <p className="text-sm text-africhess-gold">{ioStatus}</p>}
+      <details className="glass-card p-3 text-sm">
+        <summary className="cursor-pointer">{t("studies.import") || "Importer PGN Lichess"}</summary>
+        <textarea
+          className="w-full h-32 mt-2 font-mono text-xs bg-black/30 rounded p-2 border border-white/10"
+          value={importPgn}
+          onChange={(e) => setImportPgn(e.target.value)}
+          placeholder="[Event &quot;Chapter 1&quot;]..."
+        />
+        <button type="button" onClick={importStudy} className="mt-2 african-gradient px-3 py-1 rounded text-sm">
+          {t("studies.importBtn") || "Importer"}
+        </button>
+      </details>
       <div className="flex flex-wrap gap-2">
         {study.chapters.map((ch) => (
           <button

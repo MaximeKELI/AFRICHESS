@@ -223,7 +223,24 @@ function TournamentsPageContent() {
             </div>
 
             {expandedSlug === tournament.slug && (
-              <div className="mt-4 border-t border-white/10 pt-3">
+              <div className="mt-4 border-t border-white/10 pt-3 space-y-4">
+                {teamScores.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold mb-2">{t("tournaments.teamScores")}</h3>
+                    <ol className="text-sm space-y-1">
+                      {teamScores.map((row, i) => (
+                        <li key={row.club_slug} className="flex justify-between">
+                          <span>
+                            {i + 1}. {row.club_name}
+                          </span>
+                          <span className="opacity-70">
+                            {row.score} pts · {row.members} {t("tournaments.members")}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
                 {standings.length === 0 ? (
                   <p className="text-sm opacity-60">{t("tournaments.noResults")}</p>
                 ) : (
