@@ -112,6 +112,30 @@ def validate_move_telemetry(
     return None
 
 
+def validate_clock_drift(
+    game: Game,
+    user,
+    think_ms: int | None = None,
+) -> dict | None:
+    """Bloque les écarts extrêmes client vs serveur (spoofing temps)."""
+    from django.conf import settings
+
+    from .fairplay_integrity import detect_clock_drift_ms
+
+    if game.is_vs_ai:
+        return None
+    drift = detect_clock_drift_ms(game, user, think_ms)
+    if drift is None:
+        return None
+    block_ms = int(getattr(settings, "FAIRPLAY_CLOCK_DRIFT_BLOCK_MS", 12000))
+    if drift >= block_ms and think_ms is not None and think_ms < 800:
+        return {
+            "error": "Horloge client incohérente",
+            "code": "anticheat",
+        }
+    return None
+
+
 def validate_move_fairplay(
     game: Game,
     user,
@@ -122,11 +146,12 @@ def validate_move_fairplay(
     """Anti-triche temps réel (pas de verdict moteur en partie)."""
     if user_is_fairplay_exempt(user):
         return None
-    err = validate_move_timing(
-        game,
-        user,
-        think_ms=think_ms,
-    )
-    if err is not None:
-        return err
-    return validate_move_telemetry(game, user, telemetry)
+    for check in (
+        lambda: validate_move_timing(game, user, think_ms=think_ms),
+        lambda: validate_clock_drift(game, user, think_ms=think_ms),
+        lambda: validate_move_telemetry(game, user, telemetry),
+    ):
+        err = check()
+        if err:
+            return err
+    return None
