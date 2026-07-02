@@ -49,4 +49,4 @@ export const MoveHistory = memo(function MoveHistory({ moves }: MoveHistoryProps
       </div>
     </div>
   );
-}
+});
