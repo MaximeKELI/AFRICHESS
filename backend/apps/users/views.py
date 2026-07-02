@@ -86,6 +86,12 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
+    def perform_update(self, serializer):
+        super().perform_update(serializer)
+        from .profile_cache import invalidate_public_profile
+
+        invalidate_public_profile(self.request.user.username)
+
 
 class UserDetailView(generics.RetrieveAPIView):
     queryset = User.objects.select_related("stats").all()

@@ -73,6 +73,6 @@ class TournamentSerializer(serializers.ModelSerializer):
             qs = top
         else:
             qs = TournamentParticipant.objects.filter(tournament=obj).select_related(
-                "user"
+                "user", "user__stats", "club"
             )[:20]
         return TournamentParticipantSerializer(qs, many=True).data

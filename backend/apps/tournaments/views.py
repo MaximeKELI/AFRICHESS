@@ -80,6 +80,7 @@ class StartTournamentView(APIView):
             tournament = TournamentEngine().start_tournament(tournament)
         except ValueError as e:
             return Response({"error": str(e)}, status=400)
+        tournament = tournament_detail_queryset().get(pk=tournament.pk)
         return Response(TournamentSerializer(tournament).data)
 
 
@@ -88,7 +89,7 @@ class TournamentStandingsView(APIView):
 
     def get(self, request, slug):
         try:
-            tournament = Tournament.objects.get(slug=slug)
+            tournament = tournament_detail_queryset().get(slug=slug)
         except Tournament.DoesNotExist:
             return Response({"error": "Not found"}, status=404)
         standings = TournamentEngine().get_standings(tournament)

@@ -20,7 +20,8 @@ def create_user_stats(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User, dispatch_uid="africhess_invalidate_profile_cache")
 def invalidate_user_profile_cache(sender, instance, **kwargs):
     invalidate_public_profile(instance.username)
-    if instance.is_african_highlight or kwargs.get("update_fields") is None:
+    update_fields = kwargs.get("update_fields")
+    if instance.is_african_highlight or update_fields is None or "is_african_highlight" in update_fields:
         invalidate_featured_african()
 
 

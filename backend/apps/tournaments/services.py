@@ -312,7 +312,7 @@ class TournamentEngine:
     def get_standings(self, tournament: Tournament):
         return TournamentParticipant.objects.filter(
             tournament=tournament
-        ).select_related("user", "club")
+        ).select_related("user", "user__stats", "club")
 
     def get_team_scores(self, tournament: Tournament) -> list[dict]:
         if tournament.format != Tournament.Format.TEAM_BATTLE:

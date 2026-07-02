@@ -55,6 +55,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "django.middleware.gzip.GZipMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "apps.common.middleware_metrics.PrometheusMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -147,6 +148,22 @@ REDIS_URL = config(
 REDIS_CHANNELS_URLS = config("REDIS_CHANNELS_URLS", default="", cast=Csv())
 REDIS_CELERY_URL = config("REDIS_CELERY_URL", default="")
 REDIS_MATCHMAKING_URL = config("REDIS_MATCHMAKING_URL", default="")
+REDIS_CACHE_URL = config(
+    "REDIS_CACHE_URL",
+    default="redis://:africhess_redis_dev@localhost:6379/4",
+)
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_CACHE_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "KEY_PREFIX": "africhess",
+        "TIMEOUT": 300,
+    }
+}
 
 WS_ALLOW_QUERY_TOKEN = config("WS_ALLOW_QUERY_TOKEN", default=False, cast=bool)
 ALLOW_PUBLIC_API_DOCS = config("ALLOW_PUBLIC_API_DOCS", default=False, cast=bool)
