@@ -3,6 +3,7 @@ from django.conf import settings
 from apps.games.models import Game
 
 from .constants import PROVISIONAL_GAMES_REQUIRED, RATED_MODES
+from .glicko2 import Glicko2State, display_rating, rate_period
 from .models import PlayerRating, RatingHistory
 
 
@@ -32,6 +33,10 @@ class RatingService:
         if not getattr(game, "is_rated", True):
             return
         if RatingHistory.objects.filter(game=game).exists():
+            return
+
+        if getattr(settings, "USE_GLICKO2", False):
+            self._update_glicko2(game)
             return
 
         mode = game.mode if game.mode != Game.Mode.AI else "blitz"
