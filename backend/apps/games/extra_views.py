@@ -16,13 +16,19 @@ class SimulListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        qs = SimulSession.objects.filter(status=SimulSession.Status.OPEN).select_related("host")[:20]
+        qs = (
+            SimulSession.objects.filter(
+                status__in=[SimulSession.Status.OPEN, SimulSession.Status.ACTIVE]
+            )
+            .select_related("host")[:20]
+        )
         data = [
             {
                 "id": s.id,
                 "title": s.title or f"Simul de {s.host.display_name}",
                 "host": s.host.username,
                 "host_id": s.host_id,
+                "status": s.status,
                 "max_boards": s.max_boards,
                 "boards": s.boards.count(),
             }
@@ -46,7 +52,10 @@ class SimulJoinView(APIView):
 
     def post(self, request, session_id):
         try:
-            session = SimulSession.objects.get(pk=session_id, status=SimulSession.Status.OPEN)
+            session = SimulSession.objects.get(
+                pk=session_id,
+                status__in=[SimulSession.Status.OPEN, SimulSession.Status.ACTIVE],
+            )
         except SimulSession.DoesNotExist:
             return Response({"error": "Simultanée introuvable"}, status=404)
         if session.host_id == request.user.id:
@@ -69,9 +78,32 @@ class SimulJoinView(APIView):
             opponent=request.user,
             board_number=board_no,
         )
-        if session.boards.count() >= 2:
+        if session.boards.count() >= 1 and session.status == SimulSession.Status.OPEN:
             session.status = SimulSession.Status.ACTIVE
             session.save(update_fields=["status"])
+        from .ws_notify import notify_simul_room
+
+        notify_simul_room(
+            session.id,
+            "broadcast_board_joined",
+            {
+                "session_id": session.id,
+                "board_number": board_no,
+                "game_id": str(game.id),
+                "opponent": request.user.username,
+                "status": game.status,
+                "fen": game.fen,
+            },
+        )
+        notify_simul_room(
+            session.id,
+            "broadcast_session_status",
+            {
+                "session_id": session.id,
+                "status": session.status,
+                "boards_count": session.boards.count(),
+            },
+        )
         return Response(GameSerializer(game).data, status=201)
 
 
@@ -199,7 +231,11 @@ class CastVoteView(APIView):
             ply=ply,
             defaults={"move_uci": move_uci},
         )
-        return Response(_vote_tally(game, request.user))
+        tally = _vote_tally(game, request.user)
+        from .ws_notify import notify_vote_updated
+
+        notify_vote_updated(game)
+        return Response(tally)
 
 
 class ApplyVoteMoveView(APIView):
