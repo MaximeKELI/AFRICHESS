@@ -82,5 +82,11 @@ export function parseAnalysisPayload(payload: unknown): GameAnalysisData | null 
     key_moments_json: Array.isArray(p.key_moments_json)
       ? (p.key_moments_json as { ply: number; san: string; text: string }[])
       : undefined,
+    deep_review_json:
+      p.deep_review_json && typeof p.deep_review_json === "object"
+        ? (p.deep_review_json as DeepReviewData)
+        : undefined,
+    analysis_depth_used:
+      typeof p.analysis_depth_used === "number" ? p.analysis_depth_used : undefined,
   };
 }
