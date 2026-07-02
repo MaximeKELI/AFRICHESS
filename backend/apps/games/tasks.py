@@ -5,6 +5,7 @@ from datetime import timedelta
 
 from celery import shared_task
 from django.conf import settings
+from django.db.models import Q
 from django.utils import timezone
 
 from .models import Game, GameRoom, MatchmakingQueue, GameAnalysis, AnalysisJob
@@ -34,6 +35,9 @@ def forfeit_disconnected_games():
     for room in GameRoom.objects.select_related("game").filter(
         game__status=Game.Status.ACTIVE,
         game__is_vs_ai=False,
+    ).filter(
+        Q(white_disconnected_at__lt=cutoff, black_connected=True)
+        | Q(black_disconnected_at__lt=cutoff, white_connected=True)
     ):
         game = room.game
         if room.white_disconnected_at and room.white_disconnected_at < cutoff:

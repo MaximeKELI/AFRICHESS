@@ -190,6 +190,12 @@ class Game(models.Model):
             models.Index(fields=["white_player", "black_player"]),
             models.Index(fields=["tournament", "status"]),
             models.Index(fields=["status", "-ended_at"]),
+            models.Index(fields=["white_player", "-ended_at"], name="games_white_ended_idx"),
+            models.Index(fields=["black_player", "-ended_at"], name="games_black_ended_idx"),
+            models.Index(
+                fields=["mode", "status", "turn_deadline"],
+                name="games_corr_forfeit_idx",
+            ),
         ]
 
     def __str__(self):

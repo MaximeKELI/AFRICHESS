@@ -100,3 +100,6 @@ class RatingHistory(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["game"], name="ratings_hist_game_idx"),
+        ]

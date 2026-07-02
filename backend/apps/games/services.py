@@ -917,7 +917,7 @@ class MatchmakingService:
             time_control=tc_key or "",
             elo__gte=elo - self.ELO_RANGE,
             elo__lte=elo + self.ELO_RANGE,
-        ).exclude(user=user).order_by("joined_at")
+        ).exclude(user=user).select_related("user").order_by("joined_at")
 
         for candidate in candidates[:5]:
             opponent = candidate.user
@@ -951,7 +951,7 @@ class MatchmakingService:
         from .matchmaking_pools import retry_all_waiting_pools
 
         if mmr.is_redis_matchmaking_available():
-            retry_all_waiting_pools()
+            pass  # retry_all_waiting_pools (2 s) gère Redis
         return self._pair_all_waiting_pg()
 
     def _pair_all_waiting_pg(self):
@@ -960,7 +960,9 @@ class MatchmakingService:
         )
         for mode in modes:
             entries = list(
-                MatchmakingQueue.objects.filter(mode=mode).order_by("joined_at")
+                MatchmakingQueue.objects.filter(mode=mode)
+                .select_related("user")
+                .order_by("joined_at")
             )
             used = set()
             for i, a in enumerate(entries):

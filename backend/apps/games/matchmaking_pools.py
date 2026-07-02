@@ -46,7 +46,7 @@ def _meta_from_hash(data: dict[str, str]) -> dict[str, Any]:
         return {}
 
 
-def try_pair_waiting_user(user_id: int, svc) -> bool:
+def try_pair_waiting_user(user_id: int, svc, users: dict | None = None) -> bool:
     """
     Tente un pairing immédiat pour un joueur en attente (range élargie).
     Retourne True si une partie a été créée.

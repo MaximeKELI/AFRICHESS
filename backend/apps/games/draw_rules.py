@@ -52,9 +52,11 @@ def rebuild_repetition_counts(game: Game) -> dict[str, int]:
 
 def can_claim_threefold_from_game(game) -> bool:
     counts = game.repetition_counts
+    if not counts and game.move_count > 0:
+        counts = rebuild_repetition_counts(game)
+        game.repetition_counts = counts
+        game.save(update_fields=["repetition_counts"])
     if not counts:
-        if game.move_count > 0:
-            return board_from_game_moves(game).can_claim_threefold_repetition()
         return False
     key = _position_key(game.fen, game.variant)
     return counts.get(key, 0) >= 3

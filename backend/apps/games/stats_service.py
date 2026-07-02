@@ -292,7 +292,7 @@ def build_user_stats_payload(user) -> dict[str, Any]:
         if g.ended_at:
             activity[g.ended_at.date().isoformat()] += 1
 
-        sans = [m.san for m in g.moves.all()]
+        sans = [m.san for m in g.moves.all()[:24]]
         oname = opening_from_moves(sans)
         obk = openings[oname]
         obk["played"] += 1
@@ -320,8 +320,8 @@ def build_user_stats_payload(user) -> dict[str, Any]:
     )[:12]
 
     recent = []
-    for g in qs.order_by("-ended_at", "-created_at")[:50]:
-        sans = [m.san for m in g.moves.all()]
+    for g in qs[:50]:
+        sans = [m.san for m in g.moves.all()[:24]]
         if g.is_vs_ai:
             opponent = f"IA ~{g.ai_target_elo}" if g.ai_target_elo else "IA"
         else:
@@ -387,14 +387,19 @@ def build_user_stats_payload(user) -> dict[str, Any]:
         )
 
     summary = {
-        "games_played": agg_played,
-        "games_won": agg_won,
-        "games_drawn": agg_drawn,
-        "games_lost": agg_lost,
-        "win_rate": round((agg_won / agg_played) * 100, 1) if agg_played else 0.0,
+        "games_played": summary_src.games_played if summary_src else agg_played,
+        "games_won": summary_src.games_won if summary_src else agg_won,
+        "games_drawn": summary_src.games_drawn if summary_src else agg_drawn,
+        "games_lost": summary_src.games_lost if summary_src else agg_lost,
+        "win_rate": round((summary_src.games_won / summary_src.games_played) * 100, 1)
+        if summary_src and summary_src.games_played
+        else (round((agg_won / agg_played) * 100, 1) if agg_played else 0.0),
         "current_streak": summary_src.current_streak if summary_src else 0,
         "best_win_streak": summary_src.best_win_streak if summary_src else 0,
-        "total_play_time_hours": round(total_seconds / 3600, 1),
+        "total_play_time_hours": round(
+            (summary_src.total_play_time_seconds if summary_src else total_seconds) / 3600,
+            1,
+        ),
         "puzzles_solved": summary_src.puzzles_solved if summary_src else 0,
     }
 
