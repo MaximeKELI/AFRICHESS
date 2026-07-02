@@ -1,12 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { ChessBoard } from "@/components/chess/ChessBoard";
+import dynamic from "next/dynamic";
+import { useCallback, useState } from "react";
 import { gamesApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useVisibilityInterval } from "@/hooks/useVisibilityInterval";
+
+const ChessBoard = dynamic(
+  () => import("@/components/chess/ChessBoard").then((m) => m.ChessBoard),
+  {
+    ssr: false,
+    loading: () => <div className="aspect-square rounded-xl bg-white/5 animate-pulse" />,
+  }
+);
 
 interface TvGame {
   id: string;
@@ -42,11 +51,7 @@ export default function TvPage() {
       .catch((err) => setError(formatApiError(err, t("tv.error.load"))));
   }, [channel, t]);
 
-  useEffect(() => {
-    load();
-    const id = setInterval(load, 30000);
-    return () => clearInterval(id);
-  }, [load]);
+  useVisibilityInterval(load, 30000);
 
   const secondsLeft =
     nextAt != null ? Math.max(0, nextAt - Math.floor(Date.now() / 1000)) : null;

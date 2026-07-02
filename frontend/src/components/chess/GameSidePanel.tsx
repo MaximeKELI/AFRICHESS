@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { MoveHistory } from "./MoveHistory";
 import type { MoveRow } from "@/lib/chessDisplay";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -11,7 +12,7 @@ interface GameSidePanelProps {
   openingName?: string;
 }
 
-export function GameSidePanel({
+export const GameSidePanel = memo(function GameSidePanel({
   moves,
   isCheck = false,
   turn = "w",
@@ -36,4 +37,4 @@ export function GameSidePanel({
       <MoveHistory moves={moves} />
     </div>
   );
-}
+});

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { gamesApi } from "@/lib/api";
 import { marketplaceApi } from "@/lib/learningApi";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useVisibilityInterval } from "@/hooks/useVisibilityInterval";
 
 interface LiveGame {
   id: string;
@@ -25,29 +26,30 @@ export default function LiveGamesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const load = () => {
-      gamesApi
-        .live()
-        .then(({ data }) => {
-          if (Array.isArray(data)) {
-            setGames(data);
-            setFeatured([]);
-            setChannel("");
-          } else {
-            setChannel(data.channel ?? "");
-            setGames(data.games ?? []);
-            setFeatured(data.featured ?? []);
-          }
-          setError(null);
-        })
-        .catch((err) => {
-          setGames([]);
+  const load = useCallback(() => {
+    gamesApi
+      .live()
+      .then(({ data }) => {
+        if (Array.isArray(data)) {
+          setGames(data);
           setFeatured([]);
-          setError(formatApiError(err, t("live.error.load")));
-        })
-        .finally(() => setLoading(false));
-    };
+          setChannel("");
+        } else {
+          setChannel(data.channel ?? "");
+          setGames(data.games ?? []);
+          setFeatured(data.featured ?? []);
+        }
+        setError(null);
+      })
+      .catch((err) => {
+        setGames([]);
+        setFeatured([]);
+        setError(formatApiError(err, t("live.error.load")));
+      })
+      .finally(() => setLoading(false));
+  }, [t]);
+
+  useEffect(() => {
     load();
     marketplaceApi.streamers().then(({ data }) => {
       setStreamers(
@@ -56,9 +58,9 @@ export default function LiveGamesPage() {
           : []
       );
     }).catch(() => setStreamers([]));
-    const id = setInterval(load, 30000);
-    return () => clearInterval(id);
-  }, [t]);
+  }, [load]);
+
+  useVisibilityInterval(load, 30000);
 
   const renderGame = (g: LiveGame, highlight = false) => (
     <li

@@ -3,7 +3,6 @@
 import { useState, useCallback, Suspense, useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { Chess } from "chess.js";
 import { MessageCircle } from "lucide-react";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { PlaySetupOptions, type PlaySetupCategory } from "@/components/chess/PlaySetupOptions";
@@ -17,7 +16,6 @@ import { unlockAiSpeech, speakComment, bindAiSpeechToUserGestures } from "@/lib/
 import { defaultAiEloForUser, normalizeToPreset, resolveAiPlayMode, type AiLevelElo } from "@/lib/aiStrength";
 import { AiStrengthPicker } from "@/components/chess/AiStrengthPicker";
 import { VariantPicker, type GameVariant } from "@/components/chess/VariantPicker";
-import { PocketBar } from "@/components/chess/PocketBar";
 import { parsePocketsFromFen, pocketForPlayer } from "@/lib/crazyhouse";
 import {
   buildGameDisplayFromFen,
@@ -66,6 +64,7 @@ import { parseAnalysisPayload, type GameAnalysisData } from "@/lib/gameAnalysis"
 
 import { useGameWebSocket, type WsGamePatch, type WsGamePayload } from "@/hooks/useGameWebSocket";
 import { useMatchmakingWebSocket } from "@/hooks/useMatchmakingWebSocket";
+import { useVisibilityInterval } from "@/hooks/useVisibilityInterval";
 
 const AiTauntBubble = dynamic(
   () => import("@/components/chess/AiTauntBubble").then((m) => m.AiTauntBubble),

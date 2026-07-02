@@ -19,7 +19,7 @@ const nextConfig = {
       { protocol: "http", hostname: "localhost" },
       { protocol: "http", hostname: "127.0.0.1" },
     ],
-    unoptimized: true,
+    unoptimized: process.env.NODE_ENV !== "production",
   },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
