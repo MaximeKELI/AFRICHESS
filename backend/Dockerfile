@@ -25,7 +25,13 @@ RUN mkdir -p /anticheat-cpp/build \
     && make -j"$(nproc)" \
     && install -m 0755 africhess-fairplay /usr/local/bin/africhess-fairplay \
     && install -m 0755 libafrichess_native.so* /usr/local/lib/ \
+    && install -m 0755 libafrichess_native.so* /usr/local/lib/ \
     && ldconfig
+
+RUN SECRET_KEY="docker-build-collectstatic-placeholder-key-not-used-in-runtime-minimum-fifty" \
+    EMAIL_HOST="localhost" \
+    DJANGO_SETTINGS_MODULE=config.settings.production \
+    python manage.py collectstatic --noinput
 
 RUN chmod +x /app/docker-entrypoint.sh
 
