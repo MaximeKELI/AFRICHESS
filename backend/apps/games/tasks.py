@@ -13,13 +13,13 @@ from .services import GameService, MatchmakingService
 logger = logging.getLogger(__name__)
 
 
-@shared_task
+@shared_task(queue="realtime")
 def pair_matchmaking_queues():
     """Réconciliation file matchmaking (Redis primary, PG fallback)."""
     MatchmakingService().pair_all_waiting()
 
 
-@shared_task
+@shared_task(queue="realtime")
 def forfeit_disconnected_games():
     """Victoire si adversaire déconnecté au-delà du délai configuré."""
     cutoff = timezone.now() - timedelta(seconds=settings.DISCONNECT_FORFEIT_SECONDS)
@@ -48,7 +48,7 @@ def _award_forfeit(game: Game, winner_white: bool, reason: str):
     GameService()._after_human_game_finished(game)
 
 
-@shared_task
+@shared_task(queue="realtime")
 def pair_correspondence_queues():
     """Apparie les joueurs en file daily chess sans nouveau join."""
     from .correspondence import CorrespondenceMatchmakingService
