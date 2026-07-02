@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { gamesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useSimulWebSocket, type SimulBoardUpdate } from "@/hooks/useSimulWebSocket";
+import { MiniBoard } from "@/components/chess/MiniBoard";
 
 interface SimulBoard {
   board_number: number;
@@ -12,6 +14,7 @@ interface SimulBoard {
   opponent: string;
   status: string;
   result: string;
+  fen?: string;
 }
 
 interface SimulDetail {
@@ -27,17 +30,40 @@ interface SimulDetail {
 export default function SimulHostPage({ params }: { params: { id: string } }) {
   const { user } = useAuthStore();
   const { t } = useTranslation();
+  const sessionId = Number(params.id);
   const [detail, setDetail] = useState<SimulDetail | null>(null);
 
-  const load = () => {
-    gamesApi.simulDetail(Number(params.id)).then(({ data }) => setDetail(data as SimulDetail)).catch(() => {});
-  };
+  const load = useCallback(() => {
+    gamesApi.simulDetail(sessionId).then(({ data }) => setDetail(data as SimulDetail)).catch(() => {});
+  }, [sessionId]);
 
   useEffect(() => {
     load();
-    const timer = window.setInterval(load, 5000);
-    return () => window.clearInterval(timer);
-  }, [params.id]);
+  }, [load]);
+
+  const mergeBoard = useCallback((update: SimulBoardUpdate) => {
+    setDetail((prev) => {
+      if (!prev) return prev;
+      const boards = [...prev.boards];
+      const idx = boards.findIndex((b) => b.game_id === update.game_id);
+      const row: SimulBoard = {
+        board_number: update.board_number,
+        game_id: update.game_id,
+        opponent: update.opponent,
+        status: update.status,
+        result: update.result || "",
+        fen: update.fen,
+      };
+      if (idx >= 0) boards[idx] = { ...boards[idx], ...row };
+      else boards.push(row);
+      boards.sort((a, b) => a.board_number - b.board_number);
+      return { ...prev, boards };
+    });
+  }, []);
+
+  useSimulWebSocket(sessionId, Boolean(user && detail), mergeBoard, (payload) => {
+    setDetail((prev) => (prev ? { ...prev, status: payload.status } : prev));
+  });
 
   if (!detail) {
     return <p className="p-8 text-center opacity-60">{t("common.loading")}</p>;
@@ -64,15 +90,25 @@ export default function SimulHostPage({ params }: { params: { id: string } }) {
           <Link
             key={b.game_id}
             href={`/play?game=${b.game_id}`}
-            className="glass-card p-4 flex justify-between items-center hover:border-africhess-gold/40 transition"
+            className="glass-card p-4 flex justify-between items-center gap-4 hover:border-africhess-gold/40 transition"
           >
-            <div>
-              <p className="font-medium">
-                {t("simul.board", { n: b.board_number })} — {b.opponent}
-              </p>
-              <p className="text-xs opacity-50">{b.status}{b.result ? ` · ${b.result}` : ""}</p>
+            <div className="flex items-center gap-4 min-w-0">
+              {b.fen && (
+                <div className="shrink-0 w-16">
+                  <MiniBoard fen={b.fen} size={64} />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="font-medium truncate">
+                  {t("simul.board", { n: b.board_number })} — {b.opponent}
+                </p>
+                <p className="text-xs opacity-50">
+                  {b.status}
+                  {b.result ? ` · ${b.result}` : ""}
+                </p>
+              </div>
             </div>
-            <span className="text-sm text-africhess-gold">{t("simul.openBoard")}</span>
+            <span className="text-sm text-africhess-gold shrink-0">{t("simul.openBoard")}</span>
           </Link>
         ))}
         {detail.boards.length === 0 && (

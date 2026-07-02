@@ -123,6 +123,7 @@ export function useGameWebSocket(
   const onGameOverRef = useRef(onGameOver);
   const onGamePatchRef = useRef(onGamePatch);
   const onAnalysisReadyRef = useRef(onAnalysisReady);
+  const onVoteUpdateRef = useRef(onVoteUpdate);
   const chatListenersRef = useRef<Set<ChatListener>>(new Set());
 
   useEffect(() => {
@@ -130,7 +131,8 @@ export function useGameWebSocket(
     onGameOverRef.current = onGameOver;
     onGamePatchRef.current = onGamePatch;
     onAnalysisReadyRef.current = onAnalysisReady;
-  }, [onUpdate, onGameOver, onGamePatch, onAnalysisReady]);
+    onVoteUpdateRef.current = onVoteUpdate;
+  }, [onUpdate, onGameOver, onGamePatch, onAnalysisReady, onVoteUpdate]);
 
   useEffect(() => {
     if (!gameId || !enabled) {

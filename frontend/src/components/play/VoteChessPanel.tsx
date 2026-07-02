@@ -4,23 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { Chess } from "chess.js";
 import { gamesApi } from "@/lib/api";
 import { useTranslation } from "@/hooks/useTranslation";
-
-interface VoteTally {
-  tally: Record<string, number>;
-  tally_san?: Record<string, string>;
-  ply: number;
-  votes: number;
-  my_vote?: string | null;
-  my_vote_san?: string | null;
-  club_white?: string;
-  club_black?: string;
-}
+import type { VoteTallyPayload } from "@/hooks/useGameWebSocket";
 
 interface VoteChessPanelProps {
   gameId: string;
   fen: string;
   canApply: boolean;
   refreshToken?: number;
+  wsVote?: VoteTallyPayload | null;
   onApplied: () => void;
 }
 
@@ -39,25 +30,28 @@ export function VoteChessPanel({
   fen,
   canApply,
   refreshToken = 0,
+  wsVote,
   onApplied,
 }: VoteChessPanelProps) {
   const { t } = useTranslation();
-  const [data, setData] = useState<VoteTally | null>(null);
+  const [data, setData] = useState<VoteTallyPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     gamesApi
       .getVoteStatus(gameId)
-      .then(({ data }) => setData(data as VoteTally))
+      .then(({ data }) => setData(data as VoteTallyPayload))
       .catch(() => setData(null));
   }, [gameId]);
 
   useEffect(() => {
     refresh();
-    const id = window.setInterval(refresh, 4000);
-    return () => window.clearInterval(id);
   }, [refresh, refreshToken]);
+
+  useEffect(() => {
+    if (wsVote) setData(wsVote);
+  }, [wsVote]);
 
   const apply = async () => {
     setLoading(true);
