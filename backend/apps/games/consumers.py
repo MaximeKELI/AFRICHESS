@@ -572,3 +572,51 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
         from .models import MatchmakingQueue
 
         return MatchmakingQueue.objects.filter(user=self.user).exists()
+
+
+class SimulConsumer(AsyncWebsocketConsumer):
+    """Tableau simultané — ws/simul/<session_id>/"""
+
+    async def connect(self):
+        self.session_id = int(self.scope["url_route"]["kwargs"]["session_id"])
+        self.room_group_name = f"simul_{self.session_id}"
+        self.user = self.scope.get("user")
+
+        if not self.user or not self.user.is_authenticated:
+            await self.close(code=4001)
+            return
+
+        if not await self._can_watch():
+            await self.close(code=4003)
+            return
+
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await accept_websocket(self)
+        await self._send_event("simul_connected", {"session_id": self.session_id})
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+    async def broadcast_board_joined(self, event):
+        await self._send_event("simul_board_joined", event["payload"])
+
+    async def broadcast_board_updated(self, event):
+        await self._send_event("simul_board_updated", event["payload"])
+
+    async def broadcast_session_status(self, event):
+        await self._send_event("simul_session_status", event["payload"])
+
+    async def _send_event(self, event: str, data: dict):
+        await self.send(text_data=json.dumps({"event": event, "data": data}))
+
+    @database_sync_to_async
+    def _can_watch(self):
+        from .models import SimulBoard, SimulSession
+
+        try:
+            session = SimulSession.objects.get(pk=self.session_id)
+        except SimulSession.DoesNotExist:
+            return False
+        if session.host_id == self.user.id:
+            return True
+        return SimulBoard.objects.filter(session=session, opponent=self.user).exists()
