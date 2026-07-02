@@ -106,7 +106,7 @@ export default function TvPage() {
             )}
           </div>
           <div className="max-w-md mx-auto">
-            <ChessBoard fen={current.fen || "start"} interactive={false} />
+            <ChessBoard fen={current.fen || "start"} disabled />
           </div>
           <div className="mt-4 text-center">
             <Link

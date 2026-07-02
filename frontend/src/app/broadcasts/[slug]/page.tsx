@@ -71,7 +71,7 @@ export default function BroadcastDetailPage({ params }: { params: { slug: string
             </p>
             <p className="text-sm font-medium mb-2 truncate">{bb.label}</p>
             <div className="max-w-[220px] mx-auto">
-              <ChessBoard fen={bb.game.fen || "start"} interactive={false} />
+              <ChessBoard fen={bb.game.fen || "start"} disabled />
             </div>
             <Link
               href={`/watch/${bb.game.id}`}
