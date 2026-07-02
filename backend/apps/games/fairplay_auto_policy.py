@@ -77,6 +77,25 @@ def evaluate_auto_sanction(report: FairPlayReport, case: FairPlayReviewCase) -> 
                 block_days=int(getattr(settings, "FAIRPLAY_AUTO_MM_BLOCK_DAYS", 7)),
             )
 
+    from .fairplay_integrity import get_or_create_profile
+
+    profile = get_or_create_profile(user)
+    fusion_min = float(getattr(settings, "FAIRPLAY_AUTO_FUSION_SANCTION_MIN", 35.0))
+    if profile.last_fusion_score >= fusion_min and report.verdict in _flagged_verdicts():
+        return AutoSanctionRecommendation(
+            decision=FairPlayReviewCase.Decision.MATCHMAKING_BLOCK,
+            confidence=0.78,
+            reason="aie_fusion_signal",
+            block_days=int(getattr(settings, "FAIRPLAY_AUTO_MM_BLOCK_DAYS", 7)),
+        )
+    if profile.trust_score < float(getattr(settings, "FAIRPLAY_SHADOW_TRUST_MAX", 55.0)):
+        if report.verdict in _flagged_verdicts():
+            return AutoSanctionRecommendation(
+                decision=FairPlayReviewCase.Decision.WARN,
+                confidence=0.72,
+                reason="low_trust_score",
+            )
+
     warn_strikes = int(getattr(settings, "FAIRPLAY_AUTO_WARN_STRIKES", 2))
     if flagged_30d >= warn_strikes and report.verdict in _flagged_verdicts():
         return AutoSanctionRecommendation(
