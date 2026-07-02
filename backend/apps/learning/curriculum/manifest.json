@@ -141,6 +141,76 @@
         {"order": 3, "title": "Jouer contre l'ordinateur intelligemment", "file": "39-ia-entrainement.md", "xp": 50},
         {"order": 4, "title": "Devenir acteur de la scène africaine", "file": "40-scene-africaine-clubs.md", "xp": 50}
       ]
+    },
+    {
+      "slug": "vol11-tactique-avancee",
+      "title": "Volume 11 — Tactique avancée",
+      "level": "advanced",
+      "order": 11,
+      "description": "Sacrifices, zwischenzug, prophylaxie tactique et mats complexes.",
+      "xp_reward": 220,
+      "lessons": [
+        {"order": 1, "title": "Déviations et sacrifices positionnels", "file": "41-deviations-sacrifices.md", "xp": 50},
+        {"order": 2, "title": "Zwischenzug et coups intermédiaires", "file": "42-zwischenzug.md", "xp": 50},
+        {"order": 3, "title": "Défense prophylactique avancée", "file": "43-prophylaxie-tactique.md", "xp": 50},
+        {"order": 4, "title": "Combinaisons de mat complexe", "file": "44-mats-complexes.md", "xp": 50}
+      ]
+    },
+    {
+      "slug": "vol12-finales-avancees",
+      "title": "Volume 12 — Finales avancées",
+      "level": "advanced",
+      "order": 12,
+      "description": "Technique des finales fou/cavalier, pions de tour et dames actives.",
+      "xp_reward": 220,
+      "lessons": [
+        {"order": 1, "title": "Finales fou contre cavalier", "file": "45-fou-cavalier.md", "xp": 50},
+        {"order": 2, "title": "Finales pion de tour", "file": "46-pion-tour.md", "xp": 50},
+        {"order": 3, "title": "Finales deux pions", "file": "47-deux-pions.md", "xp": 50},
+        {"order": 4, "title": "Finales dames actives", "file": "48-dames-actives.md", "xp": 50}
+      ]
+    },
+    {
+      "slug": "vol13-repertoire-competitif",
+      "title": "Volume 13 — Répertoire compétitif",
+      "level": "advanced",
+      "order": 13,
+      "description": "Construire, préparer et adapter son répertoire en compétition.",
+      "xp_reward": 240,
+      "lessons": [
+        {"order": 1, "title": "Construire un répertoire cohérent", "file": "49-repertoire-coherent.md", "xp": 55},
+        {"order": 2, "title": "Préparation contre adversaire connu", "file": "50-prep-adversaire.md", "xp": 55},
+        {"order": 3, "title": "Gestion des nouveautés", "file": "51-nouveautes.md", "xp": 55},
+        {"order": 4, "title": "Adaptation en milieu de partie", "file": "52-adaptation-milieu.md", "xp": 55}
+      ]
+    },
+    {
+      "slug": "vol14-entrainement-performance",
+      "title": "Volume 14 — Entraînement & performance",
+      "level": "advanced",
+      "order": 14,
+      "description": "Planification, analyse moteur, résilience et condition en tournoi.",
+      "xp_reward": 240,
+      "lessons": [
+        {"order": 1, "title": "Planification hebdomadaire", "file": "53-plan-hebdo.md", "xp": 55},
+        {"order": 2, "title": "Analyse assistée par moteur", "file": "54-analyse-moteur.md", "xp": 55},
+        {"order": 3, "title": "Résilience après une défaite", "file": "55-resilience.md", "xp": 55},
+        {"order": 4, "title": "Nutrition et sommeil en tournoi", "file": "56-sommeil-tournoi.md", "xp": 55}
+      ]
+    },
+    {
+      "slug": "vol15-leadership-africain",
+      "title": "Volume 15 — Leadership échecs africain",
+      "level": "advanced",
+      "order": 15,
+      "description": "Clubs, arbitrage, mentorat et vision de l'écosystème continental.",
+      "xp_reward": 260,
+      "lessons": [
+        {"order": 1, "title": "Organiser un club local", "file": "57-club-local.md", "xp": 60},
+        {"order": 2, "title": "Arbitrage et fair-play communautaire", "file": "58-arbitrage-communautaire.md", "xp": 60},
+        {"order": 3, "title": "Mentorat et transmission", "file": "59-mentorat.md", "xp": 60},
+        {"order": 4, "title": "Vision AFRICHESS et scène continentale", "file": "60-vision-africhess.md", "xp": 60}
+      ]
     }
   ]
 }
