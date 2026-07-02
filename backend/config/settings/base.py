@@ -56,6 +56,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "apps.common.middleware_metrics.PrometheusMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -134,25 +135,60 @@ DATABASES = {
     }
 }
 
+# Tier déploiement : api | ws | worker | beat | all (dev)
+AFRICHESS_TIER = config("AFRICHESS_TIER", default="all")
+
 # Redis / Channels
 REDIS_URL = config(
     "REDIS_URL",
     default="redis://:africhess_redis_dev@localhost:6379/0",
 )
+# Cluster / URLs dédiées (production) — CSV pour plusieurs nœuds Channels
+REDIS_CHANNELS_URLS = config("REDIS_CHANNELS_URLS", default="", cast=Csv())
+REDIS_CELERY_URL = config("REDIS_CELERY_URL", default="")
+REDIS_MATCHMAKING_URL = config("REDIS_MATCHMAKING_URL", default="")
+
 WS_ALLOW_QUERY_TOKEN = config("WS_ALLOW_QUERY_TOKEN", default=False, cast=bool)
 ALLOW_PUBLIC_API_DOCS = config("ALLOW_PUBLIC_API_DOCS", default=False, cast=bool)
 PREMIUM_DEMO_ALLOWED = config("PREMIUM_DEMO_ALLOWED", default=False, cast=bool)
+
+_channel_redis_hosts = REDIS_CHANNELS_URLS if REDIS_CHANNELS_URLS else [REDIS_URL]
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {"hosts": [REDIS_URL]},
+        "CONFIG": {"hosts": _channel_redis_hosts},
     }
 }
 
-CELERY_BROKER_URL = REDIS_URL
-CELERY_RESULT_BACKEND = REDIS_URL
+_celery_redis = REDIS_CELERY_URL or REDIS_URL
+CELERY_BROKER_URL = _celery_redis
+CELERY_RESULT_BACKEND = _celery_redis
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
+CELERY_TASK_DEFAULT_QUEUE = "default"
+CELERY_TASK_QUEUES = {
+    "default": {"exchange": "default", "routing_key": "default"},
+    "realtime": {"exchange": "realtime", "routing_key": "realtime"},
+    "analysis": {"exchange": "analysis", "routing_key": "analysis"},
+    "fairplay": {"exchange": "fairplay", "routing_key": "fairplay"},
+}
+CELERY_TASK_ROUTES = {
+    "apps.games.tasks.pair_matchmaking_queues": {"queue": "realtime"},
+    "apps.games.tasks.forfeit_disconnected_games": {"queue": "realtime"},
+    "apps.games.tasks.pair_correspondence_queues": {"queue": "realtime"},
+    "apps.games.tasks.forfeit_overdue_correspondence_games": {"queue": "realtime"},
+    "apps.games.tasks.auto_analyze_completed_game": {"queue": "analysis"},
+    "apps.games.tasks.analyze_game_async": {"queue": "analysis"},
+    "apps.games.tasks.generate_move_comments_async": {"queue": "analysis"},
+    "apps.games.tasks.analyze_fairplay_async": {"queue": "fairplay"},
+    "apps.games.tasks.expire_fairplay_sanctions_task": {"queue": "fairplay"},
+    "apps.users.tasks.expire_premium_subscriptions": {"queue": "default"},
+    "notifications.send_native_push": {"queue": "default"},
+}
+
+# Observabilité
+PROMETHEUS_METRICS_ENABLED = config("PROMETHEUS_METRICS_ENABLED", default=True, cast=bool)
+USE_READ_REPLICA = config("USE_READ_REPLICA", default=False, cast=bool)
 
 # CORS
 CORS_ALLOWED_ORIGINS = config(
