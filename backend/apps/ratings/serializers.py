@@ -1,6 +1,8 @@
 from django.conf import settings
 from rest_framework import serializers
 
+from apps.users.serializers import UserPublicSerializer
+
 from .constants import PROVISIONAL_GAMES_REQUIRED
 from .display import format_rating_display
 from .models import LeagueSeason, LeagueStanding, PlayerRating, RatingHistory
