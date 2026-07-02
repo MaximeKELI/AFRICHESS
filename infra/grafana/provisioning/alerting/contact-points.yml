@@ -1,0 +1,31 @@
+# Remplacer l'URL Slack avant prod. Ne pas committer de webhook réel.
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: africhess-oncall
+    receivers:
+      - uid: africhess-slack
+        type: slack
+        disableResolveMessage: false
+        settings:
+          url: "https://hooks.slack.com/services/CHANGE/ME/WEBHOOK"
+          recipient: "#africhess-alerts"
+          username: "AFRICHESS Grafana"
+          icon_emoji: ":chess_pawn:"
+          title: |
+            {{ if eq .Status "firing" }}🔴{{ else }}✅{{ end }} {{ .CommonLabels.alertname }}
+          text: |
+            {{ range .Alerts }}
+            *{{ .Labels.severity | toUpper }}* — {{ .Annotations.summary }}
+            {{ .Annotations.description }}
+            {{ end }}
+
+  - orgId: 1
+    name: africhess-email
+    receivers:
+      - uid: africhess-email-ops
+        type: email
+        settings:
+          addresses: "ops@africhess.com"
+          singleEmail: false

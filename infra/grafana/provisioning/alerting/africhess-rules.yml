@@ -1,0 +1,451 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: africhess-scale
+    folder: AFRICHESS Alerts
+    interval: 1m
+    rules:
+      # ── WebSocket ──────────────────────────────────────────────
+      - uid: africhess-ws-200k
+        title: WS connexions actives > 200k
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: sum(africhess_ws_connections_active)
+              instant: true
+              refId: A
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [200000]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              refId: C
+              type: threshold
+        noDataState: OK
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Capacité WS proche de la limite planifiée"
+          description: |
+            {{ $values.A }} connexions actives (seuil 200 000).
+            Actions : vérifier HPA tier WS, ajouter des pods, contrôler Redis Channels.
+        labels:
+          severity: critical
+          team: platform
+          service: websocket
+
+      - uid: africhess-ws-150k
+        title: WS connexions actives > 150k (warning)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: sum(africhess_ws_connections_active)
+              instant: true
+              refId: A
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [150000]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              refId: C
+              type: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 10m
+        annotations:
+          summary: "Montée en charge WS — pré-scale recommandé"
+          description: "{{ $values.A }} connexions actives. Envisager scale-out avant 200k."
+        labels:
+          severity: warning
+          team: platform
+          service: websocket
+
+      # ── Matchmaking ──────────────────────────────────────────
+      - uid: africhess-mm-p99-500ms
+        title: Matchmaking p99 > 500ms
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: histogram_quantile(0.99, sum(rate(africhess_matchmaking_latency_seconds_bucket[5m])) by (le))
+              instant: true
+              refId: A
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0.5]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              refId: C
+              type: threshold
+        noDataState: OK
+        execErrState: Alerting
+        for: 3m
+        annotations:
+          summary: "Latence matchmaking Redis dégradée"
+          description: |
+            p99 = {{ $values.A }}s (objectif < 500ms).
+            Vérifier Redis matchmaking, charge Lua, fallback PostgreSQL.
+        labels:
+          severity: warning
+          team: backend
+          service: matchmaking
+
+      - uid: africhess-mm-queue-5k
+        title: File matchmaking > 5 000 joueurs
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: africhess_matchmaking_queue_size
+              instant: true
+              refId: A
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [5000]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              refId: C
+              type: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "File d'attente matchmaking anormalement longue"
+          description: "{{ $values.A }} joueurs en attente. Vérifier workers realtime et pairing Celery."
+        labels:
+          severity: warning
+          team: backend
+          service: matchmaking
+
+      # ── Celery analysis ──────────────────────────────────────
+      - uid: africhess-celery-analysis-backlog
+        title: Celery analysis — backlog (p95 > 5 min)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 900
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: histogram_quantile(0.95, sum(rate(africhess_celery_task_duration_seconds_bucket{queue="analysis"}[10m])) by (le))
+              instant: true
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: sum(rate(africhess_celery_tasks_total{queue="analysis"}[5m]))
+              instant: true
+              refId: B
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [300]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              refId: C
+              type: threshold
+          - refId: D
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0.5]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [D]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              refId: D
+              type: threshold
+        noDataState: OK
+        execErrState: Alerting
+        for: 10m
+        annotations:
+          summary: "Pool Stockfish saturé — backlog analysis"
+          description: |
+            p95 durée tâche analysis = {{ $values.A }}s, débit entrant = {{ $values.B }}/s.
+            Scale workers celery-analysis (CPU nodes), vérifier STOCKFISH_PATH.
+        labels:
+          severity: critical
+          team: backend
+          service: celery-analysis
+
+      - uid: africhess-celery-fairplay-errors
+        title: Celery fairplay — taux d'échec élevé
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: |
+                sum(rate(africhess_celery_tasks_total{queue="fairplay",status!="success"}[10m]))
+                /
+                clamp_min(sum(rate(africhess_celery_tasks_total{queue="fairplay"}[10m])), 0.001)
+              instant: true
+              refId: A
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0.1]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              refId: C
+              type: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "Plus de 10 % des tâches fairplay en échec"
+          description: "Vérifier FAIRPLAY_BIN, mémoire workers, logs celery-fairplay."
+        labels:
+          severity: warning
+          team: backend
+          service: celery-fairplay
+
+      # ── API / DB ─────────────────────────────────────────────
+      - uid: africhess-api-p99-2s
+        title: API HTTP p99 > 2s
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: histogram_quantile(0.99, sum(rate(africhess_http_request_duration_seconds_bucket[5m])) by (le))
+              instant: true
+              refId: A
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [2]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              refId: C
+              type: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "Latence API dégradée"
+          description: "p99 = {{ $values.A }}s. Vérifier PgBouncer, réplicas lecture, charge pods API."
+        labels:
+          severity: warning
+          team: backend
+          service: api
+
+      - uid: africhess-pg-connections-80pct
+        title: Postgres connexions > 80 % max
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: |
+                sum(pg_stat_activity_count{datname="africhess"})
+                /
+                clamp_min(pg_settings_max_connections, 1)
+              instant: true
+              refId: A
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0.8]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              refId: C
+              type: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "Pool connexions Postgres saturé"
+          description: |
+            Utilisation {{ $values.A | humanizePercentage }} de max_connections.
+            Vérifier PgBouncer pool_size, fuites connexion, CONN_MAX_AGE.
+        labels:
+          severity: critical
+          team: platform
+          service: postgres
