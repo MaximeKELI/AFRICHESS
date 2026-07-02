@@ -5,13 +5,18 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000";
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
+  timeout: 60_000,
+  expect: { timeout: 15_000 },
   retries: process.env.CI ? 2 : 0,
   workers: 1,
   reporter: process.env.CI ? "github" : "list",
   use: {
     ...devices["Desktop Chrome"],
     baseURL,
+    locale: "fr-FR",
     trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
   },
   globalSetup: "./e2e/global-setup.ts",
   webServer: process.env.PLAYWRIGHT_SKIP_WEBSERVER

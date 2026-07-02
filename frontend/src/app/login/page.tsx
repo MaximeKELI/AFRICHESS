@@ -107,6 +107,7 @@ function LoginContent() {
         <button
           type="submit"
           disabled={isLoading}
+          data-testid="login-submit"
           className="w-full py-3 african-gradient text-white rounded-lg font-medium disabled:opacity-50"
         >
           {isLoading ? t("auth.login.submitting") : t("auth.login.submit")}

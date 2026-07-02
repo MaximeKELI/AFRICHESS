@@ -1076,6 +1076,7 @@ function PlayContent() {
         type="button"
         onClick={startAI}
         disabled={aiStarting}
+        data-testid="play-start-ai"
         className="w-full py-2 rounded-lg african-gradient text-white font-medium disabled:opacity-50"
       >
         {aiStarting
