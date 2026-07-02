@@ -183,6 +183,9 @@ export function useGameWebSocket(
           if (event === "analysis_ready" && data) {
             onAnalysisReadyRef.current?.(data as WsAnalysisReadyPayload);
           }
+          if (event === "vote_updated" && data) {
+            onVoteUpdateRef.current?.(data as VoteTallyPayload);
+          }
           if (event === "proposition_nulle" && data) {
             if (data.declined) {
               onGamePatchRef.current?.({ draw_offered_by: null });
