@@ -56,6 +56,9 @@ OAuth flow: social login redirects to `/auth/callback?code=…`, frontend POSTs 
 | POST | `/api/games/correspondence/seek/` | Join daily pool |
 | POST | `/api/games/correspondence/challenge/` | Challenge friend (daily) |
 | POST | `/api/games/vote/create/` | Vote chess between clubs |
+| GET | `/api/games/{id}/vote/status/` | Vote tally for current ply |
+| POST | `/api/games/{id}/vote/` | Cast vote `{ "move_uci": "e2e4" }` |
+| POST | `/api/games/{id}/vote/apply/` | Apply top voted move (club rep) |
 | GET | `/api/games/fairplay/status/` | Fair Play consent status |
 | POST | `/api/games/fairplay/consent/` | Accept Fair Play |
 | DELETE | `/api/games/fairplay/consent/` | Revoke consent |
