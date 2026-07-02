@@ -1,5 +1,3 @@
-from django.core.exceptions import ImproperlyConfigured
-
 from .base import *  # noqa: F401, F403
 
 DEBUG = False
@@ -36,9 +34,37 @@ if len(SECRET_KEY) < 50 or SECRET_KEY in _INSECURE_SECRET_KEYS:  # noqa: F405
         "SECRET_KEY must be a unique random string of at least 50 characters in production."
     )
 
-DATABASES["default"]["CONN_MAX_AGE"] = config("DB_CONN_MAX_AGE", default=600, cast=int)  # noqa: F405
+# --- Postgres via PgBouncer (écritures) + réplica lecture ---
+_pgbouncer_host = config("PGBOUNCER_HOST", default="")
+_db_host = _pgbouncer_host or config("POSTGRES_HOST", default="localhost")  # noqa: F405
+_db_port = config("PGBOUNCER_PORT", default=config("POSTGRES_PORT", default="5432"))  # noqa: F405
+
+DATABASES["default"]["HOST"] = _db_host  # noqa: F405
+DATABASES["default"]["PORT"] = _db_port  # noqa: F405
+DATABASES["default"]["CONN_MAX_AGE"] = config("DB_CONN_MAX_AGE", default=0, cast=int)  # noqa: F405
 DATABASES["default"]["CONN_HEALTH_CHECKS"] = True  # noqa: F405
 DATABASES["default"]["OPTIONS"] = {  # noqa: F405
     "connect_timeout": config("POSTGRES_CONNECT_TIMEOUT", default=10, cast=int),
     "sslmode": config("POSTGRES_SSLMODE", default="prefer"),
 }
+
+_replica_host = config("POSTGRES_REPLICA_HOST", default="")
+if _replica_host:
+    DATABASES["replica"] = {  # noqa: F405
+        **DATABASES["default"],  # noqa: F405
+        "HOST": _replica_host,
+        "PORT": config("POSTGRES_REPLICA_PORT", default=_db_port),
+    }
+    DATABASE_ROUTERS = ["config.db_router.ReadReplicaRouter"]  # noqa: F405
+    USE_READ_REPLICA = config("USE_READ_REPLICA", default=True, cast=bool)  # noqa: F405
+
+# --- Redis production (cluster / URLs dédiées) ---
+if REDIS_CHANNELS_URLS:  # noqa: F405
+    CHANNEL_LAYERS["default"]["CONFIG"]["hosts"] = REDIS_CHANNELS_URLS  # noqa: F405
+
+if REDIS_CELERY_URL:  # noqa: F405
+    CELERY_BROKER_URL = REDIS_CELERY_URL  # noqa: F405
+    CELERY_RESULT_BACKEND = REDIS_CELERY_URL  # noqa: F405
+
+# Observabilité
+PROMETHEUS_METRICS_ENABLED = config("PROMETHEUS_METRICS_ENABLED", default=True, cast=bool)
