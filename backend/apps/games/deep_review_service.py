@@ -34,8 +34,12 @@ def _detect_turning_points(moves: list[dict]) -> list[dict]:
             if swing >= TURNING_POINT_SWING_CP:
                 side_fr = "Blancs" if m.get("played_by_white") else "Noirs"
                 side_en = "White" if m.get("played_by_white") else "Black"
-                direction_fr = "avantage bascule" if ev_f > prev_eval else "position se dégrade"
-                direction_en = "advantage shifts" if ev_f > prev_eval else "position worsens"
+                if ev_f > prev_eval:
+                    direction_fr = "avantage bascule"
+                    direction_en = "advantage shifts"
+                else:
+                    direction_fr = "position se dégrade"
+                    direction_en = "position worsens"
                 moments.append(
                     {
                         "ply": i + 1,
@@ -79,7 +83,11 @@ def _coaching_plan(
     if not moves:
         return "", ""
     phase, avg_loss = _weakest_phase(moves)
-    phase_fr = {"opening": "ouverture", "middlegame": "milieu de jeu", "endgame": "finale"}[phase]
+    phase_fr = {
+        "opening": "ouverture",
+        "middlegame": "milieu de jeu",
+        "endgame": "finale",
+    }[phase]
     phase_en = phase
     blunders = sum(1 for m in moves if m.get("class") == "blunder")
     mistakes = sum(1 for m in moves if m.get("class") == "mistake")
