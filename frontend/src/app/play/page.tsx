@@ -94,6 +94,12 @@ const VoteChessPanel = dynamic(
   () => import("@/components/play/VoteChessPanel").then((m) => m.VoteChessPanel),
   { ssr: false }
 );
+const PocketBar = dynamic(
+  () => import("@/components/chess/PocketBar").then((m) => m.PocketBar),
+  { ssr: false }
+);
+
+type ChessCtor = typeof import("chess.js").Chess;
 
 interface GameState {
   fen: string;
