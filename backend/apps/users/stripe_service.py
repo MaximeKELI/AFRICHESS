@@ -115,7 +115,7 @@ def activate_plan(
     if plan_id not in tier_map:
         return
     user.subscription_tier = tier_map[plan_id]
-    user.premium_until = _premium_until_from_period_end(period_end, days=days)
+    user.premium_until = _premium_until_from_period_end(period_end, fallback_days=days)
     update_fields = ["subscription_tier", "premium_until"]
     if subscription_id:
         user.stripe_subscription_id = subscription_id

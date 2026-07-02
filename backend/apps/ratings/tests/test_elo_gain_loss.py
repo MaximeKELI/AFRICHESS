@@ -70,7 +70,7 @@ def _expected_deltas(svc: RatingService, white_elo: int, black_elo: int, result:
     )
 
 
-@override_settings(K_FACTOR_BLITZ=32)
+@override_settings(K_FACTOR_BLITZ=32, USE_GLICKO2=False)
 class EloGainLossTests(TestCase):
     def setUp(self):
         self.white = User.objects.create_user(username="gain_w", password="x", chess_level="intermediate")

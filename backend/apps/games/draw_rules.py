@@ -43,9 +43,13 @@ def rebuild_repetition_counts(game: Game) -> dict[str, int]:
     else:
         start_fen, _ = starting_position_for_variant(game.variant)
     counts = init_repetition_counts(start_fen, game.variant)
+    board = board_from_fen(start_fen, game.variant)
     for move in game.moves.order_by("move_number"):
-        fen = move.fen_after or game.fen
-        key = _position_key(fen, game.variant)
+        if move.fen_after:
+            key = _position_key(move.fen_after, game.variant)
+        else:
+            board.push_uci(move.uci)
+            key = _position_key(board.fen(), game.variant)
         counts[key] = counts.get(key, 0) + 1
     return counts
 
