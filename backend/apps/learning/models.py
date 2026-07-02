@@ -264,8 +264,65 @@ class ClassroomSession(models.Model):
     def __str__(self):
         return f"Classroom {self.code}"
 
-    @property
-    def xp_to_next_level(self) -> int:
-        from .progression import xp_for_level, xp_for_next_level
 
-        return max(0, xp_for_next_level(self.level) - self.xp)
+class SharedStudy(models.Model):
+    """Study partagée (équivalent Lichess Studies v1)."""
+
+    class Visibility(models.TextChoices):
+        PUBLIC = "public", "Public"
+        UNLISTED = "unlisted", "Unlisted"
+        PRIVATE = "private", "Private"
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="owned_studies"
+    )
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    visibility = models.CharField(
+        max_length=20, choices=Visibility.choices, default=Visibility.PRIVATE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return self.title
+
+
+class StudyChapter(models.Model):
+    study = models.ForeignKey(SharedStudy, on_delete=models.CASCADE, related_name="chapters")
+    title = models.CharField(max_length=200)
+    order = models.PositiveSmallIntegerField(default=0)
+    pgn = models.TextField(blank=True)
+    initial_fen = models.CharField(
+        max_length=120,
+        default="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    )
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return f"{self.study.title} — {self.title}"
+
+
+class StudyCollaborator(models.Model):
+    class Role(models.TextChoices):
+        VIEWER = "viewer", "Viewer"
+        EDITOR = "editor", "Editor"
+
+    study = models.ForeignKey(SharedStudy, on_delete=models.CASCADE, related_name="collaborators")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="study_collaborations"
+    )
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.VIEWER)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ["study", "user"]
+
+
+class ClassroomSessionMetaFix:
+    pass
