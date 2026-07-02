@@ -124,6 +124,10 @@ def analyze_fairplay_async(game_id: str):
         if player and not user_is_fairplay_exempt(player):
             analyze_and_store(game, player)
 
+    from .fairplay_auto_policy import reevaluate_game_auto_sanctions
+
+    reevaluate_game_auto_sanctions(game)
+
 
 def schedule_fairplay_analysis(game_id: str) -> None:
     try:

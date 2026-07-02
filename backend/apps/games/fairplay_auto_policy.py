@@ -90,6 +90,9 @@ def evaluate_auto_sanction(report: FairPlayReport, case: FairPlayReviewCase) -> 
 
 def maybe_apply_auto_sanction(report: FairPlayReport, case: FairPlayReviewCase) -> dict[str, Any] | None:
     """Applique ou journalise (shadow) une sanction automatique graduée."""
+    if case.status == FairPlayReviewCase.Status.CONFIRMED:
+        return None
+
     rec = evaluate_auto_sanction(report, case)
     if not rec:
         return None
@@ -123,3 +126,22 @@ def maybe_apply_auto_sanction(report: FairPlayReport, case: FairPlayReviewCase) 
     from .fairplay_review import apply_auto_sanction
 
     return apply_auto_sanction(case, rec)
+
+
+def reevaluate_game_auto_sanctions(game) -> None:
+    """Réévalue les cas une fois les deux rapports post-partie disponibles."""
+    from .fairplay_review import compute_peer_score_delta
+    from .models import FairPlayReviewCase
+
+    reports = FairPlayReport.objects.filter(game=game).select_related("user")
+    if reports.count() < 2:
+        return
+    for report in reports:
+        case = FairPlayReviewCase.objects.filter(report=report).first()
+        if not case or case.status == FairPlayReviewCase.Status.CONFIRMED:
+            continue
+        peer_delta = compute_peer_score_delta(game, report)
+        if case.peer_score_delta != peer_delta:
+            case.peer_score_delta = peer_delta
+            case.save(update_fields=["peer_score_delta", "updated_at"])
+        maybe_apply_auto_sanction(report, case)
