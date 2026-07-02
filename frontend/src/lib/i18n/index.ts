@@ -1252,6 +1252,8 @@ const fr: Record<string, string> = {
   "tournaments.status.startFailed": "Impossible de démarrer (droits ou participants insuffisants)",
   "tournaments.status.noActiveGame": "Aucune partie active pour vous dans ce tournoi",
   "tournaments.status.findGameError": "Erreur lors de la recherche de partie",
+  "tournaments.teamScores": "Score des équipes",
+  "tournaments.members": "joueurs",
   "watch.loading": "Chargement de la partie…",
   "watch.error": "Partie introuvable ou accès refusé.",
   "watch.backLive": "← Parties en direct",
