@@ -15,6 +15,15 @@ interface OpeningInfo {
   path: string;
 }
 
+interface ExplorerMove {
+  san: string;
+  white: number;
+  draws: number;
+  black: number;
+  share_pct: number;
+  average_rating?: number;
+}
+
 const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 function fenFromSans(sans: string[]): string {
