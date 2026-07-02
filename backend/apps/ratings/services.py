@@ -86,6 +86,44 @@ class RatingService:
             game=game,
         )
 
+    def _update_glicko2(self, game: Game) -> None:
+        mode = game.mode if game.mode != Game.Mode.AI else "blitz"
+        white_rating = self.get_or_create_rating(game.white_player, mode)
+        black_rating = self.get_or_create_rating(game.black_player, mode)
+
+        if game.result == Game.Result.WHITE_WIN:
+            score_white, score_black = 1.0, 0.0
+        elif game.result == Game.Result.BLACK_WIN:
+            score_white, score_black = 0.0, 1.0
+        else:
+            score_white, score_black = 0.5, 0.5
+
+        w_state = Glicko2State(white_rating.elo, white_rating.rd, white_rating.volatility)
+        b_state = Glicko2State(black_rating.elo, black_rating.rd, black_rating.volatility)
+
+        w_new = rate_period(w_state, [b_state], [score_white])
+        b_new = rate_period(b_state, [w_state], [score_black])
+
+        self._apply_glicko_change(white_rating, w_new, game)
+        self._apply_glicko_change(black_rating, b_new, game)
+
+    def _apply_glicko_change(self, rating: PlayerRating, state: Glicko2State, game: Game) -> None:
+        elo_before = rating.elo
+        rating.elo = display_rating(state)
+        rating.rd = max(45.0, round(state.rd, 2))
+        rating.volatility = round(state.volatility, 6)
+        rating.peak_elo = max(rating.peak_elo, rating.elo)
+        rating.games_count += 1
+        rating.save()
+        RatingHistory.objects.create(
+            user=rating.user,
+            mode=rating.mode,
+            elo_before=elo_before,
+            elo_after=rating.elo,
+            change=rating.elo - elo_before,
+            game=game,
+        )
+
     def update_puzzle_rating(self, user, puzzle_rating: int, solved: bool) -> PlayerRating:
         """Met à jour l'Elo puzzle du joueur après une tentative."""
         rating = self.get_or_create_rating(user, "puzzle")

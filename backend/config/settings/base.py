@@ -297,7 +297,7 @@ MATCHMAKING_REDIS_PREFIX = config("MATCHMAKING_REDIS_PREFIX", default="mm:pool")
 CELERY_BEAT_SCHEDULE = {
     "pair-matchmaking": {
         "task": "apps.games.tasks.pair_matchmaking_queues",
-        "schedule": 60.0,
+        "schedule": 5.0,
     },
     "forfeit-disconnected": {
         "task": "apps.games.tasks.forfeit_disconnected_games",
