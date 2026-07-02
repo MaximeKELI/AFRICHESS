@@ -201,6 +201,7 @@ def match_or_enqueue(
     """Pairing atomique Redis. Retourne None si Redis indisponible."""
     if not is_redis_matchmaking_available():
         return None
+    started = time.perf_counter()
     try:
         client = _get_client()
         joined_at = str(time.time())
@@ -221,13 +222,27 @@ def match_or_enqueue(
             ],
         )
         if not result:
+            _record_mm("waiting", started)
             return MatchmakingRedisResult(status="waiting")
         if len(result) >= 2 and result[1] == "paired":
+            _record_mm("paired", started)
             return MatchmakingRedisResult(status="paired", opponent_id=int(result[0]))
+        _record_mm("waiting", started)
         return MatchmakingRedisResult(status="waiting")
     except Exception as exc:
         logger.warning("Redis match_or_enqueue failed: %s", exc)
+        _record_mm("error", started)
         return None
+
+
+def _record_mm(status: str, started: float) -> None:
+    try:
+        from apps.common.metrics import record_matchmaking, set_matchmaking_queue_size
+
+        record_matchmaking(status, time.perf_counter() - started)
+        set_matchmaking_queue_size(searching_count())
+    except Exception:
+        pass
 
 
 def leave_user(user_id: int) -> bool:
