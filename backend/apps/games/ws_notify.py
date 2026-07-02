@@ -48,6 +48,76 @@ def notify_move_made(game, result: dict) -> None:
         },
     )
     notify_game_room(game.id, "broadcast_move", payload)
+    notify_simul_from_game(game)
+    if game.status == Game.Status.COMPLETED:
+        maybe_complete_simul_session(game)
+
+
+def notify_simul_room(session_id: int, handler: str, payload: dict) -> None:
+    try:
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+
+        layer = get_channel_layer()
+        if layer is None:
+            return
+        async_to_sync(layer.group_send)(
+            f"simul_{session_id}",
+            {"type": handler, "payload": payload},
+        )
+    except Exception as exc:
+        logger.warning("WS notify simul=%s handler=%s failed: %s", session_id, handler, exc)
+
+
+def notify_simul_from_game(game) -> None:
+    try:
+        board = game.simul_board
+    except Exception:
+        return
+    session = board.session
+    notify_simul_room(
+        session.id,
+        "broadcast_board_updated",
+        {
+            "session_id": session.id,
+            "board_number": board.board_number,
+            "game_id": str(game.id),
+            "opponent": board.opponent.username,
+            "status": game.status,
+            "result": game.result or "",
+            "fen": game.fen,
+            "move_count": game.move_count,
+        },
+    )
+
+
+def maybe_complete_simul_session(game) -> None:
+    try:
+        board = game.simul_board
+    except Exception:
+        return
+    session = board.session
+    games = [b.game for b in session.boards.select_related("game")]
+    if not games or not all(g.status == game.Status.COMPLETED for g in games):
+        return
+    if session.status == session.Status.COMPLETED:
+        return
+    session.status = session.Status.COMPLETED
+    session.save(update_fields=["status"])
+    notify_simul_room(
+        session.id,
+        "broadcast_session_status",
+        {"session_id": session.id, "status": session.status, "boards_count": len(games)},
+    )
+
+
+def notify_vote_updated(game, user=None) -> None:
+    from .extra_views import _vote_tally
+
+    if not getattr(game, "is_vote_chess", False):
+        return
+    payload = _vote_tally(game, user)
+    notify_game_room(game.id, "broadcast_vote", payload)
 
 
 def notify_analysis_ready(game) -> None:
