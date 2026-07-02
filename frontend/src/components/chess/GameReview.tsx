@@ -7,6 +7,7 @@ import { CapturedBoardStack } from "@/components/chess/CapturedBoardStack";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { EvalGraph } from "@/components/chess/EvalGraph";
 import { GameReviewStatsDashboard } from "@/components/chess/GameReviewStatsDashboard";
+import { DeepReviewPanel } from "@/components/chess/DeepReviewPanel";
 import { useGameAnalysis } from "@/hooks/useGameAnalysis";
 import {
   initAiSpeech,
@@ -505,6 +506,8 @@ export function GameReview({
                 moves={moves}
                 playerIsWhite={playerIsWhite}
               />
+
+              <DeepReviewPanel deep={analysis.deep_review_json} />
 
               {reviewSummary && (
                 <div className="rounded-xl bg-gradient-to-br from-africhess-gold/10 to-transparent border border-africhess-gold/20 p-4 text-sm space-y-2">
