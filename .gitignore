@@ -22,6 +22,11 @@ out/
 .env
 .env.local
 .env.*.local
+infra/.env.production
+infra/k8s/secret.yaml
+
+# E2E artifacts
+frontend/e2e/.auth/
 
 # IDE
 .idea/
