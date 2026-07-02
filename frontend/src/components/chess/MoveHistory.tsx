@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import type { MoveRow } from "@/lib/chessDisplay";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -9,7 +9,7 @@ interface MoveHistoryProps {
   currentPly?: number;
 }
 
-export function MoveHistory({ moves }: MoveHistoryProps) {
+export const MoveHistory = memo(function MoveHistory({ moves }: MoveHistoryProps) {
   const { t } = useTranslation();
   const listRef = useRef<HTMLDivElement>(null);
 

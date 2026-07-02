@@ -128,7 +128,12 @@ class CreateAIGameView(APIView):
             bot=bot,
             variant=vd.get("variant", Game.Variant.STANDARD),
         )
-        data = GameSerializer(game).data
+        from apps.ratings.batch import batch_player_ratings
+
+        data = GameSerializer(
+            game,
+            context={"rating_map": batch_player_ratings([game])},
+        ).data
         if getattr(game, "comments_pending", False):
             data["comments_pending"] = True
         return Response(data, status=status.HTTP_201_CREATED)

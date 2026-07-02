@@ -948,7 +948,6 @@ class MatchmakingService:
         """Réconciliation PG (+ Redis si disponible)."""
         self.cleanup_stale()
         from . import matchmaking_redis as mmr
-        from .matchmaking_pools import retry_all_waiting_pools
 
         if mmr.is_redis_matchmaking_available():
             pass  # retry_all_waiting_pools (2 s) gère Redis

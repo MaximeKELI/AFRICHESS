@@ -1,10 +1,18 @@
 "use client";
 
-import { BackgroundPicker } from "@/components/chess/BackgroundPicker";
-import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
+import dynamic from "next/dynamic";
 import { OptionCategoryNav } from "@/components/ui/OptionCategoryNav";
 import { OptionSection } from "@/components/ui/OptionSection";
 import { useTranslation } from "@/hooks/useTranslation";
+
+const BackgroundPicker = dynamic(
+  () => import("@/components/chess/BackgroundPicker").then((m) => m.BackgroundPicker),
+  { ssr: false }
+);
+const BoardThemePicker = dynamic(
+  () => import("@/components/chess/BoardThemePicker").then((m) => m.BoardThemePicker),
+  { ssr: false }
+);
 
 export type PlaySetupCategory =
   | "game"
