@@ -92,13 +92,15 @@ def notify_simul_from_game(game) -> None:
 
 
 def maybe_complete_simul_session(game) -> None:
+    from .models import Game, SimulBoard
+
     try:
         board = game.simul_board
-    except Exception:
+    except SimulBoard.DoesNotExist:
         return
     session = board.session
     games = [b.game for b in session.boards.select_related("game")]
-    if not games or not all(g.status == game.Status.COMPLETED for g in games):
+    if not games or not all(g.status == Game.Status.COMPLETED for g in games):
         return
     if session.status == session.Status.COMPLETED:
         return
