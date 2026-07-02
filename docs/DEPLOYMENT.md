@@ -132,5 +132,7 @@ Cron suggéré (quotidien 3h) : `0 3 * * * /chemin/AFRICHESS/scripts/backup_db.s
 ## Monitoring recommandé
 
 - Sentry (erreurs Django + Next)
-- Healthcheck public `GET /api/health/` → `{"status":"ok","database":true}` (503 si DB down)
+- Healthcheck public `GET /api/health/` → `{"status":"ok","database":true,"cache":true}` (503 si DB ou Redis cache down)
+- Migrations prod : `infra/k8s/migrate-job.yaml` ou service `migrate` dans `docker-compose.production.yml` (api/ws attendent la fin)
+- Variables obligatoires prod : `EMAIL_HOST`, `SECRET_KEY` (≥50 car.), `REDIS_CACHE_URL`, `CSRF_TRUSTED_ORIGINS`
 - `pg_isready` sur le conteneur `db`
