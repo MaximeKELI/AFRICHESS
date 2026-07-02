@@ -6,7 +6,6 @@ import { gamesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useSimulWebSocket, type SimulBoardUpdate } from "@/hooks/useSimulWebSocket";
-import { MiniBoard } from "@/components/chess/MiniBoard";
 
 interface SimulBoard {
   board_number: number;
