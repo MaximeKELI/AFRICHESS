@@ -104,6 +104,7 @@ jobs:
           POSTGRES_USER: africhess
           POSTGRES_PASSWORD: africhess
           REDIS_URL: redis://localhost:6379/0
+          REDIS_CACHE_URL: redis://localhost:6379/4
           DJANGO_SETTINGS_MODULE: config.settings.development
           SECRET_KEY: ci-secret-key-32-bytes-minimum!!
           STOCKFISH_PATH: /usr/games/stockfish
@@ -114,8 +115,11 @@ jobs:
           mkdir -p staticfiles
           python manage.py migrate --noinput
           daphne -b 127.0.0.1 -p 8000 config.asgi:application &
-          sleep 5
-          curl -sf http://127.0.0.1:8000/api/docs/ > /dev/null || (echo "Backend not ready" && exit 1)
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8000/api/health/ && break
+            sleep 2
+          done
+          curl -sf http://127.0.0.1:8000/api/health/ || (echo "Backend not ready" && exit 1)
       - name: Frontend E2E
         env:
           PLAYWRIGHT_API_URL: http://127.0.0.1:8000/api

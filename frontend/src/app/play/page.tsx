@@ -1099,6 +1099,7 @@ function PlayContent() {
       <button
         onClick={findMatch}
         disabled={searching || wsSearching}
+        data-testid="play-find-opponent"
         className="w-full py-2 rounded-lg border-2 border-africhess-green text-africhess-green font-medium hover:bg-africhess-green/10 disabled:opacity-50"
       >
         {searching || wsSearching ? t("play.online.searching") : t("play.online.find")}
