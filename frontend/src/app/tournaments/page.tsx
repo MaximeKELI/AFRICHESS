@@ -103,14 +103,21 @@ function TournamentsPageContent() {
     }
   };
 
-  const loadStandings = async (slug: string) => {
+  const loadStandings = async (slug: string, format?: string) => {
     if (expandedSlug === slug) {
       setExpandedSlug(null);
+      setTeamScores([]);
       return;
     }
     const { data } = await tournamentsApi.standings(slug);
     setStandings(Array.isArray(data) ? data : []);
     setExpandedSlug(slug);
+    if (format === "team_battle") {
+      const ts = await tournamentsApi.teamScores(slug);
+      setTeamScores(ts.data?.teams ?? []);
+    } else {
+      setTeamScores([]);
+    }
   };
 
   const openMyGame = async (slug: string) => {
@@ -156,7 +163,12 @@ function TournamentsPageContent() {
             <p className="text-sm opacity-80 mb-3">{tournament.description || "—"}</p>
             <div className="flex flex-wrap gap-3 text-xs opacity-70 mb-4">
               <span className="capitalize">{tournament.mode}</span>
-              <span>{tournament.format}</span>
+              <span className="capitalize">{tournament.format.replace("_", " ")}</span>
+              {tournament.format === "team_battle" && tournament.club_a_name && tournament.club_b_name && (
+                <span>
+                  {tournament.club_a_name} vs {tournament.club_b_name}
+                </span>
+              )}
               <span>
                 {t("tournaments.players", {
                   current: tournament.participant_count,
