@@ -150,6 +150,12 @@ class LearningProfile(models.Model):
 
         return level_from_xp(self.xp)
 
+    @property
+    def xp_to_next_level(self) -> int:
+        from .progression import xp_for_next_level
+
+        return max(0, xp_for_next_level(self.level) - self.xp)
+
 
 class Video(models.Model):
     """Vidéothèque pédagogique."""
