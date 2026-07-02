@@ -943,6 +943,7 @@ function PlayContent() {
               type="button"
               role="switch"
               aria-checked={isRated}
+              data-testid="play-rated-switch"
               onClick={() => setIsRated((r) => !r)}
               className={`px-3 py-1 rounded-lg text-xs font-medium ${isRated ? "african-gradient text-white" : "border border-white/20"}`}
             >
@@ -1217,6 +1218,7 @@ function PlayContent() {
             type="button"
             onClick={findMatch}
             disabled={searching || wsSearching || aiStarting}
+            data-testid="play-find-opponent-quick"
             className="flex-1 py-3 rounded-xl border-2 border-africhess-green text-africhess-green text-sm font-semibold disabled:opacity-50"
           >
             {searching || wsSearching ? t("play.online.searching") : t("play.online.find")}
