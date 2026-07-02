@@ -55,6 +55,14 @@ interface LeaderboardRow {
 
 type Tab = "daily" | "training" | "rush" | "battle" | "survival" | "leaderboard";
 
+const THEMATIC_PATHS = [
+  { theme: "fork", labelKey: "puzzles.theme.fork" },
+  { theme: "pin", labelKey: "puzzles.theme.pin" },
+  { theme: "mate", labelKey: "puzzles.theme.mate" },
+  { theme: "endgame", labelKey: "puzzles.theme.endgame" },
+  { theme: "sacrifice", labelKey: "puzzles.theme.sacrifice" },
+] as const;
+
 export default function PuzzlesPage() {
   const { user, lowBandwidth } = useAuthStore();
   const { t } = useTranslation();
@@ -773,6 +781,11 @@ export default function PuzzlesPage() {
     setUsedHint(true);
   };
 
+  const startThematicPath = (pathTheme: string) => {
+    setTheme(pathTheme);
+    setTab("training");
+  };
+
   const reviewPuzzle = async (puzzleId: number) => {
     setRecapOpen(false);
     try {
@@ -853,6 +866,27 @@ export default function PuzzlesPage() {
           )}
         </InlineAlert>
       )}
+
+      <div className="glass-card p-4 mb-6">
+        <p className="text-sm font-medium mb-1">{t("puzzles.paths.title")}</p>
+        <p className="text-xs opacity-60 mb-3">{t("puzzles.paths.hint")}</p>
+        <div className="flex flex-wrap gap-2">
+          {THEMATIC_PATHS.map((path) => (
+            <button
+              key={path.theme}
+              type="button"
+              onClick={() => startThematicPath(path.theme)}
+              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                tab === "training" && theme === path.theme
+                  ? "border-africhess-gold bg-africhess-gold/15 text-africhess-gold"
+                  : "border-white/15 hover:border-africhess-gold/40"
+              }`}
+            >
+              {t(path.labelKey)}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="flex flex-wrap gap-2 mb-6">
         <button

@@ -130,7 +130,7 @@ xychart-beta
 | | Training thématique | OK lots + ELO puzzle | OK paths + rating puzzle | **Parité** cœur produit |
 | | Rush / Survival / Battle | OK 4 modes | OK Rush + Battle | **Parité** modes compétitifs |
 | | UX (indices, bilan session) | OK flèche · jardin · recap | OK hints · streak · themes | **Parité UX** · styles différents |
-| | Puzzle builder | STUB API sans page `/puzzles/build` | OK création + partage | **Chess.com +** |
+| | Puzzle builder | OK `/puzzles/build` + API custom | OK création + partage | **Parité** |
 | | Vision / coordinates | OK `/training/vision` | OK drills dédiés | **Parité** basique |
 | | Fins de partie | PART 3 positions statiques | OK tablebases + drills | **Chess.com +** |
 | **Learning** | Cours structurés | OK 40 docs FR + seed | OK centaines de leçons | **Chess.com +** volume |
@@ -204,7 +204,7 @@ flowchart TB
 
 | Priorité | Lacune | Preuve |
 |----------|--------|--------|
-| Haute | Page puzzle builder absente | Lien `/puzzles/build` sans `page.tsx` · API `CustomPuzzleCreateView` existe |
+| Haute | Liquidité matchmaking | Friction n°1 — **Redis livré** |
 | Haute | Vote chess sans UI de vote in-game | `castVote` dans `api.ts` jamais appelé depuis `/play` |
 | Moyenne | Simul = join 1v1, pas tableau simultané | `simul/page.tsx` + `extra_views.py` |
 | Moyenne | Stripe requis pour premium prod | `503` si Stripe off · message demo en dev |
