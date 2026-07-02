@@ -67,6 +67,35 @@ import { parseAnalysisPayload, type GameAnalysisData } from "@/lib/gameAnalysis"
 import { useGameWebSocket, type WsGamePatch, type WsGamePayload } from "@/hooks/useGameWebSocket";
 import { useMatchmakingWebSocket } from "@/hooks/useMatchmakingWebSocket";
 
+const AiTauntBubble = dynamic(
+  () => import("@/components/chess/AiTauntBubble").then((m) => m.AiTauntBubble),
+  { ssr: false }
+);
+const GameReview = dynamic(
+  () => import("@/components/chess/GameReview").then((m) => m.GameReview),
+  { ssr: false, loading: () => <div className="h-24 rounded-xl bg-white/5 animate-pulse" /> }
+);
+const AiCommentaryPanel = dynamic(
+  () => import("@/components/chess/AiCommentaryPanel").then((m) => m.AiCommentaryPanel),
+  { ssr: false }
+);
+const FairPlayConsentModal = dynamic(
+  () => import("@/components/fairplay/FairPlayConsentModal").then((m) => m.FairPlayConsentModal),
+  { ssr: false }
+);
+const RecentGamesList = dynamic(
+  () => import("@/components/game/RecentGamesList").then((m) => m.RecentGamesList),
+  { ssr: false, loading: () => <div className="h-32 rounded-xl bg-white/5 animate-pulse" /> }
+);
+const GameChat = dynamic(
+  () => import("@/components/social/GameChat").then((m) => m.GameChat),
+  { ssr: false }
+);
+const VoteChessPanel = dynamic(
+  () => import("@/components/play/VoteChessPanel").then((m) => m.VoteChessPanel),
+  { ssr: false }
+);
+
 interface GameState {
   fen: string;
   moves?: ApiMove[];
