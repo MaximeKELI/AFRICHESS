@@ -43,6 +43,8 @@ export default function OpeningExplorerPage() {
   const [moves, setMoves] = useState<string[]>([]);
   const [info, setInfo] = useState<OpeningInfo | null>(null);
   const [fen, setFen] = useState(START_FEN);
+  const [explorerMoves, setExplorerMoves] = useState<ExplorerMove[]>([]);
+  const [explorerStats, setExplorerStats] = useState<{ white: number; draws: number; black: number } | null>(null);
 
   const refresh = useCallback(
     (line: string[]) => {
