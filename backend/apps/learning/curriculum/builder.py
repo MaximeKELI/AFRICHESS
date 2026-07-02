@@ -206,7 +206,7 @@ def _topic_from_filename(filename: str) -> str:
 
 
 def _lesson_specs() -> dict:
-    """Spécifications des leçons 02-40."""
+    """Spécifications des leçons 02-60."""
     base_sections = lambda topic, aspects: [
         (f"Concepts fondamentaux — {topic}", [
             f"Ce chapitre traite **{topic}** sous l'angle {aspects}. "
@@ -371,22 +371,7 @@ def _lesson_specs() -> dict:
         (60, vol15, "Vision AFRICHESS et scène continentale", "60-vision-africhess.md", "écosystème AFRICHESS", "talents, fédérations"),
     ]
 
-    for args in mapping:
-        s = spec(*args)
-        add(
-            args[3],
-            build_lesson(
-                s["title"],
-                s["volume"],
-                s["doc_num"],
-                s["intro"],
-                s["sections"],
-                s["exercises"],
-                s["summary"],
-            ),
-        )
-
-    return lessons
+    return {args[3]: spec(*args) for args in mapping}
 
 
 def write_all_markdown(output_dir: Path) -> dict[str, int]:

@@ -13,7 +13,7 @@ CONTENT_FR = CURRICULUM_DIR / "fr"
 
 class Command(BaseCommand):
     help = (
-        "Génère 40 documents pédagogiques (~20 pages chacun) et les charge "
+        "Génère 60 documents pédagogiques (~20 pages chacun) et les charge "
         "comme cours/leçons AFRICHESS."
     )
 
