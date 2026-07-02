@@ -1,0 +1,40 @@
+{
+  "family": "africhess-ws",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "4096",
+  "memory": "8192",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::123456789012:role/africhessTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "ws",
+      "image": "123456789012.dkr.ecr.af-south-1.amazonaws.com/africhess-backend:latest",
+      "essential": true,
+      "command": ["/app/docker-entrypoint.sh"],
+      "portMappings": [
+        { "containerPort": 8001, "protocol": "tcp" }
+      ],
+      "environment": [
+        { "name": "DJANGO_SETTINGS_MODULE", "value": "config.settings.production" },
+        { "name": "AFRICHESS_TIER", "value": "ws" },
+        { "name": "PORT", "value": "8001" },
+        { "name": "PGBOUNCER_HOST", "value": "pgbouncer.africhess.local" },
+        { "name": "PROMETHEUS_METRICS_ENABLED", "value": "true" }
+      ],
+      "secrets": [
+        { "name": "SECRET_KEY", "valueFrom": "arn:aws:secretsmanager:af-south-1:123456789012:secret:africhess/prod:SECRET_KEY::" },
+        { "name": "REDIS_URL", "valueFrom": "arn:aws:secretsmanager:af-south-1:123456789012:secret:africhess/prod:REDIS_URL::" },
+        { "name": "REDIS_CHANNELS_URLS", "valueFrom": "arn:aws:secretsmanager:af-south-1:123456789012:secret:africhess/prod:REDIS_CHANNELS_URLS::" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/africhess-ws",
+          "awslogs-region": "af-south-1",
+          "awslogs-stream-prefix": "ws"
+        }
+      }
+    }
+  ]
+}

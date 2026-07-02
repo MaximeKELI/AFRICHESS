@@ -1,0 +1,43 @@
+{
+  "family": "africhess-celery-analysis",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["EC2"],
+  "cpu": "4096",
+  "memory": "8192",
+  "placementConstraints": [
+    {
+      "type": "memberOf",
+      "expression": "attribute:ecs.instance-type =~ c6i.4xlarge"
+    }
+  ],
+  "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::123456789012:role/africhessTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "celery-analysis",
+      "image": "123456789012.dkr.ecr.af-south-1.amazonaws.com/africhess-backend:latest",
+      "essential": true,
+      "command": [
+        "celery", "-A", "config", "worker",
+        "-l", "info", "-Q", "analysis", "-c", "2"
+      ],
+      "environment": [
+        { "name": "DJANGO_SETTINGS_MODULE", "value": "config.settings.production" },
+        { "name": "AFRICHESS_TIER", "value": "worker" },
+        { "name": "STOCKFISH_PATH", "value": "/usr/games/stockfish" }
+      ],
+      "secrets": [
+        { "name": "REDIS_CELERY_URL", "valueFrom": "arn:aws:secretsmanager:af-south-1:123456789012:secret:africhess/prod:REDIS_CELERY_URL::" },
+        { "name": "POSTGRES_PASSWORD", "valueFrom": "arn:aws:secretsmanager:af-south-1:123456789012:secret:africhess/prod:POSTGRES_PASSWORD::" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/africhess-celery-analysis",
+          "awslogs-region": "af-south-1",
+          "awslogs-stream-prefix": "analysis"
+        }
+      }
+    }
+  ]
+}
