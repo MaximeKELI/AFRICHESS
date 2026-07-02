@@ -213,7 +213,7 @@ function TournamentsPageContent() {
               )}
               <button
                 type="button"
-                onClick={() => loadStandings(tournament.slug)}
+                onClick={() => loadStandings(tournament.slug, tournament.format)}
                 className="px-4 py-2 rounded-lg border border-white/20 text-sm"
               >
                 {expandedSlug === tournament.slug
