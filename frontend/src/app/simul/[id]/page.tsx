@@ -91,21 +91,14 @@ export default function SimulHostPage({ params }: { params: { id: string } }) {
             href={`/play?game=${b.game_id}`}
             className="glass-card p-4 flex justify-between items-center gap-4 hover:border-africhess-gold/40 transition"
           >
-            <div className="flex items-center gap-4 min-w-0">
-              {b.fen && (
-                <div className="shrink-0 w-16">
-                  <MiniBoard fen={b.fen} size={64} />
-                </div>
-              )}
-              <div className="min-w-0">
-                <p className="font-medium truncate">
-                  {t("simul.board", { n: b.board_number })} — {b.opponent}
-                </p>
-                <p className="text-xs opacity-50">
-                  {b.status}
-                  {b.result ? ` · ${b.result}` : ""}
-                </p>
-              </div>
+            <div className="min-w-0">
+              <p className="font-medium truncate">
+                {t("simul.board", { n: b.board_number })} — {b.opponent}
+              </p>
+              <p className="text-xs opacity-50">
+                {b.status}
+                {b.result ? ` · ${b.result}` : ""}
+              </p>
             </div>
             <span className="text-sm text-africhess-gold shrink-0">{t("simul.openBoard")}</span>
           </Link>
