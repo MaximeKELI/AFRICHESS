@@ -22,10 +22,10 @@ def _section(title: str, *blocks: str) -> str:
     return f"## {title}\n\n{body}"
 
 
-def _lesson_header(title: str, volume: str, doc_num: int) -> str:
+def _lesson_header(title: str, volume: str, doc_num: int, total_docs: int = 60) -> str:
     return _p(
         f"# {title}",
-        f"**Programme AFRICHESS — {volume}** · Document {doc_num:02d}/40",
+        f"**Programme AFRICHESS — {volume}** · Document {doc_num:02d}/{total_docs}",
         "---",
         "Ce document fait partie du parcours complet d'apprentissage des échecs. "
         "Lisez-le en plusieurs sessions, refaites les exercices sur un échiquier réel ou sur AFRICHESS, "
@@ -75,8 +75,9 @@ def build_lesson(
     exercises: list[str],
     summary: list[str],
     further: list[str] | None = None,
+    total_docs: int = 60,
 ) -> str:
-    header = _lesson_header(title, volume, doc_num)
+    header = _lesson_header(title, volume, doc_num, total_docs=total_docs)
     intro_block = _section("Introduction", intro)
     body = _expand_sections(sections)
     ex = _exercises(*exercises)
@@ -275,7 +276,7 @@ def _lesson_specs() -> dict:
             "volume": vol,
             "doc_num": num,
             "intro": _p(
-                f"Document {num}/40 du programme AFRICHESS. Thème central : **{topic}**. ",
+                f"Document {num}/60 du programme AFRICHESS. Thème central : **{topic}**. ",
                 extra_intro or f"Ce texte développe {aspects} avec profondeur, exemples et liens vers la pratique en ligne.",
             ),
             "sections": base_sections(topic, aspects),
