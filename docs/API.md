@@ -58,7 +58,7 @@ OAuth flow: social login redirects to `/auth/callback?code=…`, frontend POSTs 
 | POST | `/api/games/vote/create/` | Vote chess between clubs |
 | GET | `/api/games/{id}/vote/status/` | Vote tally for current ply |
 | POST | `/api/games/{id}/vote/` | Cast vote `{ "move_uci": "e2e4" }` |
-| POST | `/api/games/{id}/vote/` | Apply top voted move (club rep) |
+| POST | `/api/games/{id}/vote/apply/` | Apply top voted move (club rep) |
 | GET/POST | `/api/games/simul/` | List/create simultaneous sessions |
 | GET | `/api/games/simul/{id}/` | Host dashboard (boards + FEN) |
 | POST | `/api/games/simul/{id}/join/` | Join simul (creates 1v1 board) |
