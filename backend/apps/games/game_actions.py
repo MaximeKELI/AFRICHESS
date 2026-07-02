@@ -73,7 +73,18 @@ def accept_takeback(game: Game, user) -> dict:
     game.move_count = game.moves.count()
     game.takeback_requested_by = None
     game.draw_offered_by = None
-    game.save(update_fields=["fen", "move_count", "takeback_requested_by", "draw_offered_by"])
+    from .draw_rules import rebuild_repetition_counts
+
+    game.repetition_counts = rebuild_repetition_counts(game)
+    game.save(
+        update_fields=[
+            "fen",
+            "move_count",
+            "takeback_requested_by",
+            "draw_offered_by",
+            "repetition_counts",
+        ]
+    )
     return {"ok": True, "undone": 1}
 
 
