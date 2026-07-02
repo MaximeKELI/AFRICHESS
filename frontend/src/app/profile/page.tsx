@@ -25,6 +25,23 @@ import {
   type RatingRow,
 } from "@/lib/ratings";
 
+const BoardThemePicker = dynamic(
+  () => import("@/components/chess/BoardThemePicker").then((m) => m.BoardThemePicker),
+  { ssr: false }
+);
+const BackgroundPicker = dynamic(
+  () => import("@/components/chess/BackgroundPicker").then((m) => m.BackgroundPicker),
+  { ssr: false }
+);
+const FairPlayAppealPanel = dynamic(
+  () => import("@/components/fairplay/FairPlayAppealPanel").then((m) => m.FairPlayAppealPanel),
+  { ssr: false }
+);
+const RecentGamesList = dynamic(
+  () => import("@/components/game/RecentGamesList").then((m) => m.RecentGamesList),
+  { ssr: false, loading: () => <div className="h-24 rounded-xl bg-white/5 animate-pulse" /> }
+);
+
 export default function ProfilePage() {
   const { user, fetchProfile } = useAuthStore();
   const { t, locale } = useTranslation();
