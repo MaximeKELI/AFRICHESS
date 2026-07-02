@@ -318,6 +318,9 @@ export const puzzlesApi = {
   leaderboard: () => api.get("/puzzles/leaderboard/"),
   rush: (count = 15) => api.get("/puzzles/rush/", { params: { count } }),
   rushStart: () => api.post("/puzzles/rush/start/"),
+  stormStart: () => api.post("/puzzles/storm/start/"),
+  stormSubmit: (sessionId: number, moves: string[], time_seconds: number) =>
+    api.post(`/puzzles/storm/${sessionId}/submit/`, { moves, time_seconds }),
   rushSubmit: (sessionId: number, moves: string[], time_seconds: number) =>
     api.post(`/puzzles/rush/${sessionId}/submit/`, { moves, time_seconds }),
   rushLeaderboard: () => api.get("/puzzles/rush/leaderboard/"),
