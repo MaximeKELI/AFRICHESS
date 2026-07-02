@@ -50,3 +50,30 @@ class TournamentFormatTests(TestCase):
         res = self.client.get(f"/api/tournaments/{t.slug}/")
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.data["format"], Tournament.Format.CLUB_ARENA)
+
+    def test_team_battle_team_scores(self):
+        t = Tournament.objects.create(
+            name="Team Battle",
+            slug="team-battle-test",
+            format=Tournament.Format.TEAM_BATTLE,
+            status=Tournament.Status.ACTIVE,
+            mode="blitz",
+            starts_at=timezone.now(),
+            created_by=self.organizer,
+            club_a=self.club_a,
+            club_b=self.club_b,
+        )
+        u1 = User.objects.create_user(username="tb1", password="x")
+        u2 = User.objects.create_user(username="tb2", password="x")
+        from apps.tournaments.models import TournamentParticipant
+
+        TournamentParticipant.objects.create(
+            tournament=t, user=u1, club=self.club_a, score=4, wins=2
+        )
+        TournamentParticipant.objects.create(
+            tournament=t, user=u2, club=self.club_b, score=2, wins=1
+        )
+        res = self.client.get(f"/api/tournaments/{t.slug}/team-scores/")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(len(res.data["teams"]), 2)
+        self.assertEqual(res.data["teams"][0]["club_slug"], "club-a")
