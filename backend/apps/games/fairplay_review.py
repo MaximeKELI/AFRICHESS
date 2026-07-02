@@ -160,7 +160,7 @@ def fairplay_queue_overview() -> dict[str, Any]:
         .annotate(count=Count("id"))
         .values_list("verdict", "count")
     )
-    return {
+    overview = {
         "pending_cases": pending,
         "in_review_cases": in_review,
         "flagged_by_verdict": by_verdict,
@@ -176,6 +176,13 @@ def fairplay_queue_overview() -> dict[str, Any]:
             status=FairPlayAppeal.Status.PENDING
         ).count(),
     }
+    try:
+        from .fairplay_scale import collect_fairplay_scale_stats
+
+        overview["scale"] = collect_fairplay_scale_stats()
+    except Exception:
+        overview["scale"] = {}
+    return overview
 
 
 def list_review_queue(

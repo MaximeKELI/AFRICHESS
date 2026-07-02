@@ -140,11 +140,24 @@ def maybe_apply_auto_sanction(report: FairPlayReport, case: FairPlayReviewCase) 
         case.auto_recommended_decision = rec.decision
         case.auto_confidence = rec.confidence
         case.save(update_fields=["auto_recommended_decision", "auto_confidence", "updated_at"])
+        try:
+            from apps.common.metrics import record_fairplay_auto_sanction
+
+            record_fairplay_auto_sanction(shadow=True, decision=rec.decision)
+        except Exception:
+            pass
         return {"shadow": True, "decision": rec.decision, "confidence": rec.confidence}
 
     from .fairplay_review import apply_auto_sanction
 
-    return apply_auto_sanction(case, rec)
+    result = apply_auto_sanction(case, rec)
+    try:
+        from apps.common.metrics import record_fairplay_auto_sanction
+
+        record_fairplay_auto_sanction(shadow=False, decision=rec.decision)
+    except Exception:
+        pass
+    return result
 
 
 def reevaluate_game_auto_sanctions(game) -> None:

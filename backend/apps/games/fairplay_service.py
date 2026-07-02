@@ -254,6 +254,7 @@ def analyze_and_store(game: Game, user) -> FairPlayReport | None:
         _notify_ops_engine_failure(game, user, error_reason)
         report = persist_fairplay_report(game, user, result)
         post_fairplay_integrity_sync(game, user)
+        _record_fairplay_analysis_metric(report)
         return report
     baseline = player_baseline(user, game)
     if int(baseline["games_analyzed"]) >= 10:
@@ -266,7 +267,17 @@ def analyze_and_store(game: Game, user) -> FairPlayReport | None:
             result["verdict"] = "suspicious"
     report = persist_fairplay_report(game, user, result)
     post_fairplay_integrity_sync(game, user)
+    _record_fairplay_analysis_metric(report)
     return report
+
+
+def _record_fairplay_analysis_metric(report: FairPlayReport | None) -> None:
+    try:
+        from apps.common.metrics import record_fairplay_analysis
+
+        record_fairplay_analysis(report.verdict if report else "unknown")
+    except Exception:
+        pass
 
 
 def post_fairplay_integrity_sync(game: Game, user) -> None:

@@ -64,11 +64,19 @@
 | **Mobile Review** | `/review/[id]` avec navigation coups (`fen_after`) |
 | **Mobile matchmaking WS** | Déjà actif — variantes Phase 4 exposées |
 
-### Phase 5 — Scale (continu)
-- Infra documentée (`docs/ARCHITECTURE_SCALE.md`, K8s, alertes)
-- Fair play auto à échelle (shadow pools AIE)
+### Phase 5 — livré
 
-**Parité ~100 % Lichess** = **12–18 mois** équipe 2–3 devs + liquidité joueurs.  
+| Fonctionnalité | Détail |
+|----------------|--------|
+| **Métriques AIE** | Gauges shadow pool, pending cases, shadow queue MM |
+| **Batch shadow sync** | Celery **5 min** — promote/release profils AIE |
+| **Refresh métriques** | Celery **60 s** → Prometheus |
+| **Admin overview** | `/admin/fairplay/overview/` inclut `scale` |
+| **HPA celery-fairplay** | 2–8 replicas (CPU 70 %) |
+| **Alerte Grafana** | Shadow pool > 1 000 profils |
+| **Infra** | ConfigMap batch size, docs ARCHITECTURE_SCALE |
+
+**Parité ~100 % Lichess** = croissance communauté + ops continue.  
 **Parité joueur casual (~80 %)** réaliste en **3–4 mois** Phases 1–2.
 
 ---

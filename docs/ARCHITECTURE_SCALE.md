@@ -117,8 +117,24 @@ En production AWS :
 - `africhess_ws_connections_active` — connexions WS actives par tier
 - `africhess_matchmaking_latency_seconds` — latence Redis pairing
 - `africhess_matchmaking_queue_size` — joueurs en attente
+- `africhess_matchmaking_shadow_queue_size` — file shadow AIE
+- `africhess_fairplay_shadow_pool_users` — profils shadow pool
+- `africhess_fairplay_pending_cases` — cas revue en attente
+- `africhess_fairplay_auto_sanctions_total` — sanctions auto (shadow/applied)
 - `africhess_celery_task_duration_seconds` — durée par queue/tâche
 - `africhess_http_request_duration_seconds` — latence API
+
+### Fair Play à l'échelle (Phase 5)
+
+| Composant | Rôle |
+|-----------|------|
+| `fairplay_scale.py` | Stats ops, batch sync shadow pools |
+| Celery `refresh_fairplay_scale_metrics` | Gauge Prometheus toutes les **60 s** |
+| Celery `batch_sync_shadow_pools_task` | Réconciliation AIE toutes les **5 min** |
+| Pools Redis `:shadow` | Joueurs signalés appariés entre eux (classé) |
+| `FAIRPLAY_AUTO_SANCTIONS_SHADOW=true` | Log des sanctions auto sans appliquer (prod initiale) |
+
+Activer les sanctions réelles : `FAIRPLAY_AUTO_SANCTIONS_ENABLED=true` + shadow=false après validation ops.
 
 ### Exporters infra (voir `infra/prometheus/prometheus.yml`)
 - **redis_exporter** — longueur des queues Celery, mémoire
@@ -176,6 +192,7 @@ Optimisations : Reserved Instances, Spot pour workers analysis, autoscaling HPA 
 | `infra/k8s/` | Manifestes EKS (HPA, Ingress ALB) |
 | `infra/ecs/` | Task definitions ECS Fargate/EC2 |
 | `infra/grafana/dashboards/africhess-scale.json` | Dashboard Grafana prêt à importer |
+| `backend/apps/games/fairplay_scale.py` | AIE shadow pools batch + stats ops |
 | `infra/nginx/nginx.conf` | Routage `/api` vs `/ws` |
 
 ## Migration depuis mono-Daphne

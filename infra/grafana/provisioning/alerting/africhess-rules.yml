@@ -331,6 +331,55 @@ groups:
           team: backend
           service: celery-fairplay
 
+      - uid: africhess-fairplay-shadow-1k
+        title: Shadow pool AIE > 1 000 profils
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: africhess_fairplay_shadow_pool_users
+              instant: true
+              refId: A
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [1000]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              refId: C
+              type: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 10m
+        annotations:
+          summary: "Shadow pool AIE élevé — vérifier batch sync"
+          description: "{{ $values.A }} profils en shadow pool. Contrôler celery-fairplay et batch_sync_shadow_pools."
+        labels:
+          severity: warning
+          team: backend
+          service: fairplay-aie
+
       # ── API / DB ─────────────────────────────────────────────
       - uid: africhess-api-p99-2s
         title: API HTTP p99 > 2s

@@ -287,6 +287,7 @@ FAIRPLAY_SHADOW_FUSION_MIN = config("FAIRPLAY_SHADOW_FUSION_MIN", default=30.0, 
 FAIRPLAY_AUTO_FUSION_SANCTION_MIN = config(
     "FAIRPLAY_AUTO_FUSION_SANCTION_MIN", default=35.0, cast=float
 )
+FAIRPLAY_SHADOW_BATCH_SIZE = config("FAIRPLAY_SHADOW_BATCH_SIZE", default=500, cast=int)
 
 # ELO defaults
 DEFAULT_ELO = 1200
@@ -330,6 +331,14 @@ CELERY_BEAT_SCHEDULE = {
     "expire-fairplay-sanctions": {
         "task": "apps.games.tasks.expire_fairplay_sanctions_task",
         "schedule": 3600.0,
+    },
+    "refresh-fairplay-metrics": {
+        "task": "apps.games.tasks.refresh_fairplay_scale_metrics",
+        "schedule": 60.0,
+    },
+    "batch-sync-shadow-pools": {
+        "task": "apps.games.tasks.batch_sync_shadow_pools_task",
+        "schedule": 300.0,
     },
 }
 

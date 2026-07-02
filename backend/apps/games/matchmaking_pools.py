@@ -141,8 +141,17 @@ def pool_stats() -> dict[str, Any]:
     for row in MatchmakingQueue.objects.values("mode").distinct():
         mode = row["mode"]
         by_mode[mode] = MatchmakingQueue.objects.filter(mode=mode).count()
+    shadow_profiles = 0
+    redis_shadow = 0
+    if mmr.is_redis_matchmaking_available():
+        redis_shadow = mmr.shadow_searching_count()
+    from .models import FairPlayIntegrityProfile
+
+    shadow_profiles = FairPlayIntegrityProfile.objects.filter(shadow_pool=True).count()
     return {
         "redis_waiting": total,
+        "redis_waiting_shadow": redis_shadow,
         "postgres_queue": pg,
+        "shadow_pool_profiles": shadow_profiles,
         "by_mode": by_mode,
     }

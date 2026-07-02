@@ -237,10 +237,15 @@ def match_or_enqueue(
 
 def _record_mm(status: str, started: float) -> None:
     try:
-        from apps.common.metrics import record_matchmaking, set_matchmaking_queue_size
+        from apps.common.metrics import (
+            record_matchmaking,
+            set_matchmaking_queue_size,
+            set_matchmaking_shadow_queue_size,
+        )
 
         record_matchmaking(status, time.perf_counter() - started)
         set_matchmaking_queue_size(searching_count())
+        set_matchmaking_shadow_queue_size(shadow_searching_count())
     except Exception:
         pass
 
@@ -263,6 +268,23 @@ def searching_count() -> int:
     try:
         raw = _get_client().get(WAITING_COUNT)
         return max(0, int(raw or 0))
+    except Exception:
+        return 0
+
+
+def shadow_searching_count() -> int:
+    """Joueurs en file dont le pool Redis se termine par :shadow."""
+    if not is_redis_matchmaking_available():
+        return 0
+    try:
+        client = _get_client()
+        waiting = client.smembers(WAITING_SET)
+        count = 0
+        for uid in waiting:
+            pool = client.hget(f"{USER_KEY_PREFIX}{uid}", "pool")
+            if pool and pool.endswith(":shadow"):
+                count += 1
+        return count
     except Exception:
         return 0
 

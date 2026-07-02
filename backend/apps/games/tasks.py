@@ -152,6 +152,22 @@ def expire_fairplay_sanctions_task():
     return expire_fairplay_sanctions()
 
 
+@shared_task(queue="fairplay")
+def refresh_fairplay_scale_metrics():
+    """Met à jour les gauges Prometheus AIE / shadow pools."""
+    from .fairplay_scale import refresh_prometheus_fairplay_metrics
+
+    return refresh_prometheus_fairplay_metrics()
+
+
+@shared_task(queue="fairplay")
+def batch_sync_shadow_pools_task():
+    """Réconciliation batch shadow pool (AIE à l'échelle)."""
+    from .fairplay_scale import batch_sync_shadow_pools
+
+    return batch_sync_shadow_pools()
+
+
 @shared_task(queue="analysis")
 def generate_move_comments_async(game_id: str, specs: list[dict]):
     """Commentaires coach/IA après un coup — ne bloque pas la réponse move."""

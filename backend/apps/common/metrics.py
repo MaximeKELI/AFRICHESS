@@ -49,6 +49,34 @@ MM_QUEUE_SIZE = Gauge(
     "africhess_matchmaking_queue_size",
     "Joueurs en attente (Redis).",
 )
+MM_SHADOW_QUEUE_SIZE = Gauge(
+    "africhess_matchmaking_shadow_queue_size",
+    "Joueurs en attente dans les pools shadow (AIE).",
+)
+
+# --- Fair Play / AIE ---
+FAIRPLAY_SHADOW_POOL_USERS = Gauge(
+    "africhess_fairplay_shadow_pool_users",
+    "Profils intégrité en shadow pool.",
+)
+FAIRPLAY_PENDING_CASES = Gauge(
+    "africhess_fairplay_pending_cases",
+    "Cas de revue fair play en attente.",
+)
+FAIRPLAY_FLAGGED_24H = Gauge(
+    "africhess_fairplay_flagged_reports_24h",
+    "Rapports SUSPICIOUS/LIKELY_CHEAT sur 24 h.",
+)
+FAIRPLAY_AUTO_SANCTIONS = Counter(
+    "africhess_fairplay_auto_sanctions_total",
+    "Sanctions auto (shadow log ou appliquées).",
+    ["mode", "decision"],
+)
+FAIRPLAY_ANALYSES = Counter(
+    "africhess_fairplay_analyses_total",
+    "Analyses fair play C++ terminées.",
+    ["verdict"],
+)
 
 # --- Celery (complété par redis_exporter côté infra) ---
 CELERY_TASKS = Counter(
@@ -108,6 +136,39 @@ def record_matchmaking(status: str, duration_s: float) -> None:
 def set_matchmaking_queue_size(count: int) -> None:
     if metrics_enabled():
         MM_QUEUE_SIZE.set(count)
+
+
+def set_matchmaking_shadow_queue_size(count: int) -> None:
+    if metrics_enabled():
+        MM_SHADOW_QUEUE_SIZE.set(count)
+
+
+def set_fairplay_scale_metrics(
+    *,
+    shadow_users: int,
+    pending_cases: int,
+    shadow_queue: int,
+    flagged_24h: int,
+) -> None:
+    if not metrics_enabled():
+        return
+    FAIRPLAY_SHADOW_POOL_USERS.set(shadow_users)
+    FAIRPLAY_PENDING_CASES.set(pending_cases)
+    FAIRPLAY_FLAGGED_24H.set(flagged_24h)
+    set_matchmaking_shadow_queue_size(shadow_queue)
+
+
+def record_fairplay_auto_sanction(*, shadow: bool, decision: str) -> None:
+    if metrics_enabled():
+        FAIRPLAY_AUTO_SANCTIONS.labels(
+            mode="shadow" if shadow else "applied",
+            decision=decision or "none",
+        ).inc()
+
+
+def record_fairplay_analysis(verdict: str) -> None:
+    if metrics_enabled():
+        FAIRPLAY_ANALYSES.labels(verdict=verdict or "unknown").inc()
 
 
 def record_celery_task(queue: str, task: str, status: str, duration_s: float) -> None:

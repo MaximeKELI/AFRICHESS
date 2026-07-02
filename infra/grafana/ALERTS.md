@@ -23,6 +23,8 @@ docker compose -f infra/docker-compose.production.yml restart grafana
 | File matchmaking | > 5 000 joueurs | 5 min | warning |
 | Celery analysis backlog | p95 > 5 min + débit > 0.5/s | 10 min | critical |
 | Celery fairplay échecs | > 10 % | 5 min | warning |
+| Shadow pool AIE | > 1 000 profils | 10 min | warning |
+| Cas revue fair play | > 200 en attente | 15 min | warning |
 | API HTTP p99 | > 2 s | 5 min | warning |
 | Postgres connexions | > 80 % max | 5 min | critical |
 
