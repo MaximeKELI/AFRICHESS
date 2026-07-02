@@ -285,20 +285,6 @@ class GameService:
         if cheat:
             return cheat
 
-        complexity_pre = None
-        if not game.is_vs_ai:
-            from .fairplay_service import estimate_complexity_cp
-            from .fairplay_integrity import record_live_move_integrity
-
-            complexity_pre = estimate_complexity_cp(game.fen)
-            record_live_move_integrity(
-                game,
-                user,
-                think_ms=spent_ms,
-                telemetry=telemetry,
-                complexity_cp=complexity_pre,
-            )
-
         is_white_turn = " w " in game.fen
         if is_white_turn and game.white_player != user:
             return {"error": "Not your turn"}
@@ -335,18 +321,37 @@ class GameService:
                 self._after_human_game_finished(game)
                 return {"error": "Time out", "game_over": True}
 
+        complexity_pre = None
         if game.variant == Game.Variant.STANDARD:
             from .board_fast import try_standard_move
 
-            fast = try_standard_move(game.fen, uci, with_complexity=False)
+            fast = try_standard_move(
+                game.fen, uci, with_complexity=not game.is_vs_ai
+            )
             if not fast.get("ok"):
                 return {"error": "Illegal move"}
             new_fen, san, is_over = fast["fen"], fast["san"], fast["game_over"]
+            complexity_pre = fast.get("complexity_pre")
         else:
+            if not game.is_vs_ai:
+                from .fairplay_service import estimate_complexity_cp
+
+                complexity_pre = estimate_complexity_cp(game.fen)
             result = self.engine.apply_move(game.fen, uci, variant=game.variant)
             if not result:
                 return {"error": "Illegal move"}
             new_fen, san, is_over = result
+
+        if not game.is_vs_ai:
+            from .fairplay_integrity import record_live_move_integrity
+
+            record_live_move_integrity(
+                game,
+                user,
+                think_ms=spent_ms,
+                telemetry=telemetry,
+                complexity_cp=complexity_pre,
+            )
         fen_before_player = game.fen
         complexity_cp = complexity_pre if not game.is_vs_ai else None
         pending_comment_specs: list[dict] = []
