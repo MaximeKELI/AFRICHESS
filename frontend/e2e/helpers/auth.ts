@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { expect } from "@playwright/test";
 
 export type E2ECredentials = {
   username: string;
@@ -70,6 +71,5 @@ export async function setUnratedMode(page: import("@playwright/test").Page) {
 
 async function expectSwitchOff(switchEl: import("@playwright/test").Locator) {
   await switchEl.waitFor({ state: "visible" });
-  const { expect } = await import("@playwright/test");
   await expect(switchEl).toHaveAttribute("aria-checked", "false");
 }

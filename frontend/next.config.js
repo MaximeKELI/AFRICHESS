@@ -18,11 +18,16 @@ const nextConfig = {
     remotePatterns: [
       { protocol: "http", hostname: "localhost" },
       { protocol: "http", hostname: "127.0.0.1" },
+      ...(process.env.NEXT_PUBLIC_MEDIA_HOSTNAME || "")
+        .split(",")
+        .filter(Boolean)
+        .map((hostname) => ({ protocol: "https", hostname: hostname.trim() })),
     ],
     unoptimized: process.env.NODE_ENV !== "production",
   },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
+    instrumentationHook: true,
   },
   async headers() {
     return [
@@ -39,4 +44,11 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+const sentryOptions = {
+  silent: true,
+  disableLogger: true,
+};
+
+module.exports = process.env.NEXT_PUBLIC_SENTRY_DSN
+  ? require("@sentry/nextjs").withSentryConfig(nextConfig, sentryOptions)
+  : nextConfig;
