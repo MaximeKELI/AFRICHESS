@@ -60,7 +60,23 @@ export default function OpeningExplorerPage() {
 
   useEffect(() => {
     refresh(moves);
-    setFen(fenFromSans(moves));
+    const nextFen = fenFromSans(moves);
+    setFen(nextFen);
+    gamesApi
+      .openingExplorer(nextFen, "lichess")
+      .then(({ data }) => {
+        if (data.available) {
+          setExplorerMoves(data.moves ?? []);
+          setExplorerStats({ white: data.white ?? 0, draws: data.draws ?? 0, black: data.black ?? 0 });
+        } else {
+          setExplorerMoves([]);
+          setExplorerStats(null);
+        }
+      })
+      .catch(() => {
+        setExplorerMoves([]);
+        setExplorerStats(null);
+      });
   }, [moves, refresh]);
 
   const playSan = (san: string) => {
@@ -78,6 +94,11 @@ export default function OpeningExplorerPage() {
         {t("openings.title")}
       </h1>
       <p className="opacity-70 text-sm">{t("openings.subtitle")}</p>
+      {explorerStats && (
+        <p className="text-xs opacity-50">
+          Lichess DB — {explorerStats.white}W / {explorerStats.draws}D / {explorerStats.black}B
+        </p>
+      )}
 
       <div className="glass-card p-4">
         <p className="text-lg font-semibold text-africhess-gold">
@@ -97,7 +118,10 @@ export default function OpeningExplorerPage() {
         <div className="space-y-4">
           <h2 className="font-semibold text-sm">{t("openings.continue")}</h2>
           <div className="flex flex-wrap gap-2">
-            {(info?.children ?? ["e4", "d4", "Nf3", "c4"]).map((san) => (
+            {(explorerMoves.length
+              ? explorerMoves.map((m) => m.san)
+              : info?.children ?? ["e4", "d4", "Nf3", "c4"]
+            ).map((san) => (
               <button
                 key={san}
                 type="button"
@@ -105,6 +129,11 @@ export default function OpeningExplorerPage() {
                 className="px-4 py-2 rounded-lg border hover:border-africhess-gold font-mono text-sm"
               >
                 {san}
+                {explorerMoves.find((m) => m.san === san) && (
+                  <span className="ml-2 text-xs opacity-50">
+                    {explorerMoves.find((m) => m.san === san)?.share_pct}%
+                  </span>
+                )}
               </button>
             ))}
           </div>
