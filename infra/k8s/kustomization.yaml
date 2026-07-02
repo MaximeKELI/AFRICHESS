@@ -6,7 +6,6 @@ namespace: africhess
 resources:
   - namespace.yaml
   - configmap.yaml
-  - secret.example.yaml
   - pgbouncer.yaml
   - api.yaml
   - ws.yaml
