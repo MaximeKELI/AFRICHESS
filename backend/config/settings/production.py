@@ -38,8 +38,6 @@ if len(SECRET_KEY) < 50 or SECRET_KEY in _INSECURE_SECRET_KEYS:  # noqa: F405
         "SECRET_KEY must be a unique random string of at least 50 characters in production."
     )
 
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())  # noqa: F405
-
 CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="", cast=Csv())  # noqa: F405
 if not CSRF_TRUSTED_ORIGINS:  # noqa: F405
     CSRF_TRUSTED_ORIGINS = [  # noqa: F405
