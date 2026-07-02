@@ -9,6 +9,7 @@ class Tournament(models.Model):
         ARENA = "arena", "Arena"
         DAILY = "daily", "Daily"
         CLUB_ARENA = "club_arena", "Club Arena"
+        TEAM_BATTLE = "team_battle", "Team Battle"
 
     class Status(models.TextChoices):
         UPCOMING = "upcoming", "Upcoming"

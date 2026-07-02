@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import extra_views, fairplay_admin_views, fairplay_views, views
+from . import broadcast_views, extra_views, fairplay_admin_views, fairplay_views, views
 
 urlpatterns = [
     path("", views.GameListView.as_view(), name="game-list"),
@@ -13,6 +13,10 @@ urlpatterns = [
     path("matchmaking/", views.MatchmakingView.as_view(), name="matchmaking"),
     path("matchmaking/status/", views.MatchmakingStatusView.as_view(), name="matchmaking-status"),
     path("live/", views.LiveGamesView.as_view(), name="live-games"),
+    path("live/tv/", views.LiveTvView.as_view(), name="live-tv"),
+    path("broadcasts/", broadcast_views.BroadcastListCreateView.as_view(), name="broadcast-list"),
+    path("broadcasts/<slug:slug>/", broadcast_views.BroadcastDetailView.as_view(), name="broadcast-detail"),
+    path("broadcasts/<slug:slug>/sync/", broadcast_views.BroadcastSyncView.as_view(), name="broadcast-sync"),
     path("correspondence/", views.CorrespondenceListView.as_view(), name="correspondence-list"),
     path("correspondence/challenge/", views.CorrespondenceChallengeView.as_view(), name="correspondence-challenge"),
     path("correspondence/seek/", views.CorrespondenceSeekView.as_view(), name="correspondence-seek"),

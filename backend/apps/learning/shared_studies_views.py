@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import SharedStudy, StudyChapter, StudyCollaborator
+from .study_pgn_io import export_study_pgn, import_study_pgn
 
 
 def _can_view(study: SharedStudy, user) -> bool:

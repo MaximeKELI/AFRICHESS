@@ -2,6 +2,7 @@
 
 import random
 
+from django.db.models import Count, Sum
 from django.utils import timezone
 
 from apps.games.models import Game
@@ -37,7 +38,11 @@ class TournamentEngine:
             n = self.participant_count(tournament)
             tournament.total_rounds = max(3, min(7, (n - 1).bit_length() + 2))
         tournament.save(update_fields=["status", "current_round", "total_rounds"])
-        if tournament.format in (Tournament.Format.ARENA, Tournament.Format.CLUB_ARENA):
+        if tournament.format in (
+            Tournament.Format.ARENA,
+            Tournament.Format.CLUB_ARENA,
+            Tournament.Format.TEAM_BATTLE,
+        ):
             self._start_arena_round(tournament, 1)
         elif tournament.format == Tournament.Format.KNOCKOUT:
             self._start_knockout_round(tournament, 1)
@@ -218,7 +223,11 @@ class TournamentEngine:
             self._maybe_advance_swiss(tournament)
         if tournament.format == Tournament.Format.KNOCKOUT:
             self._maybe_advance_knockout(tournament)
-        if tournament.format in (Tournament.Format.ARENA, Tournament.Format.CLUB_ARENA):
+        if tournament.format in (
+            Tournament.Format.ARENA,
+            Tournament.Format.CLUB_ARENA,
+            Tournament.Format.TEAM_BATTLE,
+        ):
             self._arena_repair(tournament, game)
 
     def _round_complete(self, tournament: Tournament, round_no: int) -> bool:
@@ -274,7 +283,10 @@ class TournamentEngine:
                 key = tuple(sorted([a.user_id, b.user_id]))
                 if key in played:
                     continue
-                if tournament.format == Tournament.Format.CLUB_ARENA:
+                if tournament.format in (
+                    Tournament.Format.CLUB_ARENA,
+                    Tournament.Format.TEAM_BATTLE,
+                ):
                     if a.club_id and b.club_id and a.club_id == b.club_id:
                         continue
                 partner = b
@@ -297,4 +309,31 @@ class TournamentEngine:
     def get_standings(self, tournament: Tournament):
         return TournamentParticipant.objects.filter(
             tournament=tournament
-        ).select_related("user")
+        ).select_related("user", "club")
+
+    def get_team_scores(self, tournament: Tournament) -> list[dict]:
+        if tournament.format != Tournament.Format.TEAM_BATTLE:
+            return []
+        rows = (
+            TournamentParticipant.objects.filter(tournament=tournament, club_id__isnull=False)
+            .values("club_id", "club__name", "club__slug")
+            .annotate(
+                total_score=Sum("score"),
+                total_wins=Sum("wins"),
+                members=Count("id"),
+            )
+        )
+        out = []
+        for row in rows:
+            out.append(
+                {
+                    "club_id": row["club_id"],
+                    "club_name": row["club__name"],
+                    "club_slug": row["club__slug"],
+                    "score": float(row["total_score"] or 0),
+                    "wins": row["total_wins"] or 0,
+                    "members": row["members"],
+                }
+            )
+        out.sort(key=lambda x: (x["score"], x["wins"]), reverse=True)
+        return out

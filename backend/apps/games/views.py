@@ -413,23 +413,51 @@ class LiveGamesView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
+        from .live_tv import build_tv_payload
+
         games = list(live_games_queryset())
-        featured = sorted(
-            games,
-            key=lambda g: (
-                (getattr(g.white_player, "is_african_highlight", False) or False)
-                + (getattr(g.black_player, "is_african_highlight", False) or False),
-                g.move_count,
-            ),
-            reverse=True,
-        )[:5]
+        tv = build_tv_payload("best")
+        featured_ids = set(tv.get("queue_game_ids") or [])
+        featured = [g for g in games if str(g.id) in featured_ids][:5]
+        if not featured:
+            featured = sorted(
+                games,
+                key=lambda g: (
+                    (getattr(g.white_player, "is_african_highlight", False) or False)
+                    + (getattr(g.black_player, "is_african_highlight", False) or False),
+                    g.move_count,
+                ),
+                reverse=True,
+            )[:5]
         return Response(
             {
                 "channel": "AFRICHESS Live TV",
                 "games": GameSerializer(games, many=True).data,
                 "featured": GameSerializer(featured, many=True).data,
+                "tv": tv,
             }
         )
+
+
+class LiveTvView(APIView):
+    """Canal TV avec rotation temporelle (style Lichess TV)."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        from .live_tv import TV_CHANNELS, build_tv_payload
+
+        channel = request.query_params.get("channel", "best")
+        payload = build_tv_payload(channel)
+        current_id = payload.get("current_game_id")
+        games = list(live_games_queryset())
+        by_id = {str(g.id): g for g in games}
+        current = by_id.get(current_id) if current_id else None
+        queue = [by_id[g_id] for g_id in payload.get("queue_game_ids", []) if g_id in by_id]
+        payload["channels"] = list(TV_CHANNELS)
+        payload["current"] = GameSerializer(current).data if current else None
+        payload["queue"] = GameSerializer(queue, many=True).data
+        return Response(payload)
 
 
 class DrawOfferView(APIView):

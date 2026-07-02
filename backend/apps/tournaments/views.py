@@ -44,7 +44,21 @@ class RegisterTournamentView(APIView):
             return Response({"error": "Tournament full"}, status=400)
         TournamentEngine().ensure_participant(tournament, request.user)
         club_id = request.data.get("club_id")
-        if club_id and tournament.format == Tournament.Format.CLUB_ARENA:
+        if club_id and tournament.format in (
+            Tournament.Format.CLUB_ARENA,
+            Tournament.Format.TEAM_BATTLE,
+        ):
+            try:
+                club_id = int(club_id)
+            except (TypeError, ValueError):
+                return Response({"error": "club_id invalide"}, status=400)
+            if tournament.format == Tournament.Format.TEAM_BATTLE:
+                allowed = {tournament.club_a_id, tournament.club_b_id}
+                if club_id not in allowed or None in allowed:
+                    return Response(
+                        {"error": "club_id doit être l'une des deux équipes du tournoi"},
+                        status=400,
+                    )
             TournamentParticipant.objects.filter(
                 tournament=tournament, user=request.user
             ).update(club_id=club_id)
@@ -80,6 +94,34 @@ class TournamentStandingsView(APIView):
         standings = TournamentEngine().get_standings(tournament)
         return Response(
             TournamentParticipantSerializer(standings, many=True).data
+        )
+
+
+class TournamentTeamScoresView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, slug):
+        try:
+            tournament = Tournament.objects.select_related("club_a", "club_b").get(slug=slug)
+        except Tournament.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        if tournament.format != Tournament.Format.TEAM_BATTLE:
+            return Response({"error": "Not a team battle"}, status=400)
+        scores = TournamentEngine().get_team_scores(tournament)
+        return Response(
+            {
+                "teams": scores,
+                "club_a": {
+                    "id": tournament.club_a_id,
+                    "name": tournament.club_a.name if tournament.club_a_id else None,
+                    "slug": tournament.club_a.slug if tournament.club_a_id else None,
+                },
+                "club_b": {
+                    "id": tournament.club_b_id,
+                    "name": tournament.club_b.name if tournament.club_b_id else None,
+                    "slug": tournament.club_b.slug if tournament.club_b_id else None,
+                },
+            }
         )
 
 

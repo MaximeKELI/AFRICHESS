@@ -8,5 +8,6 @@ urlpatterns = [
     path("<slug:slug>/register/", views.RegisterTournamentView.as_view(), name="tournament-register"),
     path("<slug:slug>/start/", views.StartTournamentView.as_view(), name="tournament-start"),
     path("<slug:slug>/standings/", views.TournamentStandingsView.as_view(), name="tournament-standings"),
+    path("<slug:slug>/team-scores/", views.TournamentTeamScoresView.as_view(), name="tournament-team-scores"),
     path("<slug:slug>/my-game/", views.MyTournamentGameView.as_view(), name="tournament-my-game"),
 ]

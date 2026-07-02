@@ -4,11 +4,11 @@ from .models import Tournament, TournamentParticipant
 
 
 def tournament_list_queryset():
-    standings_qs = TournamentParticipant.objects.select_related("user").order_by(
+    standings_qs = TournamentParticipant.objects.select_related("user", "club").order_by(
         "-score", "-wins"
     )
     return (
-        Tournament.objects.select_related("created_by")
+        Tournament.objects.select_related("created_by", "club_a", "club_b")
         .annotate(participant_count=Count("standings", distinct=True))
         .prefetch_related(
             Prefetch(
