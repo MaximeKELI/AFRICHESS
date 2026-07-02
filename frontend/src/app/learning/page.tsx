@@ -83,7 +83,7 @@ export default function LearningDashboardPage() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold mb-2">{t("learning.title")}</h1>
       <p className="opacity-70 mb-4">
-        Parcours complet : <strong>10 volumes</strong>, <strong>40 documents</strong> (~20 pages chacun),
+        Parcours complet : <strong>15 volumes</strong>, <strong>60 documents</strong> (~20 pages chacun),
         tous les plans du jeu.
       </p>
       <p className="text-sm opacity-50 mb-8">

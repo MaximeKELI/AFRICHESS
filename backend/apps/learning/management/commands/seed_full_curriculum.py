@@ -31,7 +31,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options["regenerate"] or not CONTENT_FR.exists() or not any(CONTENT_FR.glob("*.md")):
-            self.stdout.write("Génération des 40 documents markdown…")
+            self.stdout.write("Génération des 60 documents markdown…")
             stats = write_all_markdown(CONTENT_FR)
             total = sum(stats.values())
             self.stdout.write(
