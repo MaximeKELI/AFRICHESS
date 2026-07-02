@@ -213,7 +213,15 @@ export const gamesApi = {
   engineEval: (fen: string) =>
     api.get<{ evaluation: number | null }>("/games/engine/eval/", { params: { fen } }),
   live: () => api.get("/games/live/"),
-  liveTv: () => api.get("/games/live/"),
+  liveTv: (channel = "best") =>
+    api.get<{
+      channel: string;
+      current: Record<string, unknown> | null;
+      queue: Record<string, unknown>[];
+      rotation_seconds: number;
+      next_rotation_at: number | null;
+      channels: string[];
+    }>("/games/live/tv/", { params: { channel } }),
   legalMoves: (id: string, from?: string) =>
     api.get(`/games/${id}/legal-moves/`, { params: from ? { from } : {} }),
   offerDraw: (id: string) => api.post(`/games/${id}/draw/`),
@@ -248,6 +256,16 @@ export const gamesApi = {
     api.post("/games/simul/", { title, max_boards }),
   joinSimul: (id: number) => api.post(`/games/simul/${id}/join/`),
   simulDetail: (id: number) => api.get(`/games/simul/${id}/`),
+  broadcastList: () => api.get("/games/broadcasts/"),
+  broadcastDetail: (slug: string) => api.get(`/games/broadcasts/${slug}/`),
+  createBroadcast: (payload: {
+    title: string;
+    description?: string;
+    tournament_slug?: string;
+    is_public?: boolean;
+  }) => api.post("/games/broadcasts/", payload),
+  syncBroadcast: (slug: string, gameIds?: string[]) =>
+    api.post(`/games/broadcasts/${slug}/sync/`, { game_ids: gameIds }),
   createVoteGame: (club_white: string, club_black: string, mode = "rapid") =>
     api.post("/games/vote/create/", { club_white, club_black, mode }),
   getVoteStatus: (gameId: string) => api.get(`/games/${gameId}/vote/status/`),
