@@ -73,16 +73,38 @@ FRONTEND_URL=https://votre-domaine.com
 
 URL : `https://api.votre-domaine.com/api/users/subscription/webhook/`
 
-Événement : `checkout.session.completed`
+Événements à activer :
 
-### 4. Vérification
+- `checkout.session.completed`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+- `invoice.payment_failed`
+
+Test local :
+
+```bash
+stripe listen --forward-to localhost:8000/api/users/subscription/webhook/
+stripe trigger checkout.session.completed
+```
+
+### 4. Portail client Stripe
+
+Dans le [Dashboard Stripe → Settings → Billing → Customer portal](https://dashboard.stripe.com/settings/billing/portal), activer :
+
+- Changement de plan / annulation
+- Mise à jour du moyen de paiement
+- Historique des factures
+
+Les utilisateurs y accèdent via **Premium → Gérer l'abonnement** ou `/settings/subscription`.
+
+### 5. Vérification
 
 ```bash
 curl -s http://localhost:8000/api/users/subscription/plans/ | jq .stripe_enabled
 # true si Stripe est configuré
 ```
 
-Sans clés Stripe : le bouton Premium active **30 jours démo** (développement uniquement).
+Sans clés Stripe : l'API renvoie **503** — configurez Stripe pour activer les paiements (pas de mode démo via API en production).
 
 ---
 
