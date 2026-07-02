@@ -32,6 +32,9 @@ class TournamentEngine:
     def start_tournament(self, tournament: Tournament) -> Tournament:
         if self.participant_count(tournament) < 2:
             raise ValueError("Au moins 2 participants requis")
+        if tournament.format == Tournament.Format.TEAM_BATTLE:
+            if not tournament.club_a_id or not tournament.club_b_id:
+                raise ValueError("Team battle requiert club_a et club_b")
         tournament.status = Tournament.Status.ACTIVE
         tournament.current_round = 1
         if not tournament.total_rounds:
