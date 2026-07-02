@@ -29,6 +29,10 @@ const VARIANTS: { id: GameVariant; label: string }[] = [
   { id: "crazyhouse", label: "Crazy" },
   { id: "kingofthehill", label: "KOTH" },
   { id: "threecheck", label: "3-check" },
+  { id: "atomic", label: "Atomic" },
+  { id: "antichess", label: "Antichess" },
+  { id: "horde", label: "Horde" },
+  { id: "racingkings", label: "Racing" },
 ];
 
 export default function PlayScreen() {

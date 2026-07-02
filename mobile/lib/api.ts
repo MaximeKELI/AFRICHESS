@@ -149,6 +149,7 @@ export interface GameMove {
   san: string;
   played_by_white: boolean;
   move_number: number;
+  fen_after?: string;
   comment?: string;
 }
 
@@ -157,7 +158,11 @@ export type GameVariant =
   | "chess960"
   | "crazyhouse"
   | "kingofthehill"
-  | "threecheck";
+  | "threecheck"
+  | "atomic"
+  | "antichess"
+  | "horde"
+  | "racingkings";
 
 export interface PublicUser {
   id: number;
@@ -303,7 +308,32 @@ export const learningApi = {
   courses: (lang = "fr") =>
     api.get<CourseSummary[]>("/learning/courses/", { params: { lang } }),
   videos: () => api.get<VideoSummary[]>("/learning/videos/"),
+  studies: () => api.get<StudySummary[]>("/learning/studies/"),
+  studyDetail: (id: number) => api.get<StudyDetail>(`/learning/studies/${id}/`),
 };
+
+export interface StudySummary {
+  id: number;
+  title: string;
+  description: string;
+  owner: string;
+  chapter_count: number;
+}
+
+export interface StudyChapter {
+  id: number;
+  title: string;
+  order: number;
+  pgn: string;
+  initial_fen: string;
+}
+
+export interface StudyDetail {
+  id: number;
+  title: string;
+  description: string;
+  chapters: StudyChapter[];
+}
 
 export const tournamentsApi = {
   list: () => api.get<TournamentSummary[]>("/tournaments/"),

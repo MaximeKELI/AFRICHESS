@@ -37,6 +37,9 @@ export default function RootLayout() {
           <Stack.Screen name="register" options={{ title: "Inscription" }} />
           <Stack.Screen name="premium" options={{ title: "Premium" }} />
           <Stack.Screen name="daily" options={{ title: "Daily chess" }} />
+          <Stack.Screen name="studies" options={{ title: "Studies" }} />
+          <Stack.Screen name="studies/[id]" options={{ title: "Study" }} />
+          <Stack.Screen name="review/[id]" options={{ title: "Review" }} />
           <Stack.Screen name="auth/callback" options={{ title: "OAuth", headerShown: false }} />
         </Stack>
       </AuthProvider>

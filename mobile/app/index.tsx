@@ -112,6 +112,13 @@ export default function HomeScreen() {
             <Text style={styles.btnTextOutline}>{t("app.learning")}</Text>
           </Pressable>
         </Link>
+        {user && (
+          <Link href="/studies" asChild>
+            <Pressable style={[styles.btn, styles.btnOutline]}>
+              <Text style={styles.btnTextOutline}>{t("app.studies")}</Text>
+            </Pressable>
+          </Link>
+        )}
         <Link href="/tournaments" asChild>
           <Pressable style={[styles.btn, styles.btnOutline]}>
             <Text style={styles.btnTextOutline}>{t("app.tournaments")}</Text>

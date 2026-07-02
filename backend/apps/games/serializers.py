@@ -38,6 +38,7 @@ class MoveSerializer(serializers.ModelSerializer):
             "from_square",
             "to_square",
             "played_by_white",
+            "fen_after",
             "time_remaining_ms",
             "comment",
             "created_at",
