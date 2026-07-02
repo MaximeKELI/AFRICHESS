@@ -33,6 +33,7 @@ jobs:
           cmake --build build -j2
           mkdir -p ../backend/bin
           cp build/africhess-fairplay ../backend/bin/africhess-fairplay
+          cp build/libafrichess_native.so* ../backend/bin/ 2>/dev/null || cp build/libafrichess_native.so ../backend/bin/
           chmod +x ../backend/bin/africhess-fairplay
       - name: Install backend deps
         run: |
