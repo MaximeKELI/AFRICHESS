@@ -149,8 +149,8 @@ class Game(models.Model):
     )
     conditional_moves = models.JSONField(default=list, blank=True)
     repetition_counts = models.JSONField(
-        default=dict,
         blank=True,
+        default=dict,
         help_text="Occurrences par clé de transposition (répétition triple incrémentale).",
     )
     rematch_of = models.ForeignKey(
