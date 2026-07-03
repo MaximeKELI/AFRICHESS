@@ -206,6 +206,10 @@ export const gamesApi = {
       "/games/matchmaking/status/"
     ),
   leaveQueue: () => api.delete("/games/matchmaking/"),
+  challengeUser: (
+    username: string,
+    opts?: { mode?: string; is_rated?: boolean; time_control?: string; is_timed?: boolean; odds?: string }
+  ) => api.post("/games/challenge/", { username, ...opts }),
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),
   analyzeAsync: (id: string) => api.post(`/games/${id}/analyze/async/`),
   analyzeStatus: (id: string) => api.get(`/games/${id}/analyze/status/`),
@@ -363,6 +367,7 @@ export interface UserRelationship {
     display_name: string;
     country: string;
     avatar?: string | null;
+    avatar_preset?: string | null;
   };
   friendship_status: "none" | "friends" | "pending_sent" | "pending_received" | "blocked" | "self";
   friendship_id: number | null;
@@ -381,6 +386,7 @@ export interface UserSearchHit {
     display_name: string;
     country: string;
     avatar?: string | null;
+    avatar_preset?: string | null;
     title?: string;
   };
   blitz_elo: number | null;
