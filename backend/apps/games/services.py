@@ -937,6 +937,14 @@ class MatchmakingService:
             time_minutes=time_minutes,
             time_control=time_control,
         )
+        from .matchmaking_pools import elo_range_for_wait
+
+        my_entry = MatchmakingQueue.objects.filter(user=user).first()
+        my_wait = (
+            (timezone.now() - my_entry.joined_at).total_seconds()
+            if my_entry
+            else 0.0
+        )
         candidates = MatchmakingQueue.objects.filter(
             mode=mode,
             is_timed=is_timed,
@@ -944,11 +952,16 @@ class MatchmakingService:
             variant=variant,
             time_control_minutes=tcm,
             time_control=tc_key or "",
-            elo__gte=elo - self.ELO_RANGE,
-            elo__lte=elo + self.ELO_RANGE,
         ).exclude(user=user).select_related("user").order_by("joined_at")
 
-        for candidate in candidates[:5]:
+        for candidate in candidates[:20]:
+            wait = max(
+                my_wait,
+                (timezone.now() - candidate.joined_at).total_seconds(),
+            )
+            elo_range = elo_range_for_wait(wait)
+            if abs(candidate.elo - elo) > elo_range:
+                continue
             opponent = candidate.user
             return self._create_match(
                 user,
@@ -998,8 +1011,11 @@ class MatchmakingService:
             for i, a in enumerate(entries):
                 if a.user_id in used:
                     continue
+                from .matchmaking_pools import elo_range_for_wait
+
                 best = None
-                best_diff = self.ELO_RANGE + 1
+                best_diff = settings.MATCHMAKING_POOL_MAX_RANGE + 1
+                wait_a = (timezone.now() - a.joined_at).total_seconds()
                 for j, b in enumerate(entries):
                     if j <= i or b.user_id in used or b.user_id == a.user_id:
                         continue
@@ -1013,8 +1029,10 @@ class MatchmakingService:
                         continue
                     if a.variant != b.variant:
                         continue
+                    wait_b = (timezone.now() - b.joined_at).total_seconds()
+                    elo_range = elo_range_for_wait(max(wait_a, wait_b))
                     diff = abs(a.elo - b.elo)
-                    if diff <= self.ELO_RANGE and diff < best_diff:
+                    if diff <= elo_range and diff < best_diff:
                         best = b
                         best_diff = diff
                 if best:

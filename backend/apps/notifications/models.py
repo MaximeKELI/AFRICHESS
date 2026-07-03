@@ -7,6 +7,7 @@ class Notification(models.Model):
         GAME_INVITE = "game_invite", "Game Invite"
         MATCH_FOUND = "match_found", "Match Found"
         FRIEND_REQUEST = "friend_request", "Friend Request"
+        DIRECT_MESSAGE = "direct_message", "Direct Message"
         TOURNAMENT = "tournament", "Tournament"
         ACHIEVEMENT = "achievement", "Achievement"
         SYSTEM = "system", "System"

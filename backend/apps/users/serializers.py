@@ -74,6 +74,7 @@ class UserSerializer(serializers.ModelSerializer):
             "last_name",
             "display_name",
             "avatar",
+            "avatar_preset",
             "chess_level",
             "bio",
             "country",
@@ -119,7 +120,11 @@ class UserStatsPublicSerializer(serializers.ModelSerializer):
 
 class UserPublicSerializer(serializers.ModelSerializer):
     display_name = serializers.ReadOnlyField()
+    avatar = serializers.SerializerMethodField()
     stats = UserStatsPublicSerializer(read_only=True)
+
+    def get_avatar(self, obj):
+        return uploaded_avatar_url(obj)
 
     class Meta:
         model = User
@@ -128,6 +133,7 @@ class UserPublicSerializer(serializers.ModelSerializer):
             "username",
             "display_name",
             "avatar",
+            "avatar_preset",
             "bio",
             "country",
             "city",
@@ -156,6 +162,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "avatar",
+            "avatar_preset",
             "chess_level",
             "bio",
             "country",
