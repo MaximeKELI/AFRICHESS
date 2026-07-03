@@ -97,6 +97,7 @@ export function GameReview({
     initialAnalysis,
     autoRun: !staticMode,
     cacheFirst,
+    moveCount,
   });
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [voiceOn, setVoiceOn] = useState(true);
