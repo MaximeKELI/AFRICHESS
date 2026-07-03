@@ -1,6 +1,6 @@
 import type { Locale, MessageParams } from "./types";
 import { arOverlay, ptOverlay, swOverlay } from "./localeOverlays";
-import { arOverlayM3, ptOverlayM3, swOverlayM3 } from "./localeOverlaysM3";
+import { arOverlayM3, swOverlayM3 } from "./localeOverlaysM3";
 
 export type { Locale, MessageParams } from "./types";
 
@@ -1189,6 +1189,7 @@ const fr: Record<string, string> = {
   "puzzles.solved.wrong": "✗ Ce n'est pas la bonne ligne",
   "puzzles.loginToSubmit": "Connectez-vous pour valider",
   "puzzles.rush.done": "Rush terminé — {score}/5 résolus",
+  "puzzles.rush.leaderboard.title": "Meilleurs scores Rush",
   "puzzles.leaderboard.title": "Top résolveurs",
   "puzzles.leaderboard.empty": "Aucun score enregistré",
   "puzzles.leaderboard.solved": "{n} résolus",
@@ -2641,6 +2642,7 @@ const en: Record<string, string> = {
   "puzzles.solved.wrong": "✗ That's not the right line",
   "puzzles.loginToSubmit": "Sign in to submit",
   "puzzles.rush.done": "Rush complete — {score}/5 solved",
+  "puzzles.rush.leaderboard.title": "Puzzle Rush top scores",
   "puzzles.leaderboard.title": "Top solvers",
   "puzzles.leaderboard.empty": "No scores recorded",
   "puzzles.leaderboard.solved": "{n} solved",
@@ -2944,7 +2946,6 @@ const ar: Record<string, string> = {
 const pt: Record<string, string> = {
   ...en,
   ...ptOverlay,
-  ...ptOverlayM3,
   "nav.play": "Jogar",
   "nav.puzzles": "Problemas",
   "nav.learn": "Aprender",

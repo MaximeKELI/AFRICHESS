@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { type FriendRow, socialApi } from "../lib/api";
+import { type FriendRow, friendPeer, socialApi } from "../lib/api";
 
 export default function FriendsScreen() {
   const { user, loading: authLoading } = useAuth();
@@ -46,7 +46,7 @@ export default function FriendsScreen() {
     if (!dmUser) return;
     socialApi
       .directMessages(dmUser)
-      .then(({ data }) => setDmMessages(data.messages ?? []))
+      .then(({ data }) => setDmMessages(Array.isArray(data) ? data : []))
       .catch(() => setDmMessages([]));
   }, [dmUser]);
 
@@ -75,7 +75,7 @@ export default function FriendsScreen() {
   const challenge = async (name: string) => {
     try {
       const { data } = await socialApi.challengeFriend(name, "blitz");
-      if (data.game_id) router.push(`/play?game=${data.game_id}`);
+      if (data.id) router.push(`/play?game=${data.id}`);
       else setStatus("Défi envoyé");
     } catch {
       setStatus("Défi impossible");
@@ -162,7 +162,7 @@ export default function FriendsScreen() {
                 renderItem={({ item }) => (
                   <View style={styles.card}>
                     <Text style={styles.name}>
-                      {item.user?.display_name || item.user?.username}
+                      {item.from_user?.display_name || item.from_user?.username}
                     </Text>
                     <Pressable style={styles.accept} onPress={() => accept(item.id)}>
                       <Text style={styles.acceptText}>Accepter</Text>
@@ -178,11 +178,11 @@ export default function FriendsScreen() {
             keyExtractor={(item) => String(item.id)}
             ListEmptyComponent={<Text style={styles.empty}>Aucun ami pour l'instant</Text>}
             renderItem={({ item }) => {
-              const other = item.user?.id === user.id ? item.friend : item.user;
-              const name = other?.username ?? "";
+              const other = friendPeer(item, user.id);
+              const name = other.username;
               return (
                 <View style={styles.card}>
-                  <Text style={styles.name}>{other?.display_name || name}</Text>
+                  <Text style={styles.name}>{other.display_name || name}</Text>
                   <View style={styles.actions}>
                     <Pressable style={styles.actionBtn} onPress={() => void challenge(name)}>
                       <Text style={styles.actionText}>Défi</Text>

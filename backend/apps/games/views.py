@@ -396,10 +396,7 @@ class ChallengeUserView(APIView):
     def post(self, request):
         from django.contrib.auth import get_user_model
 
-        from apps.notifications.models import Notification
-        from apps.social.relationships import is_blocked
-
-        from .odds import fen_for_odds
+        from .challenge_service import ChallengeError, create_player_challenge
 
         User = get_user_model()
         username = (request.data.get("username") or "").strip()
@@ -409,50 +406,28 @@ class ChallengeUserView(APIView):
             opponent = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response({"error": "Joueur introuvable"}, status=404)
-        if opponent == request.user:
-            return Response({"error": "Impossible"}, status=400)
-        if is_blocked(request.user, opponent):
-            return Response({"error": "Action non autorisée"}, status=403)
 
         mode = request.data.get("mode", "blitz")
         odds = request.data.get("odds", "none")
-        is_rated = bool(request.data.get("is_rated", True))
+        is_rated = bool(request.data.get("is_rated", False))
         time_control = request.data.get("time_control")
         is_timed = request.data.get("is_timed", True)
-        from .time_control import default_time_control_for_mode
-
-        if is_timed and not time_control:
-            time_control = default_time_control_for_mode(mode)
-
-        if is_rated:
-            svc = MatchmakingService()
-            try:
-                svc._check_fairplay(request.user, True)
-            except ValueError as exc:
-                return Response({"error": str(exc), "code": "fairplay_sanction"}, status=403)
-
-        starting_fen = fen_for_odds(odds)
-        game = GameService().create_friend_game(
-            request.user,
-            opponent,
-            mode=mode,
-            is_rated=is_rated,
-            is_timed=bool(is_timed),
-            time_control=time_control,
-            starting_fen=starting_fen,
-            odds_preset=odds if odds and odds != "none" else "",
-        )
-        Notification.objects.create(
-            user=opponent,
-            type=Notification.Type.GAME_INVITE,
-            title=f"{request.user.display_name or request.user.username} vous défie",
-            body=f"Partie {mode} — rejoignez la partie",
-            data={
-                "game_id": str(game.id),
-                "mode": mode,
-                "from_username": request.user.username,
-            },
-        )
+        try:
+            game = create_player_challenge(
+                request.user,
+                opponent,
+                require_friends=False,
+                mode=mode,
+                odds=odds,
+                is_rated=is_rated,
+                is_timed=bool(is_timed),
+                time_control=time_control,
+            )
+        except ChallengeError as exc:
+            payload = {"error": exc.message}
+            if exc.code:
+                payload["code"] = exc.code
+            return Response(payload, status=exc.status)
         return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
 
 
@@ -760,7 +735,7 @@ class CorrespondenceChallengeView(APIView):
     def post(self, request):
         from django.contrib.auth import get_user_model
 
-        from apps.social.views import _are_friends
+        from apps.social.relationships import are_friends
 
         from .correspondence import create_correspondence_game
 
@@ -773,7 +748,7 @@ class CorrespondenceChallengeView(APIView):
             return Response({"error": "Joueur introuvable"}, status=404)
         if opponent == request.user:
             return Response({"error": "Impossible"}, status=400)
-        if not _are_friends(request.user, opponent):
+        if not are_friends(request.user, opponent):
             return Response({"error": "Vous devez être amis"}, status=400)
         color = request.data.get("color", "white")
         if color == "black":

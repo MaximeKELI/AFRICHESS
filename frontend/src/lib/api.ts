@@ -442,7 +442,13 @@ export const socialApi = {
     username: string,
     mode = "blitz",
     opts?: { odds?: string; is_rated?: boolean; time_control?: string; is_timed?: boolean }
-  ) => api.post("/social/friends/challenge/", { username, mode, ...opts }),
+  ) =>
+    api.post("/social/friends/challenge/", {
+      username,
+      mode,
+      is_rated: opts?.is_rated ?? false,
+      ...opts,
+    }),
   chatHistory: (roomType: string, roomId: string) =>
     api.get(`/social/chat/${roomType}/${roomId}/`),
   sendChat: (roomType: string, roomId: string, message: string) =>

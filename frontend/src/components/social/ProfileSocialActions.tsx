@@ -49,7 +49,7 @@ export function ProfileSocialActions({ username, onChange }: ProfileSocialAction
     }
   };
 
-  const { friendship_status, friendship_id, is_following, followers_count, following_count } = rel;
+  const { friendship_status, friendship_id, is_following, followers_count, following_count, can_message } = rel;
 
   return (
     <div className="space-y-3">
@@ -94,6 +94,15 @@ export function ProfileSocialActions({ username, onChange }: ProfileSocialAction
             </button>
           </>
         )}
+        {can_message && friendship_status !== "friends" && friendship_status !== "blocked" && (
+          <Link
+            href={`/messages/${encodeURIComponent(username)}`}
+            className="px-4 py-2 rounded-lg border text-sm hover:border-africhess-gold"
+          >
+            {t("social.message")}
+          </Link>
+        )}
+
         {friendship_status === "friends" && (
           <>
             <Link

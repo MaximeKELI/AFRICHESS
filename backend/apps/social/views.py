@@ -8,7 +8,6 @@ from rest_framework.views import APIView
 
 from apps.common.text_validation import FORUM_COMMENT_MAX, validate_user_text
 from apps.games.serializers import GameSerializer
-from apps.games.services import GameService
 from apps.notifications.models import Notification
 from apps.ratings.models import PlayerRating
 
@@ -376,39 +375,29 @@ class ChallengeFriendView(APIView):
             opponent = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response({"error": "Joueur introuvable"}, status=404)
-        if opponent == request.user:
-            return Response({"error": "Impossible"}, status=400)
-        if not are_friends(request.user, opponent):
-            return Response({"error": "Vous devez être amis"}, status=400)
 
         odds = request.data.get("odds", "none")
-        is_rated = request.data.get("is_rated", True)
+        is_rated = bool(request.data.get("is_rated", False))
         time_control = request.data.get("time_control")
         is_timed = request.data.get("is_timed", True)
-        from apps.games.time_control import default_time_control_for_mode
+        from apps.games.challenge_service import ChallengeError, create_player_challenge
 
-        if is_timed and not time_control:
-            time_control = default_time_control_for_mode(mode)
-        from apps.games.odds import fen_for_odds
-
-        starting_fen = fen_for_odds(odds)
-        game = GameService().create_friend_game(
-            request.user,
-            opponent,
-            mode=mode,
-            is_rated=bool(is_rated),
-            is_timed=bool(is_timed),
-            time_control=time_control,
-            starting_fen=starting_fen,
-            odds_preset=odds if odds and odds != "none" else "",
-        )
-        Notification.objects.create(
-            user=opponent,
-            type=Notification.Type.GAME_INVITE,
-            title=f"{request.user.display_name or request.user.username} vous défie",
-            body=f"Partie {mode} — rejoignez la partie",
-            data={"game_id": str(game.id), "mode": mode},
-        )
+        try:
+            game = create_player_challenge(
+                request.user,
+                opponent,
+                require_friends=True,
+                mode=mode,
+                odds=odds,
+                is_rated=is_rated,
+                is_timed=bool(is_timed),
+                time_control=time_control,
+            )
+        except ChallengeError as exc:
+            payload = {"error": exc.message}
+            if exc.code:
+                payload["code"] = exc.code
+            return Response(payload, status=exc.status)
         return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
 
 

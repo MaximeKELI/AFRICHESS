@@ -45,3 +45,18 @@ class ChallengeFriendViewTests(TestCase):
         game = Game.objects.get(id=res.data["id"])
         self.assertEqual(game.white_time_ms, 180_000)
         self.assertEqual(game.increment_ms, 2_000)
+
+    def test_challenge_friend_notification_includes_from_username(self):
+        from apps.notifications.models import Notification
+
+        res = self.client.post(
+            "/api/social/friends/challenge/",
+            {"username": self.b.username, "mode": "blitz", "is_rated": False},
+            format="json",
+        )
+        self.assertEqual(res.status_code, 201, res.data)
+        notif = Notification.objects.filter(
+            user=self.b, type=Notification.Type.GAME_INVITE
+        ).latest("created_at")
+        self.assertEqual(notif.data.get("from_username"), self.a.username)
+        self.assertEqual(notif.data.get("game_id"), str(res.data["id"]))

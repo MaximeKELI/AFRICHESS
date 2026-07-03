@@ -82,8 +82,10 @@ export function getUserAvatarUrl(
     const resolved = resolveMediaUrl(avatar);
     if (resolved) return resolved;
   }
-  const preset = avatarPreset || "avatar-1";
-  return getAiAvatarSrc(preset);
+  if (avatarPreset) {
+    return getAiAvatarSrc(avatarPreset);
+  }
+  return null;
 }
 
 export { isLocalDevMediaUrl };

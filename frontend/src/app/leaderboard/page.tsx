@@ -93,7 +93,7 @@ export default function LeaderboardPage() {
               <th className="text-left p-4">{t("leaderboard.col.rank")}</th>
               <th className="text-left p-4">{t("leaderboard.col.player")}</th>
               <th className="text-left p-4">{t("leaderboard.col.country")}</th>
-              <th className="text-right p-4">{t("leaderboard.col.rating") || "Rating"}</th>
+              <th className="text-right p-4">{t("leaderboard.col.elo")}</th>
               <th className="text-right p-4">{t("leaderboard.col.games")}</th>
             </tr>
           </thead>

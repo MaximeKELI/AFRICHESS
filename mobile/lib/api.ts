@@ -412,9 +412,13 @@ export interface FriendUser {
 
 export interface FriendRow {
   id: number;
-  user: FriendUser;
-  friend: FriendUser;
+  from_user: FriendUser;
+  to_user: FriendUser;
   status: string;
+}
+
+export function friendPeer(row: FriendRow, myId: number): FriendUser {
+  return row.from_user.id === myId ? row.to_user : row.from_user;
 }
 
 export const socialApi = {
@@ -423,9 +427,9 @@ export const socialApi = {
   request: (username: string) => api.post("/social/friends/request/", { username }),
   accept: (id: number) => api.post(`/social/friends/${id}/accept/`),
   challengeFriend: (username: string, mode = "blitz") =>
-    api.post<{ game_id?: string }>("/social/friends/challenge/", { username, mode }),
+    api.post<{ id: string }>("/social/friends/challenge/", { username, mode, is_rated: false }),
   directMessages: (username: string) =>
-    api.get<{ messages: { id: number; content: string; sender: FriendUser; created_at: string }[] }>(
+    api.get<{ id: number; content: string; sender: FriendUser; created_at: string }[]>(
       `/social/messages/${username}/`
     ),
   sendDirectMessage: (username: string, message: string) =>

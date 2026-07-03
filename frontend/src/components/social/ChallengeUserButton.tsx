@@ -98,10 +98,10 @@ export function ChallengeUserButton({
           onClick={(e) => e.stopPropagation()}
           className="text-sm border rounded-lg px-2 py-1.5 bg-transparent"
         >
-          <option value="bullet">Bullet</option>
-          <option value="blitz">Blitz</option>
-          <option value="rapid">Rapide</option>
-          <option value="classical">Classique</option>
+          <option value="bullet">{t("modes.bullet")}</option>
+          <option value="blitz">{t("modes.blitz")}</option>
+          <option value="rapid">{t("modes.rapid")}</option>
+          <option value="classical">{t("modes.classical")}</option>
         </select>
         <label className="flex items-center gap-1.5 text-sm cursor-pointer">
           <input

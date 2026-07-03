@@ -9,6 +9,7 @@ import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { useTranslation } from "@/hooks/useTranslation";
 import { UserSearchBar } from "@/components/social/UserSearchBar";
+import { UserAvatar } from "@/components/profile/UserAvatar";
 import { defaultPresetForMode, playModeFromPreset, type TimePresetId } from "@/lib/timeControl";
 
 interface UserPublic {
@@ -16,6 +17,8 @@ interface UserPublic {
   username: string;
   display_name: string;
   country: string;
+  avatar?: string | null;
+  avatar_preset?: string | null;
 }
 
 interface Friendship {
@@ -132,9 +135,10 @@ function FriendsContent() {
     setMsg("");
     try {
       const playMode = playModeFromPreset(timePreset);
-      const opts: { odds?: string; time_control: string; is_timed: boolean } = {
+      const opts: { odds?: string; time_control: string; is_timed: boolean; is_rated: boolean } = {
         time_control: timePreset,
         is_timed: true,
+        is_rated: false,
       };
       if (odds !== "none") opts.odds = odds;
       const { data } = await socialApi.challengeFriend(name, playMode, opts);
@@ -302,9 +306,16 @@ function FriendsContent() {
               >
                 <Link
                   href={`/profile/${f.username}`}
-                  className="text-left flex-1 min-w-0 hover:text-africhess-gold"
+                  className="text-left flex-1 min-w-0 hover:text-africhess-gold flex items-center gap-2"
                 >
-                  <span className="font-medium">{f.display_name || f.username}</span>
+                  <UserAvatar
+                    avatar={f.avatar}
+                    avatarPreset={f.avatar_preset}
+                    displayName={f.display_name}
+                    username={f.username}
+                    size={32}
+                  />
+                  <span className="font-medium truncate">{f.display_name || f.username}</span>
                   {f.country && (
                     <span className="text-xs opacity-60 ml-2">{f.country}</span>
                   )}

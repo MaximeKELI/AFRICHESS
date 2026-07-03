@@ -53,6 +53,12 @@ interface LeaderboardRow {
   solved_count: number;
 }
 
+interface RushLeaderboardRow {
+  username: string;
+  display_name: string;
+  score: number;
+}
+
 type Tab = "daily" | "training" | "rush" | "battle" | "survival" | "leaderboard";
 
 const THEMATIC_PATHS = [
@@ -94,6 +100,7 @@ export default function PuzzlesPage() {
   const [battleScoreYou, setBattleScoreYou] = useState(0);
   const [battleScoreOpp, setBattleScoreOpp] = useState(0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
+  const [rushLeaderboard, setRushLeaderboard] = useState<RushLeaderboardRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [puzzleFailed, setPuzzleFailed] = useState(false);
   const [celebration, setCelebration] = useState<PuzzleCelebrationData | null>(null);
@@ -323,6 +330,13 @@ export default function PuzzlesPage() {
       });
   };
 
+  const loadRushLeaderboard = () => {
+    puzzlesApi
+      .rushLeaderboard()
+      .then(({ data }) => setRushLeaderboard(Array.isArray(data) ? data : []))
+      .catch(() => setRushLeaderboard([]));
+  };
+
   const loadRush = () => {
     if (!user) {
       setLoadError(t("puzzles.rush.loginRequired"));
@@ -453,7 +467,10 @@ export default function PuzzlesPage() {
   useEffect(() => {
     if (tab === "daily") loadDaily();
     else if (tab === "training") loadTraining();
-    else if (tab === "rush") loadRush();
+    else if (tab === "rush") {
+      loadRushLeaderboard();
+      loadRush();
+    }
     else if (tab === "battle") loadBattle();
     else if (tab === "survival") loadSurvival();
     else if (tab === "leaderboard") loadLeaderboard();
@@ -964,6 +981,29 @@ export default function PuzzlesPage() {
           </>
         )}
       </div>
+
+      {tab === "rush" && (
+        <div className="glass-card p-4 mb-6">
+          <h3 className="font-semibold text-sm mb-2">{t("puzzles.rush.leaderboard.title")}</h3>
+          {rushLeaderboard.length === 0 ? (
+            <p className="text-xs opacity-60">{t("puzzles.leaderboard.empty")}</p>
+          ) : (
+            <ol className="text-sm space-y-1">
+              {rushLeaderboard.slice(0, 10).map((row, i) => (
+                <li key={row.username} className="flex justify-between gap-2">
+                  <span className="truncate">
+                    {i + 1}.{" "}
+                    <a href={`/profile/${row.username}`} className="hover:text-africhess-gold hover:underline">
+                      {row.display_name || row.username}
+                    </a>
+                  </span>
+                  <span className="text-africhess-gold font-mono shrink-0">{row.score}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      )}
 
       {tab === "leaderboard" && (
         <div className="glass-card p-6">

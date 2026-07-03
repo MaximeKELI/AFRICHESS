@@ -117,9 +117,7 @@ class PuzzleLeaderboardView(APIView):
         user_ids = [r["user_id"] for r in rows]
         users = {
             u.pk: u
-            for u in User.objects.filter(pk__in=user_ids).only(
-                "id", "username", "display_name"
-            )
+            for u in User.objects.filter(pk__in=user_ids).only("id", "username")
         }
         out = []
         for i, row in enumerate(rows, 1):
@@ -368,12 +366,12 @@ class PuzzleRushLeaderboardView(APIView):
         users = {u.pk: u for u in User.objects.filter(pk__in=[r["user_id"] for r in rows])}
         return Response([
             {
-                "username": users[r["user_id"]].username,
-                "display_name": users[r["user_id"]].display_name,
+                "username": u.username,
+                "display_name": u.display_name or u.username,
                 "score": r["best_score"],
             }
             for r in rows
-            if r["user_id"] in users
+            if (u := users.get(r["user_id"]))
         ])
 
 
