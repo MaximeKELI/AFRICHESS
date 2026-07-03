@@ -5,6 +5,7 @@ export interface GamePlayerPublic {
   username: string;
   display_name?: string | null;
   avatar?: string | null;
+  avatar_preset?: string | null;
   country?: string | null;
   title?: string | null;
   flair?: string | null;
@@ -39,6 +40,7 @@ export interface PlayerDisplayInfo {
   country?: string | null;
   title?: string | null;
   avatar?: string | null;
+  avatar_preset?: string | null;
   flair?: string | null;
   aiAvatarSrc?: string;
   isYou?: boolean;
@@ -59,6 +61,7 @@ function sideFromUser(
     country: player.country ?? null,
     title: player.title ?? null,
     avatar: player.avatar ?? null,
+    avatarPreset: player.avatar_preset ?? null,
     flair: player.flair ?? null,
     isYou: currentUserId != null && player.id === currentUserId,
   };
