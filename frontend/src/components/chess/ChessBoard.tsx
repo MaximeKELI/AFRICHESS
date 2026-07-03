@@ -8,6 +8,7 @@ import { playChessSound, preloadChessSounds, soundForMove } from "@/lib/chessSou
 import { accentRgba, getBoardTheme, getThemedSquareStyles, themeHasTexturedSquares } from "@/lib/boardThemes";
 import { useAuthStore } from "@/store/auth";
 import { customPiecesForSet } from "@/lib/pieceSets";
+import { isPawnPromotion } from "@/lib/promotion";
 import { usePreferencesStore } from "@/store/preferences";
 import { PromotionDialog } from "./PromotionDialog";
 import { MoveClassPieceBadge } from "./MoveClassPieceBadge";
@@ -239,19 +240,14 @@ function ChessBoardInner({
   const applyMove = useCallback(
     (from: Square, to: Square, promotion?: "q" | "r" | "b" | "n"): boolean => {
       if (serverValidated) {
-        const piece = activeChess.get(from);
-        const rank = to[1];
-        const isPawnPromotion =
-          piece?.type === "p" &&
-          ((piece.color === "w" && rank === "8") ||
-            (piece.color === "b" && rank === "1"));
-        if (isPawnPromotion && !promotion) {
+        const promoting = isPawnPromotion(activeChess.get(from), to);
+        if (promoting && !promotion) {
           setPromotionPending({ from, to });
           setSelectedSquare(null);
           setLegalTargets([]);
           return false;
         }
-        return applyMoveServer(from, to, isPawnPromotion ? promotion : undefined);
+        return applyMoveServer(from, to, promoting ? promotion : undefined);
       }
       const g = new Chess(game.fen());
       const legal = g.moves({ square: from, verbose: true });
