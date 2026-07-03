@@ -377,14 +377,39 @@ class ChessEngineService:
         """Analyse à partir d'un PGN (module apprentissage)."""
         return self.analyze_game_moves(self._moves_from_pgn(pgn))
 
+    @staticmethod
+    def _analysis_limit(depth: int, movetime_ms: int | None = None) -> chess.engine.Limit:
+        if movetime_ms:
+            return chess.engine.Limit(depth=depth, time=movetime_ms / 1000.0)
+        return chess.engine.Limit(depth=depth)
+
+    @staticmethod
+    def _pv_to_san(board: chess.Board, pv: list[chess.Move]) -> str | None:
+        if not pv:
+            return None
+        tmp = board.copy()
+        sans: list[str] = []
+        for pv_move in pv[:4]:
+            if pv_move not in tmp.legal_moves:
+                break
+            sans.append(tmp.san(pv_move))
+            tmp.push(pv_move)
+        return " ".join(sans) if sans else None
+
     def analyze_game_moves(
-        self, moves: list[tuple[str, bool]], depth: int = 12
+        self,
+        moves: list[tuple[str, bool]],
+        depth: int = 12,
+        *,
+        movetime_ms: int | None = None,
     ) -> list[MoveEvaluation]:
         """Analyse une partie à partir des coups UCI (uci, played_by_white)."""
         board = chess.Board()
         evaluations: list[MoveEvaluation] = []
+        limit = self._analysis_limit(depth, movetime_ms)
         try:
             with self._use_engine() as engine:
+                info = engine.analyse(board, limit)
                 for uci, played_by_white in moves:
                     try:
                         move = chess.Move.from_uci(uci)
@@ -394,30 +419,16 @@ class ChessEngineService:
                     if move not in board.legal_moves:
                         logger.warning("Illegal move in analysis: %s", uci)
                         break
-                    info_before = engine.analyse(
-                        board, chess.engine.Limit(depth=depth)
-                    )
-                    eval_before = self._score_to_cp(info_before["score"].white())
-                    pv = info_before.get("pv") or []
+                    eval_before = self._score_to_cp(info["score"].white())
+                    pv = info.get("pv") or []
                     best_move = pv[0] if pv else None
                     best_san = board.san(best_move) if best_move else None
                     best_uci = best_move.uci() if best_move else None
-                    pv_san = None
-                    if pv:
-                        tmp = board.copy()
-                        sans = []
-                        for pv_move in pv[:4]:
-                            if pv_move not in tmp.legal_moves:
-                                break
-                            sans.append(tmp.san(pv_move))
-                            tmp.push(pv_move)
-                        pv_san = " ".join(sans) if sans else None
+                    pv_san = self._pv_to_san(board, pv)
                     san = board.san(move)
                     board.push(move)
-                    info_after = engine.analyse(
-                        board, chess.engine.Limit(depth=depth)
-                    )
-                    eval_after = self._score_to_cp(info_after["score"].white())
+                    info = engine.analyse(board, limit)
+                    eval_after = self._score_to_cp(info["score"].white())
                     if played_by_white:
                         cp_loss = max(0, eval_before - eval_after)
                         eval_gain = eval_after - eval_before
