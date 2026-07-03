@@ -389,6 +389,69 @@ class MatchmakingStatusView(APIView):
         return Response(payload)
 
 
+@extend_schema(summary="Défier un joueur (ami ou non)")
+class ChallengeUserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        from django.contrib.auth import get_user_model
+
+        from apps.notifications.models import Notification
+        from apps.social.relationships import is_blocked
+
+        from .odds import fen_for_odds
+
+        User = get_user_model()
+        username = (request.data.get("username") or "").strip()
+        if not username:
+            return Response({"error": "username required"}, status=400)
+        try:
+            opponent = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"error": "Joueur introuvable"}, status=404)
+        if opponent == request.user:
+            return Response({"error": "Impossible"}, status=400)
+        if is_blocked(request.user, opponent):
+            return Response({"error": "Action non autorisée"}, status=403)
+
+        mode = request.data.get("mode", "blitz")
+        odds = request.data.get("odds", "none")
+        is_rated = bool(request.data.get("is_rated", True))
+        time_control = request.data.get("time_control")
+        is_timed = request.data.get("is_timed", True)
+
+        if is_rated:
+            svc = MatchmakingService()
+            try:
+                svc._check_fairplay(request.user, True)
+            except ValueError as exc:
+                return Response({"error": str(exc), "code": "fairplay_sanction"}, status=403)
+
+        starting_fen = fen_for_odds(odds)
+        game = GameService().create_friend_game(
+            request.user,
+            opponent,
+            mode=mode,
+            is_rated=is_rated,
+            is_timed=bool(is_timed),
+            time_control=time_control,
+            starting_fen=starting_fen,
+            odds_preset=odds if odds and odds != "none" else "",
+        )
+        Notification.objects.create(
+            user=opponent,
+            type=Notification.Type.GAME_INVITE,
+            title=f"{request.user.display_name or request.user.username} vous défie",
+            body=f"Partie {mode} — rejoignez la partie",
+            data={
+                "game_id": str(game.id),
+                "mode": mode,
+                "from_username": request.user.username,
+            },
+        )
+        return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
+
+
 @extend_schema(
     summary="Évaluation Stockfish d'une position FEN",
     parameters=[OpenApiParameter(name="fen", type=str, required=True)],

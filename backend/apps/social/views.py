@@ -460,6 +460,13 @@ class DirectMessageListView(APIView):
             room_id=room_id,
             content=content,
         )
+        Notification.objects.create(
+            user=other,
+            type=Notification.Type.DIRECT_MESSAGE,
+            title=f"{request.user.display_name or request.user.username}",
+            body=content[:200],
+            data={"from_username": request.user.username, "room_id": room_id},
+        )
         return Response(ChatMessageSerializer(msg).data, status=201)
 
 

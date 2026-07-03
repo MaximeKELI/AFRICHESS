@@ -12,6 +12,7 @@ urlpatterns = [
     path("active/", views.active_games, name="active-games"),
     path("matchmaking/", views.MatchmakingView.as_view(), name="matchmaking"),
     path("matchmaking/status/", views.MatchmakingStatusView.as_view(), name="matchmaking-status"),
+    path("challenge/", views.ChallengeUserView.as_view(), name="challenge-user"),
     path("live/", views.LiveGamesView.as_view(), name="live-games"),
     path("live/tv/", views.LiveTvView.as_view(), name="live-tv"),
     path("broadcasts/", broadcast_views.BroadcastListCreateView.as_view(), name="broadcast-list"),
