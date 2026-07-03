@@ -132,8 +132,21 @@ export const authApi = {
   register: (data: Record<string, string | number>) =>
     api.post("/users/register/", data),
   profile: () => api.get("/users/profile/"),
-  updateProfile: (data: Record<string, string> | FormData) =>
-    api.patch("/users/profile/", data),
+  updateProfile: (data: Record<string, string> | FormData) => {
+    if (data instanceof FormData) {
+      return api.patch("/users/profile/", data, {
+        transformRequest: [
+          (body, headers) => {
+            if (headers && typeof headers === "object") {
+              delete (headers as Record<string, unknown>)["Content-Type"];
+            }
+            return body;
+          },
+        ],
+      });
+    }
+    return api.patch("/users/profile/", data);
+  },
 };
 
 export const usersApi = {
