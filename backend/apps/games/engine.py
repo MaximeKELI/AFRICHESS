@@ -4,7 +4,9 @@ from __future__ import annotations
 import atexit
 import io
 import logging
+import os
 import random
+import shutil
 import threading
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -90,6 +92,22 @@ def close_stockfish_pool() -> None:
     _stockfish_pool.close()
 
 
+def _resolve_stockfish_path() -> str:
+    """Chemin Stockfish — env, PATH, emplacements courants."""
+    configured = getattr(settings, "STOCKFISH_PATH", "") or ""
+    candidates = [
+        configured,
+        shutil.which("stockfish") or "",
+        "/usr/games/stockfish",
+        "/usr/bin/stockfish",
+        "/usr/local/bin/stockfish",
+    ]
+    for path in candidates:
+        if path and os.path.isfile(path) and os.access(path, os.X_OK):
+            return path
+    return configured or "/usr/games/stockfish"
+
+
 @dataclass
 class EngineMove:
     uci: str
@@ -121,7 +139,7 @@ class ChessEngineService:
     }
 
     def __init__(self, stockfish_path: Optional[str] = None):
-        self.path = stockfish_path or settings.STOCKFISH_PATH
+        self.path = stockfish_path or _resolve_stockfish_path()
 
     @contextmanager
     def _use_engine(self) -> Iterator[chess.engine.SimpleEngine]:

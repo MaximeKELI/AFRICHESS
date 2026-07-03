@@ -440,7 +440,9 @@ class GameService:
                         ai_san,
                         played_by_white=not is_white_turn,
                         comment="",
+                        fen_after=nf,
                     )
+                    bump_repetition_count(game)
                     if include_comments:
                         pending_comment_specs.append(
                             _comment_spec(
