@@ -164,7 +164,7 @@ function FriendsContent() {
         </InlineAlert>
       )}
 
-      <div className="glass-card p-4 mb-6">
+      <div className="glass-card p-4 mb-6 relative overflow-visible">
         <h2 className="font-semibold mb-3">{t("social.search.title")}</h2>
         <UserSearchBar compact />
       </div>
