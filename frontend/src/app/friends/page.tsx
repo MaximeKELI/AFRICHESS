@@ -141,8 +141,8 @@ function FriendsContent() {
         is_rated: false,
       };
       if (odds !== "none") opts.odds = odds;
-      const { data } = await socialApi.challengeFriend(name, playMode, opts);
-      router.push(`/play?game=${data.id}&mode=${playMode}`);
+      await socialApi.challengeFriend(name, playMode, opts);
+      setMsg(t("friends.challenge.sent"));
     } catch {
       setMsg(t("friends.challenge.failed"));
     }

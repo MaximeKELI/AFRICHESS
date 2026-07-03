@@ -85,7 +85,7 @@ export default function NotificationsPage() {
         </InlineAlert>
       )}
 
-      <NotificationList items={items} onMarkRead={markRead} />
+      <NotificationList items={items} onMarkRead={markRead} onRefresh={load} />
     </div>
   );
 }

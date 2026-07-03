@@ -132,6 +132,7 @@ export function NotificationBell() {
                 items={items}
                 onMarkRead={markRead}
                 onNavigate={() => setOpen(false)}
+                onRefresh={load}
                 compact
               />
             )}

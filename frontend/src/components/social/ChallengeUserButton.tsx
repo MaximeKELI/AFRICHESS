@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { gamesApi } from "@/lib/api";
 import { useTranslation } from "@/hooks/useTranslation";
 import { formatApiError } from "@/lib/errors";
@@ -24,9 +23,9 @@ export function ChallengeUserButton({
   compact = false,
 }: ChallengeUserButtonProps) {
   const { t } = useTranslation();
-  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
   const [mode, setMode] = useState("blitz");
   const [isTimed, setIsTimed] = useState(true);
   const [timePreset, setTimePreset] = useState<TimePresetId>(() =>
@@ -44,15 +43,16 @@ export function ChallengeUserButton({
     if (busy) return;
     setBusy(true);
     setError(null);
+    setSent(false);
     try {
       const playMode = isTimed ? playModeFromPreset(timePreset) : mode;
-      const { data } = await gamesApi.challengeUser(username, {
+      await gamesApi.challengeUser(username, {
         mode: playMode,
         is_rated: isRated,
         is_timed: isTimed,
         time_control: isTimed ? timePreset : undefined,
       });
-      router.push(`/play?game=${data.id}&mode=${playMode}`);
+      setSent(true);
     } catch (err) {
       setError(formatApiError(err, t("friends.challenge.failed")));
     } finally {
@@ -79,11 +79,11 @@ export function ChallengeUserButton({
         <button
           type="button"
           onClick={challenge}
-          disabled={busy}
+          disabled={busy || sent}
           className="text-xs px-2.5 py-1 rounded-lg african-gradient text-white shrink-0 disabled:opacity-50"
-          title={error || undefined}
+          title={error || (sent ? t("friends.challenge.sent") : undefined)}
         >
-          {busy ? "…" : t("friends.challenge")}
+          {busy ? "…" : sent ? "✓" : t("friends.challenge")}
         </button>
       </div>
     );
@@ -123,12 +123,15 @@ export function ChallengeUserButton({
       <button
         type="button"
         onClick={challenge}
-        disabled={busy}
+        disabled={busy || sent}
         className="px-4 py-2 rounded-lg african-gradient text-white text-sm disabled:opacity-50"
       >
-        {busy ? t("common.loading") : t("friends.challenge")}
+        {busy ? t("common.loading") : sent ? t("friends.challenge.sent") : t("friends.challenge")}
       </button>
       {error && <p className="text-xs text-africhess-terracotta">{error}</p>}
+      {sent && !error && (
+        <p className="text-xs text-africhess-gold">{t("friends.challenge.sentHint")}</p>
+      )}
     </div>
   );
 }
