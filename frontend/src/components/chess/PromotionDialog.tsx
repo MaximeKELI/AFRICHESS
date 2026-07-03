@@ -40,7 +40,7 @@ export function PromotionDialog({ color, onSelect, onCancel }: PromotionDialogPr
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-layer-modal flex items-center justify-center bg-black/60 p-4"
       role="presentation"
       onClick={onCancel}
     >

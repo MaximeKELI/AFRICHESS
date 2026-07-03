@@ -815,7 +815,7 @@ export function GameReview({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 p-0 sm:p-4"
+      className="fixed inset-0 z-layer-modal flex items-end sm:items-center justify-center bg-black/75 p-0 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="game-review-title"

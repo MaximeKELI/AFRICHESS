@@ -2979,6 +2979,10 @@ const pt: Record<string, string> = {
   "play.loginRequired": "Entre para jogar online.",
   "profile.loginRequired": "Entre para ver seu perfil.",
   "stats.loginRequired": "Entre para ver suas estatísticas.",
+  "chess.review.deep.title": "Coach IA — análise profunda",
+  "chess.review.deep.turningPoints": "Momentos decisivos",
+  "chess.review.deep.integrity": "AIE — integridade",
+  "chess.review.deep.depth": "Stockfish d{depth}",
 };
 
 const sw: Record<string, string> = {

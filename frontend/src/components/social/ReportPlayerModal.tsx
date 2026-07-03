@@ -42,7 +42,7 @@ export function ReportPlayerModal({ username, gameId, onClose, onSuccess }: Repo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog">
+    <div className="fixed inset-0 z-layer-modal flex items-center justify-center p-4 bg-black/60" role="dialog">
       <div className="glass-card w-full max-w-md p-5 space-y-4">
         <h2 className="font-semibold text-lg">{t("report.title")}</h2>
         <p className="text-sm opacity-70">{username}</p>

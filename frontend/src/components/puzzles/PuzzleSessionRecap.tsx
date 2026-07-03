@@ -25,7 +25,7 @@ export function PuzzleSessionRecapModal({
     .slice(0, 4);
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/70" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-layer-modal flex items-center justify-center p-4 bg-black/70" role="dialog" aria-modal="true">
       <div className="glass-card max-w-md w-full p-6 space-y-4 puzzle-recap-modal">
         <h2 className="font-display text-xl font-bold text-africhess-gold">
           {t("puzzles.recap.title")}

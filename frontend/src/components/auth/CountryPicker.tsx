@@ -72,7 +72,7 @@ export function CountryPicker({ value, onChange, className }: CountryPickerProps
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full glass-card border border-white/15 shadow-xl overflow-hidden">
+        <div className="absolute z-layer-popover mt-1 w-full glass-card border border-white/15 shadow-xl overflow-hidden">
           <div className="p-2 border-b border-white/10">
             <input
               type="search"

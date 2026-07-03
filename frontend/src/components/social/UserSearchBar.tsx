@@ -107,13 +107,12 @@ export function UserSearchBar({ compact = false }: { compact?: boolean }) {
       ? createPortal(
           <div
             data-user-search-dropdown
-            className="rounded-xl border border-white/10 bg-[var(--card)] shadow-2xl overflow-hidden max-h-80 overflow-y-auto"
+            className="rounded-xl border border-white/10 bg-[var(--card)] shadow-2xl overflow-hidden max-h-80 overflow-y-auto z-layer-search"
             style={{
               position: "fixed",
               top: dropdownRect.top,
               left: dropdownRect.left,
               width: dropdownRect.width,
-              zIndex: 210,
             }}
             role="listbox"
           >

@@ -263,10 +263,10 @@ function FriendsContent() {
             }}
             className="text-sm border rounded-lg px-2 py-1 bg-transparent"
           >
-            <option value="bullet">Bullet</option>
-            <option value="blitz">Blitz</option>
-            <option value="rapid">Rapide</option>
-            <option value="classical">Classique</option>
+            <option value="bullet">{t("modes.bullet")}</option>
+            <option value="blitz">{t("modes.blitz")}</option>
+            <option value="rapid">{t("modes.rapid")}</option>
+            <option value="classical">{t("modes.classical")}</option>
           </select>
           <select
             value={timePreset}

@@ -50,7 +50,7 @@ export function GameEndOverlay({
   return (
     <div
       className={clsx(
-        "fixed inset-0 z-[300] flex items-center justify-center p-4 transition-opacity duration-500",
+        "fixed inset-0 z-layer-game-end flex items-center justify-center p-4 transition-opacity duration-500",
         visible ? "opacity-100" : "opacity-0"
       )}
       role="dialog"
