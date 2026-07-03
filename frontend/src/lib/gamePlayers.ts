@@ -39,9 +39,9 @@ export interface PlayerDisplayInfo {
   eloProvisional?: boolean;
   country?: string | null;
   title?: string | null;
-  avatar?: string | null;
-  avatar_preset?: string | null;
   flair?: string | null;
+  avatar?: string | null;
+  avatarPreset?: string | null;
   aiAvatarSrc?: string;
   isYou?: boolean;
 }
