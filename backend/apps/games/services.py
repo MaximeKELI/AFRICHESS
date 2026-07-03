@@ -974,12 +974,14 @@ class MatchmakingService:
             mmr.leave_user(uid)
 
     def pair_all_waiting(self):
-        """Réconciliation PG (+ Redis si disponible)."""
+        """Réconciliation Redis puis PG (ne dépend pas uniquement de Celery beat)."""
         self.cleanup_stale()
         from . import matchmaking_redis as mmr
 
         if mmr.is_redis_matchmaking_available():
-            pass  # retry_all_waiting_pools (2 s) gère Redis
+            from .matchmaking_pools import retry_all_waiting_pools
+
+            retry_all_waiting_pools()
         return self._pair_all_waiting_pg()
 
     def _pair_all_waiting_pg(self):

@@ -438,6 +438,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
                 {"event": "connected", "data": {"user_id": self.user.id}}
             )
         )
+        await self._deliver_pending_match()
 
     async def disconnect(self, close_code):
         if getattr(self, "user_group", None) and self.user.is_authenticated:
@@ -567,6 +568,52 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
         from .models import MatchmakingQueue
 
         return MatchmakingQueue.objects.filter(user=self.user).exists()
+
+    async def _deliver_pending_match(self):
+        """Partie créée pendant que le client n'était pas encore connecté au WS."""
+        pending = await self._find_recent_matchmaking_game()
+        if not pending:
+            return
+        game_id, room_id, mode = pending
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "event": "match_found",
+                    "data": {
+                        "game_id": game_id,
+                        "room_id": room_id,
+                        "mode": mode,
+                    },
+                }
+            )
+        )
+
+    @database_sync_to_async
+    def _find_recent_matchmaking_game(self):
+        from datetime import timedelta
+
+        from django.db.models import Q
+
+        from .models import MatchmakingQueue
+
+        if MatchmakingQueue.objects.filter(user=self.user).exists():
+            return None
+
+        cutoff = timezone.now() - timedelta(seconds=120)
+        game = (
+            Game.objects.filter(
+                Q(white_player=self.user) | Q(black_player=self.user),
+                status=Game.Status.ACTIVE,
+                is_vs_ai=False,
+                created_at__gte=cutoff,
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        if not game:
+            return None
+        room = ensure_game_room(game)
+        return str(game.id), str(room.room_id), game.mode
 
 
 class SimulConsumer(AsyncWebsocketConsumer):
