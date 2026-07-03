@@ -368,7 +368,11 @@ class MatchmakingStatusView(APIView):
         from django.core.cache import cache
 
         from . import matchmaking_redis as mmr
-        from .matchmaking_pools import pool_stats
+        from .matchmaking_pools import pool_stats, retry_all_waiting_pools
+
+        if mmr.is_redis_matchmaking_available():
+            retry_all_waiting_pools()
+        MatchmakingService().pair_all_waiting()
 
         cached = cache.get("mm:status")
         if cached is not None:
