@@ -67,6 +67,7 @@ export function UserAvatar({
           fill
           className="object-cover"
           sizes={`${size}px`}
+          unoptimized={isLocalDevMediaUrl(src)}
           onError={() => setBroken(true)}
         />
       </span>
