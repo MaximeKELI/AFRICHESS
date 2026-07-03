@@ -52,6 +52,17 @@ export interface GameAnalysisData {
   key_moments_json?: { ply: number; san: string; text: string; text_en?: string }[];
   deep_review_json?: DeepReviewData | null;
   analysis_depth_used?: number;
+  analysis_incomplete?: boolean;
+}
+
+export function isAnalysisIncomplete(
+  analysis: GameAnalysisData | null | undefined,
+  moveCount?: number
+): boolean {
+  if (!analysis) return false;
+  if (analysis.analysis_incomplete) return true;
+  if (!moveCount || moveCount <= 0) return false;
+  return analysis.best_moves_json.length < moveCount;
 }
 
 export function resolveMoveAccuracies(data: GameAnalysisData) {
@@ -88,5 +99,6 @@ export function parseAnalysisPayload(payload: unknown): GameAnalysisData | null 
         : undefined,
     analysis_depth_used:
       typeof p.analysis_depth_used === "number" ? p.analysis_depth_used : undefined,
+    analysis_incomplete: p.analysis_incomplete === true,
   };
 }

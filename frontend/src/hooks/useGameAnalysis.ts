@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { gamesApi } from "@/lib/api";
 import {
+  isAnalysisIncomplete,
   parseAnalysisPayload,
   type GameAnalysisData,
 } from "@/lib/gameAnalysis";
@@ -14,6 +15,8 @@ interface UseGameAnalysisOptions {
   autoRun?: boolean;
   /** Attendre l'analyse auto (cache/WS) avant de relancer Stockfish */
   cacheFirst?: boolean;
+  /** Nombre de coups de la partie — détecte les anciennes analyses tronquées */
+  moveCount?: number;
 }
 
 const SYNC_TIMEOUT_MS = 45000;

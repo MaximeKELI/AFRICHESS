@@ -24,6 +24,7 @@ export default function GameReviewPage({ params }: GameReviewPageProps) {
   const [playerIsWhite, setPlayerIsWhite] = useState(true);
   const [orientation, setOrientation] = useState<"white" | "black">("white");
   const [result, setResult] = useState<string | undefined>();
+  const [moveCount, setMoveCount] = useState<number | undefined>();
   const [initialAnalysis, setInitialAnalysis] = useState(
     () => null as ReturnType<typeof parseAnalysisPayload>
   );
