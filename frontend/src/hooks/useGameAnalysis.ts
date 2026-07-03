@@ -119,22 +119,24 @@ export function useGameAnalysis({
   }, [gameId, t]);
 
   useEffect(() => {
-    if (initialAnalysis) {
-      setAnalysis((prev) => prev ?? initialAnalysis);
-      if (cachePollStartedRef.current) {
-        abortRef.current?.abort();
-        cachePollStartedRef.current = false;
-        setLoading(false);
-      }
+    if (!initialAnalysis || isAnalysisIncomplete(initialAnalysis, moveCount)) return;
+    setAnalysis((prev) => prev ?? initialAnalysis);
+    if (cachePollStartedRef.current) {
+      abortRef.current?.abort();
+      cachePollStartedRef.current = false;
+      setLoading(false);
     }
-  }, [initialAnalysis]);
+  }, [initialAnalysis, moveCount]);
 
   useEffect(() => {
     if (!enabled || !autoRun || !gameId) return;
-    if (analysis) return;
+    if (analysis && !isAnalysisIncomplete(analysis, moveCount)) return;
 
     if (cacheFirst) {
-      if (initialAnalysis) return;
+      const cached = initialAnalysis && !isAnalysisIncomplete(initialAnalysis, moveCount)
+        ? initialAnalysis
+        : null;
+      if (cached) return;
       if (cachePollStartedRef.current) return;
       cachePollStartedRef.current = true;
 

@@ -1379,6 +1379,7 @@ function PlayContent() {
               playerIsWhite={playerIsWhite}
               orientation={orientation}
               initialAnalysis={gameData.analysis ?? null}
+              moveCount={gameData.move_count}
               result={gameData.result}
               cacheFirst
               onClose={() => setReviewOpen(false)}
