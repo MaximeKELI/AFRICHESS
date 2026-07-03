@@ -164,6 +164,20 @@ export const usersApi = {
   totpDisable: (code: string) => api.post("/users/security/2fa/disable/", { code }),
 };
 
+export interface GameChallenge {
+  id: number;
+  status: string;
+  mode: string;
+  odds?: string;
+  is_rated: boolean;
+  is_timed: boolean;
+  time_control?: string;
+  game_id?: string | null;
+  challenger: { id: number; username: string; display_name?: string };
+  opponent: { id: number; username: string; display_name?: string };
+  created_at: string;
+}
+
 export const gamesApi = {
   list: () => api.get("/games/"),
   get: (id: string) => api.get(`/games/${id}/`),
@@ -229,7 +243,9 @@ export const gamesApi = {
   ) => api.post<GameChallenge>("/games/challenge/", { username, ...opts }),
   pendingChallenges: () => api.get<GameChallenge[]>("/games/challenges/pending/"),
   acceptChallenge: (id: number) =>
-    api.post<{ challenge: GameChallenge; game: GameData }>(`/games/challenges/${id}/accept/`),
+    api.post<{ challenge: GameChallenge; game: { id: string; mode?: string } }>(
+      `/games/challenges/${id}/accept/`
+    ),
   declineChallenge: (id: number) => api.post<GameChallenge>(`/games/challenges/${id}/decline/`),
   cancelChallenge: (id: number) => api.post<GameChallenge>(`/games/challenges/${id}/cancel/`),
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),
@@ -448,7 +464,7 @@ export const socialApi = {
     mode = "blitz",
     opts?: { odds?: string; is_rated?: boolean; time_control?: string; is_timed?: boolean }
   ) =>
-    api.post("/social/friends/challenge/", {
+    api.post<GameChallenge>("/social/friends/challenge/", {
       username,
       mode,
       is_rated: opts?.is_rated ?? false,
