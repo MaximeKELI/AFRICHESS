@@ -86,6 +86,7 @@ export default function PublicProfilePage() {
       <div className="flex items-start gap-5">
         <UserAvatar
           avatar={profile.avatar}
+          avatarPreset={profile.avatar_preset}
           displayName={profile.display_name}
           username={profile.username}
           size={88}

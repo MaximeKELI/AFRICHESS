@@ -89,9 +89,16 @@ export default function MessagesInboxPage() {
             <li key={f.id}>
               <Link
                 href={`/messages/${encodeURIComponent(f.username)}`}
-                className="glass-card flex items-center justify-between gap-3 p-4 hover:border-africhess-gold/40 transition-colors"
+                className="glass-card flex items-center gap-3 p-4 hover:border-africhess-gold/40 transition-colors"
               >
-                <div className="min-w-0">
+                <UserAvatar
+                  avatar={f.avatar}
+                  avatarPreset={f.avatar_preset}
+                  displayName={f.display_name}
+                  username={f.username}
+                  size={44}
+                />
+                <div className="min-w-0 flex-1">
                   <p className="font-medium truncate">{f.display_name || f.username}</p>
                   <p className="text-xs opacity-50">@{f.username}</p>
                 </div>

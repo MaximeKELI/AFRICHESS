@@ -166,6 +166,7 @@ export default function ProfilePage() {
         <h2 className="font-semibold text-lg">{t("profile.customize")}</h2>
         <UserAvatarUpload
           avatar={user.avatar}
+          avatarPreset={user.avatar_preset}
           displayName={user.display_name}
           username={user.username}
           onUpdated={fetchProfile}

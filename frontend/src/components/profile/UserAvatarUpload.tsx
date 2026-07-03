@@ -16,6 +16,7 @@ interface UserAvatarUploadProps {
 
 export function UserAvatarUpload({
   avatar,
+  avatarPreset,
   displayName,
   username,
   onUpdated,
@@ -52,7 +53,13 @@ export function UserAvatarUpload({
     <div>
       <p className="text-sm font-medium mb-3">{t("profile.avatar.title")}</p>
       <div className="flex items-center gap-4">
-        <UserAvatar avatar={avatar} displayName={displayName} username={username} size={72} />
+        <UserAvatar
+          avatar={avatar}
+          avatarPreset={avatarPreset}
+          displayName={displayName}
+          username={username}
+          size={72}
+        />
         <div className="space-y-2">
           <button
             type="button"
