@@ -51,7 +51,18 @@ class GameNeedsAutoAnalysisTests(TestCase):
         with override_settings(AUTO_GAME_ANALYSIS_MIN_MOVES=2):
             self.assertFalse(game_needs_auto_analysis(game))
 
-    def test_skips_when_analysis_exists(self):
+    def test_skips_when_analysis_is_complete(self):
+        game = _completed_game(white_player=self.white, black_player=self.black)
+        moves = [{"uci": "e2e4", "san": "e4", "class": "good"} for _ in range(game.move_count)]
+        GameAnalysis.objects.create(
+            game=game,
+            accuracy_white=90,
+            accuracy_black=88,
+            best_moves_json=moves,
+        )
+        self.assertFalse(game_needs_auto_analysis(game))
+
+    def test_needs_reanalysis_when_truncated(self):
         game = _completed_game(white_player=self.white, black_player=self.black)
         GameAnalysis.objects.create(
             game=game,
@@ -59,7 +70,7 @@ class GameNeedsAutoAnalysisTests(TestCase):
             accuracy_black=88,
             best_moves_json=[{"uci": "e2e4", "san": "e4", "class": "good"}],
         )
-        self.assertFalse(game_needs_auto_analysis(game))
+        self.assertTrue(game_needs_auto_analysis(game))
 
     def test_skips_when_job_running(self):
         game = _completed_game(white_player=self.white, black_player=self.black)
@@ -115,7 +126,23 @@ class RunAutoGameAnalysisTests(TestCase):
         mock_notify.assert_called_once()
 
     @patch("apps.games.game_analysis_service.build_and_save_game_analysis")
-    def test_run_auto_game_analysis_skips_existing(self, mock_build):
+    def test_run_auto_game_analysis_skips_complete(self, mock_build):
+        from apps.games.analysis_async import run_auto_game_analysis
+
+        game = _completed_game(white_player=self.user, is_vs_ai=True)
+        moves = [{"uci": "e2e4", "san": "e4", "class": "good"} for _ in range(game.move_count)]
+        GameAnalysis.objects.create(
+            game=game,
+            accuracy_white=90,
+            accuracy_black=88,
+            best_moves_json=moves,
+        )
+        run_auto_game_analysis(str(game.id))
+        mock_build.assert_not_called()
+
+    @patch("apps.games.ws_notify.notify_analysis_ready")
+    @patch("apps.games.game_analysis_service.build_and_save_game_analysis")
+    def test_run_auto_game_analysis_reanalyzes_truncated(self, mock_build, mock_notify):
         from apps.games.analysis_async import run_auto_game_analysis
 
         game = _completed_game(white_player=self.user, is_vs_ai=True)
@@ -125,5 +152,7 @@ class RunAutoGameAnalysisTests(TestCase):
             accuracy_black=88,
             best_moves_json=[{"uci": "e2e4", "san": "e4", "class": "good"}],
         )
+        mock_build.return_value = MagicMock()
         run_auto_game_analysis(str(game.id))
-        mock_build.assert_not_called()
+        mock_build.assert_called_once()
+        mock_notify.assert_called_once()

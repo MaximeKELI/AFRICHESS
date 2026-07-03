@@ -59,6 +59,8 @@ class MoveSerializer(serializers.ModelSerializer):
 
 
 class GameAnalysisSerializer(serializers.ModelSerializer):
+    analysis_incomplete = serializers.SerializerMethodField()
+
     class Meta:
         model = GameAnalysis
         fields = [
@@ -66,8 +68,14 @@ class GameAnalysisSerializer(serializers.ModelSerializer):
             "move_accuracy_white", "move_accuracy_black",
             "blunders_white", "blunders_black",
             "best_moves_json", "summary_fr", "summary_en", "key_moments_json",
-            "deep_review_json", "analysis_depth_used",
+            "deep_review_json", "analysis_depth_used", "analysis_incomplete",
         ]
+
+    def get_analysis_incomplete(self, obj: GameAnalysis) -> bool:
+        moves = obj.best_moves_json or []
+        if not moves:
+            return False
+        return len(moves) < obj.game.move_count
 
     def to_representation(self, instance):
         from apps.users.premium_utils import redact_game_analysis_payload

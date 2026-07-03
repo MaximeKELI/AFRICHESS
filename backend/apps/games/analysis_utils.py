@@ -14,9 +14,6 @@ ACCURACY_WEIGHTS: dict[str, int] = {
     "blunder": 0,
 }
 
-MAX_ANALYZED_MOVES = 80
-
-
 def move_accuracy_from_cp_loss(cp_loss: float) -> float:
     """Précision d'un coup (formule Chess.com / centipawn loss)."""
     cp = max(0.0, float(cp_loss))

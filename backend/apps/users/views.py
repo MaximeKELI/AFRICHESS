@@ -22,9 +22,7 @@ from .serializers import RegisterSerializer, UserPublicSerializer, UserSerialize
 from .premium_utils import (
     DIAMOND_ANALYSIS_DEPTH,
     FREE_ANALYSIS_DEPTH,
-    FREE_ANALYSIS_MOVES,
     GOLD_ANALYSIS_DEPTH,
-    GOLD_ANALYSIS_MOVES,
 )
 from .stripe_service import create_billing_portal_session, create_checkout_session, handle_webhook, stripe_enabled
 

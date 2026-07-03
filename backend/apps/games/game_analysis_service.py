@@ -147,10 +147,24 @@ def refresh_deep_review_integrity(game: Game) -> None:
     analysis.save(update_fields=["deep_review_json", "evaluated_at"])
 
 
+def analysis_covers_full_game(game: Game) -> bool:
+    """Vrai si l'analyse stockée couvre tous les coups de la partie."""
+    from .models import GameAnalysis
+
+    try:
+        analysis = game.analysis
+    except GameAnalysis.DoesNotExist:
+        return False
+    moves = analysis.best_moves_json or []
+    if not moves:
+        return False
+    return len(moves) >= game.move_count
+
+
 def game_needs_auto_analysis(game: Game) -> bool:
     from django.conf import settings
 
-    from .models import AnalysisJob, Game, GameAnalysis
+    from .models import AnalysisJob, Game
 
     if not getattr(settings, "AUTO_GAME_ANALYSIS_ENABLED", True):
         return False
@@ -161,12 +175,7 @@ def game_needs_auto_analysis(game: Game) -> bool:
     min_moves = getattr(settings, "AUTO_GAME_ANALYSIS_MIN_MOVES", 2)
     if game.move_count < min_moves:
         return False
-    try:
-        if game.analysis.best_moves_json:
-            return False
-    except GameAnalysis.DoesNotExist:
-        pass
-    if GameAnalysis.objects.filter(game=game).exclude(best_moves_json=[]).exists():
+    if analysis_covers_full_game(game):
         return False
     if AnalysisJob.objects.filter(
         game=game,
