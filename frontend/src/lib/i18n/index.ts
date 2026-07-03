@@ -1,6 +1,6 @@
 import type { Locale, MessageParams } from "./types";
 import { arOverlay, ptOverlay, swOverlay } from "./localeOverlays";
-import { arOverlayM3, swOverlayM3 } from "./localeOverlaysM3";
+import { arOverlayM3, ptOverlayM3, swOverlayM3 } from "./localeOverlaysM3";
 
 export type { Locale, MessageParams } from "./types";
 
@@ -973,6 +973,10 @@ const fr: Record<string, string> = {
   "chess.review.phase.opening": "Ouverture",
   "chess.review.phase.middlegame": "Milieu de jeu",
   "chess.review.phase.endgame": "Finale",
+  "chess.review.deep.title": "Coach IA — analyse profonde",
+  "chess.review.deep.turningPoints": "Moments décisifs",
+  "chess.review.deep.integrity": "AIE — intégrité",
+  "chess.review.deep.depth": "Stockfish d{depth}",
   "chess.review.opponent": "Adversaire",
   "chess.review.statsTitle": "Statistiques des coups",
   "chess.review.dashboardTitle": "Analyse statistique",
@@ -2426,6 +2430,10 @@ const en: Record<string, string> = {
   "chess.review.phase.opening": "Opening",
   "chess.review.phase.middlegame": "Middlegame",
   "chess.review.phase.endgame": "Endgame",
+  "chess.review.deep.title": "AI Coach — deep review",
+  "chess.review.deep.turningPoints": "Turning points",
+  "chess.review.deep.integrity": "AIE — integrity",
+  "chess.review.deep.depth": "Stockfish d{depth}",
   "chess.review.opponent": "Opponent",
   "chess.review.statsTitle": "Move statistics",
   "chess.review.dashboardTitle": "Statistical analysis",
@@ -2946,6 +2954,7 @@ const ar: Record<string, string> = {
 const pt: Record<string, string> = {
   ...en,
   ...ptOverlay,
+  ...ptOverlayM3,
   "nav.play": "Jogar",
   "nav.puzzles": "Problemas",
   "nav.learn": "Aprender",

@@ -9,6 +9,22 @@
   --bg: #F5F0E8;
   --text: #0D1117;
   --card: #ffffff;
+
+  /* Z-index scale — use utility classes z-layer-* in components */
+  --z-bg: 0;
+  --z-content: 1;
+  --z-board-ui: 20;
+  --z-sticky: 30;
+  --z-nav-overlay: 45;
+  --z-nav: 50;
+  --z-nav-menu: 55;
+  --z-mobile-menu: 60;
+  --z-modal: 80;
+  --z-popover: 90;
+  --z-fairplay: 100;
+  --z-notification: 200;
+  --z-search: 210;
+  --z-game-end: 300;
 }
 
 .dark {
@@ -67,7 +83,21 @@ html.has-site-background footer {
 }
 
 html.has-site-background nav {
-  z-index: 50;
+  z-index: var(--z-nav);
+}
+
+@layer utilities {
+  .z-layer-content { z-index: var(--z-content); }
+  .z-layer-nav-overlay { z-index: var(--z-nav-overlay); }
+  .z-layer-nav { z-index: var(--z-nav); }
+  .z-layer-nav-menu { z-index: var(--z-nav-menu); }
+  .z-layer-mobile-menu { z-index: var(--z-mobile-menu); }
+  .z-layer-modal { z-index: var(--z-modal); }
+  .z-layer-popover { z-index: var(--z-popover); }
+  .z-layer-fairplay { z-index: var(--z-fairplay); }
+  .z-layer-notification { z-index: var(--z-notification); }
+  .z-layer-search { z-index: var(--z-search); }
+  .z-layer-game-end { z-index: var(--z-game-end); }
 }
 
 .low-bandwidth body,
