@@ -8,11 +8,12 @@ from rest_framework.views import APIView
 from apps.ratings.models import PlayerRating
 
 from .engine import ChessEngineService
-from .models import ChessBot, Game, GameAnalysis, AnalysisJob
+from .models import ChessBot, Game, GameAnalysis, AnalysisJob, GameChallenge
 from .serializers import (
     ChessBotSerializer,
     CreateAIGameSerializer,
     GameAnalysisSerializer,
+    GameChallengeSerializer,
     GameListSerializer,
     GameSerializer,
     MakeMoveSerializer,
@@ -413,7 +414,7 @@ class ChallengeUserView(APIView):
         time_control = request.data.get("time_control")
         is_timed = request.data.get("is_timed", True)
         try:
-            game = create_player_challenge(
+            challenge = create_player_challenge(
                 request.user,
                 opponent,
                 require_friends=False,
@@ -428,7 +429,88 @@ class ChallengeUserView(APIView):
             if exc.code:
                 payload["code"] = exc.code
             return Response(payload, status=exc.status)
-        return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
+        return Response(GameChallengeSerializer(challenge).data, status=status.HTTP_201_CREATED)
+
+
+class PendingChallengesView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        qs = (
+            GameChallenge.objects.filter(
+                opponent=request.user,
+                status=GameChallenge.Status.PENDING,
+            )
+            .select_related("challenger", "opponent")
+            .order_by("-created_at")[:20]
+        )
+        return Response(GameChallengeSerializer(qs, many=True).data)
+
+
+class ChallengeAcceptView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk: int):
+        from .challenge_service import ChallengeError, accept_challenge
+
+        try:
+            challenge = GameChallenge.objects.select_related("challenger", "opponent").get(pk=pk)
+        except GameChallenge.DoesNotExist:
+            return Response({"error": "Défi introuvable"}, status=404)
+        try:
+            challenge = accept_challenge(challenge, request.user)
+        except ChallengeError as exc:
+            payload = {"error": exc.message}
+            if exc.code:
+                payload["code"] = exc.code
+            return Response(payload, status=exc.status)
+        return Response(
+            {
+                "challenge": GameChallengeSerializer(challenge).data,
+                "game": GameSerializer(challenge.game).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class ChallengeDeclineView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk: int):
+        from .challenge_service import ChallengeError, decline_challenge
+
+        try:
+            challenge = GameChallenge.objects.get(pk=pk)
+        except GameChallenge.DoesNotExist:
+            return Response({"error": "Défi introuvable"}, status=404)
+        try:
+            challenge = decline_challenge(challenge, request.user)
+        except ChallengeError as exc:
+            payload = {"error": exc.message}
+            if exc.code:
+                payload["code"] = exc.code
+            return Response(payload, status=exc.status)
+        return Response(GameChallengeSerializer(challenge).data)
+
+
+class ChallengeCancelView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk: int):
+        from .challenge_service import ChallengeError, cancel_challenge
+
+        try:
+            challenge = GameChallenge.objects.get(pk=pk)
+        except GameChallenge.DoesNotExist:
+            return Response({"error": "Défi introuvable"}, status=404)
+        try:
+            challenge = cancel_challenge(challenge, request.user)
+        except ChallengeError as exc:
+            payload = {"error": exc.message}
+            if exc.code:
+                payload["code"] = exc.code
+            return Response(payload, status=exc.status)
+        return Response(GameChallengeSerializer(challenge).data)
 
 
 @extend_schema(

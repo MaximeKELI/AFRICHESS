@@ -226,7 +226,12 @@ export const gamesApi = {
   challengeUser: (
     username: string,
     opts?: { mode?: string; is_rated?: boolean; time_control?: string; is_timed?: boolean; odds?: string }
-  ) => api.post("/games/challenge/", { username, ...opts }),
+  ) => api.post<GameChallenge>("/games/challenge/", { username, ...opts }),
+  pendingChallenges: () => api.get<GameChallenge[]>("/games/challenges/pending/"),
+  acceptChallenge: (id: number) =>
+    api.post<{ challenge: GameChallenge; game: GameData }>(`/games/challenges/${id}/accept/`),
+  declineChallenge: (id: number) => api.post<GameChallenge>(`/games/challenges/${id}/decline/`),
+  cancelChallenge: (id: number) => api.post<GameChallenge>(`/games/challenges/${id}/cancel/`),
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),
   analyzeAsync: (id: string) => api.post(`/games/${id}/analyze/async/`),
   analyzeStatus: (id: string) => api.get(`/games/${id}/analyze/status/`),

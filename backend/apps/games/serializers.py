@@ -6,7 +6,7 @@ from apps.ratings.game_payload import rating_changes_for_game
 from apps.ratings.provisional import player_rating_info
 
 from .elo_config import get_user_elo
-from .models import ChessBot, Game, GameAnalysis, Move
+from .models import ChessBot, Game, GameAnalysis, GameChallenge, Move
 from .variant_utils import VARIANT_CHOICES
 
 
@@ -282,6 +282,29 @@ class LiveGameSerializer(serializers.ModelSerializer):
             "white_time_ms",
             "black_time_ms",
             "is_timed",
+        ]
+
+
+class GameChallengeSerializer(serializers.ModelSerializer):
+    challenger = UserPublicSerializer(read_only=True)
+    opponent = UserPublicSerializer(read_only=True)
+    game_id = serializers.UUIDField(source="game_id", read_only=True, allow_null=True)
+
+    class Meta:
+        model = GameChallenge
+        fields = [
+            "id",
+            "challenger",
+            "opponent",
+            "status",
+            "mode",
+            "odds",
+            "is_rated",
+            "is_timed",
+            "time_control",
+            "game_id",
+            "created_at",
+            "responded_at",
         ]
 
 

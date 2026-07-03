@@ -383,7 +383,7 @@ class ChallengeFriendView(APIView):
         from apps.games.challenge_service import ChallengeError, create_player_challenge
 
         try:
-            game = create_player_challenge(
+            challenge = create_player_challenge(
                 request.user,
                 opponent,
                 require_friends=True,
@@ -398,7 +398,9 @@ class ChallengeFriendView(APIView):
             if exc.code:
                 payload["code"] = exc.code
             return Response(payload, status=exc.status)
-        return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
+        from apps.games.serializers import GameChallengeSerializer
+
+        return Response(GameChallengeSerializer(challenge).data, status=status.HTTP_201_CREATED)
 
 
 class PostChatMessageView(APIView):
