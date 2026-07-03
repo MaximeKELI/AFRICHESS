@@ -5,14 +5,28 @@ import unittest
 from django.conf import settings
 from django.test import TestCase
 
-from apps.games.engine import ChessEngineService, close_stockfish_pool
+from apps.games.engine import ChessEngineService, close_stockfish_pool, _resolve_stockfish_path
 from apps.games.elo_config import STOCKFISH_UCI_MAX_ELO
 
 START = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 
 def stockfish_available() -> bool:
-    return bool(settings.STOCKFISH_PATH and shutil.which(settings.STOCKFISH_PATH))
+    path = _resolve_stockfish_path()
+    return bool(path and shutil.which(path) or (path and __import__("os").path.isfile(path)))
+
+
+class StockfishFallbackTests(TestCase):
+    """L'IA doit toujours répondre même sans binaire Stockfish."""
+
+    def test_fallback_when_engine_unavailable(self):
+        svc = ChessEngineService()
+        from unittest.mock import patch
+
+        with patch.object(svc, "_use_engine", side_effect=FileNotFoundError("missing")):
+            move = svc.get_best_move(START, difficulty=10, target_elo=2500)
+        self.assertIsNotNone(move)
+        self.assertTrue(svc.is_legal_move(START, move.uci))
 
 
 @unittest.skipUnless(stockfish_available(), "Stockfish non installé")
