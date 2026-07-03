@@ -214,6 +214,10 @@ def serialize_game_move_delta(game: Game, result: dict) -> dict:
         payload["result"] = result["result"]
     if result.get("termination_reason"):
         payload["termination_reason"] = result["termination_reason"]
+    if game.draw_offered_by_id:
+        payload["draw_offered_by"] = game.draw_offered_by_id
+    if game.takeback_requested_by_id:
+        payload["takeback_requested_by"] = game.takeback_requested_by_id
     if game.status == Game.Status.COMPLETED or result.get("game_over"):
         changes = rating_changes_for_game(game)
         if changes:
