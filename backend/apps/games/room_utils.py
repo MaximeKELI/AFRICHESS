@@ -45,6 +45,22 @@ def set_player_connected(game: Game, user, connected: bool) -> GameRoom:
     return room
 
 
+def sync_clock_when_both_ready(game: Game) -> bool:
+    """Remet le chrono quand les deux joueurs sont connectés (défi, etc.)."""
+    if game.is_vs_ai or not getattr(game, "is_timed", True) or game.move_count > 0:
+        return False
+    if game.status != Game.Status.ACTIVE:
+        return False
+    room = ensure_game_room(game)
+    if not (room.white_connected and room.black_connected):
+        return False
+    from .clock_service import tick_turn_started
+
+    tick_turn_started(game)
+    game.save(update_fields=["turn_started_at"])
+    return True
+
+
 def try_start_game(game: Game) -> Game:
     if game.status != Game.Status.WAITING:
         return game

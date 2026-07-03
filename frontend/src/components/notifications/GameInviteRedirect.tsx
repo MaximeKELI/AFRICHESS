@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
 import { useNotificationsWebSocket } from "@/hooks/useNotificationsWebSocket";
 import { gamesApi } from "@/lib/api";
@@ -28,17 +28,25 @@ function shouldAutoJoinGame(n: NotifPayload): string | null {
 export function GameInviteRedirect() {
   const { user } = useAuthStore();
   const router = useRouter();
+  const pathname = usePathname();
   const joinedRef = useRef<Set<string>>(new Set());
   const pendingChallengeIds = useRef<Set<number>>(new Set());
 
   const goToGame = useCallback(
     (gameId: string, mode?: string) => {
       if (joinedRef.current.has(gameId)) return;
+      if (pathname === "/play" && typeof window !== "undefined") {
+        const current = new URLSearchParams(window.location.search).get("game");
+        if (current === gameId) {
+          joinedRef.current.add(gameId);
+          return;
+        }
+      }
       joinedRef.current.add(gameId);
       const qs = mode ? `?game=${gameId}&mode=${encodeURIComponent(mode)}` : `?game=${gameId}`;
       router.push(`/play${qs}`);
     },
-    [router]
+    [router, pathname]
   );
 
   const onNew = useCallback(

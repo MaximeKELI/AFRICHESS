@@ -15,7 +15,7 @@ from apps.common.ws_ratelimit import allow_ws_event
 
 from .models import Game
 from .realtime_services import build_ws_move_payload, build_ws_payload
-from .room_utils import ensure_game_room, set_player_connected, try_start_game
+from .room_utils import ensure_game_room, set_player_connected, sync_clock_when_both_ready, try_start_game
 from .services import GameService, MatchmakingService
 
 logger = logging.getLogger(__name__)
@@ -353,6 +353,8 @@ class ChessConsumer(AsyncWebsocketConsumer):
         try:
             game = Game.objects.get(id=self.game_id)
             set_player_connected(game, self.user, connected)
+            if connected:
+                sync_clock_when_both_ready(game)
         except Game.DoesNotExist:
             pass
 

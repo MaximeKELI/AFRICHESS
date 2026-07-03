@@ -184,10 +184,11 @@ function PlayContent() {
   const gameWasActiveRef = useRef(false);
   const { aiCommentsEnabled, blindMode, setBlindMode } = usePreferencesStore();
   const turnStartRef = useRef(Date.now());
+  const activeGameId = gameId ?? gameFromUrl;
 
   useEffect(() => {
-    if (gameId) setMobileTab("board");
-  }, [gameId]);
+    if (activeGameId) setMobileTab("board");
+  }, [activeGameId]);
 
   useEffect(() => {
     if (!isVsAi || !gameId) return;
@@ -198,7 +199,9 @@ function PlayContent() {
   const playerIsWhite = orientation === "white";
   const levelLabel = user?.chess_level ? chessLevelLabel(t, user.chess_level) : undefined;
   const modeLabelText = modeLabel(t, mode);
-  const gameActive = gameId && gameData.status === "active";
+  const gameReady =
+    gameData.status === "active" || gameData.status === "completed";
+  const gameActive = Boolean(activeGameId && gameData.status === "active");
   const gameCompleted = gameData.status === "completed";
 
   useEffect(() => {
@@ -414,14 +417,14 @@ function PlayContent() {
   }, [gameData, user]);
 
   const boardPlayers = useMemo(() => {
-    if (!gameId) return null;
+    if (!activeGameId) return null;
     return opponentAndSelfPlayers(
       gamePlayersSource,
       orientation,
       user?.id,
       userElo
     );
-  }, [gameId, gamePlayersSource, orientation, user?.id, userElo]);
+  }, [activeGameId, gamePlayersSource, orientation, user?.id, userElo]);
 
   const opponentName = useMemo(() => {
     if (!boardPlayers || isVsAi) return undefined;
@@ -1424,7 +1427,12 @@ function PlayContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(240px,300px)] gap-4 lg:gap-5 items-start">
         <div className={`w-full min-w-0 max-w-full space-y-3 ${mobileTab !== "board" ? "hidden lg:block" : ""}`}>
-          {isLiveHuman && (
+          {activeGameId && !gameReady && (
+            <p className="text-xs text-center text-africhess-gold animate-pulse">
+              {t("common.loading")}
+            </p>
+          )}
+          {isLiveHuman && gameReady && (
             <div className="space-y-1">
               <p className="text-xs text-center opacity-60">
                 {wsConnected ? t("play.ws.connected") : t("play.ws.connecting")}
