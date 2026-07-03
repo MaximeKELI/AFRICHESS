@@ -207,3 +207,20 @@ export function soundForMove(flags: string, san?: string): ChessSoundType {
 export function playDrawWhistle(enabled = true) {
   playChessSound("draw", enabled);
 }
+
+/** Fanfare courte — victoire */
+export function playGameVictory(enabled = true) {
+  if (!enabled || typeof window === "undefined") return;
+  tone(262, 0.14, 0.22, "triangle");
+  tone(330, 0.14, 0.22, "triangle", 120);
+  tone(392, 0.14, 0.24, "triangle", 240);
+  tone(523, 0.28, 0.28, "triangle", 360);
+}
+
+/** Son grave — défaite */
+export function playGameDefeat(enabled = true) {
+  if (!enabled || typeof window === "undefined") return;
+  tone(220, 0.2, 0.2, "sawtooth");
+  tone(165, 0.25, 0.18, "sine", 150);
+  tone(110, 0.35, 0.15, "sine", 300);
+}

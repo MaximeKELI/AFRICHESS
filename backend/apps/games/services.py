@@ -556,6 +556,14 @@ class GameService:
                 game.winner = None
         game.status = Game.Status.COMPLETED
         game.ended_at = timezone.now()
+        if outcome:
+            term_name = outcome.termination.name.lower() if outcome.termination else ""
+            if term_name == "checkmate":
+                game.termination_reason = "checkmate"
+            elif term_name == "stalemate":
+                game.termination_reason = "stalemate"
+            elif outcome.winner is None:
+                game.termination_reason = "draw"
         game.save()
         self._after_human_game_finished(game)
 

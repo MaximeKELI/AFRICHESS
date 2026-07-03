@@ -1619,3 +1619,28 @@ html.has-site-background nav {
   to { transform: scale(1); opacity: 0.85; }
 }
 
+/* Fin de partie live */
+@keyframes game-end-confetti-fall {
+  0% { transform: translateY(-10%) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(120%) rotate(360deg); opacity: 0; }
+}
+
+.animate-pulse-slow {
+  animation: pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.game-end-confetti::before,
+.game-end-confetti::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, var(--africhess-gold) 2px, transparent 2px),
+    radial-gradient(circle, var(--africhess-green) 2px, transparent 2px),
+    radial-gradient(circle, #67e8f9 2px, transparent 2px);
+  background-size: 40px 40px, 55px 55px, 48px 48px;
+  background-position: 0 0, 20px 20px, 10px 30px;
+  animation: game-end-confetti-fall 2.5s ease-in forwards;
+  opacity: 0.6;
+}
+

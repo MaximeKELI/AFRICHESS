@@ -9,6 +9,7 @@ import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { useTranslation } from "@/hooks/useTranslation";
 import { UserSearchBar } from "@/components/social/UserSearchBar";
+import { defaultPresetForMode, playModeFromPreset, type TimePresetId } from "@/lib/timeControl";
 
 interface UserPublic {
   id: number;
@@ -37,6 +38,7 @@ function FriendsContent() {
   const [sent, setSent] = useState<Friendship[]>([]);
   const [username, setUsername] = useState(addFromUrl || "");
   const [mode, setMode] = useState("blitz");
+  const [timePreset, setTimePreset] = useState<TimePresetId>(() => defaultPresetForMode("blitz"));
   const [odds, setOdds] = useState("none");
   const [msg, setMsg] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -129,9 +131,14 @@ function FriendsContent() {
   const challenge = async (name: string) => {
     setMsg("");
     try {
-      const opts = odds !== "none" ? { odds } : undefined;
-      const { data } = await socialApi.challengeFriend(name, mode, opts);
-      router.push(`/play?game=${data.id}&mode=${mode}`);
+      const playMode = playModeFromPreset(timePreset);
+      const opts: { odds?: string; time_control: string; is_timed: boolean } = {
+        time_control: timePreset,
+        is_timed: true,
+      };
+      if (odds !== "none") opts.odds = odds;
+      const { data } = await socialApi.challengeFriend(name, playMode, opts);
+      router.push(`/play?game=${data.id}&mode=${playMode}`);
     } catch {
       setMsg(t("friends.challenge.failed"));
     }
@@ -246,12 +253,30 @@ function FriendsContent() {
           <h2 className="font-semibold">{t("friends.list.title", { count: friends.length })}</h2>
           <select
             value={mode}
-            onChange={(e) => setMode(e.target.value)}
+            onChange={(e) => {
+              setMode(e.target.value);
+              setTimePreset(defaultPresetForMode(e.target.value));
+            }}
             className="text-sm border rounded-lg px-2 py-1 bg-transparent"
           >
             <option value="bullet">Bullet</option>
             <option value="blitz">Blitz</option>
             <option value="rapid">Rapide</option>
+            <option value="classical">Classique</option>
+          </select>
+          <select
+            value={timePreset}
+            onChange={(e) => setTimePreset(e.target.value as TimePresetId)}
+            className="text-sm border rounded-lg px-2 py-1 bg-transparent"
+            title={t("time.title")}
+          >
+            <option value="1+0">1+0</option>
+            <option value="3+2">3+2</option>
+            <option value="5+0">5+0</option>
+            <option value="10+0">10+0</option>
+            <option value="15+10">15+10</option>
+            <option value="30+0">30+0</option>
+            <option value="60+0">60+0</option>
           </select>
           <select
             value={odds}

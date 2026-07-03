@@ -10,6 +10,8 @@ import { OptionSection } from "@/components/ui/OptionSection";
 import { CommentsToggle } from "@/components/chess/CommentsToggle";
 import { PlayBoardSection } from "@/components/play/PlayBoardSection";
 import { GameOverRatingBanner } from "@/components/play/GameOverRatingBanner";
+import { GameEndOverlay } from "@/components/play/GameEndOverlay";
+import { GamePendingActionsBanner } from "@/components/play/GamePendingActionsBanner";
 import { movesMissingComments, pollPendingMoveComments } from "@/lib/pollGameComments";
 import { useAuthStore } from "@/store/auth";
 import { unlockAiSpeech, speakComment, bindAiSpeechToUserGestures } from "@/lib/aiSpeech";
@@ -32,7 +34,8 @@ import { formatTimeControlLabel, defaultPresetForMode, matchmakingTimeControl, p
 import { MODE_CLOCK_LABEL } from "@/lib/clock";
 import { turnFromFen } from "@/lib/gameDisplayFast";
 import { TimeControlPicker } from "@/components/chess/TimeControlPicker";
-import { playDrawWhistle } from "@/lib/chessSounds";
+import { playDrawWhistle, playGameVictory, playGameDefeat } from "@/lib/chessSounds";
+import { computePlayerOutcome, type PlayerOutcome } from "@/lib/gameOutcome";
 import { formatApiError } from "@/lib/errors";
 import {
   saveActiveGame,
@@ -172,6 +175,12 @@ function PlayContent() {
   const [setupCategory, setSetupCategory] = useState<PlaySetupCategory>("game");
   const [aiStarting, setAiStarting] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [gameEndOverlay, setGameEndOverlay] = useState<{
+    outcome: PlayerOutcome;
+    terminationReason?: string | null;
+    result?: string | null;
+  } | null>(null);
+  const gameEndShownRef = useRef<string | null>(null);
   const { aiCommentsEnabled, blindMode, setBlindMode } = usePreferencesStore();
   const turnStartRef = useRef(Date.now());
 
@@ -193,10 +202,16 @@ function PlayContent() {
 
   useEffect(() => {
     if (gameCompleted && gameId) {
-      setReviewOpen(true);
       setMobileTab("board");
     }
   }, [gameCompleted, gameId]);
+
+  useEffect(() => {
+    if (!gameId) {
+      gameEndShownRef.current = null;
+      setGameEndOverlay(null);
+    }
+  }, [gameId]);
 
   // Parties vs IA : pas de WS actif pendant le jeu — poll léger jusqu'à l'analyse auto.
   useEffect(() => {
@@ -254,6 +269,36 @@ function PlayContent() {
   const isLiveHuman = Boolean(gameId && !isVsAi);
   const isVoteChess = Boolean(gameData.is_vote_chess);
   const telemetryEnabled = isLiveHuman && fairplayConsent === true && !fairplayExempt;
+
+  useEffect(() => {
+    if (!gameCompleted || !gameId || !user || !gameData.result) return;
+    if (!isLiveHuman) return;
+    if (gameEndShownRef.current === gameId) return;
+    gameEndShownRef.current = gameId;
+    const outcome = computePlayerOutcome(gameData.result, playerIsWhite);
+    if (!outcome) return;
+    setGameEndOverlay({
+      outcome,
+      terminationReason: gameData.termination_reason,
+      result: gameData.result,
+    });
+    if (outcome === "win") playGameVictory();
+    else if (outcome === "loss") playGameDefeat();
+    else playDrawWhistle();
+  }, [
+    gameCompleted,
+    gameId,
+    user,
+    gameData.result,
+    gameData.termination_reason,
+    playerIsWhite,
+    isLiveHuman,
+  ]);
+
+  const handleGameEndContinue = useCallback(() => {
+    setGameEndOverlay(null);
+    if (gameId) setReviewOpen(true);
+  }, [gameId]);
   const { consumePatch: consumeFairPlayPatch, notePremove } = useFairPlayTelemetry(telemetryEnabled);
   const gameIsTimed = gameData.is_timed !== false;
   useEffect(() => {
@@ -601,6 +646,44 @@ function PlayContent() {
   const handleWsGamePatch = useCallback((patch: WsGamePatch) => {
     setGameData((prev) => ({ ...prev, ...patch }));
   }, []);
+
+  const acceptDrawOffer = useCallback(() => {
+    if (!gameId) return;
+    gamesApi
+      .respondDraw(gameId, true)
+      .then(({ data }) => applyGameResponse(data))
+      .catch((err) => setStatus(formatApiError(err, t("play.error.drawAccept"))));
+  }, [gameId, applyGameResponse, t]);
+
+  const declineDrawOffer = useCallback(() => {
+    if (!gameId) return;
+    gamesApi
+      .respondDraw(gameId, false)
+      .then(() => {
+        setGameData((prev) => ({ ...prev, draw_offered_by: null }));
+        setStatus(t("play.draw.declined"));
+      })
+      .catch((err) => setStatus(formatApiError(err, t("play.error.drawOffer"))));
+  }, [gameId, t]);
+
+  const acceptTakebackRequest = useCallback(() => {
+    if (!gameId) return;
+    gamesApi
+      .respondTakeback(gameId, true)
+      .then(({ data }) => applyGameResponse(data))
+      .catch((err) => setStatus(formatApiError(err, t("play.error.takeback"))));
+  }, [gameId, applyGameResponse, t]);
+
+  const declineTakebackRequest = useCallback(() => {
+    if (!gameId) return;
+    gamesApi
+      .respondTakeback(gameId, false)
+      .then(() => {
+        setGameData((prev) => ({ ...prev, takeback_requested_by: null }));
+        setStatus(t("play.takeback.declined"));
+      })
+      .catch((err) => setStatus(formatApiError(err, t("play.error.takeback"))));
+  }, [gameId, t]);
 
   const handleAnalysisReady = useCallback((payload: { analysis?: unknown }) => {
     const parsed = parseAnalysisPayload(payload.analysis);
@@ -1336,6 +1419,19 @@ function PlayContent() {
               )}
             </div>
           )}
+          {isLiveHuman && gameActive && !isVoteChess && (
+            <GamePendingActionsBanner
+              myUserId={user?.id}
+              drawOfferedBy={gameData.draw_offered_by}
+              takebackRequestedBy={gameData.takeback_requested_by}
+              whitePlayer={gameData.white_player}
+              blackPlayer={gameData.black_player}
+              onAcceptDraw={acceptDrawOffer}
+              onDeclineDraw={declineDrawOffer}
+              onAcceptTakeback={acceptTakebackRequest}
+              onDeclineTakeback={declineTakebackRequest}
+            />
+          )}
           <div className="relative w-full">
             {movePending && isVsAi && (
               <p className="pointer-events-none absolute bottom-3 right-3 z-30 rounded-lg bg-black/75 px-2.5 py-1 text-[11px] text-africhess-gold shadow-lg animate-pulse">
@@ -1558,31 +1654,15 @@ function PlayContent() {
                   <>
                     <button
                       type="button"
-                      onClick={() =>
-                        gameId &&
-                        gamesApi
-                          .respondDraw(gameId, true)
-                          .then(({ data }) => applyGameResponse(data))
-                          .catch((err) =>
-                            setStatus(formatApiError(err, t("play.error.drawAccept")))
-                          )
-                      }
-                      className="text-xs px-3 py-1 rounded border border-africhess-green text-africhess-green"
+                      onClick={acceptDrawOffer}
+                      className="text-xs px-3 py-1 rounded border border-africhess-green text-africhess-green lg:hidden"
                     >
                       {t("play.draw.accept")}
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
-                        gameId &&
-                        gamesApi
-                          .respondDraw(gameId, false)
-                          .then(({ data }) => applyGameResponse(data))
-                          .catch((err) =>
-                            setStatus(formatApiError(err, t("play.error.drawOffer")))
-                          )
-                      }
-                      className="text-xs px-3 py-1 rounded border border-white/20"
+                      onClick={declineDrawOffer}
+                      className="text-xs px-3 py-1 rounded border border-white/20 lg:hidden"
                     >
                       {t("play.draw.decline")}
                     </button>
@@ -1702,6 +1782,14 @@ function PlayContent() {
           </div>
         </div>
       </div>
+      {gameEndOverlay && (
+        <GameEndOverlay
+          outcome={gameEndOverlay.outcome}
+          terminationReason={gameEndOverlay.terminationReason}
+          result={gameEndOverlay.result}
+          onContinue={handleGameEndContinue}
+        />
+      )}
     </div>
   );
 }

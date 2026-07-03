@@ -383,6 +383,12 @@ class ChallengeFriendView(APIView):
 
         odds = request.data.get("odds", "none")
         is_rated = request.data.get("is_rated", True)
+        time_control = request.data.get("time_control")
+        is_timed = request.data.get("is_timed", True)
+        from apps.games.time_control import default_time_control_for_mode
+
+        if is_timed and not time_control:
+            time_control = default_time_control_for_mode(mode)
         from apps.games.odds import fen_for_odds
 
         starting_fen = fen_for_odds(odds)
@@ -391,6 +397,8 @@ class ChallengeFriendView(APIView):
             opponent,
             mode=mode,
             is_rated=bool(is_rated),
+            is_timed=bool(is_timed),
+            time_control=time_control,
             starting_fen=starting_fen,
             odds_preset=odds if odds and odds != "none" else "",
         )

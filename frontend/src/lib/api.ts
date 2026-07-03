@@ -421,8 +421,11 @@ export const socialApi = {
   unfollowUser: (username: string) => api.post(`/social/users/${username}/unfollow/`),
   followers: (username: string) => api.get(`/social/users/${username}/followers/`),
   following: (username: string) => api.get(`/social/users/${username}/following/`),
-  challengeFriend: (username: string, mode = "blitz", opts?: { odds?: string; is_rated?: boolean }) =>
-    api.post("/social/friends/challenge/", { username, mode, ...opts }),
+  challengeFriend: (
+    username: string,
+    mode = "blitz",
+    opts?: { odds?: string; is_rated?: boolean; time_control?: string; is_timed?: boolean }
+  ) => api.post("/social/friends/challenge/", { username, mode, ...opts }),
   chatHistory: (roomType: string, roomId: string) =>
     api.get(`/social/chat/${roomType}/${roomId}/`),
   sendChat: (roomType: string, roomId: string, message: string) =>

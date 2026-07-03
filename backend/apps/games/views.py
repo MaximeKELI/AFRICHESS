@@ -419,6 +419,10 @@ class ChallengeUserView(APIView):
         is_rated = bool(request.data.get("is_rated", True))
         time_control = request.data.get("time_control")
         is_timed = request.data.get("is_timed", True)
+        from .time_control import default_time_control_for_mode
+
+        if is_timed and not time_control:
+            time_control = default_time_control_for_mode(mode)
 
         if is_rated:
             svc = MatchmakingService()
