@@ -94,23 +94,28 @@ def test_challenge_endpoint() -> None:
     opponent = ensure_user("smoke_opponent")
     client = APIClient()
     client.force_authenticate(challenger)
-    before = Game.objects.filter(white_player=challenger, black_player=opponent).count()
     res = client.post(
         "/api/games/challenge/",
         {"username": opponent.username, "mode": "blitz", "is_rated": False},
         format="json",
     )
     assert res.status_code == 201, res.data
-    assert "id" in res.data, res.data
-    after = Game.objects.filter(white_player=challenger, black_player=opponent).count()
-    if after <= before:
-        fail("partie de défi non créée")
+    assert res.data.get("status") == "pending", res.data
     notif = Notification.objects.filter(
         user=opponent, type=Notification.Type.GAME_INVITE
     ).order_by("-id").first()
-    if not notif:
-        fail("notification GAME_INVITE manquante")
-    ok(f"défi créé (game {res.data['id']}) + notif adversaire")
+    if not notif or not notif.data.get("challenge_id"):
+        fail("notification GAME_INVITE avec challenge_id manquante")
+    client.force_authenticate(opponent)
+    accept = client.post(
+        f"/api/games/challenges/{res.data['id']}/accept/",
+        {},
+        format="json",
+    )
+    assert accept.status_code == 200, accept.data
+    if not accept.data.get("game", {}).get("id"):
+        fail("partie non créée après acceptation")
+    ok(f"défi pending → accepté (game {accept.data['game']['id']})")
 
 
 def test_dm_notification() -> None:
