@@ -212,6 +212,7 @@ function PlayContent() {
       gameEndShownRef.current = null;
       gameWasActiveRef.current = false;
       setGameEndOverlay(null);
+      setReviewOpen(false);
     }
   }, [gameId]);
 
