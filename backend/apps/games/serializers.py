@@ -288,7 +288,6 @@ class LiveGameSerializer(serializers.ModelSerializer):
 class GameChallengeSerializer(serializers.ModelSerializer):
     challenger = UserPublicSerializer(read_only=True)
     opponent = UserPublicSerializer(read_only=True)
-    game_id = serializers.UUIDField(source="game_id", read_only=True, allow_null=True)
 
     class Meta:
         model = GameChallenge
