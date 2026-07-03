@@ -46,14 +46,17 @@ async function pollAsyncAnalysis(
 
 async function pollCachedGameAnalysis(
   gameId: string,
-  signal: AbortSignal
+  signal: AbortSignal,
+  moveCount?: number
 ): Promise<GameAnalysisData | null> {
   const started = Date.now();
   while (Date.now() - started < AUTO_CACHE_MAX_MS) {
     if (signal.aborted) return null;
     const { data } = await gamesApi.get(gameId);
     const payload = parseAnalysisPayload(data?.analysis);
-    if (payload) return payload;
+    if (payload && !isAnalysisIncomplete(payload, moveCount ?? data?.move_count)) {
+      return payload;
+    }
     await new Promise((r) => setTimeout(r, AUTO_CACHE_POLL_MS));
   }
   return null;
