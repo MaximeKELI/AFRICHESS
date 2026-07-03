@@ -8,21 +8,15 @@ import { formatApiError } from "@/lib/errors";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useNotificationsWebSocket } from "@/hooks/useNotificationsWebSocket";
-
-interface Notification {
-  id: number;
-  type: string;
-  title: string;
-  body: string;
-  data: { game_id?: string; mode?: string; friendship_id?: number; from_username?: string };
-  is_read: boolean;
-  created_at: string;
-}
+import {
+  NotificationList,
+  type NotificationItem,
+} from "@/components/notifications/NotificationList";
 
 export function NotificationBell() {
   const { user } = useAuthStore();
   const { t } = useTranslation();
-  const [items, setItems] = useState<Notification[]>([]);
+  const [items, setItems] = useState<NotificationItem[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -53,9 +47,9 @@ export function NotificationBell() {
 
   useNotificationsWebSocket(
     Boolean(user),
-    (snapshot) => setItems(snapshot as Notification[]),
+    (snapshot) => setItems(snapshot as NotificationItem[]),
     (n) => {
-      const item = n as Notification;
+      const item = n as NotificationItem;
       setItems((prev) => [item, ...prev.filter((x) => x.id !== item.id)]);
     }
   );
@@ -105,61 +99,43 @@ export function NotificationBell() {
       </button>
       {open && (
         <div
-          className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto glass-card shadow-xl z-50 text-sm"
+          className="fixed sm:absolute left-3 right-3 sm:left-auto sm:right-0 top-[3.75rem] sm:top-full sm:mt-2 w-auto sm:w-[min(100vw-1.5rem,26rem)] max-h-[min(75vh,36rem)] flex flex-col glass-card shadow-xl z-[200] text-sm overflow-hidden"
           role="region"
           aria-label={t("notifications.title")}
         >
-          <div className="p-3 border-b border-white/10 flex justify-between items-center">
+          <div className="p-3 border-b border-white/10 flex justify-between items-center shrink-0">
             <span className="font-semibold">{t("notifications.title")}</span>
-            {unread > 0 && (
-              <button
-                type="button"
-                className="text-xs text-africhess-gold"
-                onClick={() => notificationsApi.markAllRead().then(load)}
+            <div className="flex items-center gap-3">
+              {unread > 0 && (
+                <button
+                  type="button"
+                  className="text-xs text-africhess-gold hover:underline"
+                  onClick={() => notificationsApi.markAllRead().then(load)}
+                >
+                  {t("notifications.markAll")}
+                </button>
+              )}
+              <Link
+                href="/notifications"
+                onClick={() => setOpen(false)}
+                className="text-xs text-africhess-gold hover:underline"
               >
-                {t("notifications.markAll")}
-              </button>
+                {t("notifications.viewAll")}
+              </Link>
+            </div>
+          </div>
+          <div className="overflow-y-auto flex-1 min-h-0">
+            {loadError ? (
+              <p className="p-4 text-africhess-terracotta text-center text-xs">{loadError}</p>
+            ) : (
+              <NotificationList
+                items={items}
+                onMarkRead={markRead}
+                onNavigate={() => setOpen(false)}
+                compact
+              />
             )}
           </div>
-          {loadError ? (
-            <p className="p-4 text-africhess-terracotta text-center text-xs">{loadError}</p>
-          ) : items.length === 0 ? (
-            <p className="p-4 opacity-60 text-center">{t("notifications.empty")}</p>
-          ) : (
-            items.slice(0, 20).map((n) => (
-              <div
-                key={n.id}
-                className={`p-3 border-b border-white/5 ${n.is_read ? "opacity-70" : ""}`}
-              >
-                <p className="font-medium">{n.title}</p>
-                {n.body && <p className="text-xs opacity-80 mt-1">{n.body}</p>}
-                {n.type === "game_invite" && n.data?.game_id && (
-                  <Link
-                    href={`/play?game=${n.data.game_id}`}
-                    onClick={() => {
-                      markRead(n.id);
-                      setOpen(false);
-                    }}
-                    className="text-xs text-africhess-green mt-2 inline-block hover:underline"
-                  >
-                    {t("notifications.joinGame")}
-                  </Link>
-                )}
-                {n.type === "friend_request" && (
-                  <Link
-                    href="/friends"
-                    onClick={() => {
-                      markRead(n.id);
-                      setOpen(false);
-                    }}
-                    className="text-xs text-africhess-gold mt-2 inline-block hover:underline"
-                  >
-                    {t("notifications.friendRequest")}
-                  </Link>
-                )}
-              </div>
-            ))
-          )}
         </div>
       )}
     </div>

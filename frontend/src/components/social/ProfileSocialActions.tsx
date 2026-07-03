@@ -96,7 +96,7 @@ export function ProfileSocialActions({ username, onChange }: ProfileSocialAction
         {friendship_status === "friends" && (
           <>
             <Link
-              href={`/friends?dm=${username}`}
+              href={`/messages/${encodeURIComponent(username)}`}
               className="px-4 py-2 rounded-lg border text-sm hover:border-africhess-gold"
             >
               {t("social.message")}
