@@ -40,15 +40,17 @@ function InitialsAvatar({
 
 export function UserAvatar({
   avatar,
+  avatarPreset,
   displayName,
   username,
   size = 40,
   className,
 }: UserAvatarProps) {
   const { t } = useTranslation();
-  const src = getUserAvatarUrl(avatar);
-  const initials = userInitials(displayName, username);
   const [broken, setBroken] = useState(false);
+  const src = getUserAvatarUrl(broken ? null : avatar, avatarPreset);
+
+  const initials = userInitials(displayName, username);
 
   if (src && !broken) {
     return (
@@ -65,7 +67,6 @@ export function UserAvatar({
           fill
           className="object-cover"
           sizes={`${size}px`}
-          unoptimized={isLocalDevMediaUrl(src)}
           onError={() => setBroken(true)}
         />
       </span>
