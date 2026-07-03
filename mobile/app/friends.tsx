@@ -74,9 +74,8 @@ export default function FriendsScreen() {
 
   const challenge = async (name: string) => {
     try {
-      const { data } = await socialApi.challengeFriend(name, "blitz");
-      if (data.id) router.push(`/play?game=${data.id}`);
-      else setStatus("Défi envoyé");
+      await socialApi.challengeFriend(name, "blitz");
+      setStatus("Défi envoyé — en attente d'acceptation");
     } catch {
       setStatus("Défi impossible");
     }

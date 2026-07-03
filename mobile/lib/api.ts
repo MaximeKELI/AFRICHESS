@@ -427,7 +427,11 @@ export const socialApi = {
   request: (username: string) => api.post("/social/friends/request/", { username }),
   accept: (id: number) => api.post(`/social/friends/${id}/accept/`),
   challengeFriend: (username: string, mode = "blitz") =>
-    api.post<{ id: string }>("/social/friends/challenge/", { username, mode, is_rated: false }),
+    api.post<{ id: number; status: string }>("/social/friends/challenge/", {
+      username,
+      mode,
+      is_rated: false,
+    }),
   directMessages: (username: string) =>
     api.get<{ id: number; content: string; sender: FriendUser; created_at: string }[]>(
       `/social/messages/${username}/`
