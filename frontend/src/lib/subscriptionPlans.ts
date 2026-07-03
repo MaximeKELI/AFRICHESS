@@ -1,19 +1,20 @@
 import { usersApi } from "@/lib/api";
 
 export interface AnalysisLimits {
-  free: number;
-  gold: number;
-  diamond: number;
+  free: number | null;
+  gold: number | null;
+  diamond: number | null;
 }
 
 export interface SubscriptionPlansPayload {
   stripe_enabled?: boolean;
   oauth?: { google?: boolean; github?: boolean };
   analysis_limits?: AnalysisLimits;
-  plans?: Array<{ id: string; analysis_moves?: number }>;
+  analysis_depth?: { free: number; gold: number; diamond: number };
+  plans?: Array<{ id: string; analysis_moves?: number | null; analysis_depth?: number }>;
 }
 
-const DEFAULT_LIMITS: AnalysisLimits = { free: 40, gold: 80, diamond: 120 };
+const DEFAULT_LIMITS: AnalysisLimits = { free: null, gold: null, diamond: null };
 
 let cachedPlans: SubscriptionPlansPayload | null = null;
 let fetchPromise: Promise<SubscriptionPlansPayload> | null = null;
@@ -41,13 +42,16 @@ export function analysisLimitHint(
   limits: AnalysisLimits,
   user?: { is_premium?: boolean; is_diamond?: boolean } | null
 ): string | null {
+  if (limits.free == null && limits.gold == null) {
+    return null;
+  }
   if (user?.is_diamond) return null;
   if (user?.is_premium) {
-    return t("chess.analysis.limitGold", { limit: limits.gold, diamond: limits.diamond });
+    return t("chess.analysis.limitGold", { limit: limits.gold ?? 0, diamond: limits.diamond ?? 0 });
   }
   return t("chess.analysis.limitFree", {
-    limit: limits.free,
-    gold: limits.gold,
-    diamond: limits.diamond,
+    limit: limits.free ?? 0,
+    gold: limits.gold ?? 0,
+    diamond: limits.diamond ?? 0,
   });
 }

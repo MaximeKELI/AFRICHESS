@@ -6,7 +6,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from apps.users.premium_utils import (
-    FREE_ANALYSIS_MOVES,
+    FREE_ANALYSIS_DEPTH,
     analysis_engine_depth,
     max_analysis_moves,
 )
@@ -27,18 +27,17 @@ def reference_user_for_analysis(game: Game):
     return max(users, key=lambda u: max_analysis_moves(u))
 
 
-def analysis_params_for_game(game: Game) -> tuple[int, int]:
-    """Retourne (move_limit, engine_depth) en tenant compte des deux joueurs."""
+def analysis_params_for_game(game: Game) -> tuple[int | None, int]:
+    """Retourne (move_limit, engine_depth) — move_limit None = partie entière."""
     users = []
     if game.white_player_id:
         users.append(game.white_player)
     if game.black_player_id:
         users.append(game.black_player)
     if not users:
-        return FREE_ANALYSIS_MOVES, 12
-    limit = max(max_analysis_moves(u) for u in users)
+        return None, FREE_ANALYSIS_DEPTH
     depth = max(analysis_engine_depth(u) for u in users)
-    return limit, depth
+    return None, depth
 
 
 def move_rows_for_game(game: Game, limit: int | None) -> list[tuple[str, bool]]:

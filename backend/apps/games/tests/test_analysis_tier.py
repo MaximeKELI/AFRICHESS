@@ -9,9 +9,10 @@ from rest_framework.test import APIClient
 from apps.games.models import Game, GameAnalysis, Move
 from apps.users.models import User as UserModel
 from apps.users.premium_utils import (
-    DIAMOND_ANALYSIS_MOVES,
-    FREE_ANALYSIS_MOVES,
-    GOLD_ANALYSIS_MOVES,
+    DIAMOND_ANALYSIS_DEPTH,
+    FREE_ANALYSIS_DEPTH,
+    GOLD_ANALYSIS_DEPTH,
+    analysis_engine_depth,
     max_analysis_moves,
     redact_game_analysis_payload,
 )
@@ -29,17 +30,22 @@ class AnalysisTierUtilsTests(TestCase):
         self.diamond.subscription_tier = UserModel.SubscriptionTier.DIAMOND
         self.diamond.save()
 
-    def test_max_analysis_moves_by_tier(self):
-        self.assertEqual(max_analysis_moves(self.free), FREE_ANALYSIS_MOVES)
-        self.assertEqual(max_analysis_moves(self.gold), GOLD_ANALYSIS_MOVES)
-        self.assertEqual(max_analysis_moves(self.diamond), DIAMOND_ANALYSIS_MOVES)
+    def test_max_analysis_moves_unlimited(self):
+        self.assertIsNone(max_analysis_moves(self.free))
+        self.assertIsNone(max_analysis_moves(self.gold))
+        self.assertIsNone(max_analysis_moves(self.diamond))
 
-    def test_redact_analysis_for_free_viewer(self):
+    def test_analysis_depth_by_tier(self):
+        self.assertEqual(analysis_engine_depth(self.free), FREE_ANALYSIS_DEPTH)
+        self.assertEqual(analysis_engine_depth(self.gold), GOLD_ANALYSIS_DEPTH)
+        self.assertEqual(analysis_engine_depth(self.diamond), DIAMOND_ANALYSIS_DEPTH)
+
+    def test_redact_analysis_keeps_full_game(self):
         moves = [{"uci": f"e2e{i%8}", "san": "x"} for i in range(100)]
         data = {"best_moves_json": moves, "summary_fr": "ok"}
         out = redact_game_analysis_payload(data, self.free)
-        self.assertEqual(len(out["best_moves_json"]), FREE_ANALYSIS_MOVES)
-        self.assertTrue(out.get("analysis_truncated"))
+        self.assertEqual(len(out["best_moves_json"]), 100)
+        self.assertFalse(out.get("analysis_truncated"))
 
 
 class AnalysisRedactionApiTests(TestCase):
@@ -75,13 +81,13 @@ class AnalysisRedactionApiTests(TestCase):
             summary_fr="test",
         )
 
-    def test_game_detail_redacts_analysis_for_free_viewer(self):
+    def test_game_detail_returns_full_analysis_for_free_viewer(self):
         self.client.force_authenticate(user=self.viewer)
         resp = self.client.get(f"/api/games/{self.game.id}/")
         self.assertEqual(resp.status_code, 200)
         analysis = resp.data.get("analysis")
         self.assertIsNotNone(analysis)
-        self.assertLessEqual(len(analysis["best_moves_json"]), FREE_ANALYSIS_MOVES)
+        self.assertEqual(len(analysis["best_moves_json"]), 50)
 
 
 class AnalyzePgnTierTests(TestCase):
@@ -90,8 +96,8 @@ class AnalyzePgnTierTests(TestCase):
         self.user = User.objects.create_user(username="pgn_free", password="x")
 
     @patch("apps.learning.views.analyze_pgn")
-    def test_pgn_analysis_passes_tier_limits(self, mock_analyze):
-        mock_analyze.return_value = {"moves": [], "summary_fr": "x", "analysis_move_limit": 40}
+    def test_pgn_analysis_uses_full_game(self, mock_analyze):
+        mock_analyze.return_value = {"moves": [], "summary_fr": "x"}
         self.client.force_authenticate(user=self.user)
         resp = self.client.post(
             "/api/learning/analyze/",
@@ -101,4 +107,4 @@ class AnalyzePgnTierTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         mock_analyze.assert_called_once()
         _args, kwargs = mock_analyze.call_args
-        self.assertEqual(kwargs.get("max_moves"), FREE_ANALYSIS_MOVES)
+        self.assertIsNone(kwargs.get("max_moves"))

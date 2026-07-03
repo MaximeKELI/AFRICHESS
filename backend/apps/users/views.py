@@ -19,7 +19,13 @@ from .countries_data import WORLD_COUNTRIES, country_flag
 from .oauth_exchange import consume_oauth_code
 from .totp_service import verify_totp
 from .serializers import RegisterSerializer, UserPublicSerializer, UserSerializer, UserUpdateSerializer
-from .premium_utils import DIAMOND_ANALYSIS_MOVES, FREE_ANALYSIS_MOVES, GOLD_ANALYSIS_MOVES
+from .premium_utils import (
+    DIAMOND_ANALYSIS_DEPTH,
+    FREE_ANALYSIS_DEPTH,
+    FREE_ANALYSIS_MOVES,
+    GOLD_ANALYSIS_DEPTH,
+    GOLD_ANALYSIS_MOVES,
+)
 from .stripe_service import create_billing_portal_session, create_checkout_session, handle_webhook, stripe_enabled
 
 User = get_user_model()
@@ -192,9 +198,14 @@ def subscription_plans(request):
                 "github": bool(getattr(settings, "GITHUB_OAUTH_CLIENT_ID", "")),
             },
             "analysis_limits": {
-                "free": FREE_ANALYSIS_MOVES,
-                "gold": GOLD_ANALYSIS_MOVES,
-                "diamond": DIAMOND_ANALYSIS_MOVES,
+                "free": None,
+                "gold": None,
+                "diamond": None,
+            },
+            "analysis_depth": {
+                "free": FREE_ANALYSIS_DEPTH,
+                "gold": GOLD_ANALYSIS_DEPTH,
+                "diamond": DIAMOND_ANALYSIS_DEPTH,
             },
             "plans": [
                 {
@@ -202,17 +213,20 @@ def subscription_plans(request):
                     "name": "Free",
                     "price_eur": 0,
                     "features": ["play", "puzzles_daily", "lessons_basic"],
-                    "analysis_moves": FREE_ANALYSIS_MOVES,
+                    "analysis_moves": None,
+                    "analysis_depth": FREE_ANALYSIS_DEPTH,
                 },
                 {
                     "id": "gold",
                     **{k: v for k, v in PLANS["gold"].items() if k != "tier"},
-                    "analysis_moves": GOLD_ANALYSIS_MOVES,
+                    "analysis_moves": None,
+                    "analysis_depth": GOLD_ANALYSIS_DEPTH,
                 },
                 {
                     "id": "diamond",
                     **{k: v for k, v in PLANS["diamond"].items() if k != "tier"},
-                    "analysis_moves": DIAMOND_ANALYSIS_MOVES,
+                    "analysis_moves": None,
+                    "analysis_depth": DIAMOND_ANALYSIS_DEPTH,
                 },
             ],
         }
