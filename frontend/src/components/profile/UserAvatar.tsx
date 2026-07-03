@@ -8,6 +8,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 
 interface UserAvatarProps {
   avatar?: string | null;
+  avatarPreset?: string | null;
   displayName?: string | null;
   username?: string;
   size?: number;

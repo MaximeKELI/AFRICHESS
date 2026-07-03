@@ -74,8 +74,16 @@ export function aiAvatarForLevelElo(levelElo: number) {
   return AI_AVATARS.find((a) => a.id === id) ?? AI_AVATARS[0];
 }
 
-export function getUserAvatarUrl(avatar?: string | null): string | null {
-  return resolveMediaUrl(avatar);
+export function getUserAvatarUrl(
+  avatar?: string | null,
+  avatarPreset?: string | null
+): string | null {
+  if (avatar) {
+    const resolved = resolveMediaUrl(avatar);
+    if (resolved) return resolved;
+  }
+  const preset = avatarPreset || "avatar-1";
+  return getAiAvatarSrc(preset);
 }
 
 export { isLocalDevMediaUrl };
