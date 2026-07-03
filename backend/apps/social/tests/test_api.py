@@ -72,3 +72,14 @@ class SocialApiTests(TestCase):
         self.assertTrue(self.club.members.filter(pk=self.a.pk).exists())
         self.club.refresh_from_db()
         self.assertEqual(self.club.member_count, 1)
+
+    def test_create_club_without_slug(self):
+        self.client.force_authenticate(self.a)
+        res = self.client.post(
+            "/api/social/clubs/",
+            {"name": "Nouveau Club", "description": "Salut", "country": "FR"},
+            format="json",
+        )
+        self.assertEqual(res.status_code, 201)
+        self.assertTrue(res.data["slug"])
+        self.assertEqual(res.data["name"], "Nouveau Club")

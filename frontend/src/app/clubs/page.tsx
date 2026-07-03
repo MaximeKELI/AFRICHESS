@@ -43,10 +43,15 @@ export default function ClubsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || creating || !form.name.trim()) return;
     setCreating(true);
+    setError(null);
     try {
-      await socialApi.createClub(form);
+      await socialApi.createClub({
+        name: form.name.trim(),
+        description: form.description.trim(),
+        country: form.country.trim().toUpperCase(),
+      });
       setForm({ name: "", description: "", country: "" });
       setShowCreate(false);
       load();

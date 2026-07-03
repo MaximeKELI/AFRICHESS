@@ -41,6 +41,7 @@ class UserSearchResultSerializer(serializers.Serializer):
 class ClubSerializer(serializers.ModelSerializer):
     owner = UserPublicSerializer(read_only=True)
     is_member = serializers.SerializerMethodField()
+    slug = serializers.SlugField(read_only=True)
 
     class Meta:
         model = Club
