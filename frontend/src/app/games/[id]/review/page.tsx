@@ -60,6 +60,7 @@ export default function GameReviewPage({ params }: GameReviewPageProps) {
         setPlayerIsWhite(isWhite);
         setOrientation(isWhite ? "white" : "black");
         setResult(data.result);
+        setMoveCount(data.move_count);
         setInitialAnalysis(parseAnalysisPayload(data.analysis));
       })
       .catch((err) => setError(formatApiError(err, t("chess.analysis.unavailable"))))
