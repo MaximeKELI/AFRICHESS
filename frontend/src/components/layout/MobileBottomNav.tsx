@@ -26,7 +26,7 @@ export function MobileBottomNav({ onMenuOpen }: MobileBottomNavProps) {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-white/10 bg-[var(--card)]/95 backdrop-blur-lg pb-[env(safe-area-inset-bottom)]"
+      className="md:hidden fixed bottom-0 inset-x-0 z-layer-nav border-t border-white/10 bg-[var(--card)]/95 backdrop-blur-lg pb-[env(safe-area-inset-bottom)]"
       aria-label={t("nav.mobileTabs")}
     >
       <div className="grid grid-cols-5 h-14">

@@ -32,7 +32,7 @@ export function PwaInstallPrompt() {
   if (!deferred || dismissed) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-50 glass-card p-4 shadow-xl border border-africhess-gold/30">
+    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-layer-nav glass-card p-4 shadow-xl border border-africhess-gold/30">
       <p className="text-sm mb-3">{t("pwa.installHint")}</p>
       <div className="flex gap-2">
         <button

@@ -99,7 +99,7 @@ export function NotificationBell() {
       </button>
       {open && (
         <div
-          className="fixed sm:absolute left-3 right-3 sm:left-auto sm:right-0 top-[3.75rem] sm:top-full sm:mt-2 w-auto sm:w-[min(100vw-1.5rem,26rem)] max-h-[min(75vh,36rem)] flex flex-col glass-card shadow-xl z-[200] text-sm overflow-hidden"
+          className="fixed sm:absolute left-3 right-3 sm:left-auto sm:right-0 top-[3.75rem] sm:top-full sm:mt-2 w-auto sm:w-[min(100vw-1.5rem,26rem)] max-h-[min(75vh,36rem)] flex flex-col glass-card shadow-xl z-layer-notification text-sm overflow-hidden"
           role="region"
           aria-label={t("notifications.title")}
         >
