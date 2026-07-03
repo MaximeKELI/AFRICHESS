@@ -24,13 +24,6 @@ interface Friendship {
   status: string;
 }
 
-interface ChatMsg {
-  id: number;
-  sender: UserPublic;
-  content: string;
-  created_at: string;
-}
-
 function FriendsContent() {
   const { user } = useAuthStore();
   const { t } = useTranslation();
@@ -46,11 +39,13 @@ function FriendsContent() {
   const [mode, setMode] = useState("blitz");
   const [odds, setOdds] = useState("none");
   const [msg, setMsg] = useState("");
-  const [dmUser, setDmUser] = useState<UserPublic | null>(null);
-  const [dmMessages, setDmMessages] = useState<ChatMsg[]>([]);
-  const [dmText, setDmText] = useState("");
-  const [dmLoading, setDmLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (dmFromUrl) {
+      router.replace(`/messages/${encodeURIComponent(dmFromUrl)}`);
+    }
+  }, [dmFromUrl, router]);
 
   const load = useCallback(() => {
     setLoadError(null);
@@ -63,11 +58,6 @@ function FriendsContent() {
         setFriends(users);
         setPending(Array.isArray(pendingRes.data) ? pendingRes.data : []);
         setSent(Array.isArray(sentRes.data) ? sentRes.data : []);
-
-        if (dmFromUrl) {
-          const target = users.find((u) => u.username === dmFromUrl);
-          if (target) setDmUser(target);
-        }
       })
       .catch((err) => {
         setFriends([]);
@@ -75,19 +65,7 @@ function FriendsContent() {
         setSent([]);
         setLoadError(formatApiError(err, t("friends.error.load")));
       });
-  }, [user?.id, dmFromUrl, t]);
-
-  const loadDm = useCallback((friend: UserPublic) => {
-    setDmLoading(true);
-    socialApi
-      .directMessages(friend.username)
-      .then(({ data }) => setDmMessages(Array.isArray(data) ? data : []))
-      .catch((err) => {
-        setDmMessages([]);
-        setMsg(formatApiError(err, t("friends.error.messages")));
-      })
-      .finally(() => setDmLoading(false));
-  }, [t]);
+  }, [user?.id, t]);
 
   useEffect(() => {
     if (!user) return;
@@ -98,10 +76,6 @@ function FriendsContent() {
     if (addFromUrl) setUsername(addFromUrl);
   }, [addFromUrl]);
 
-  useEffect(() => {
-    if (dmUser) loadDm(dmUser);
-  }, [dmUser, loadDm]);
-
   if (!user) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
@@ -110,6 +84,12 @@ function FriendsContent() {
           {t("nav.login")}
         </Link>
       </div>
+    );
+  }
+
+  if (dmFromUrl) {
+    return (
+      <p className="max-w-4xl mx-auto px-4 py-12 opacity-60">{t("common.loading")}</p>
     );
   }
 
@@ -143,7 +123,6 @@ function FriendsContent() {
   const unfriend = async (name: string) => {
     if (!window.confirm(t("social.friend.unfriendConfirm"))) return;
     await socialApi.unfriend(name);
-    if (dmUser?.username === name) setDmUser(null);
     load();
   };
 
@@ -158,24 +137,18 @@ function FriendsContent() {
     }
   };
 
-  const sendDm = async () => {
-    if (!dmUser || !dmText.trim()) return;
-    try {
-      await socialApi.sendDirectMessage(dmUser.username, dmText.trim());
-      setDmText("");
-      loadDm(dmUser);
-    } catch {
-      setMsg(t("friends.message.failed"));
-    }
-  };
-
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <h1 className="font-display text-3xl font-bold">{t("friends.title")}</h1>
-        <Link href="/users/search" className="text-sm text-africhess-gold hover:underline">
-          {t("social.search.title")}
-        </Link>
+        <div className="flex gap-4 text-sm">
+          <Link href="/messages" className="text-africhess-gold hover:underline">
+            {t("friends.messages.title")}
+          </Link>
+          <Link href="/users/search" className="text-africhess-gold hover:underline">
+            {t("social.search.title")}
+          </Link>
+        </div>
       </div>
 
       {loadError && (
@@ -268,122 +241,76 @@ function FriendsContent() {
         </div>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="glass-card p-4">
-          <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
-            <h2 className="font-semibold">{t("friends.list.title", { count: friends.length })}</h2>
-            <select
-              value={mode}
-              onChange={(e) => setMode(e.target.value)}
-              className="text-sm border rounded-lg px-2 py-1 bg-transparent"
-            >
-              <option value="bullet">Bullet</option>
-              <option value="blitz">Blitz</option>
-              <option value="rapid">Rapide</option>
-            </select>
-            <select
-              value={odds}
-              onChange={(e) => setOdds(e.target.value)}
-              className="text-sm border rounded-lg px-2 py-1 bg-transparent"
-              title={t("friends.odds.label")}
-            >
-              <option value="none">{t("friends.odds.none")}</option>
-              <option value="knight">{t("friends.odds.knight")}</option>
-              <option value="bishop">{t("friends.odds.bishop")}</option>
-              <option value="rook">{t("friends.odds.rook")}</option>
-              <option value="queen">{t("friends.odds.queen")}</option>
-            </select>
-          </div>
-          {friends.length === 0 ? (
-            <p className="opacity-60 text-sm">{t("friends.list.empty")}</p>
-          ) : (
-            <ul className="space-y-2">
-              {friends.map((f) => (
-                <li
-                  key={f.id}
-                  className={`flex justify-between items-center p-2 rounded-lg gap-2 ${
-                    dmUser?.id === f.id ? "bg-africhess-gold/10" : ""
-                  }`}
+      <div className="glass-card p-4">
+        <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
+          <h2 className="font-semibold">{t("friends.list.title", { count: friends.length })}</h2>
+          <select
+            value={mode}
+            onChange={(e) => setMode(e.target.value)}
+            className="text-sm border rounded-lg px-2 py-1 bg-transparent"
+          >
+            <option value="bullet">Bullet</option>
+            <option value="blitz">Blitz</option>
+            <option value="rapid">Rapide</option>
+          </select>
+          <select
+            value={odds}
+            onChange={(e) => setOdds(e.target.value)}
+            className="text-sm border rounded-lg px-2 py-1 bg-transparent"
+            title={t("friends.odds.label")}
+          >
+            <option value="none">{t("friends.odds.none")}</option>
+            <option value="knight">{t("friends.odds.knight")}</option>
+            <option value="bishop">{t("friends.odds.bishop")}</option>
+            <option value="rook">{t("friends.odds.rook")}</option>
+            <option value="queen">{t("friends.odds.queen")}</option>
+          </select>
+        </div>
+        {friends.length === 0 ? (
+          <p className="opacity-60 text-sm">{t("friends.list.empty")}</p>
+        ) : (
+          <ul className="space-y-2">
+            {friends.map((f) => (
+              <li
+                key={f.id}
+                className="flex justify-between items-center p-2 rounded-lg gap-2"
+              >
+                <Link
+                  href={`/profile/${f.username}`}
+                  className="text-left flex-1 min-w-0 hover:text-africhess-gold"
                 >
+                  <span className="font-medium">{f.display_name || f.username}</span>
+                  {f.country && (
+                    <span className="text-xs opacity-60 ml-2">{f.country}</span>
+                  )}
+                </Link>
+                <div className="flex gap-1 shrink-0">
+                  <Link
+                    href={`/messages/${encodeURIComponent(f.username)}`}
+                    className="text-sm px-3 py-1 rounded-lg border hover:border-africhess-gold"
+                  >
+                    {t("social.message")}
+                  </Link>
                   <button
                     type="button"
-                    onClick={() => setDmUser(f)}
-                    className="text-left flex-1 min-w-0"
+                    onClick={() => challenge(f.username)}
+                    className="text-sm px-3 py-1 rounded-lg african-gradient text-white"
                   >
-                    <span className="font-medium">{f.display_name || f.username}</span>
-                    {f.country && (
-                      <span className="text-xs opacity-60 ml-2">{f.country}</span>
-                    )}
+                    {t("friends.challenge")}
                   </button>
-                  <div className="flex gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => challenge(f.username)}
-                      className="text-sm px-3 py-1 rounded-lg african-gradient text-white"
-                    >
-                      {t("friends.challenge")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => unfriend(f.username)}
-                      className="text-xs px-2 py-1 rounded-lg border opacity-50"
-                      title={t("social.friend.unfriend")}
-                    >
-                      ×
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="glass-card p-4 flex flex-col min-h-[320px]">
-          <h2 className="font-semibold mb-3">
-            {dmUser
-              ? t("friends.messages.with", { name: dmUser.display_name || dmUser.username })
-              : t("friends.messages.title")}
-          </h2>
-          {!dmUser ? (
-            <p className="text-sm opacity-60">{t("friends.messages.select")}</p>
-          ) : (
-            <>
-              <div className="flex-1 overflow-y-auto space-y-2 mb-3 max-h-64 border border-white/10 rounded-lg p-3">
-                {dmLoading ? (
-                  <p className="text-xs opacity-50">{t("common.loading")}</p>
-                ) : dmMessages.length === 0 ? (
-                  <p className="text-xs opacity-50">{t("friends.messages.empty")}</p>
-                ) : (
-                  dmMessages.map((m) => (
-                    <div
-                      key={m.id}
-                      className={`text-sm ${m.sender.id === user.id ? "text-right" : ""}`}
-                    >
-                      <span className="text-[10px] opacity-50 block">{m.sender.username}</span>
-                      <span className="inline-block px-2 py-1 rounded bg-white/5">{m.content}</span>
-                    </div>
-                  ))
-                )}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  value={dmText}
-                  onChange={(e) => setDmText(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendDm()}
-                  placeholder={t("friends.messages.placeholder")}
-                  className="flex-1 border rounded-lg px-3 py-2 bg-transparent text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={sendDm}
-                  className="px-4 py-2 rounded-lg african-gradient text-white text-sm"
-                >
-                  {t("friends.messages.send")}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+                  <button
+                    type="button"
+                    onClick={() => unfriend(f.username)}
+                    className="text-xs px-2 py-1 rounded-lg border opacity-50"
+                    title={t("social.friend.unfriend")}
+                  >
+                    ×
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
