@@ -147,9 +147,16 @@ class UserPublicSerializer(serializers.ModelSerializer):
 
 class UserUpdateSerializer(serializers.ModelSerializer):
     ALLOWED_FLAIRS = {"", "🦁", "🐘", "🌳", "🥁", "⭐", "👑", "🔥", "🚀", "🧩"}
+    ALLOWED_AVATAR_PRESETS = {f"avatar-{i}" for i in range(1, 9)}
 
     def validate_avatar(self, value):
         return validate_uploaded_image(value)
+
+    def validate_avatar_preset(self, value):
+        preset = (value or "").strip()
+        if preset and preset not in self.ALLOWED_AVATAR_PRESETS:
+            raise serializers.ValidationError("Preset invalide.")
+        return preset or "avatar-1"
 
     def validate_flair(self, value):
         if value not in self.ALLOWED_FLAIRS:

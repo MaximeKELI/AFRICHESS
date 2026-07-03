@@ -91,7 +91,16 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
     def perform_update(self, serializer):
-        super().perform_update(serializer)
+        user = serializer.save()
+        # Choisir un preset illustré retire la photo uploadée (évite un fichier fantôme).
+        if (
+            "avatar_preset" in serializer.validated_data
+            and "avatar" not in serializer.validated_data
+            and user.avatar
+        ):
+            user.avatar.delete(save=False)
+            user.avatar = None
+            user.save(update_fields=["avatar"])
         from .profile_cache import invalidate_public_profile
 
         invalidate_public_profile(self.request.user.username)

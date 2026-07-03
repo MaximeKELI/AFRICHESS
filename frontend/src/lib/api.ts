@@ -72,6 +72,10 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // FormData : laisser le navigateur définir Content-Type + boundary (sinon upload échoue).
+  if (config.data instanceof FormData && config.headers) {
+    delete config.headers["Content-Type"];
+  }
   return config;
 });
 
@@ -129,7 +133,7 @@ export const authApi = {
     api.post("/users/register/", data),
   profile: () => api.get("/users/profile/"),
   updateProfile: (data: Record<string, string> | FormData) =>
-    api.patch("/users/profile/", data, data instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined),
+    api.patch("/users/profile/", data),
 };
 
 export const usersApi = {
