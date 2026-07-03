@@ -10,9 +10,13 @@ from apps.games.models import Game, GameAnalysis, Move
 from apps.users.models import User as UserModel
 from apps.users.premium_utils import (
     DIAMOND_ANALYSIS_DEPTH,
+    DIAMOND_AUTO_ANALYSIS_DEPTH,
     FREE_ANALYSIS_DEPTH,
+    FREE_AUTO_ANALYSIS_DEPTH,
     GOLD_ANALYSIS_DEPTH,
+    GOLD_AUTO_ANALYSIS_DEPTH,
     analysis_engine_depth,
+    auto_analysis_engine_depth,
     max_analysis_moves,
     redact_game_analysis_payload,
 )
@@ -39,6 +43,11 @@ class AnalysisTierUtilsTests(TestCase):
         self.assertEqual(analysis_engine_depth(self.free), FREE_ANALYSIS_DEPTH)
         self.assertEqual(analysis_engine_depth(self.gold), GOLD_ANALYSIS_DEPTH)
         self.assertEqual(analysis_engine_depth(self.diamond), DIAMOND_ANALYSIS_DEPTH)
+
+    def test_auto_analysis_depth_by_tier(self):
+        self.assertEqual(auto_analysis_engine_depth(self.free), FREE_AUTO_ANALYSIS_DEPTH)
+        self.assertEqual(auto_analysis_engine_depth(self.gold), GOLD_AUTO_ANALYSIS_DEPTH)
+        self.assertEqual(auto_analysis_engine_depth(self.diamond), DIAMOND_AUTO_ANALYSIS_DEPTH)
 
     def test_redact_analysis_keeps_full_game(self):
         moves = [{"uci": f"e2e{i%8}", "san": "x"} for i in range(100)]

@@ -2331,7 +2331,7 @@ const en: Record<string, string> = {
   "chess.promotion.knight": "Knight",
   "chess.promotion.aria": "Promote to {piece}",
   "chess.analysis.title": "Stockfish analysis",
-  "chess.analysis.hint": "May take 30s to several minutes depending on move count.",
+  "chess.analysis.hint": "Quick post-game analysis (seconds to ~1 min). Use deep analysis for more detail.",
   "chess.analysis.run": "Analyze game",
   "chess.analysis.cloudRun": "Cloud analysis (deep)",
   "chess.analysis.cloudRunning": "Analysis running…",

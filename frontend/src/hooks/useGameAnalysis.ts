@@ -24,7 +24,6 @@ const ASYNC_POLL_MS = 2500;
 const ASYNC_MAX_MS = 120000;
 const AUTO_CACHE_INITIAL_MS = 600;
 const AUTO_CACHE_MAX_MS = 180000;
-const AUTO_SYNC_FALLBACK_MS = 120000;
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
