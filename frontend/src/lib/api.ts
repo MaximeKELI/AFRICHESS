@@ -176,6 +176,7 @@ export interface GameChallenge {
   challenger: { id: number; username: string; display_name?: string };
   opponent: { id: number; username: string; display_name?: string };
   created_at: string;
+  responded_at?: string | null;
 }
 
 export const gamesApi = {
