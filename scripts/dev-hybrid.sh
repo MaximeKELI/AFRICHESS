@@ -26,6 +26,8 @@ export REDIS_CACHE_URL=redis://:africhess_redis_dev@127.0.0.1:6379/4
 export DJANGO_SETTINGS_MODULE=config.settings.development
 export SECRET_KEY=dev-local-docker-compose-secret-key-minimum-fifty-characters-long
 
+mkdir -p "$ROOT/backend/media/avatars" "$ROOT/backend/.media_dev/avatars" 2>/dev/null || true
+
 trap 'kill 0' EXIT
 echo "→ Backend http://127.0.0.1:8000"
 (cd backend && daphne -b 127.0.0.1 -p 8000 config.asgi:application) &

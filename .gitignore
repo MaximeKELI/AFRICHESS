@@ -8,6 +8,7 @@ env/
 *.sqlite3
 staticfiles/
 media/
+backend/.media_dev/
 
 # Node
 node_modules/
