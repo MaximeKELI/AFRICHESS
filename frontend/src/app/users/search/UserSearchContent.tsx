@@ -73,13 +73,14 @@ export default function UserSearchContent() {
       )}
       <ul className="space-y-2">
         {results.map((hit) => (
-          <li key={hit.user.id}>
+          <li key={hit.user.id} className="glass-card p-4 flex items-center gap-3">
             <Link
               href={`/profile/${hit.user.username}`}
-              className="glass-card p-4 flex items-center gap-3 hover:ring-1 hover:ring-africhess-gold/40 transition-all"
+              className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-90"
             >
               <UserAvatar
                 avatar={hit.user.avatar}
+                avatarPreset={hit.user.avatar_preset}
                 displayName={hit.user.display_name}
                 username={hit.user.username}
                 size={48}
@@ -95,10 +96,11 @@ export default function UserSearchContent() {
                   )}
                 </p>
               </div>
-              {hit.blitz_elo != null && (
-                <span className="font-mono text-africhess-gold">{hit.blitz_elo}</span>
-              )}
             </Link>
+            {hit.blitz_elo != null && (
+              <span className="font-mono text-africhess-gold shrink-0">{hit.blitz_elo}</span>
+            )}
+            <ChallengeUserButton username={hit.user.username} compact />
           </li>
         ))}
       </ul>
