@@ -72,3 +72,13 @@ class ChallengeFriendViewTests(TestCase):
         game = Game.objects.get(id=accept.data["game"]["id"])
         self.assertEqual(game.white_time_ms, 180_000)
         self.assertEqual(game.increment_ms, 2_000)
+        self.assertTrue(
+            Notification.objects.filter(
+                user=self.a, type=Notification.Type.MATCH_FOUND
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                user=self.b, type=Notification.Type.MATCH_FOUND
+            ).exists()
+        )

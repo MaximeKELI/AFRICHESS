@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
 import { useNotificationsWebSocket } from "@/hooks/useNotificationsWebSocket";
+import { gamesApi } from "@/lib/api";
 
 interface NotifPayload {
   type?: string;
@@ -23,25 +24,68 @@ function shouldAutoJoinGame(n: NotifPayload): string | null {
   return null;
 }
 
-/** Redirige vers /play quand un défi est accepté ou une partie est trouvée (WS notifications). */
+/** Redirige vers /play quand un défi est accepté ou une partie est trouvée (WS + polling). */
 export function GameInviteRedirect() {
   const { user } = useAuthStore();
   const router = useRouter();
   const joinedRef = useRef<Set<string>>(new Set());
+  const pendingChallengeIds = useRef<Set<number>>(new Set());
 
-  const onNew = useCallback(
-    (raw: NotifPayload) => {
-      const gameId = shouldAutoJoinGame(raw);
-      if (!gameId || joinedRef.current.has(gameId)) return;
+  const goToGame = useCallback(
+    (gameId: string, mode?: string) => {
+      if (joinedRef.current.has(gameId)) return;
       joinedRef.current.add(gameId);
-      const mode = raw.data?.mode;
       const qs = mode ? `?game=${gameId}&mode=${encodeURIComponent(mode)}` : `?game=${gameId}`;
       router.push(`/play${qs}`);
     },
     [router]
   );
 
+  const onNew = useCallback(
+    (raw: NotifPayload) => {
+      const gameId = shouldAutoJoinGame(raw);
+      if (!gameId) return;
+      goToGame(gameId, raw.data?.mode);
+    },
+    [goToGame]
+  );
+
   useNotificationsWebSocket(Boolean(user), () => {}, onNew);
+
+  // Secours si le WS est indisponible : suit les défis envoyés en attente.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+
+    const poll = async () => {
+      try {
+        const { data } = await gamesApi.sentChallenges();
+        if (cancelled) return;
+        for (const c of data) {
+          if (c.status === "pending") pendingChallengeIds.current.add(c.id);
+        }
+        for (const c of data) {
+          if (
+            c.status === "accepted" &&
+            c.game_id &&
+            pendingChallengeIds.current.has(c.id)
+          ) {
+            pendingChallengeIds.current.delete(c.id);
+            goToGame(c.game_id, c.mode);
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+
+    poll();
+    const timer = setInterval(poll, 2000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [user, goToGame]);
 
   return null;
 }

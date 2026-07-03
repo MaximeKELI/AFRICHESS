@@ -49,6 +49,15 @@ class GameChallengeFlowTests(TestCase):
         challenge = GameChallenge.objects.get(pk=challenge_id)
         self.assertEqual(challenge.status, GameChallenge.Status.ACCEPTED)
         self.assertEqual(challenge.game_id, game.id)
+        challenger_notif = Notification.objects.get(
+            user=self.challenger, type=Notification.Type.MATCH_FOUND
+        )
+        self.assertEqual(challenger_notif.data.get("game_id"), str(game.id))
+        self.assertEqual(challenger_notif.data.get("action"), "challenge_accepted")
+        acceptor_notif = Notification.objects.get(
+            user=self.opponent, type=Notification.Type.MATCH_FOUND
+        )
+        self.assertEqual(acceptor_notif.data.get("game_id"), str(game.id))
 
     def test_decline_challenge_does_not_create_game(self):
         self.client.force_authenticate(self.challenger)
