@@ -8,11 +8,15 @@ import { InlineAlert } from "@/components/ui/InlineAlert";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 
+import { UserAvatar } from "@/components/profile/UserAvatar";
+
 interface UserPublic {
   id: number;
   username: string;
   display_name: string;
   country: string;
+  avatar?: string | null;
+  avatar_preset?: string | null;
 }
 
 interface Friendship {

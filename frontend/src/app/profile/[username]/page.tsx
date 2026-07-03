@@ -21,6 +21,7 @@ interface PublicUser {
   username: string;
   display_name: string;
   avatar?: string | null;
+  avatar_preset?: string | null;
   bio: string;
   country: string;
   city: string;

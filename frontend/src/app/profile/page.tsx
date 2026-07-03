@@ -112,6 +112,7 @@ export default function ProfilePage() {
       <div className="flex items-center gap-4">
         <UserAvatar
           avatar={user.avatar}
+          avatarPreset={user.avatar_preset}
           displayName={user.display_name}
           username={user.username}
           size={80}
