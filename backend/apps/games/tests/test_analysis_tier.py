@@ -81,13 +81,23 @@ class AnalysisRedactionApiTests(TestCase):
             summary_fr="test",
         )
 
-    def test_game_detail_returns_full_analysis_for_free_viewer(self):
+    def test_game_detail_flags_truncated_analysis(self):
         self.client.force_authenticate(user=self.viewer)
         resp = self.client.get(f"/api/games/{self.game.id}/")
         self.assertEqual(resp.status_code, 200)
         analysis = resp.data.get("analysis")
         self.assertIsNotNone(analysis)
         self.assertEqual(len(analysis["best_moves_json"]), 50)
+        self.assertFalse(analysis.get("analysis_incomplete"))
+
+    def test_game_detail_flags_incomplete_analysis(self):
+        moves_json = [{"uci": "e2e4", "san": "e4", "class": "good"} for _ in range(40)]
+        self.game.analysis.best_moves_json = moves_json
+        self.game.analysis.save(update_fields=["best_moves_json"])
+        self.client.force_authenticate(user=self.viewer)
+        resp = self.client.get(f"/api/games/{self.game.id}/")
+        analysis = resp.data.get("analysis")
+        self.assertTrue(analysis.get("analysis_incomplete"))
 
 
 class AnalyzePgnTierTests(TestCase):

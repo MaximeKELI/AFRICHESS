@@ -151,7 +151,7 @@ export function useGameAnalysis({
 
       void (async () => {
         try {
-          const payload = await pollCachedGameAnalysis(gameId, controller.signal);
+          const payload = await pollCachedGameAnalysis(gameId, controller.signal, moveCount);
           if (controller.signal.aborted) return;
           if (payload) {
             setAnalysis(payload);
