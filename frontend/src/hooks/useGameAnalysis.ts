@@ -163,21 +163,11 @@ export function useGameAnalysis({
 
       void (async () => {
         try {
-          const started = Date.now();
           const payload = await pollCachedGameAnalysis(gameId, controller.signal, moveCount);
           if (controller.signal.aborted) return;
           if (payload) {
             applyAnalysis(payload);
             return;
-          }
-          // L'auto-analyse tourne en arrière-plan : éviter un second Stockfish synchrone trop tôt.
-          if (Date.now() - started < AUTO_SYNC_FALLBACK_MS) {
-            const extra = await pollCachedGameAnalysis(gameId, controller.signal, moveCount);
-            if (controller.signal.aborted) return;
-            if (extra) {
-              applyAnalysis(extra);
-              return;
-            }
           }
           await runAnalysis();
         } catch (err: unknown) {

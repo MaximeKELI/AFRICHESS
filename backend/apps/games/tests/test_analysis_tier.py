@@ -69,6 +69,7 @@ class AnalysisRedactionApiTests(TestCase):
             black_player=self.viewer,
             status=Game.Status.COMPLETED,
             mode=Game.Mode.BLITZ,
+            move_count=50,
         )
         for i in range(50):
             Move.objects.create(

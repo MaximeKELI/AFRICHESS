@@ -75,7 +75,10 @@ class GameAnalysisSerializer(serializers.ModelSerializer):
         moves = obj.best_moves_json or []
         if not moves:
             return False
-        return len(moves) < obj.game.move_count
+        total = obj.game.move_count or obj.game.moves.count()
+        if total <= 0:
+            return False
+        return len(moves) < total
 
     def to_representation(self, instance):
         from apps.users.premium_utils import redact_game_analysis_payload
