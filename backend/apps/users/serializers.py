@@ -7,6 +7,7 @@ from rest_framework import serializers
 
 from apps.common.validators import validate_uploaded_image
 
+from .avatar_utils import uploaded_avatar_url
 from .countries_data import VALID_COUNTRY_CODES
 from .models import UserStats
 
@@ -50,8 +51,12 @@ class UserStatsSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     stats = UserStatsSerializer(read_only=True)
     display_name = serializers.ReadOnlyField()
+    avatar = serializers.SerializerMethodField()
     is_premium = serializers.SerializerMethodField()
     is_diamond = serializers.SerializerMethodField()
+
+    def get_avatar(self, obj):
+        return uploaded_avatar_url(obj)
 
     def get_is_premium(self, obj) -> bool:
         return obj.is_premium
