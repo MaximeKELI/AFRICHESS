@@ -65,6 +65,7 @@ interface GameReviewProps {
   orientation: "white" | "black";
   initialAnalysis?: GameAnalysisData | null;
   result?: string;
+  moveCount?: number;
   onClose: () => void;
   layout?: "modal" | "page";
   cacheFirst?: boolean;

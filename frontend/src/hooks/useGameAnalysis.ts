@@ -65,6 +65,7 @@ export function useGameAnalysis({
   initialAnalysis = null,
   autoRun = false,
   cacheFirst = false,
+  moveCount,
 }: UseGameAnalysisOptions) {
   const { t } = useTranslation();
   const [analysis, setAnalysis] = useState<GameAnalysisData | null>(initialAnalysis);
