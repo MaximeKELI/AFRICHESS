@@ -275,8 +275,15 @@ export function Navbar() {
                   </Link>
                 )}
                 <NotificationBell />
+                <MessagesNavButton />
                 <Link href="/profile" className="flex items-center gap-2 hover:opacity-90" onClick={closeDrawer}>
-                  <UserAvatar avatar={user.avatar} displayName={user.display_name} username={user.username} size={32} />
+                  <UserAvatar
+                    avatar={user.avatar}
+                    avatarPreset={user.avatar_preset}
+                    displayName={user.display_name}
+                    username={user.username}
+                    size={32}
+                  />
                   <span className="text-sm font-medium hidden xl:inline hover:text-africhess-gold inline-flex items-center gap-1 max-w-[120px] truncate">
                     <UserFlair flair={user.flair} />
                     {user.display_name || user.username}
