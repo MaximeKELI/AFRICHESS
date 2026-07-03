@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { formatApiError } from "@/lib/errors";
 import { UserAvatar } from "@/components/profile/UserAvatar";
+import { ChallengeUserButton } from "@/components/social/ChallengeUserButton";
 import { countryFlag } from "@/lib/worldCountries";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 
