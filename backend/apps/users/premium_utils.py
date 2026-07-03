@@ -4,10 +4,15 @@ from __future__ import annotations
 
 from django.utils import timezone
 
-# Profondeur moteur par tier (l'analyse couvre toujours la partie entière).
+# Profondeur moteur par tier (analyse manuelle / approfondie).
 FREE_ANALYSIS_DEPTH = 12
 GOLD_ANALYSIS_DEPTH = 14
 DIAMOND_ANALYSIS_DEPTH = 16
+
+# Profondeur plus légère pour l'analyse auto post-partie (latence).
+FREE_AUTO_ANALYSIS_DEPTH = 8
+GOLD_AUTO_ANALYSIS_DEPTH = 10
+DIAMOND_AUTO_ANALYSIS_DEPTH = 12
 
 # Rétrocompat API — plus de plafond de coups.
 FREE_ANALYSIS_MOVES = None
@@ -35,6 +40,15 @@ def analysis_engine_depth(user) -> int:
     if user and user.is_premium:
         return GOLD_ANALYSIS_DEPTH
     return FREE_ANALYSIS_DEPTH
+
+
+def auto_analysis_engine_depth(user) -> int:
+    """Profondeur Stockfish pour l'analyse automatique en arrière-plan."""
+    if user and getattr(user, "is_diamond", False):
+        return DIAMOND_AUTO_ANALYSIS_DEPTH
+    if user and user.is_premium:
+        return GOLD_AUTO_ANALYSIS_DEPTH
+    return FREE_AUTO_ANALYSIS_DEPTH
 
 
 def can_start_puzzle_rush(user) -> tuple[bool, str | None]:

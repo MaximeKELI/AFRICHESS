@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from apps.users.premium_utils import (
     FREE_ANALYSIS_DEPTH,
     analysis_engine_depth,
+    auto_analysis_engine_depth,
     max_analysis_moves,
 )
 
@@ -37,6 +38,21 @@ def analysis_params_for_game(game: Game) -> tuple[int | None, int]:
     if not users:
         return None, FREE_ANALYSIS_DEPTH
     depth = max(analysis_engine_depth(u) for u in users)
+    return None, depth
+
+
+def auto_analysis_params_for_game(game: Game) -> tuple[int | None, int]:
+    """Paramètres rapides pour l'analyse auto post-partie."""
+    users = []
+    if game.white_player_id:
+        users.append(game.white_player)
+    if game.black_player_id:
+        users.append(game.black_player)
+    if not users:
+        return None, FREE_AUTO_ANALYSIS_DEPTH
+    from apps.users.premium_utils import FREE_AUTO_ANALYSIS_DEPTH
+
+    depth = max(auto_analysis_engine_depth(u) for u in users)
     return None, depth
 
 
