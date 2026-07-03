@@ -47,6 +47,7 @@ export function GamePlayerStrip({
         {player.kind === "user" ? (
           <UserAvatar
             avatar={player.avatar}
+            avatarPreset={player.avatarPreset}
             displayName={player.name}
             username={player.username ?? player.name}
             size={36}
