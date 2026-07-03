@@ -430,6 +430,49 @@ class GameVote(models.Model):
         unique_together = ["game", "user", "ply"]
 
 
+class GameChallenge(models.Model):
+    """Défi direct — la partie n'est créée qu'après acceptation."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        ACCEPTED = "accepted", "Accepted"
+        DECLINED = "declined", "Declined"
+        CANCELLED = "cancelled", "Cancelled"
+
+    challenger = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="challenges_sent",
+    )
+    opponent = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="challenges_received",
+    )
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    mode = models.CharField(max_length=20, default="blitz")
+    odds = models.CharField(max_length=20, default="none")
+    is_rated = models.BooleanField(default=False)
+    is_timed = models.BooleanField(default=True)
+    time_control = models.CharField(max_length=20, blank=True, default="")
+    challenger_plays_white = models.BooleanField(default=True)
+    game = models.ForeignKey(
+        Game,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="source_challenge",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["opponent", "status", "-created_at"]),
+            models.Index(fields=["challenger", "status", "-created_at"]),
+        ]
+
 class GameFairPlayTelemetry(models.Model):
     """Télémétrie client accumulée par joueur et par partie."""
 
