@@ -41,13 +41,18 @@ def analysis_params_for_game(game: Game) -> tuple[int, int]:
     return limit, depth
 
 
-def move_rows_for_game(game: Game, limit: int) -> list[tuple[str, bool]]:
-    return list(
+def move_rows_for_game(game: Game, limit: int | None) -> list[tuple[str, bool]]:
+    rows = list(
         game.moves.order_by("move_number").values_list("uci", "played_by_white")
-    )[:limit]
+    )
+    if limit is None:
+        return rows
+    return rows[:limit]
 
 
-def build_and_save_game_analysis(game: Game, *, depth: int, move_limit: int) -> GameAnalysis | None:
+def build_and_save_game_analysis(
+    game: Game, *, depth: int, move_limit: int | None = None
+) -> GameAnalysis | None:
     """Exécute Stockfish et persiste GameAnalysis. Retourne None si échec."""
     from apps.games.engine import ChessEngineService
     from apps.learning.review_nlg import generate_game_review
