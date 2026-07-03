@@ -1,8 +1,10 @@
 """Vues auth durcies — throttle + révocation access token + cookies HttpOnly."""
 
 from dj_rest_auth.views import LoginView
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -62,7 +64,15 @@ class CookieTokenRefreshView(TokenRefreshView):
                 data["refresh"] = cookie_val
 
         serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError:
+            response = Response(
+                {"detail": "Token is invalid or has been revoked."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+            clear_refresh_cookie(response)
+            return response
         validated = serializer.validated_data
 
         body = {"access": validated["access"]}
