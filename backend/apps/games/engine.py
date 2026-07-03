@@ -222,6 +222,27 @@ class ChessEngineService:
         move = random.choice(legal)
         return EngineMove(uci=move.uci(), san=board.san(move))
 
+    def _pick_fallback_move(self, board: chess.Board) -> Optional[EngineMove]:
+        """Coup légal de secours si Stockfish est indisponible ou plante."""
+        legal = list(board.legal_moves)
+        if not legal:
+            return None
+        best_score = -1
+        candidates: list[chess.Move] = []
+        for move in legal:
+            score = 0
+            if board.is_capture(move):
+                score += 3
+            if board.gives_check(move):
+                score += 2
+            if score > best_score:
+                best_score = score
+                candidates = [move]
+            elif score == best_score:
+                candidates.append(move)
+        chosen = random.choice(candidates)
+        return EngineMove(uci=chosen.uci(), san=board.san(chosen))
+
     def get_best_move(
         self,
         fen: str,
@@ -247,28 +268,47 @@ class ChessEngineService:
             if weak:
                 return weak
 
-        try:
-            with self._use_engine() as engine:
-                strength_mode = (
-                    self._configure_strength(engine, elo)
-                    if elo is not None and elo <= STOCKFISH_UCI_MAX_ELO
-                    else "depth"
-                )
-                if strength_mode == "uci_elo":
-                    limit = self._limit_for_weak_elo(elo)
-                elif strength_mode == "skill":
-                    limit = self._limit_for_weak_elo(elo)
-                elif elo is not None:
-                    limit = self._limit_for_weak_elo(elo)
-                else:
-                    limit = self._limit_for_elo(1200, diff_key)
+        last_error: Exception | None = None
+        for attempt in range(2):
+            try:
+                with self._use_engine() as engine:
+                    strength_mode = (
+                        self._configure_strength(engine, elo)
+                        if elo is not None and elo <= STOCKFISH_UCI_MAX_ELO
+                        else "depth"
+                    )
+                    if strength_mode == "uci_elo":
+                        limit = self._limit_for_weak_elo(elo)
+                    elif strength_mode == "skill":
+                        limit = self._limit_for_weak_elo(elo)
+                    elif elo is not None:
+                        limit = self._limit_for_weak_elo(elo)
+                    else:
+                        limit = self._limit_for_elo(1200, diff_key)
 
-                result = engine.play(board, limit)
-                if result.move:
-                    san = board.san(result.move)
-                    return EngineMove(uci=result.move.uci(), san=san)
-        except Exception as e:
-            logger.error("Engine error: %s", e)
+                    result = engine.play(board, limit)
+                    if result.move:
+                        san = board.san(result.move)
+                        return EngineMove(uci=result.move.uci(), san=san)
+            except Exception as e:
+                last_error = e
+                logger.error(
+                    "Engine error (attempt %s): %s", attempt + 1, e
+                )
+                if attempt == 0:
+                    close_stockfish_pool()
+                    continue
+                break
+
+        fallback = self._pick_fallback_move(board)
+        if fallback:
+            logger.warning(
+                "Stockfish fallback move %s (path=%s, err=%s)",
+                fallback.uci,
+                self.path,
+                last_error,
+            )
+            return fallback
         return None
 
     def analyze_position(self, fen: str, depth: Optional[int] = None) -> Optional[float]:
