@@ -181,6 +181,7 @@ function PlayContent() {
     result?: string | null;
   } | null>(null);
   const gameEndShownRef = useRef<string | null>(null);
+  const gameWasActiveRef = useRef(false);
   const { aiCommentsEnabled, blindMode, setBlindMode } = usePreferencesStore();
   const turnStartRef = useRef(Date.now());
 
@@ -209,9 +210,35 @@ function PlayContent() {
   useEffect(() => {
     if (!gameId) {
       gameEndShownRef.current = null;
+      gameWasActiveRef.current = false;
       setGameEndOverlay(null);
     }
   }, [gameId]);
+
+  useEffect(() => {
+    if (gameData.status === "active") {
+      gameWasActiveRef.current = true;
+    }
+  }, [gameData.status]);
+
+  const showGameEndOverlayIfNeeded = useCallback(
+    (result: string | null | undefined, terminationReason?: string | null) => {
+      if (!gameId || !result || !gameWasActiveRef.current) return;
+      if (gameEndShownRef.current === gameId) return;
+      const outcome = computePlayerOutcome(result, playerIsWhite);
+      if (!outcome) return;
+      gameEndShownRef.current = gameId;
+      setGameEndOverlay({
+        outcome,
+        terminationReason: terminationReason ?? gameData.termination_reason,
+        result,
+      });
+      if (outcome === "win") playGameVictory();
+      else if (outcome === "loss") playGameDefeat();
+      else playDrawWhistle();
+    },
+    [gameId, playerIsWhite, gameData.termination_reason]
+  );
 
   // Parties vs IA : pas de WS actif pendant le jeu — poll léger jusqu'à l'analyse auto.
   useEffect(() => {
@@ -271,28 +298,14 @@ function PlayContent() {
   const telemetryEnabled = isLiveHuman && fairplayConsent === true && !fairplayExempt;
 
   useEffect(() => {
-    if (!gameCompleted || !gameId || !user || !gameData.result) return;
-    if (!isLiveHuman) return;
-    if (gameEndShownRef.current === gameId) return;
-    gameEndShownRef.current = gameId;
-    const outcome = computePlayerOutcome(gameData.result, playerIsWhite);
-    if (!outcome) return;
-    setGameEndOverlay({
-      outcome,
-      terminationReason: gameData.termination_reason,
-      result: gameData.result,
-    });
-    if (outcome === "win") playGameVictory();
-    else if (outcome === "loss") playGameDefeat();
-    else playDrawWhistle();
+    if (!gameCompleted || !gameId || !gameData.result) return;
+    showGameEndOverlayIfNeeded(gameData.result, gameData.termination_reason);
   }, [
     gameCompleted,
     gameId,
-    user,
     gameData.result,
     gameData.termination_reason,
-    playerIsWhite,
-    isLiveHuman,
+    showGameEndOverlayIfNeeded,
   ]);
 
   const handleGameEndContinue = useCallback(() => {
@@ -585,13 +598,16 @@ function PlayContent() {
     if (data.is_vs_ai !== undefined) setIsVsAi(data.is_vs_ai);
     if (data.status === "completed") {
       clearActiveGame();
+      if (data.result) {
+        showGameEndOverlayIfNeeded(data.result, data.termination_reason);
+      }
       if (data.termination_reason === "repetition") {
         setStatus(t("play.status.drawRepetition"));
       } else if (data.result) {
         setStatus(t("play.status.gameEnd", { result: data.result }));
       }
     }
-  }, [t]);
+  }, [t, showGameEndOverlayIfNeeded]);
 
   const refreshPendingComments = useCallback(
     (data: Partial<GameState> & { comments_pending?: boolean }, id: string | null) => {

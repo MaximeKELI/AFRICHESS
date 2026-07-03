@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Trophy, Frown, Handshake } from "lucide-react";
 import clsx from "clsx";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -21,8 +22,10 @@ export function GameEndOverlay({
 }: GameEndOverlayProps) {
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const id = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(id);
   }, []);
@@ -47,7 +50,9 @@ export function GameEndOverlay({
   const Icon =
     outcome === "win" ? Trophy : outcome === "loss" ? Frown : Handshake;
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       className={clsx(
         "fixed inset-0 z-layer-game-end flex items-center justify-center p-4 transition-opacity duration-500",
@@ -58,7 +63,7 @@ export function GameEndOverlay({
       aria-labelledby="game-end-title"
     >
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/75 backdrop-blur-sm"
         onClick={onContinue}
         aria-hidden
       />
@@ -66,8 +71,8 @@ export function GameEndOverlay({
         className={clsx(
           "relative w-full max-w-sm rounded-2xl p-8 text-center shadow-2xl border transition-transform duration-500 game-end-card",
           visible ? "scale-100 translate-y-0" : "scale-90 translate-y-4",
-          outcome === "win" && "border-africhess-gold/60 bg-gradient-to-b from-africhess-green/30 to-black/90",
-          outcome === "loss" && "border-africhess-terracotta/40 bg-gradient-to-b from-africhess-terracotta/20 to-black/90",
+          outcome === "win" && "game-end-card--win border-africhess-gold/60 bg-gradient-to-b from-africhess-green/30 to-black/90",
+          outcome === "loss" && "game-end-card--loss border-africhess-terracotta/40 bg-gradient-to-b from-africhess-terracotta/20 to-black/90",
           outcome === "draw" && "border-white/30 bg-gradient-to-b from-white/10 to-black/90"
         )}
       >
@@ -98,6 +103,7 @@ export function GameEndOverlay({
           {t("play.gameEnd.continue")}
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
