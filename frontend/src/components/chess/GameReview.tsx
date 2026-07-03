@@ -82,6 +82,7 @@ export function GameReview({
   orientation,
   initialAnalysis = null,
   result,
+  moveCount,
   onClose,
   layout = "modal",
   cacheFirst = false,

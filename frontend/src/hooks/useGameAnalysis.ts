@@ -167,7 +167,7 @@ export function useGameAnalysis({
     }
 
     void runAnalysis();
-  }, [enabled, autoRun, cacheFirst, gameId, initialAnalysis, analysis, runAnalysis, t]);
+  }, [enabled, autoRun, cacheFirst, gameId, initialAnalysis, analysis, moveCount, runAnalysis, t]);
 
   useEffect(() => {
     cachePollStartedRef.current = false;
