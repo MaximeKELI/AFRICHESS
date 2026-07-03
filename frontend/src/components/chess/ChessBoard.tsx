@@ -239,16 +239,19 @@ function ChessBoardInner({
   const applyMove = useCallback(
     (from: Square, to: Square, promotion?: "q" | "r" | "b" | "n"): boolean => {
       if (serverValidated) {
+        const piece = activeChess.get(from);
         const rank = to[1];
-        const needsPromo =
-          (from[1] === "7" && rank === "8") || (from[1] === "2" && rank === "1");
-        if (needsPromo && !promotion) {
+        const isPawnPromotion =
+          piece?.type === "p" &&
+          ((piece.color === "w" && rank === "8") ||
+            (piece.color === "b" && rank === "1"));
+        if (isPawnPromotion && !promotion) {
           setPromotionPending({ from, to });
           setSelectedSquare(null);
           setLegalTargets([]);
           return false;
         }
-        return applyMoveServer(from, to, promotion);
+        return applyMoveServer(from, to, isPawnPromotion ? promotion : undefined);
       }
       const g = new Chess(game.fen());
       const legal = g.moves({ square: from, verbose: true });
@@ -289,7 +292,7 @@ function ChessBoardInner({
       onMove?.(uci);
       return true;
     },
-    [game, onMove, onMovePlayed, soundsOn, serverValidated, applyMoveServer]
+    [game, activeChess, onMove, onMovePlayed, soundsOn, serverValidated, applyMoveServer]
   );
 
   const onSquareClick = useCallback(
