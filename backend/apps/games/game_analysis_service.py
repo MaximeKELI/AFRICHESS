@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from apps.users.premium_utils import (
     FREE_ANALYSIS_DEPTH,
+    FREE_AUTO_ANALYSIS_DEPTH,
     analysis_engine_depth,
     auto_analysis_engine_depth,
     max_analysis_moves,
@@ -50,8 +51,6 @@ def auto_analysis_params_for_game(game: Game) -> tuple[int | None, int]:
         users.append(game.black_player)
     if not users:
         return None, FREE_AUTO_ANALYSIS_DEPTH
-    from apps.users.premium_utils import FREE_AUTO_ANALYSIS_DEPTH
-
     depth = max(auto_analysis_engine_depth(u) for u in users)
     return None, depth
 
@@ -66,7 +65,12 @@ def move_rows_for_game(game: Game, limit: int | None) -> list[tuple[str, bool]]:
 
 
 def build_and_save_game_analysis(
-    game: Game, *, depth: int, move_limit: int | None = None
+    game: Game,
+    *,
+    depth: int,
+    move_limit: int | None = None,
+    movetime_ms: int | None = None,
+    include_deep_review: bool = True,
 ) -> GameAnalysis | None:
     """Exécute Stockfish et persiste GameAnalysis. Retourne None si échec."""
     from apps.games.engine import ChessEngineService
@@ -81,7 +85,9 @@ def build_and_save_game_analysis(
         return None
 
     engine = ChessEngineService()
-    evaluations = engine.analyze_game_moves(move_rows, depth=depth)
+    evaluations = engine.analyze_game_moves(
+        move_rows, depth=depth, movetime_ms=movetime_ms
+    )
     if not evaluations:
         logger.warning("Auto analysis: engine returned nothing for game %s", game.id)
         return None
@@ -109,13 +115,15 @@ def build_and_save_game_analysis(
 
     ref_user = reference_user_for_analysis(game)
     hints = integrity_hints_for_user(game, ref_user) if ref_user else None
-    deep_review_json = build_deep_review(
-        best_moves_json,
-        accuracy_white=acc_w,
-        accuracy_black=acc_b,
-        depth=depth,
-        integrity_hints=hints,
-    )
+    deep_review_json = None
+    if include_deep_review:
+        deep_review_json = build_deep_review(
+            best_moves_json,
+            accuracy_white=acc_w,
+            accuracy_black=acc_b,
+            depth=depth,
+            integrity_hints=hints,
+        )
 
     analysis, _ = GameAnalysis.objects.update_or_create(
         game=game,

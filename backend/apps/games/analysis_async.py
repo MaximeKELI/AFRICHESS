@@ -48,7 +48,7 @@ def run_auto_game_analysis(game_id: str) -> None:
     from apps.games.models import Game
 
     from .game_analysis_service import (
-        analysis_params_for_game,
+        auto_analysis_params_for_game,
         build_and_save_game_analysis,
         game_needs_auto_analysis,
     )
@@ -61,8 +61,17 @@ def run_auto_game_analysis(game_id: str) -> None:
     if not game_needs_auto_analysis(game):
         return
 
-    move_limit, depth = analysis_params_for_game(game)
-    analysis = build_and_save_game_analysis(game, depth=depth, move_limit=move_limit)
+    move_limit, depth = auto_analysis_params_for_game(game)
+    from django.conf import settings
+
+    movetime_ms = getattr(settings, "AUTO_GAME_ANALYSIS_MOVETIME_MS", 80)
+    analysis = build_and_save_game_analysis(
+        game,
+        depth=depth,
+        move_limit=move_limit,
+        movetime_ms=movetime_ms,
+        include_deep_review=False,
+    )
     if analysis:
         logger.info("Auto game analysis saved for game %s", game_id)
         notify_analysis_ready(game)
