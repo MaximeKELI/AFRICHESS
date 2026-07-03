@@ -11,6 +11,7 @@ import { UserFlair } from "@/components/profile/UserFlair";
 import { usePreferencesStore } from "@/store/preferences";
 import { ChevronDown, Menu, Moon, Shield, Sun, Wifi, WifiOff, X, Leaf } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
+import { MessagesNavButton } from "./MessagesNavButton";
 import { UserSearchBar } from "@/components/social/UserSearchBar";
 import { MobileBottomNav } from "./MobileBottomNav";
 import clsx from "clsx";

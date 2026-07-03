@@ -6,6 +6,7 @@ import { socialApi, type UserRelationship } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { formatApiError } from "@/lib/errors";
+import { ChallengeUserButton } from "@/components/social/ChallengeUserButton";
 
 interface ProfileSocialActionsProps {
   username: string;
@@ -117,7 +118,9 @@ export function ProfileSocialActions({ username, onChange }: ProfileSocialAction
           </>
         )}
 
-        {friendship_status !== "blocked" && friendship_status !== "self" && (
+        {friendship_status !== "blocked" &&
+          friendship_status !== "friends" &&
+          friendship_status !== "self" && (
           <ChallengeUserButton username={username} />
         )}
 
