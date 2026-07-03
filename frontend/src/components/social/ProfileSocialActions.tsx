@@ -101,6 +101,7 @@ export function ProfileSocialActions({ username, onChange }: ProfileSocialAction
             >
               {t("social.message")}
             </Link>
+            <ChallengeUserButton username={username} />
             <button
               type="button"
               disabled={busy}
@@ -114,6 +115,10 @@ export function ProfileSocialActions({ username, onChange }: ProfileSocialAction
               {t("social.friend.unfriend")}
             </button>
           </>
+        )}
+
+        {friendship_status !== "blocked" && friendship_status !== "self" && (
+          <ChallengeUserButton username={username} />
         )}
 
         {friendship_status !== "blocked" && (
