@@ -242,6 +242,8 @@ export const gamesApi = {
     opts?: { mode?: string; is_rated?: boolean; time_control?: string; is_timed?: boolean; odds?: string }
   ) => api.post<GameChallenge>("/games/challenge/", { username, ...opts }),
   pendingChallenges: () => api.get<GameChallenge[]>("/games/challenges/pending/"),
+  sentChallenges: () => api.get<GameChallenge[]>("/games/challenges/sent/"),
+  challengeDetail: (id: number) => api.get<GameChallenge>(`/games/challenges/${id}/`),
   acceptChallenge: (id: number) =>
     api.post<{ challenge: GameChallenge; game: { id: string; mode?: string } }>(
       `/games/challenges/${id}/accept/`

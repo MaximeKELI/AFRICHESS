@@ -447,6 +447,34 @@ class PendingChallengesView(APIView):
         return Response(GameChallengeSerializer(qs, many=True).data)
 
 
+class SentChallengesView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        qs = (
+            GameChallenge.objects.filter(challenger=request.user)
+            .exclude(status=GameChallenge.Status.CANCELLED)
+            .select_related("challenger", "opponent", "game")
+            .order_by("-created_at")[:20]
+        )
+        return Response(GameChallengeSerializer(qs, many=True).data)
+
+
+class ChallengeDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk: int):
+        try:
+            challenge = GameChallenge.objects.select_related(
+                "challenger", "opponent", "game"
+            ).get(pk=pk)
+        except GameChallenge.DoesNotExist:
+            return Response({"error": "Défi introuvable"}, status=404)
+        if request.user.id not in (challenge.challenger_id, challenge.opponent_id):
+            return Response({"error": "Action non autorisée"}, status=403)
+        return Response(GameChallengeSerializer(challenge).data)
+
+
 class ChallengeAcceptView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 

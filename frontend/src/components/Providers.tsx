@@ -6,6 +6,7 @@ import { ActivityTracker } from "@/components/analytics/ActivityTracker";
 import { SiteBackground } from "@/components/layout/SiteBackground";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { PushRegistration } from "@/components/notifications/PushRegistration";
+import { GameInviteRedirect } from "@/components/notifications/GameInviteRedirect";
 import { initAiSpeech } from "@/lib/aiSpeech";
 import { refreshAuthTokens } from "@/lib/api";
 import { JWT_REFRESH_HTTPONLY } from "@/lib/authConfig";
@@ -75,6 +76,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ActivityTracker />
       <PwaInstallPrompt />
       <PushRegistration />
+      <GameInviteRedirect />
       {children}
     </>
   );

@@ -126,19 +126,27 @@ def accept_challenge(challenge: GameChallenge, user) -> GameChallenge:
     challenge.responded_at = timezone.now()
     challenge.save(update_fields=["status", "game", "responded_at"])
 
-    Notification.objects.create(
-        user=challenge.challenger,
-        type=Notification.Type.GAME_INVITE,
-        title=f"{user.display_name or user.username} a accepté votre défi",
-        body=f"Partie {challenge.mode} — c'est parti !",
-        data={
-            "game_id": str(game.id),
-            "mode": challenge.mode,
-            "from_username": user.username,
-            "challenge_id": challenge.id,
-        },
-    )
+    _notify_challenge_started(challenge, game)
     return challenge
+
+
+def _notify_challenge_started(challenge: GameChallenge, game) -> None:
+    """Les deux joueurs reçoivent match_found pour rejoindre l'échiquier automatiquement."""
+    for user in (challenge.challenger, challenge.opponent):
+        opp = challenge.opponent if user.id == challenge.challenger_id else challenge.challenger
+        Notification.objects.create(
+            user=user,
+            type=Notification.Type.MATCH_FOUND,
+            title="Défi accepté — c'est parti !",
+            body=f"Partie {challenge.mode} vs {opp.display_name or opp.username}",
+            data={
+                "game_id": str(game.id),
+                "mode": challenge.mode,
+                "from_username": opp.username,
+                "challenge_id": challenge.id,
+                "action": "challenge_accepted",
+            },
+        )
 
 
 def decline_challenge(challenge: GameChallenge, user) -> GameChallenge:
