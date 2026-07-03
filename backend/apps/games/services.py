@@ -684,7 +684,7 @@ class MatchmakingService:
                 elo=elo,
                 pool=pool,
                 meta=meta,
-                elo_range=elo_range_for_wait(0),
+                elo_range=elo_range_for_wait(15),
                 enqueue_if_no_match=True,
             )
             if result and result.status == "paired" and result.opponent_id:
@@ -786,7 +786,7 @@ class MatchmakingService:
                 elo=elo,
                 pool=pool,
                 meta=meta,
-                elo_range=elo_range_for_wait(0),
+                elo_range=elo_range_for_wait(15),
                 enqueue_if_no_match=True,
             )
         MatchmakingQueue.objects.update_or_create(
@@ -859,7 +859,7 @@ class MatchmakingService:
                 elo=elo,
                 pool=pool,
                 meta=meta,
-                elo_range=elo_range_for_wait(0),
+                elo_range=elo_range_for_wait(15),
                 enqueue_if_no_match=False,
             )
             if result and result.status == "paired" and result.opponent_id:

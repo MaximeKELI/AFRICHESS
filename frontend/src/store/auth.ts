@@ -15,6 +15,7 @@ interface User {
   username: string;
   display_name: string;
   avatar?: string | null;
+  avatar_preset?: string | null;
   flair?: string | null;
   chess_level?: string;
   country: string;

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { usersApi } from "@/lib/api";
+import { usersApi, notificationsApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
 import { DirectMessagePanel } from "@/components/social/DirectMessagePanel";
 import { InlineAlert } from "@/components/ui/InlineAlert";
@@ -28,6 +28,23 @@ export default function DirectMessagePage() {
       .catch((err) => setError(formatApiError(err, t("profile.public.error"))))
       .finally(() => setLoading(false));
   }, [username, t]);
+
+  useEffect(() => {
+    if (!user || !username) return;
+    notificationsApi.list().then(({ data }) => {
+      const items = Array.isArray(data) ? data : data.results ?? [];
+      items
+        .filter(
+          (n: { type: string; is_read: boolean; data?: { from_username?: string } }) =>
+            n.type === "direct_message" &&
+            !n.is_read &&
+            n.data?.from_username === username
+        )
+        .forEach((n: { id: number }) => {
+          notificationsApi.markRead(n.id).catch(() => undefined);
+        });
+    });
+  }, [user, username]);
 
   if (!user) {
     return (
