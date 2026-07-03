@@ -11,7 +11,7 @@ from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken
 
 from apps.games.game_actions import accept_draw, offer_draw, resign_game
-from apps.games.models import Game
+from apps.games.models import Game, GameChallenge
 from apps.games.serializers import serialize_game_move_delta
 from apps.games.services import GameService
 from config.asgi import application
@@ -37,6 +37,10 @@ class ChallengeUserViewTests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(self.challenger)
 
+    def _accept(self, challenge_id: int):
+        self.client.force_authenticate(self.opponent)
+        return self.client.post(f"/api/games/challenges/{challenge_id}/accept/", {}, format="json")
+
     def test_challenge_with_explicit_time_control(self):
         res = self.client.post(
             "/api/games/challenge/",
@@ -50,7 +54,9 @@ class ChallengeUserViewTests(TestCase):
             format="json",
         )
         self.assertEqual(res.status_code, 201, res.data)
-        game = Game.objects.get(id=res.data["id"])
+        accept = self._accept(res.data["id"])
+        self.assertEqual(accept.status_code, 200, accept.data)
+        game = Game.objects.get(id=accept.data["game"]["id"])
         self.assertEqual(game.white_time_ms, 900_000)
         self.assertEqual(game.black_time_ms, 900_000)
         self.assertEqual(game.increment_ms, 10_000)
@@ -67,7 +73,10 @@ class ChallengeUserViewTests(TestCase):
             format="json",
         )
         self.assertEqual(res.status_code, 201, res.data)
-        game = Game.objects.get(id=res.data["id"])
+        challenge = GameChallenge.objects.get(pk=res.data["id"])
+        self.assertEqual(challenge.time_control, "3+2")
+        accept = self._accept(res.data["id"])
+        game = Game.objects.get(id=accept.data["game"]["id"])
         self.assertEqual(game.white_time_ms, 180_000)
         self.assertEqual(game.increment_ms, 2_000)
 
@@ -84,7 +93,8 @@ class ChallengeUserViewTests(TestCase):
             format="json",
         )
         self.assertEqual(res.status_code, 201, res.data)
-        game = Game.objects.get(id=res.data["id"])
+        accept = self._accept(res.data["id"])
+        game = Game.objects.get(id=accept.data["game"]["id"])
         self.assertEqual(game.white_time_ms, 1_800_000)
         self.assertEqual(game.increment_ms, 0)
 
