@@ -8,5 +8,6 @@ export function lastMoveFromMoves(moves?: ApiMove[]): { from: string; to: string
 }
 
 export function turnFromFen(fen: string): "w" | "b" {
+  if (!fen || fen === "start") return "w";
   return fen.includes(" w ") ? "w" : "b";
 }

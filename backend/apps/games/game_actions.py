@@ -209,12 +209,19 @@ def create_rematch(game: Game, user) -> Game | None:
         game.is_timed,
         game.time_control_minutes,
     )
+    from .draw_rules import init_repetition_counts
+    from .variant_utils import starting_position_for_variant
+
+    fen, chess960_pos = starting_position_for_variant(game.variant)
     new_game = Game.objects.create(
         white_player=game.black_player,
         black_player=game.white_player,
         mode=game.mode,
         variant=game.variant,
+        chess960_position_id=chess960_pos,
         status=Game.Status.ACTIVE,
+        fen=fen,
+        repetition_counts=init_repetition_counts(fen, game.variant),
         is_timed=timed,
         time_control_minutes=tcm,
         white_time_ms=white_ms,

@@ -12,6 +12,8 @@ from apps.ratings.models import PlayerRating
 
 from .models import CorrespondenceQueue, Game
 from .room_utils import ensure_game_room
+from .draw_rules import init_repetition_counts
+from .variant_utils import starting_position_for_variant
 
 User = get_user_model()
 
@@ -26,11 +28,15 @@ def create_correspondence_game(
 ) -> Game:
     days = max(1, min(int(days_per_move), 14))
     now = timezone.now()
+    fen, chess960_pos = starting_position_for_variant("standard")
     game = Game.objects.create(
         white_player=white,
         black_player=black,
         mode=Game.Mode.CORRESPONDENCE,
         status=Game.Status.ACTIVE,
+        fen=fen,
+        chess960_position_id=chess960_pos,
+        repetition_counts=init_repetition_counts(fen, "standard"),
         is_timed=False,
         is_rated=False,
         days_per_move=days,

@@ -131,6 +131,7 @@ class GameService:
             chess960_position_id=chess960_pos,
             bot=bot,
             fen=start_fen,
+            repetition_counts=init_repetition_counts(start_fen, variant),
             status=Game.Status.ACTIVE,
             is_vs_ai=True,
             ai_difficulty=display_difficulty,
