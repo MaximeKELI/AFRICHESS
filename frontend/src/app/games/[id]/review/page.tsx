@@ -99,6 +99,7 @@ export default function GameReviewPage({ params }: GameReviewPageProps) {
       playerIsWhite={playerIsWhite}
       orientation={orientation}
       initialAnalysis={initialAnalysis}
+      moveCount={moveCount}
       result={result}
       layout="page"
       cacheFirst
