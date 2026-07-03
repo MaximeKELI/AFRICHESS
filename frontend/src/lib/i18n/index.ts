@@ -901,7 +901,7 @@ const fr: Record<string, string> = {
   "chess.promotion.knight": "Cavalier",
   "chess.promotion.aria": "Promouvoir en {piece}",
   "chess.analysis.title": "Analyse Stockfish",
-  "chess.analysis.hint": "Peut prendre 30 s à plusieurs minutes selon le nombre de coups.",
+  "chess.analysis.hint": "Analyse rapide après la partie (quelques secondes à 1 min). Bouton « analyse approfondie » pour plus de détail.",
   "chess.analysis.run": "Analyser la partie",
   "chess.analysis.cloudRun": "Analyse cloud (profonde)",
   "chess.analysis.cloudRunning": "Analyse en cours…",

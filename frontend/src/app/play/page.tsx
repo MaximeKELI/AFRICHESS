@@ -60,7 +60,7 @@ import {
   type GameBotPublic,
   type GamePlayerPublic,
 } from "@/lib/gamePlayers";
-import { parseAnalysisPayload, type GameAnalysisData } from "@/lib/gameAnalysis";
+import { isAnalysisIncomplete, parseAnalysisPayload, type GameAnalysisData } from "@/lib/gameAnalysis";
 
 import { useGameWebSocket, type WsGamePatch, type WsGamePayload } from "@/hooks/useGameWebSocket";
 import { useMatchmakingWebSocket } from "@/hooks/useMatchmakingWebSocket";
@@ -197,6 +197,37 @@ function PlayContent() {
       setMobileTab("board");
     }
   }, [gameCompleted, gameId]);
+
+  // Parties vs IA : pas de WS actif pendant le jeu — poll léger jusqu'à l'analyse auto.
+  useEffect(() => {
+    if (!gameCompleted || !gameId) return;
+    if (gameData.analysis && !isAnalysisIncomplete(gameData.analysis, gameData.move_count)) return;
+
+    let cancelled = false;
+    let delay = 700;
+
+    const poll = async () => {
+      while (!cancelled) {
+        try {
+          const { data } = await gamesApi.get(gameId);
+          const parsed = parseAnalysisPayload(data.analysis);
+          if (parsed && !isAnalysisIncomplete(parsed, data.move_count)) {
+            setGameData((prev) => ({ ...prev, analysis: parsed }));
+            return;
+          }
+        } catch {
+          /* retry */
+        }
+        await new Promise((r) => setTimeout(r, delay));
+        delay = Math.min(Math.round(delay * 1.25), 2500);
+      }
+    };
+
+    void poll();
+    return () => {
+      cancelled = true;
+    };
+  }, [gameCompleted, gameId, gameData.analysis, gameData.move_count]);
 
   const [fairplayConsent, setFairplayConsent] = useState<boolean | null>(null);
   const [fairplayExempt, setFairplayExempt] = useState(false);
@@ -581,7 +612,7 @@ function PlayContent() {
 
   const { connected: wsConnected, wsError, sendMove: wsSendMove, resign: wsResign, sendChat: wsSendChat, subscribeChat: wsSubscribeChat } = useGameWebSocket(
     gameId,
-    isLiveHuman || isVoteChess,
+    Boolean(gameId) && (isLiveHuman || isVoteChess || isVsAi),
     handleWsUpdate,
     (payload) => {
       setStatus(

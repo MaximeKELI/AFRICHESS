@@ -22,8 +22,13 @@ interface UseGameAnalysisOptions {
 const SYNC_TIMEOUT_MS = 45000;
 const ASYNC_POLL_MS = 2500;
 const ASYNC_MAX_MS = 120000;
-const AUTO_CACHE_POLL_MS = 2500;
-const AUTO_CACHE_MAX_MS = 90000;
+const AUTO_CACHE_INITIAL_MS = 600;
+const AUTO_CACHE_MAX_MS = 180000;
+const AUTO_SYNC_FALLBACK_MS = 120000;
+
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 async function pollAsyncAnalysis(
   gameId: string,
@@ -39,7 +44,7 @@ async function pollAsyncAnalysis(
     if (data.status === "failed") {
       throw new Error(typeof data.error === "string" ? data.error : "Analysis failed");
     }
-    await new Promise((r) => setTimeout(r, ASYNC_POLL_MS));
+    await sleep(ASYNC_POLL_MS);
   }
   throw new Error("Analysis timeout");
 }
@@ -50,6 +55,7 @@ async function pollCachedGameAnalysis(
   moveCount?: number
 ): Promise<GameAnalysisData | null> {
   const started = Date.now();
+  let delay = AUTO_CACHE_INITIAL_MS;
   while (Date.now() - started < AUTO_CACHE_MAX_MS) {
     if (signal.aborted) return null;
     const { data } = await gamesApi.get(gameId);
@@ -57,7 +63,8 @@ async function pollCachedGameAnalysis(
     if (payload && !isAnalysisIncomplete(payload, moveCount ?? data?.move_count)) {
       return payload;
     }
-    await new Promise((r) => setTimeout(r, AUTO_CACHE_POLL_MS));
+    await sleep(delay);
+    delay = Math.min(Math.round(delay * 1.3), 2500);
   }
   return null;
 }
@@ -77,6 +84,13 @@ export function useGameAnalysis({
   const abortRef = useRef<AbortController | null>(null);
   const cachePollStartedRef = useRef(false);
 
+  const applyAnalysis = useCallback((payload: GameAnalysisData | null) => {
+    if (!payload || isAnalysisIncomplete(payload, moveCount)) return;
+    setAnalysis(payload);
+    setError(null);
+    setLoading(false);
+  }, [moveCount]);
+
   const runAnalysis = useCallback(async () => {
     if (!gameId) return;
     abortRef.current?.abort();
@@ -94,7 +108,7 @@ export function useGameAnalysis({
         const { data } = await Promise.race([syncPromise, timeoutPromise]);
         const payload = parseAnalysisPayload(data?.analysis);
         if (payload) {
-          setAnalysis(payload);
+          applyAnalysis(payload);
           return;
         }
         if (data?.analysis) {
@@ -106,7 +120,7 @@ export function useGameAnalysis({
         if (controller.signal.aborted) return;
         await gamesApi.analyzeAsync(gameId);
         const payload = await pollAsyncAnalysis(gameId, controller.signal);
-        if (payload) setAnalysis(payload);
+        if (payload) applyAnalysis(payload);
         else setError(t("chess.analysis.incomplete"));
         if (syncErr instanceof Error && syncErr.message !== "SYNC_TIMEOUT") {
           /* async succeeded */
@@ -119,17 +133,16 @@ export function useGameAnalysis({
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
-  }, [gameId, t]);
+  }, [gameId, t, applyAnalysis]);
 
   useEffect(() => {
     if (!initialAnalysis || isAnalysisIncomplete(initialAnalysis, moveCount)) return;
-    setAnalysis((prev) => prev ?? initialAnalysis);
+    applyAnalysis(initialAnalysis);
     if (cachePollStartedRef.current) {
       abortRef.current?.abort();
       cachePollStartedRef.current = false;
-      setLoading(false);
     }
-  }, [initialAnalysis, moveCount]);
+  }, [initialAnalysis, moveCount, applyAnalysis]);
 
   useEffect(() => {
     if (!enabled || !autoRun || !gameId) return;
@@ -151,11 +164,21 @@ export function useGameAnalysis({
 
       void (async () => {
         try {
+          const started = Date.now();
           const payload = await pollCachedGameAnalysis(gameId, controller.signal, moveCount);
           if (controller.signal.aborted) return;
           if (payload) {
-            setAnalysis(payload);
+            applyAnalysis(payload);
             return;
+          }
+          // L'auto-analyse tourne en arrière-plan : éviter un second Stockfish synchrone trop tôt.
+          if (Date.now() - started < AUTO_SYNC_FALLBACK_MS) {
+            const extra = await pollCachedGameAnalysis(gameId, controller.signal, moveCount);
+            if (controller.signal.aborted) return;
+            if (extra) {
+              applyAnalysis(extra);
+              return;
+            }
           }
           await runAnalysis();
         } catch (err: unknown) {
@@ -170,7 +193,18 @@ export function useGameAnalysis({
     }
 
     void runAnalysis();
-  }, [enabled, autoRun, cacheFirst, gameId, initialAnalysis, analysis, moveCount, runAnalysis, t]);
+  }, [
+    enabled,
+    autoRun,
+    cacheFirst,
+    gameId,
+    initialAnalysis,
+    analysis,
+    moveCount,
+    runAnalysis,
+    applyAnalysis,
+    t,
+  ]);
 
   useEffect(() => {
     cachePollStartedRef.current = false;
