@@ -1626,11 +1626,12 @@ html.has-site-background nav {
 .puzzle-hint-arrow-overlay {
   position: absolute;
   inset: 0;
-  z-index: 30;
+  z-index: 40;
   pointer-events: none;
   overflow: visible;
 }
 .puzzle-hint-arrow-segment {
+  stroke-dasharray: 200;
   animation: puzzle-hint-arrow-in 0.45s ease-out both;
 }
 .puzzle-hint-origin-ring {
@@ -1640,7 +1641,7 @@ html.has-site-background nav {
   animation: puzzle-hint-dot-pop 0.35s ease-out 0.2s both;
 }
 @keyframes puzzle-hint-arrow-in {
-  from { stroke-dashoffset: 120; opacity: 0; }
+  from { stroke-dashoffset: 200; opacity: 0; }
   to { stroke-dashoffset: 0; opacity: 1; }
 }
 @keyframes puzzle-hint-ring-pulse {

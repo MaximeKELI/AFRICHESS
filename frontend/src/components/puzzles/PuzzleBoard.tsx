@@ -144,7 +144,12 @@ export function PuzzleBoard({
         lastMove={lastMove}
         playSoundOnFenChange
         serverValidated
-        reviewHighlight={reviewHighlight}
+        reviewHighlight={
+          reviewHighlight ??
+          (hintArrow
+            ? { best: { from: hintArrow.from, to: hintArrow.to } }
+            : null)
+        }
         hintArrow={hintArrow ? { from: hintArrow.from, to: hintArrow.to } : null}
       />
       </div>

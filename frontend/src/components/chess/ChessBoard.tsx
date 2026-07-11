@@ -511,7 +511,13 @@ function ChessBoardInner({
           <PuzzleHintArrow
             from={hintArrow.from}
             to={hintArrow.to}
-            fen={displayFen}
+            fen={
+              serverValidated
+                ? displayFen === "start"
+                  ? "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+                  : displayFen
+                : game.fen()
+            }
             orientation={orientation}
           />
         )}
