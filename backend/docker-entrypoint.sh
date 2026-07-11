@@ -13,6 +13,15 @@ fi
 # Toujours synchroniser le catalogue bots (idempotent) — évite /bots vide
 python manage.py seed_bots 2>/dev/null || true
 
+# Catalogue puzzles local si pool trop petit (sans télécharger Lichess)
+python -c "
+import django, os
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', os.environ.get('DJANGO_SETTINGS_MODULE', 'config.settings'))
+django.setup()
+from apps.puzzles.models import Puzzle
+raise SystemExit(0 if Puzzle.objects.count() >= 40 else 1)
+" 2>/dev/null || python manage.py seed_puzzle_catalog 2>/dev/null || true
+
 if [ "${RUN_SEED:-false}" = "true" ]; then
   python manage.py seed_puzzles --download 2>/dev/null || true
   python manage.py seed_league 2>/dev/null || true

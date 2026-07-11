@@ -22,7 +22,6 @@ import { InlineAlert } from "@/components/ui/InlineAlert";
 import { formatApiError } from "@/lib/errors";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
-import { chessLevelLabel } from "@/lib/i18n/labels";
 import { getPuzzleStreak, recordPuzzleSolved } from "@/lib/puzzleStreak";
 import {
   evaluateNewBadges,
@@ -545,6 +544,9 @@ export default function PuzzlesPage() {
         setTrainingQueue(list);
         setTrainingIndex(0);
         setPuzzle(list[0] ?? null);
+        if (list.length === 0) {
+          setLoadError(t("puzzles.error.emptyPool"));
+        }
       })
       .catch((err) => {
         setPuzzle(null);
@@ -1049,10 +1051,10 @@ export default function PuzzlesPage() {
               onChange={(e) => setDifficulty(e.target.value)}
               className="px-3 py-2 rounded-lg border border-white/20 bg-transparent text-sm"
             >
-              <option value="beginner">{chessLevelLabel(t, "beginner")}</option>
-              <option value="intermediate">{chessLevelLabel(t, "intermediate")}</option>
-              <option value="advanced">{chessLevelLabel(t, "advanced")}</option>
-              <option value="expert">{chessLevelLabel(t, "expert")}</option>
+              <option value="beginner">{t("puzzles.level.beginner")}</option>
+              <option value="intermediate">{t("puzzles.level.intermediate")}</option>
+              <option value="advanced">{t("puzzles.level.advanced")}</option>
+              <option value="expert">{t("puzzles.level.expert")}</option>
               <option value="adaptive">{t("puzzles.difficulty.adaptive")}</option>
             </select>
             <select

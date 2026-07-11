@@ -94,10 +94,35 @@ class TacticalTrainingView(APIView):
         difficulty = _normalize_difficulty(request.query_params.get("difficulty", "medium"))
         theme = request.query_params.get("theme")
         count = min(int(request.query_params.get("count", 10)), 20)
-        qs = Puzzle.objects.filter(difficulty=difficulty)
-        if theme:
-            qs = qs.filter(themes__contains=[theme])
-        puzzles = random_queryset(qs, count)
+        order = ["easy", "medium", "hard", "expert"]
+        # Essayer le niveau demandé puis les voisins (évite liste vide si pool pauvre)
+        try:
+            idx = order.index(difficulty)
+        except ValueError:
+            idx = 1
+        neighbors: list[str] = []
+        for dist in range(1, len(order)):
+            if idx - dist >= 0:
+                neighbors.append(order[idx - dist])
+            if idx + dist < len(order):
+                neighbors.append(order[idx + dist])
+        candidates = [difficulty] + neighbors
+        puzzles = []
+        for diff in candidates:
+            qs = Puzzle.objects.filter(difficulty=diff)
+            if theme:
+                qs = qs.filter(themes__contains=[theme])
+            puzzles = random_queryset(qs, count)
+            if puzzles:
+                break
+        if not puzzles and theme:
+            # Dernier recours : même difficulté sans filtre thème
+            for diff in candidates:
+                puzzles = random_queryset(Puzzle.objects.filter(difficulty=diff), count)
+                if puzzles:
+                    break
+        if not puzzles:
+            puzzles = random_queryset(Puzzle.objects.all(), count)
         return Response(PuzzleSerializer(puzzles, many=True).data)
 
 
