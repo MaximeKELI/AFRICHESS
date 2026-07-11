@@ -32,7 +32,6 @@ const NAV_GROUPS = [
       { href: "/simul", key: "nav.simul" },
       { href: "/bots", key: "nav.bots" },
       { href: "/friends", key: "nav.friends" },
-      { href: "/play?setup=background", key: "nav.background" },
     ],
   },
   {
@@ -44,12 +43,9 @@ const NAV_GROUPS = [
       { href: "/learning/repertoires", key: "nav.repertoire" },
       { href: "/learning/study", key: "study.title" },
       { href: "/studies", key: "nav.studies" },
-      { href: "/insights", key: "nav.insights" },
-      { href: "/coaches", key: "nav.coaches" },
-      { href: "/classroom", key: "nav.classroom" },
-      { href: "/learning/glossary", key: "nav.glossary" },
       { href: "/training", key: "nav.training" },
-      { href: "/training/endgames", key: "nav.endgames" },
+      { href: "/insights", key: "nav.insights" },
+      { href: "/learning/glossary", key: "nav.glossary" },
     ],
   },
   {
@@ -69,6 +65,8 @@ const NAV_GROUPS = [
       { href: "/clubs", key: "nav.clubs" },
       { href: "/community", key: "nav.community" },
       { href: "/blog", key: "nav.blog" },
+      { href: "/coaches", key: "nav.coaches" },
+      { href: "/classroom", key: "nav.classroom" },
       { href: "/stats", key: "nav.stats" },
     ],
   },
@@ -234,7 +232,7 @@ export function Navbar() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 md:h-16 flex items-center justify-between gap-2">
           <Link href="/" className="flex items-center gap-2 group shrink-0" onClick={closeDrawer}>
             <Image src="/images/logo.png" alt="AFRICHESS" width={36} height={36} className="rounded-lg md:w-10 md:h-10" />
-            <span className="font-display text-lg md:text-xl font-bold bg-gradient-to-r from-africhess-gold to-africhess-green bg-clip-text text-transparent hidden sm:inline">
+            <span className="font-display text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-africhess-gold to-africhess-green bg-clip-text text-transparent">
               AFRICHESS
             </span>
           </Link>
