@@ -154,10 +154,6 @@ class StudyLineListCreateView(APIView):
         line = StudyLine.objects.create(
             user=request.user, name=name, color=color, moves_uci=moves
         )
-        from django.utils import timezone
-
-        from .models import LineReview
-
         LineReview.objects.create(
             user=request.user, line=line, next_review=timezone.now()
         )
