@@ -5,8 +5,9 @@ import { ChessBoard } from "@/components/chess/ChessBoard";
 import {
   applyPuzzleMove,
   buildPuzzleFen,
+  hintPlayerSolutionMove,
   isPlayerTurn,
-  nextPlayerSolutionMove,
+  normalizeSolutionMoves,
   puzzleOrientation,
   solverColor,
 } from "@/lib/puzzleEngine";
@@ -30,6 +31,8 @@ interface PuzzleBoardProps {
   onWrong?: (played: string[]) => void;
   disabled?: boolean;
   hintRevealed?: boolean;
+  /** true = flèche/UCI OK, false = échec, null = pas encore révélé */
+  onHintStatus?: (status: boolean | null) => void;
   reviewHighlight?: { played?: { from: string; to: string }; best?: { from: string; to: string } } | null;
   onPlayedChange?: (played: string[]) => void;
 }
@@ -40,12 +43,16 @@ export function PuzzleBoard({
   onWrong,
   disabled,
   hintRevealed,
+  onHintStatus,
   reviewHighlight,
   onPlayedChange,
 }: PuzzleBoardProps) {
   const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
-  const solution = puzzle.solution_moves ?? [];
+  const solution = useMemo(
+    () => normalizeSolutionMoves(puzzle.solution_moves),
+    [puzzle.solution_moves]
+  );
   const [played, setPlayed] = useState<string[]>([]);
   const [fen, setFen] = useState(puzzle.fen);
   const [shake, setShake] = useState(false);
@@ -107,10 +114,18 @@ export function PuzzleBoard({
 
   const hintArrow = useMemo(() => {
     if (!hintRevealed) return null;
-    const uci = nextPlayerSolutionMove(puzzle.fen, solution, played);
+    const uci = hintPlayerSolutionMove(puzzle.fen, solution, played);
     if (!uci || uci.length < 4) return null;
     return { from: uci.slice(0, 2), to: uci.slice(2, 4), uci };
   }, [hintRevealed, puzzle.fen, solution, played]);
+
+  useEffect(() => {
+    if (!hintRevealed) {
+      onHintStatus?.(null);
+      return;
+    }
+    onHintStatus?.(Boolean(hintArrow));
+  }, [hintRevealed, hintArrow, onHintStatus]);
 
   return (
     <div className={`space-y-2 relative ${shake ? "puzzle-fx-shake" : ""}`}>

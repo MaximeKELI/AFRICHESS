@@ -127,6 +127,8 @@ export default function PuzzlesPage() {
   const unlockedBadgesRef = useRef<Set<PuzzleBadgeId>>(new Set());
   const [showMiniError, setShowMiniError] = useState(false);
   const [hintRevealed, setHintRevealed] = useState(false);
+  /** null = pas révélé ; true/false = flèche résolue ou non (évite message contradictoire) */
+  const [hintAvailable, setHintAvailable] = useState<boolean | null>(null);
   const [hintOffered, setHintOffered] = useState(false);
   const [usedHint, setUsedHint] = useState(false);
   const [badgeQueue, setBadgeQueue] = useState<PuzzleBadgeId[]>([]);
@@ -147,6 +149,7 @@ export default function PuzzlesPage() {
     setResult(null);
     setPuzzleFailed(false);
     setHintRevealed(false);
+    setHintAvailable(null);
     setHintOffered(false);
     setUsedHint(false);
     setShowMiniError(false);
@@ -160,6 +163,7 @@ export default function PuzzlesPage() {
     setPuzzleFailed(false);
     setLocalPlayed([]);
     setHintRevealed(false);
+    setHintAvailable(null);
     setHintOffered(false);
     setUsedHint(false);
     setShowMiniError(false);
@@ -358,6 +362,7 @@ export default function PuzzlesPage() {
     setPuzzleFailed(false);
     setUciMoves([]);
     setHintRevealed(false);
+    setHintAvailable(null);
     setHintOffered(false);
     setUsedHint(false);
     setStartTime(Date.now());
@@ -527,6 +532,7 @@ export default function PuzzlesPage() {
     setPuzzleFailed(false);
     setUciMoves([]);
     setHintRevealed(false);
+    setHintAvailable(null);
     setHintOffered(false);
     setUsedHint(false);
     setStartTime(Date.now());
@@ -782,6 +788,7 @@ export default function PuzzlesPage() {
           })
         );
         setHintRevealed(false);
+        setHintAvailable(null);
         setHintOffered(false);
         setUsedHint(false);
 
@@ -899,6 +906,10 @@ export default function PuzzlesPage() {
     setUsedHint(true);
   };
 
+  const handleHintStatus = useCallback((status: boolean | null) => {
+    setHintAvailable(status);
+  }, []);
+
   const startThematicPath = (pathTheme: string) => {
     setTheme(pathTheme);
     setTab("training");
@@ -916,6 +927,7 @@ export default function PuzzlesPage() {
       setResult(null);
       setPuzzleFailed(false);
       setHintRevealed(false);
+      setHintAvailable(null);
       setHintOffered(false);
       setUsedHint(false);
       setStartTime(Date.now());
@@ -1192,6 +1204,7 @@ export default function PuzzlesPage() {
                 onPlayedChange={setLocalPlayed}
                 disabled={puzzleSolved && !celebration && tab !== "rush" && tab !== "storm" && tab !== "survival"}
                 hintRevealed={hintRevealed}
+                onHintStatus={handleHintStatus}
               />
               <PuzzleSolveCelebration
                 data={celebration}
@@ -1240,7 +1253,7 @@ export default function PuzzlesPage() {
                 {t("puzzles.hint.button")}
               </button>
             )}
-            {hintRevealed && !puzzleSolved && tab !== "rush" && tab !== "storm" && tab !== "survival" && (
+            {hintRevealed && hintAvailable === true && !puzzleSolved && tab !== "rush" && tab !== "storm" && tab !== "survival" && (
               <span className="text-sm text-africhess-gold/80">{t("puzzles.hint.shown")}</span>
             )}
             {puzzleFailed && tab !== "rush" && tab !== "storm" && tab !== "survival" && (

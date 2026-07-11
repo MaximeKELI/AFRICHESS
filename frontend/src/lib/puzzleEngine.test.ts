@@ -3,7 +3,9 @@ import {
   alignMovesToSolution,
   applyPuzzleMove,
   buildPuzzleFen,
+  hintPlayerSolutionMove,
   nextPlayerSolutionMove,
+  normalizeSolutionMoves,
   uciEquals,
 } from "./puzzleEngine";
 
@@ -32,6 +34,23 @@ describe("nextPlayerSolutionMove", () => {
     const solution = ["f6g4", "h5g4"];
     // played vide mais on simule un décalage : index 0 = coup noir, OK
     expect(nextPlayerSolutionMove(fen, solution, [])).toBe("f6g4");
+  });
+});
+
+describe("normalizeSolutionMoves", () => {
+  it("parses JSON string and filters short tokens", () => {
+    expect(normalizeSolutionMoves('["h5f7","e8f7"]')).toEqual(["h5f7", "e8f7"]);
+    expect(normalizeSolutionMoves("h5f7, e8f7")).toEqual(["h5f7", "e8f7"]);
+  });
+});
+
+describe("hintPlayerSolutionMove", () => {
+  it("falls back to raw UCI when strict legality fails", () => {
+    // Tour bloquée vers f8 (pion f7) — pas légal, mais indice affichable
+    const fen = "6k1/5ppp/8/8/8/5R2/5PPP/6K1 w - - 0 1";
+    const solution = ["f3f8"];
+    expect(nextPlayerSolutionMove(fen, solution, [])).toBeNull();
+    expect(hintPlayerSolutionMove(fen, solution, [])).toBe("f3f8");
   });
 });
 
