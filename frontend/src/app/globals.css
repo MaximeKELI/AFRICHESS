@@ -446,9 +446,9 @@ html.has-site-background nav {
   40% { transform: translateX(100%); }
 }
 
-.stats-fx-accent-gold .stats-fx-stat-value { color: #d4a843; text-shadow: 0 0 20px rgba(212, 168, 67, 0.4); }
-.stats-fx-accent-green .stats-fx-stat-value { color: #6ee7a8; text-shadow: 0 0 20px rgba(45, 106, 79, 0.45); }
-.stats-fx-accent-cyan .stats-fx-stat-value { color: #67e8f9; text-shadow: 0 0 20px rgba(103, 232, 249, 0.35); }
+.stats-fx-accent-gold .stats-fx-stat-value { color: var(--africhess-gold, #D4A017); text-shadow: 0 0 20px rgba(212, 160, 23, 0.4); }
+.stats-fx-accent-green .stats-fx-stat-value { color: var(--africhess-green, #1B7A3D); text-shadow: 0 0 20px rgba(27, 122, 61, 0.45); }
+.stats-fx-accent-cyan .stats-fx-stat-value { color: var(--africhess-gold, #D4A017); text-shadow: 0 0 20px rgba(212, 160, 23, 0.25); }
 
 .stats-fx-stat-value {
   font-size: 1.75rem;

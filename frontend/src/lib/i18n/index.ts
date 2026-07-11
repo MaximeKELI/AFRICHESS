@@ -152,6 +152,7 @@ const fr: Record<string, string> = {
   "play.chat.open": "Ouvrir le chat",
   "play.options.appearance": "Apparence",
   "play.options.game": "Partie",
+  "play.options.style": "Style",
   "play.options.sectionNav": "Catégories d'options",
   "play.playerBar.opponent": "Adversaire",
   "pgn.export": "Exporter PGN",

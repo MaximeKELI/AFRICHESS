@@ -7,12 +7,12 @@ interface Slice {
 }
 
 const CHART_COLORS = {
-  win: "#2d6a4f",
+  win: "#1B7A3D",
   draw: "#6b7280",
-  loss: "#c45c3e",
-  gold: "#d4a843",
-  green: "#2d6a4f",
-  terracotta: "#c45c3e",
+  loss: "#C45C26",
+  gold: "#D4A017",
+  green: "#1B7A3D",
+  terracotta: "#C45C26",
   blue: "#3b82f6",
   purple: "#8b5cf6",
 };
