@@ -154,7 +154,13 @@ class StudyLineListCreateView(APIView):
         line = StudyLine.objects.create(
             user=request.user, name=name, color=color, moves_uci=moves
         )
-        schedule_review(request.user, line, quality=4)
+        from django.utils import timezone
+
+        from .models import LineReview
+
+        LineReview.objects.create(
+            user=request.user, line=line, next_review=timezone.now()
+        )
         return Response({"id": line.id, "name": line.name}, status=201)
 
 
