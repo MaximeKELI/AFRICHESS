@@ -189,13 +189,13 @@ function ChessBoardInner({
 
   useEffect(() => {
     if (game.isCheckmate()) {
-      setBoardStatus("Échec et mat");
+      setBoardStatus(t("board.checkmate"));
     } else if (game.inCheck()) {
-      setBoardStatus("Échec");
+      setBoardStatus(t("board.check"));
     } else {
       setBoardStatus("");
     }
-  }, [game]);
+  }, [game, t]);
 
   const canSelectSquare = useCallback(
     (square: Square) => {
