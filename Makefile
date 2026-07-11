@@ -1,4 +1,8 @@
-.PHONY: up up-all down logs migrate superuser demo
+.PHONY: all bootstrap up up-all down logs migrate superuser demo frontend hybrid
+
+# Install deps + Docker stack + frontend (commande unique)
+all bootstrap:
+	./scripts/dev-all.sh
 
 up:
 	docker compose up -d db redis backend celery celery-beat
@@ -8,6 +12,10 @@ up:
 
 up-all:
 	docker compose up -d
+
+# db/redis Docker + backend local + frontend
+hybrid:
+	./scripts/dev-hybrid.sh
 
 frontend:
 	cd frontend && npm run dev
