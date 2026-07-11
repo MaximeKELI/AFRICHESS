@@ -2,7 +2,7 @@
 
 import { useState, useCallback, Suspense, useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 import { GameSidePanel } from "@/components/chess/GameSidePanel";
 import { PlaySetupOptions, type PlaySetupCategory } from "@/components/chess/PlaySetupOptions";
@@ -141,6 +141,7 @@ interface GameState {
 
 function PlayContent() {
   const params = useSearchParams();
+  const router = useRouter();
   const mode = params.get("mode") || "blitz";
   const gameFromUrl = params.get("game");
   const botFromUrl = params.get("bot");
@@ -535,8 +536,28 @@ function PlayContent() {
 
   useEffect(() => {
     const saved = loadActiveGame();
-    if (saved && !gameId) setResumeOffer(saved);
-  }, [user, gameId]);
+    if (saved && !gameId && !gameFromUrl) setResumeOffer(saved);
+  }, [user, gameId, gameFromUrl]);
+
+  // Reprendre une partie humaine active (refresh / onglet fermé)
+  useEffect(() => {
+    if (!user || gameId || gameFromUrl) return;
+    gamesApi
+      .active()
+      .then(({ data }) => {
+        const list = Array.isArray(data) ? data : [];
+        const live = list.find((g: { is_vs_ai?: boolean; status?: string }) => !g.is_vs_ai && g.status === "active");
+        if (!live?.id) return;
+        setResumeOffer({
+          gameId: live.id,
+          mode: live.mode || "blitz",
+          orientation: "white",
+          aiElo: 1250,
+          savedAt: Date.now(),
+        });
+      })
+      .catch(() => {});
+  }, [user, gameId, gameFromUrl]);
 
   useEffect(() => {
     turnStartRef.current = Date.now();
@@ -712,6 +733,31 @@ function PlayContent() {
     }
   }, []);
 
+  const syncGameInUrl = useCallback(
+    (id: string, playMode?: string) => {
+      const q = new URLSearchParams();
+      q.set("game", id);
+      q.set("mode", playMode || mode);
+      router.replace(`/play?${q.toString()}`);
+    },
+    [router, mode]
+  );
+
+  const handleRematchReady = useCallback(
+    (payload: { game_id: string; mode?: string }) => {
+      if (!payload.game_id) return;
+      setGameId(payload.game_id);
+      setIsVsAi(false);
+      syncGameInUrl(payload.game_id, payload.mode);
+      gamesApi.get(payload.game_id).then(({ data }) => {
+        if (data.white_player?.id === user?.id) setOrientation("white");
+        else if (data.black_player?.id === user?.id) setOrientation("black");
+        applyGameResponse(data);
+        setStatus(t("play.rematch.started"));
+      });
+    },
+    [user?.id, applyGameResponse, t, syncGameInUrl]
+  );
 
   const { connected: wsConnected, wsError, sendMove: wsSendMove, resign: wsResign, sendChat: wsSendChat, subscribeChat: wsSubscribeChat } = useGameWebSocket(
     gameId,
@@ -726,7 +772,8 @@ function PlayContent() {
     },
     handleWsGamePatch,
     handleAnalysisReady,
-    (payload) => setWsVoteTally(payload)
+    (payload) => setWsVoteTally(payload),
+    handleRematchReady
   );
 
   const handleMatchFound = useCallback(
@@ -734,6 +781,7 @@ function PlayContent() {
       setGameId(id);
       setIsVsAi(false);
       setSearching(false);
+      syncGameInUrl(id);
       gamesApi.get(id).then(({ data }) => {
         if (data.white_player?.id === user?.id) setOrientation("white");
         else if (data.black_player?.id === user?.id) setOrientation("black");
@@ -741,7 +789,7 @@ function PlayContent() {
         setStatus(t("play.status.opponentFound"));
       });
     },
-    [user?.id, applyGameResponse, t]
+    [user?.id, applyGameResponse, t, syncGameInUrl]
   );
 
   const { searching: wsSearching, mmError, search: wsSearch, cancel: wsCancel } =
@@ -818,9 +866,12 @@ function PlayContent() {
     try {
       const { data } = await gamesApi.get(resumeOffer.gameId);
       setGameId(data.id);
-      setOrientation(resumeOffer.orientation);
-      setAiEloChoice(resumeOffer.aiElo as AiLevelElo);
-      setIsVsAi(true);
+      syncGameInUrl(data.id, data.mode || resumeOffer.mode);
+      if (data.white_player?.id === user?.id) setOrientation("white");
+      else if (data.black_player?.id === user?.id) setOrientation("black");
+      else setOrientation(resumeOffer.orientation);
+      if (resumeOffer.aiElo) setAiEloChoice(resumeOffer.aiElo as AiLevelElo);
+      setIsVsAi(Boolean(data.is_vs_ai));
       applyGameResponse(data);
       refreshPendingComments(data, data.id);
       setResumeOffer(null);
@@ -828,6 +879,7 @@ function PlayContent() {
     } catch {
       clearActiveGame();
       setResumeOffer(null);
+      setStatus(t("play.status.gameNotFound"));
     }
   };
 
@@ -872,6 +924,7 @@ function PlayContent() {
       });
       setIsVsAi(true);
       setGameId(data.id);
+      syncGameInUrl(data.id, aiPlayMode);
       applyGameResponse(data);
       refreshPendingComments(data, data.id);
       saveActiveGame({
@@ -887,16 +940,15 @@ function PlayContent() {
           : t("play.status.gameStarted")
       );
     } catch (err) {
-      const ax = err as { response?: { status?: number } };
+      const ax = err as { response?: { status?: number; data?: { code?: string } } };
       if (ax.response?.status === 403) {
-        setStatus(t("premium.botLocked"));
-      } else {
-        const msg = formatApiError(err);
         setStatus(
-          msg.includes("joindre le serveur")
-            ? msg
-            : msg || t("play.status.startFailed")
+          ax.response.data?.code === "bot_locked"
+            ? t("bots.lockedProgress")
+            : t("premium.botLocked")
         );
+      } else {
+        setStatus(formatApiError(err, t("play.status.startFailed")));
       }
     } finally {
       setAiStarting(false);
@@ -914,6 +966,7 @@ function PlayContent() {
     timePreset,
     applyGameResponse,
     refreshPendingComments,
+    syncGameInUrl,
     t,
   ]);
 
@@ -1045,24 +1098,9 @@ function PlayContent() {
       }
       httpJoined = status === 200;
     } catch (err: unknown) {
-      const msg =
-        err &&
-        typeof err === "object" &&
-        "response" in err &&
-        err.response &&
-        typeof err.response === "object" &&
-        "data" in err.response &&
-        err.response.data &&
-        typeof err.response.data === "object" &&
-        "error" in err.response.data &&
-        typeof err.response.data.error === "string"
-          ? err.response.data.error
-          : null;
-      if (msg) {
-        setStatus(msg);
-        setSearching(false);
-        return;
-      }
+      setStatus(formatApiError(err, t("play.status.searchFailed")));
+      setSearching(false);
+      return;
     }
     wsSearch({ listenOnly: httpJoined });
   };
@@ -1717,6 +1755,7 @@ function PlayContent() {
                   .rematch(gameId)
                   .then(({ data }) => {
                     setGameId(data.id);
+                    syncGameInUrl(data.id, data.mode || mode);
                     applyGameResponse(data);
                     setStatus(t("play.rematch.started"));
                   })

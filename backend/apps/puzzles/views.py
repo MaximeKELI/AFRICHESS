@@ -183,14 +183,9 @@ class PuzzleStormStartView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        from apps.users.premium_utils import can_start_puzzle_rush, record_puzzle_rush_start
-
         from .storm import start_storm_session
 
-        ok, code = can_start_puzzle_rush(request.user)
-        if not ok:
-            return Response({"error": "Limite storm atteinte", "code": code}, status=403)
-        record_puzzle_rush_start(request.user)
+        # Storm libre (parité Lichess) — ne consomme pas le quota Rush
         session = start_storm_session(request.user)
         first = Puzzle.objects.get(pk=session.puzzle_ids[0])
         return Response(

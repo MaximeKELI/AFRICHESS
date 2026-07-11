@@ -80,6 +80,22 @@ export function formatApiError(
     return detailText;
   }
 
+  if (typeof data === "object" && data !== null && "error" in data && typeof (data as { error: unknown }).error === "string") {
+    const errMsg = (data as { error: string }).error;
+    const ERROR_MAP: Record<string, string> = {
+      "Authentication required": "errors.authRequired",
+      "Game not found": "errors.gameNotFound",
+      "Not found": "errors.notFound",
+      Forbidden: "errors.forbidden",
+      "User not found": "errors.userNotFound",
+      "username required": "errors.usernameRequired",
+      "fen required": "errors.fenRequired",
+      Empty: "errors.empty",
+    };
+    const key = ERROR_MAP[errMsg];
+    if (key) return translate(locale, key);
+  }
+
   if (Array.isArray(data)) return data.join(" ");
 
   const messages: string[] = [];

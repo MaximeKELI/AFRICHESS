@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { socialApi, gamesApi, type GameChallenge } from "@/lib/api";
+import { unwrapList } from "@/lib/unwrapList";
 import { useAuthStore } from "@/store/auth";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
@@ -62,15 +63,14 @@ function FriendsContent() {
       gamesApi.pendingChallenges().catch(() => ({ data: [] as GameChallenge[] })),
     ])
       .then(([friendsRes, pendingRes, sentRes, challengesRes]) => {
-        const list: Friendship[] = Array.isArray(friendsRes.data) ? friendsRes.data : [];
+        const list = unwrapList<Friendship>(friendsRes.data);
         const users = list.map((f) =>
           f.from_user.id === user?.id ? f.to_user : f.from_user
         );
         setFriends(users);
-        setPending(Array.isArray(pendingRes.data) ? pendingRes.data : []);
-        setSent(Array.isArray(sentRes.data) ? sentRes.data : []);
-        const ch = challengesRes.data;
-        setGameChallenges(Array.isArray(ch) ? ch : []);
+        setPending(unwrapList<Friendship>(pendingRes.data));
+        setSent(unwrapList<Friendship>(sentRes.data));
+        setGameChallenges(unwrapList<GameChallenge>(challengesRes.data));
       })
       .catch((err) => {
         setFriends([]);

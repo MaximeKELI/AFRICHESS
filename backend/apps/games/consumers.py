@@ -294,6 +294,9 @@ class ChessConsumer(AsyncWebsocketConsumer):
     async def broadcast_draw(self, event):
         await self._send_event("proposition_nulle", event["payload"])
 
+    async def rematch_ready(self, event):
+        await self._send_event("rematch_ready", event["payload"])
+
     @database_sync_to_async
     def _draw_offer(self):
         from .game_actions import offer_draw

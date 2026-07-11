@@ -65,10 +65,10 @@ export function usePushNotifications(userId: number | undefined) {
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data as Record<string, string>;
-      if (data?.game_id) {
-        router.push(`/play?game=${data.game_id}`);
-      } else if (data?.action === "match_found" && data?.game_id) {
+      const data = response.notification.request.content.data as Record<string, string | number>;
+      if (data?.challenge_id) {
+        router.push("/friends");
+      } else if (data?.game_id) {
         router.push(`/play?game=${data.game_id}`);
       }
     });

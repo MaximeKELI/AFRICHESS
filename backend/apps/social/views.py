@@ -42,6 +42,7 @@ def _notify_friend_request(from_user, to_user, friendship_id: int):
 class SentFriendsView(generics.ListAPIView):
     serializer_class = FriendshipSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
 
     def get_queryset(self):
         return Friendship.objects.filter(
@@ -53,6 +54,7 @@ class SentFriendsView(generics.ListAPIView):
 class PendingFriendsView(generics.ListAPIView):
     serializer_class = FriendshipSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
 
     def get_queryset(self):
         return Friendship.objects.filter(
@@ -64,6 +66,7 @@ class PendingFriendsView(generics.ListAPIView):
 class FriendsListView(generics.ListAPIView):
     serializer_class = FriendshipSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
 
     def get_queryset(self):
         user = self.request.user
@@ -536,6 +539,7 @@ class ForumLikeView(APIView):
 class ChatHistoryView(generics.ListAPIView):
     serializer_class = ChatMessageSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
 
     def list(self, request, *args, **kwargs):
         room_type = self.kwargs["room_type"]

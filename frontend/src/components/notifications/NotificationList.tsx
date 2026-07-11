@@ -144,17 +144,6 @@ export function NotificationList({
         </Link>
       );
     }
-    if (n.data?.from_username) {
-      return (
-        <Link
-          href={`/messages/${encodeURIComponent(n.data.from_username)}`}
-          onClick={close}
-          className="text-xs text-africhess-gold mt-2 inline-block hover:underline"
-        >
-          {t("social.message")}
-        </Link>
-      );
-    }
     return null;
   };
 

@@ -17,6 +17,7 @@ import { OptionSection } from "@/components/ui/OptionSection";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { puzzlesApi, ratingsApi } from "@/lib/api";
+import { learningApi } from "@/lib/learningApi";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { formatApiError } from "@/lib/errors";
 import { useAuthStore } from "@/store/auth";
@@ -75,7 +76,7 @@ interface RushLeaderboardRow {
   score: number;
 }
 
-type Tab = "daily" | "training" | "rush" | "battle" | "survival" | "leaderboard";
+type Tab = "daily" | "training" | "rush" | "storm" | "battle" | "survival" | "leaderboard";
 
 const THEMATIC_PATHS = [
   { theme: "fork", labelKey: "puzzles.theme.fork" },
@@ -295,12 +296,16 @@ export default function PuzzlesPage() {
   }, [user, refreshWeeklyRank]);
 
   useEffect(() => {
-    if (tab !== "rush" || !rushEndsAt || !puzzle) return;
+    if ((tab !== "rush" && tab !== "storm") || !rushEndsAt || !puzzle) return;
     const tick = () => {
       const left = Math.max(0, Math.floor((rushEndsAt - Date.now()) / 1000));
       setRushTimeLeft(left);
       if (left <= 0) {
-        setResult(t("puzzles.rush.timeUp", { score: rushScore }));
+        setResult(
+          tab === "storm"
+            ? t("puzzles.storm.timeUp", { score: rushScore })
+            : t("puzzles.rush.timeUp", { score: rushScore })
+        );
         setPuzzle(null);
         setRushSessionId(null);
       }
@@ -409,6 +414,36 @@ export default function PuzzlesPage() {
       });
   };
 
+  const loadStorm = () => {
+    if (!user) {
+      setLoadError(t("puzzles.storm.loginRequired"));
+      return;
+    }
+    setResult(null);
+    setUciMoves([]);
+    setStartTime(Date.now());
+    setRushScore(0);
+    setRushMisses(0);
+    setRushTimeLeft(180);
+    setRushSessionId(null);
+    setRushEndsAt(null);
+    setLoadError(null);
+    puzzlesApi
+      .stormStart()
+      .then(({ data }) => {
+        setRushSessionId(data.session_id);
+        setRushEndsAt(new Date(data.ends_at).getTime());
+        setRushTimeLeft(data.duration ?? 180);
+        setRushQueue([data.puzzle]);
+        setRushIndex(0);
+        setPuzzle(data.puzzle);
+      })
+      .catch((err) => {
+        setPuzzle(null);
+        setLoadError(formatApiError(err, t("puzzles.error.storm")));
+      });
+  };
+
   const loadSurvival = () => {
     if (!user) return;
     setSurvivalSessionId(null);
@@ -500,8 +535,11 @@ export default function PuzzlesPage() {
     setRecapOpen(false);
     sessionRecapSnapshotRef.current = null;
     sessionRef.current.reset();
-    puzzlesApi
-      .training(difficulty, 10, theme || undefined)
+    const req =
+      difficulty === "adaptive"
+        ? learningApi.adaptivePuzzles(10)
+        : puzzlesApi.training(difficulty, 10, theme || undefined);
+    req
       .then(({ data }) => {
         const list: Puzzle[] = Array.isArray(data) ? data : data.results ?? [];
         setTrainingQueue(list);
@@ -521,6 +559,7 @@ export default function PuzzlesPage() {
       loadRushLeaderboard();
       loadRush();
     }
+    else if (tab === "storm") loadStorm();
     else if (tab === "battle") loadBattle();
     else if (tab === "survival") loadSurvival();
     else if (tab === "leaderboard") loadLeaderboard();
@@ -529,7 +568,7 @@ export default function PuzzlesPage() {
 
   const submitWithMoves = async (moves: string[]) => {
     if (!puzzle) return;
-    if (!user && tab !== "rush" && tab !== "survival" && tab !== "battle") {
+    if (!user && tab !== "rush" && tab !== "storm" && tab !== "survival" && tab !== "battle") {
       setResult(t("puzzles.loginToSubmit"));
       return;
     }
@@ -540,8 +579,12 @@ export default function PuzzlesPage() {
     setUciMoves(submitMoves);
     const time = Math.floor((Date.now() - startTime) / 1000);
     try {
-      if (tab === "rush" && rushSessionId) {
-        const { data } = await puzzlesApi.rushSubmit(rushSessionId, moves, time);
+      if ((tab === "rush" || tab === "storm") && rushSessionId) {
+        const submit =
+          tab === "storm"
+            ? puzzlesApi.stormSubmit(rushSessionId, moves, time)
+            : puzzlesApi.rushSubmit(rushSessionId, moves, time);
+        const { data } = await submit;
         setRushScore(data.score ?? rushScore);
         setRushMisses(data.misses ?? rushMisses);
         if (data.time_left != null) {
@@ -827,7 +870,7 @@ export default function PuzzlesPage() {
 
   const handlePuzzleWrong = useCallback(
     (played: string[]) => {
-      if (puzzle && tab !== "rush" && tab !== "survival") {
+      if (puzzle && tab !== "rush" && tab !== "storm" && tab !== "survival") {
         sessionRef.current.recordWrong(puzzle.id);
         setShowMiniError(true);
         window.setTimeout(() => setShowMiniError(false), 700);
@@ -835,7 +878,7 @@ export default function PuzzlesPage() {
           setHintOffered(true);
         }
       }
-      if (tab === "rush" || tab === "survival") {
+      if (tab === "rush" || tab === "storm" || tab === "survival") {
         void submitWithMoves(played);
         return;
       }
@@ -964,7 +1007,7 @@ export default function PuzzlesPage() {
       )}
 
       <div className="flex flex-wrap gap-2 mb-6 items-center">
-        {(["daily", "training", "rush"] as const).map((id) => (
+        {(["daily", "training", "rush", "storm"] as const).map((id) => (
           <button
             key={id}
             type="button"
@@ -1010,6 +1053,7 @@ export default function PuzzlesPage() {
               <option value="intermediate">{chessLevelLabel(t, "intermediate")}</option>
               <option value="advanced">{chessLevelLabel(t, "advanced")}</option>
               <option value="expert">{chessLevelLabel(t, "expert")}</option>
+              <option value="adaptive">{t("puzzles.difficulty.adaptive")}</option>
             </select>
             <select
               value={theme}
@@ -1027,7 +1071,7 @@ export default function PuzzlesPage() {
         )}
       </div>
 
-      {tab === "rush" && (
+      {(tab === "rush" || tab === "storm") && (
         <div className="glass-card p-4 mb-6">
           <h3 className="font-semibold text-sm mb-2">{t("puzzles.rush.leaderboard.title")}</h3>
           {rushLeaderboard.length === 0 ? (
@@ -1109,7 +1153,7 @@ export default function PuzzlesPage() {
             <span className="px-3 py-1 rounded-full bg-africhess-green/20 text-sm capitalize">
               {puzzle.difficulty}
             </span>
-            {(tab === "training" || tab === "rush") &&
+            {(tab === "training" || tab === "rush" || tab === "storm") &&
               (tab === "training" ? trainingQueue : rushQueue).length > 0 && (
               <span className="px-3 py-1 rounded-full bg-white/10 text-sm">
                 {(tab === "training" ? trainingIndex : rushIndex) + 1}/
@@ -1144,13 +1188,13 @@ export default function PuzzlesPage() {
                 onComplete={(moves) => handlePuzzleComplete(moves)}
                 onWrong={handlePuzzleWrong}
                 onPlayedChange={setLocalPlayed}
-                disabled={puzzleSolved && !celebration && tab !== "rush" && tab !== "survival"}
+                disabled={puzzleSolved && !celebration && tab !== "rush" && tab !== "storm" && tab !== "survival"}
                 hintRevealed={hintRevealed}
               />
               <PuzzleSolveCelebration
                 data={celebration}
                 onDone={handleCelebrationDone}
-                autoDismissMs={tab === "rush" || tab === "survival" ? 2400 : 3200}
+                autoDismissMs={tab === "rush" || tab === "storm" || tab === "survival" ? 2400 : 3200}
               />
               <PuzzleBadgeToast
                 badgeIds={badgeQueue}
@@ -1181,7 +1225,7 @@ export default function PuzzlesPage() {
             <button type="button" onClick={reset} className="px-6 py-2 border rounded-lg">
               {t("puzzles.reset")}
             </button>
-            {hintOffered && !hintRevealed && !puzzleSolved && tab !== "rush" && tab !== "survival" && (
+            {hintOffered && !hintRevealed && !puzzleSolved && tab !== "rush" && tab !== "storm" && tab !== "survival" && (
               <button
                 type="button"
                 onClick={revealHint}
@@ -1190,7 +1234,7 @@ export default function PuzzlesPage() {
                 {t("puzzles.hint.button")}
               </button>
             )}
-            {puzzleFailed && tab !== "rush" && tab !== "survival" && (
+            {puzzleFailed && tab !== "rush" && tab !== "storm" && tab !== "survival" && (
               <button
                 type="button"
                 onClick={retryPuzzle}
@@ -1213,7 +1257,7 @@ export default function PuzzlesPage() {
                 {t("puzzles.daily.reload")}
               </button>
             )}
-            {tab === "rush" && puzzle && (
+            {(tab === "rush" || tab === "storm") && puzzle && (
               <span className="text-sm font-mono text-africhess-gold ml-auto">
                 {Math.floor(rushTimeLeft / 60)}:{String(rushTimeLeft % 60).padStart(2, "0")}
                 {" · "}{t("puzzles.rush.score", { n: rushScore })}

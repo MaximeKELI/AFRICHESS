@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { socialApi } from "@/lib/api";
+import { unwrapList } from "@/lib/unwrapList";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { useAuthStore } from "@/store/auth";
@@ -35,7 +36,7 @@ export default function MessagesInboxPage() {
     socialApi
       .friends()
       .then(({ data }) => {
-        const list: Friendship[] = Array.isArray(data) ? data : [];
+        const list = unwrapList<Friendship>(data);
         setFriends(
           list.map((f) => (f.from_user.id === user?.id ? f.to_user : f.from_user))
         );

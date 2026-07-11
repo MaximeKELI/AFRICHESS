@@ -729,7 +729,10 @@ class RematchView(APIView):
             return Response({"error": "Forbidden"}, status=403)
         new_game = create_rematch(game, request.user)
         if not new_game:
-            return Response({"error": "Impossible"}, status=400)
+            return Response(
+                {"error": "Rematch impossible (partie non terminée ou vs IA)."},
+                status=400,
+            )
         return Response(GameSerializer(new_game).data, status=201)
 
 

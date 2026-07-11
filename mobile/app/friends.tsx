@@ -16,6 +16,9 @@ export default function FriendsScreen() {
   const { user, loading: authLoading } = useAuth();
   const [friends, setFriends] = useState<FriendRow[]>([]);
   const [pending, setPending] = useState<FriendRow[]>([]);
+  const [gameChallenges, setGameChallenges] = useState<
+    { id: number; mode: string; time_control?: string; challenger: { username: string; display_name?: string } }[]
+  >([]);
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("");
@@ -25,10 +28,17 @@ export default function FriendsScreen() {
 
   const load = useCallback(() => {
     setLoading(true);
-    Promise.all([socialApi.friends(), socialApi.pending()])
-      .then(([f, p]) => {
-        setFriends(Array.isArray(f.data) ? f.data : []);
-        setPending(Array.isArray(p.data) ? p.data : []);
+    Promise.all([
+      socialApi.friends(),
+      socialApi.pending(),
+      socialApi.pendingChallenges().catch(() => ({ data: [] })),
+    ])
+      .then(([f, p, c]) => {
+        const unwrap = <T,>(data: unknown): T[] =>
+          Array.isArray(data) ? data : ((data as { results?: T[] })?.results ?? []);
+        setFriends(unwrap(f.data));
+        setPending(unwrap(p.data));
+        setGameChallenges(unwrap(c.data));
       })
       .catch(() => setStatus("Impossible de charger les amis"))
       .finally(() => setLoading(false));
@@ -72,6 +82,30 @@ export default function FriendsScreen() {
     }
   };
 
+  const acceptGameChallenge = async (id: number) => {
+    try {
+      const { data } = await socialApi.acceptChallenge(id);
+      const gameId = data.game?.id;
+      if (gameId) {
+        router.push(`/play?game=${gameId}`);
+        return;
+      }
+      setStatus("Défi accepté");
+      load();
+    } catch {
+      setStatus("Acceptation du défi impossible");
+    }
+  };
+
+  const declineGameChallenge = async (id: number) => {
+    try {
+      await socialApi.declineChallenge(id);
+      load();
+    } catch {
+      setStatus("Refus impossible");
+    }
+  };
+
   const challenge = async (name: string) => {
     try {
       await socialApi.challengeFriend(name, "blitz");
@@ -87,7 +121,7 @@ export default function FriendsScreen() {
       await socialApi.sendDirectMessage(dmUser, dmText.trim());
       setDmText("");
       const { data } = await socialApi.directMessages(dmUser);
-      setDmMessages(data.messages ?? []);
+      setDmMessages(Array.isArray(data) ? data : []);
     } catch {
       setStatus("Message impossible");
     }
@@ -152,6 +186,30 @@ export default function FriendsScreen() {
         <ActivityIndicator color="#D4A017" style={{ marginTop: 24 }} />
       ) : (
         <>
+          {gameChallenges.length > 0 && (
+            <>
+              <Text style={styles.section}>Défis de partie</Text>
+              <FlatList
+                data={gameChallenges}
+                keyExtractor={(item) => String(item.id)}
+                renderItem={({ item }) => (
+                  <View style={styles.card}>
+                    <Text style={styles.name}>
+                      {item.challenger?.display_name || item.challenger?.username} · {item.mode}
+                    </Text>
+                    <View style={{ flexDirection: "row", gap: 8 }}>
+                      <Pressable style={styles.accept} onPress={() => void acceptGameChallenge(item.id)}>
+                        <Text style={styles.acceptText}>Accepter</Text>
+                      </Pressable>
+                      <Pressable onPress={() => void declineGameChallenge(item.id)}>
+                        <Text style={styles.link}>Refuser</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                )}
+              />
+            </>
+          )}
           {pending.length > 0 && (
             <>
               <Text style={styles.section}>Demandes en attente</Text>

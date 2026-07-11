@@ -112,6 +112,13 @@ export interface VoteTallyPayload {
 
 type VoteUpdateHandler = (payload: VoteTallyPayload) => void;
 
+export interface RematchReadyPayload {
+  game_id: string;
+  mode?: string;
+}
+
+type RematchReadyHandler = (payload: RematchReadyPayload) => void;
+
 const MAX_WS_RETRIES = 5;
 
 export function useGameWebSocket(
@@ -121,7 +128,8 @@ export function useGameWebSocket(
   onGameOver?: WsHandler,
   onGamePatch?: WsPatchHandler,
   onAnalysisReady?: AnalysisReadyHandler,
-  onVoteUpdate?: VoteUpdateHandler
+  onVoteUpdate?: VoteUpdateHandler,
+  onRematchReady?: RematchReadyHandler
 ) {
   const [connected, setConnected] = useState(false);
   const [wsError, setWsError] = useState<string | null>(null);
@@ -133,6 +141,7 @@ export function useGameWebSocket(
   const onGamePatchRef = useRef(onGamePatch);
   const onAnalysisReadyRef = useRef(onAnalysisReady);
   const onVoteUpdateRef = useRef(onVoteUpdate);
+  const onRematchReadyRef = useRef(onRematchReady);
   const chatListenersRef = useRef<Set<ChatListener>>(new Set());
 
   useEffect(() => {
@@ -141,7 +150,8 @@ export function useGameWebSocket(
     onGamePatchRef.current = onGamePatch;
     onAnalysisReadyRef.current = onAnalysisReady;
     onVoteUpdateRef.current = onVoteUpdate;
-  }, [onUpdate, onGameOver, onGamePatch, onAnalysisReady, onVoteUpdate]);
+    onRematchReadyRef.current = onRematchReady;
+  }, [onUpdate, onGameOver, onGamePatch, onAnalysisReady, onVoteUpdate, onRematchReady]);
 
   useEffect(() => {
     if (!gameId || !enabled) {
@@ -194,6 +204,9 @@ export function useGameWebSocket(
           }
           if (event === "vote_updated" && data) {
             onVoteUpdateRef.current?.(data as VoteTallyPayload);
+          }
+          if (event === "rematch_ready" && data?.game_id) {
+            onRematchReadyRef.current?.(data as RematchReadyPayload);
           }
           if (event === "proposition_nulle" && data) {
             if (data.declined) {

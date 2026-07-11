@@ -205,6 +205,10 @@ def try_apply_conditional_response(game: Game, last_move_uci: str) -> dict | Non
 def create_rematch(game: Game, user) -> Game | None:
     if not _participant(game, user):
         return None
+    if game.status != Game.Status.COMPLETED:
+        return None
+    if game.is_vs_ai or not game.white_player_id or not game.black_player_id:
+        return None
     timed, white_ms, black_ms, inc_ms, tcm = resolve_time_fields(
         game.is_timed,
         game.time_control_minutes,
@@ -233,6 +237,19 @@ def create_rematch(game: Game, user) -> Game | None:
         rematch_of=game,
     )
     ensure_game_room(new_game)
+    from apps.notifications.services import create_match_found_notifications
+
+    create_match_found_notifications(new_game.white_player_id, new_game.black_player_id, new_game)
+    try:
+        from .ws_notify import notify_game_room
+
+        notify_game_room(
+            game.id,
+            "rematch_ready",
+            {"game_id": str(new_game.id), "mode": new_game.mode},
+        )
+    except Exception:
+        pass
     return new_game
 
 

@@ -432,12 +432,25 @@ export const socialApi = {
       mode,
       is_rated: false,
     }),
+  pendingChallenges: () =>
+    api.get<
+      | { id: number; mode: string; time_control?: string; challenger: FriendUser }[]
+      | { results: { id: number; mode: string; time_control?: string; challenger: FriendUser }[] }
+    >("/games/challenges/pending/"),
+  acceptChallenge: (id: number) =>
+    api.post<{ challenge: { id: number }; game: { id: string; mode?: string } }>(
+      `/games/challenges/${id}/accept/`
+    ),
+  declineChallenge: (id: number) => api.post(`/games/challenges/${id}/decline/`),
   directMessages: (username: string) =>
     api.get<{ id: number; content: string; sender: FriendUser; created_at: string }[]>(
       `/social/messages/${username}/`
     ),
   sendDirectMessage: (username: string, message: string) =>
-    api.post(`/social/messages/${username}/`, { message }),
+    api.post<{ id: number; content: string; sender: FriendUser; created_at: string }>(
+      `/social/messages/${username}/`,
+      { message }
+    ),
   clubs: (country?: string) =>
     api.get<{ id: number; name: string; slug: string; description: string; country: string; member_count: number; is_member?: boolean }[]>(
       "/social/clubs/",
