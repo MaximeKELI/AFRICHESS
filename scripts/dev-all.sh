@@ -99,8 +99,8 @@ docker compose up -d --build backend
 
 echo "→ Attente API…"
 for i in $(seq 1 60); do
-  code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/api/puzzles/daily/ 2>/dev/null || echo "000")
-  if [ "$code" = "200" ] || [ "$code" = "401" ] || [ "$code" = "403" ]; then
+  code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/api/health/ 2>/dev/null || echo "000")
+  if [ "$code" = "200" ]; then
     echo "✓ Backend répond ($code)"
     break
   fi
