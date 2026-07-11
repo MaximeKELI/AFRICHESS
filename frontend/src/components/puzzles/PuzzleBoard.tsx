@@ -108,8 +108,8 @@ export function PuzzleBoard({
   const hintArrow = useMemo(() => {
     if (!hintRevealed) return null;
     const uci = nextPlayerSolutionMove(puzzle.fen, solution, played);
-    if (!uci) return null;
-    return { from: uci.slice(0, 2), to: uci.slice(2, 4) };
+    if (!uci || uci.length < 4) return null;
+    return { from: uci.slice(0, 2), to: uci.slice(2, 4), uci };
   }, [hintRevealed, puzzle.fen, solution, played]);
 
   return (
@@ -145,11 +145,21 @@ export function PuzzleBoard({
         playSoundOnFenChange
         serverValidated
         reviewHighlight={reviewHighlight}
-        hintArrow={hintArrow}
+        hintArrow={hintArrow ? { from: hintArrow.from, to: hintArrow.to } : null}
       />
       </div>
       {hintRevealed && hintArrow && (
-        <p className="text-xs text-center text-africhess-gold/80">{t("puzzles.hint.active")}</p>
+        <p className="text-xs text-center text-africhess-gold/90">
+          {t("puzzles.hint.active")}{" "}
+          <span className="font-mono uppercase">
+            {hintArrow.from} → {hintArrow.to}
+          </span>
+        </p>
+      )}
+      {hintRevealed && !hintArrow && (
+        <p className="text-xs text-center text-africhess-terracotta">
+          {t("puzzles.hint.unavailable")}
+        </p>
       )}
       {feedback && (
         <p className={`text-sm text-center ${feedback.includes("!") ? "text-africhess-green" : "text-africhess-terracotta"}`}>

@@ -1227,14 +1227,21 @@ export default function PuzzlesPage() {
             <button type="button" onClick={reset} className="px-6 py-2 border rounded-lg">
               {t("puzzles.reset")}
             </button>
-            {hintOffered && !hintRevealed && !puzzleSolved && tab !== "rush" && tab !== "storm" && tab !== "survival" && (
+            {!hintRevealed && !puzzleSolved && tab !== "rush" && tab !== "storm" && tab !== "survival" && (
               <button
                 type="button"
                 onClick={revealHint}
-                className="px-6 py-2 border border-africhess-gold text-africhess-gold rounded-lg text-sm"
+                className={`px-6 py-2 rounded-lg text-sm font-medium ${
+                  hintOffered
+                    ? "african-gradient text-white ring-2 ring-africhess-gold/60 animate-pulse"
+                    : "border border-africhess-gold text-africhess-gold hover:bg-africhess-gold/10"
+                }`}
               >
                 {t("puzzles.hint.button")}
               </button>
+            )}
+            {hintRevealed && !puzzleSolved && tab !== "rush" && tab !== "storm" && tab !== "survival" && (
+              <span className="text-sm text-africhess-gold/80">{t("puzzles.hint.shown")}</span>
             )}
             {puzzleFailed && tab !== "rush" && tab !== "storm" && tab !== "survival" && (
               <button
