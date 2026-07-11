@@ -111,6 +111,72 @@ export default function RegisterPage() {
 
       <form onSubmit={handleSubmit} className="glass-card p-8 space-y-8">
         <section className="space-y-4">
+          <h2 className="text-sm font-semibold text-africhess-gold">{t("auth.register.section.account")}</h2>
+          <div>
+            <label htmlFor="register-username" className="block text-sm font-medium mb-1.5">
+              {t("auth.register.username")}
+            </label>
+            <input
+              id="register-username"
+              type="text"
+              autoComplete="username"
+              value={form.username}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              className="w-full px-4 py-3 rounded-lg border border-white/20 bg-transparent focus:border-africhess-gold focus:outline-none focus:ring-1 focus:ring-africhess-gold/40"
+              required
+              minLength={3}
+            />
+          </div>
+          <div>
+            <label htmlFor="register-email" className="block text-sm font-medium mb-1.5">
+              {t("auth.register.email")}
+            </label>
+            <input
+              id="register-email"
+              type="email"
+              autoComplete="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className="w-full px-4 py-3 rounded-lg border border-white/20 bg-transparent focus:border-africhess-gold focus:outline-none focus:ring-1 focus:ring-africhess-gold/40"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="register-password" className="block text-sm font-medium mb-1.5">
+              {t("auth.register.password")}
+            </label>
+            <input
+              id="register-password"
+              type="password"
+              autoComplete="new-password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              className="w-full px-4 py-3 rounded-lg border border-white/20 bg-transparent focus:border-africhess-gold focus:outline-none focus:ring-1 focus:ring-africhess-gold/40"
+              required
+              minLength={8}
+            />
+            <p className="text-[11px] opacity-50 mt-1">{t("auth.register.passwordHint")}</p>
+          </div>
+          <div>
+            <label htmlFor="register-password-confirm" className="block text-sm font-medium mb-1.5">
+              {t("auth.register.passwordConfirm")}
+            </label>
+            <input
+              id="register-password-confirm"
+              type="password"
+              autoComplete="new-password"
+              value={form.password_confirm}
+              onChange={(e) => setForm({ ...form, password_confirm: e.target.value })}
+              className="w-full px-4 py-3 rounded-lg border border-white/20 bg-transparent focus:border-africhess-gold focus:outline-none focus:ring-1 focus:ring-africhess-gold/40"
+              required
+              minLength={8}
+            />
+          </div>
+        </section>
+
+        <hr className="border-white/10" />
+
+        <section className="space-y-4">
           <LevelPicker
             value={form.chess_level}
             onChange={(chess_level) => setForm({ ...form, chess_level })}
@@ -124,87 +190,26 @@ export default function RegisterPage() {
           </p>
         </section>
 
-        <hr className="border-white/10" />
-
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-africhess-gold">{t("auth.register.section.account")}</h2>
-          <label htmlFor="register-username" className="sr-only">
-            {t("auth.register.username")}
-          </label>
-          <input
-            id="register-username"
-            type="text"
-            placeholder={t("auth.register.username")}
-            autoComplete="username"
-            value={form.username}
-            onChange={(e) => setForm({ ...form, username: e.target.value })}
-            className="w-full px-4 py-3 rounded-lg border bg-transparent"
-            required
-            minLength={3}
-          />
-          <label htmlFor="register-email" className="sr-only">
-            {t("auth.register.email")}
-          </label>
-          <input
-            id="register-email"
-            type="email"
-            placeholder={t("auth.register.email")}
-            autoComplete="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full px-4 py-3 rounded-lg border bg-transparent"
-            required
-          />
-          <label htmlFor="register-password" className="sr-only">
-            {t("auth.register.password")}
-          </label>
-          <input
-            id="register-password"
-            type="password"
-            placeholder={t("auth.register.password")}
-            autoComplete="new-password"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            className="w-full px-4 py-3 rounded-lg border bg-transparent"
-            required
-            minLength={8}
-          />
-          <p className="text-[11px] opacity-50 -mt-2">{t("auth.register.passwordHint")}</p>
-          <label htmlFor="register-password-confirm" className="sr-only">
-            {t("auth.register.passwordConfirm")}
-          </label>
-          <input
-            id="register-password-confirm"
-            type="password"
-            placeholder={t("auth.register.passwordConfirm")}
-            autoComplete="new-password"
-            value={form.password_confirm}
-            onChange={(e) => setForm({ ...form, password_confirm: e.target.value })}
-            className="w-full px-4 py-3 rounded-lg border bg-transparent"
-            required
-            minLength={8}
-          />
-        </section>
-
         <section className="space-y-4">
           <h2 className="text-sm font-semibold text-africhess-gold">{t("auth.register.section.location")}</h2>
           <CountryPicker
             value={form.country}
             onChange={(country) => setForm({ ...form, country })}
           />
-          <label htmlFor="register-city" className="sr-only">
-            {t("auth.register.city")}
-          </label>
-          <input
-            id="register-city"
-            type="text"
-            placeholder={t("auth.register.city")}
-            autoComplete="address-level2"
-            value={form.city}
-            onChange={(e) => setForm({ ...form, city: e.target.value })}
-            className="w-full px-4 py-3 rounded-lg border bg-transparent"
-            maxLength={100}
-          />
+          <div>
+            <label htmlFor="register-city" className="block text-sm font-medium mb-1.5">
+              {t("auth.register.city")}
+            </label>
+            <input
+              id="register-city"
+              type="text"
+              autoComplete="address-level2"
+              value={form.city}
+              onChange={(e) => setForm({ ...form, city: e.target.value })}
+              className="w-full px-4 py-3 rounded-lg border border-white/20 bg-transparent focus:border-africhess-gold focus:outline-none focus:ring-1 focus:ring-africhess-gold/40"
+              maxLength={100}
+            />
+          </div>
         </section>
 
         <section className="space-y-4">
@@ -213,7 +218,7 @@ export default function RegisterPage() {
           <select
             value={form.preferred_language}
             onChange={(e) => setForm({ ...form, preferred_language: e.target.value as Locale })}
-            className="w-full px-4 py-3 rounded-lg border bg-transparent"
+            className="w-full px-4 py-3 rounded-lg border border-white/20 bg-transparent focus:border-africhess-gold focus:outline-none"
           >
             {LANGUAGE_OPTIONS.filter((o) => LOCALES.includes(o.value)).map((o) => (
               <option key={o.value} value={o.value}>

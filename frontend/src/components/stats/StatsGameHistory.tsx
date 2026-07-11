@@ -133,8 +133,8 @@ export function StatsHistorySummary({ games }: { games: StatsGameRow[] }) {
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
       {[
         { icon: User, label: t("stats.history.vsHuman"), value: vsHuman, color: "#6ee7a8" },
-        { icon: Bot, label: t("stats.chart.ai"), value: vsAi, color: "#d4a843" },
-        { icon: Swords, label: t("stats.chart.victories"), value: wins, color: "#2d6a4f" },
+        { icon: Bot, label: t("stats.chart.ai"), value: vsAi, color: "var(--africhess-gold, #D4A017)" },
+        { icon: Swords, label: t("stats.chart.victories"), value: wins, color: "var(--africhess-green, #1B7A3D)" },
         { icon: Clock, label: t("stats.history.listed"), value: games.length, color: "#60a5fa" },
       ].map(({ icon: Icon, label, value, color }) => (
         <div key={label} className="stats-fx-history-mini">
