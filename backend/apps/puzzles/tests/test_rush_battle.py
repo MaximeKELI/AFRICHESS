@@ -43,6 +43,18 @@ class PuzzleRushLogicTests(TestCase):
         self.assertIsNotNone(battle)
         assert battle is not None
         self.assertEqual(battle.player1, self.user)
+        self.assertEqual(battle.status, "waiting")
+
+    def test_battle_queue_match_reuses_waiting_battle(self):
+        """Le 2e joueur active le combat WAITING du 1er (même id)."""
+        other = User.objects.create_user(username="rush_opp", password="x")
+        waiting = join_battle_queue(self.user)
+        self.assertEqual(waiting.status, "waiting")
+        matched = join_battle_queue(other)
+        self.assertEqual(matched.id, waiting.id)
+        self.assertEqual(matched.status, "active")
+        self.assertEqual(matched.player1_id, self.user.id)
+        self.assertEqual(matched.player2_id, other.id)
 
 
 class PuzzleRushApiTests(TestCase):

@@ -235,6 +235,8 @@ class PuzzleBattleQueueView(APIView):
         data = {"battle_id": battle.id, "status": battle.status}
         if battle.player2_id:
             data["opponent"] = battle.player2.username if battle.player1_id == request.user.id else battle.player1.username
+        data["player1_id"] = battle.player1_id
+        data["player2_id"] = battle.player2_id
         if battle.status == PuzzleBattle.Status.ACTIVE and battle.puzzle_ids:
             data["puzzle"] = PuzzleSerializer(Puzzle.objects.get(pk=battle.puzzle_ids[0])).data
         return Response(data, status=201 if battle.status == PuzzleBattle.Status.ACTIVE else 202)
@@ -257,11 +259,19 @@ class PuzzleBattleDetailView(APIView):
         puzzle = None
         if battle.status == PuzzleBattle.Status.ACTIVE and battle.current_index < len(battle.puzzle_ids):
             puzzle = PuzzleSerializer(Puzzle.objects.get(pk=battle.puzzle_ids[battle.current_index])).data
+        opponent = None
+        if request.user.id == battle.player1_id and battle.player2_id:
+            opponent = battle.player2.username
+        elif request.user.id == battle.player2_id:
+            opponent = battle.player1.username
         return Response({
             "id": battle.id,
             "status": battle.status,
             "score1": battle.score1,
             "score2": battle.score2,
+            "player1_id": battle.player1_id,
+            "player2_id": battle.player2_id,
+            "opponent": opponent,
             "puzzle": puzzle,
             "winner_id": battle.winner_id,
         })

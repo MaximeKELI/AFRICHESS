@@ -113,10 +113,35 @@ def join_battle_queue(user) -> PuzzleBattle | None:
     puzzle_ids = [p.id for p in puzzles]
 
     if opponent_entry:
+        opponent = opponent_entry.user
         PuzzleBattleQueue.objects.filter(user=user).delete()
         opponent_entry.delete()
+        # Réutiliser le combat WAITING de l'adversaire (sinon le joueur A poll un id orphelin)
+        waiting = (
+            PuzzleBattle.objects.filter(player1=opponent, status=PuzzleBattle.Status.WAITING)
+            .order_by("-id")
+            .first()
+        )
+        if waiting:
+            waiting.player2 = user
+            waiting.puzzle_ids = puzzle_ids
+            waiting.current_index = 0
+            waiting.score1 = 0
+            waiting.score2 = 0
+            waiting.status = PuzzleBattle.Status.ACTIVE
+            waiting.save(
+                update_fields=[
+                    "player2",
+                    "puzzle_ids",
+                    "current_index",
+                    "score1",
+                    "score2",
+                    "status",
+                ]
+            )
+            return waiting
         return PuzzleBattle.objects.create(
-            player1=opponent_entry.user,
+            player1=opponent,
             player2=user,
             puzzle_ids=puzzle_ids,
             status=PuzzleBattle.Status.ACTIVE,
@@ -168,6 +193,8 @@ def battle_submit(battle: PuzzleBattle, user, moves: list[str]) -> dict:
         "solved": True,
         "score1": battle.score1,
         "score2": battle.score2,
+        "player1_id": battle.player1_id,
+        "player2_id": battle.player2_id,
         "completed": battle.status == PuzzleBattle.Status.COMPLETED,
         "winner_id": battle.winner_id,
     }
