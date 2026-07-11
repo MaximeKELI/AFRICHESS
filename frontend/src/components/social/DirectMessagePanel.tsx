@@ -58,6 +58,17 @@ export function DirectMessagePanel({
     load();
   }, [load]);
 
+  // Rafraîchir les messages entrants (pas de spinner)
+  useEffect(() => {
+    const id = setInterval(() => {
+      socialApi
+        .directMessages(username)
+        .then(({ data }) => setMessages(Array.isArray(data) ? data : []))
+        .catch(() => {});
+    }, 4000);
+    return () => clearInterval(id);
+  }, [username]);
+
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;

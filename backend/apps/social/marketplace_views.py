@@ -1,10 +1,19 @@
 """Streamers et marketplace coaches."""
 
+from urllib.parse import urlparse
+
+from django.conf import settings
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import CoachProfile, StreamerProfile
+
+
+def _twitch_parent() -> str:
+    raw = getattr(settings, "FRONTEND_URL", "") or "http://localhost:3000"
+    host = urlparse(raw).hostname
+    return host or "localhost"
 
 
 class StreamerListView(APIView):
@@ -14,11 +23,12 @@ class StreamerListView(APIView):
         qs = StreamerProfile.objects.select_related("user").filter(
             user__is_active=True
         ).order_by("-is_featured", "display_name")[:30]
+        parent = _twitch_parent()
         data = []
         for s in qs:
             embed = None
             if s.twitch_username:
-                embed = f"https://player.twitch.tv/?channel={s.twitch_username}&parent=localhost"
+                embed = f"https://player.twitch.tv/?channel={s.twitch_username}&parent={parent}"
             elif s.youtube_channel_id:
                 embed = f"https://www.youtube.com/embed/live_stream?channel={s.youtube_channel_id}"
             data.append({

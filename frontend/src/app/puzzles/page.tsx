@@ -39,6 +39,20 @@ import {
 import { playPuzzleAdvance, playPuzzleWrong, preloadPuzzleSounds } from "@/lib/puzzleSounds";
 import Link from "next/link";
 
+/** score1/score2 are always player1/player2 — map to "you" / opponent. */
+function mapBattleScores(
+  userId: number | undefined | null,
+  score1: number,
+  score2: number,
+  player1Id?: number | null,
+  player2Id?: number | null
+) {
+  if (userId != null && player2Id != null && userId === player2Id) {
+    return { you: score2, opp: score1 };
+  }
+  return { you: score1, opp: score2 };
+}
+
 interface Puzzle {
   id: number;
   fen: string;
@@ -101,6 +115,7 @@ export default function PuzzlesPage() {
   const [battleOpponent, setBattleOpponent] = useState<string | null>(null);
   const [battleScoreYou, setBattleScoreYou] = useState(0);
   const [battleScoreOpp, setBattleScoreOpp] = useState(0);
+  const [battlePlayer1Id, setBattlePlayer1Id] = useState<number | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [rushLeaderboard, setRushLeaderboard] = useState<RushLeaderboardRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -296,23 +311,43 @@ export default function PuzzlesPage() {
   }, [tab, rushEndsAt, puzzle, rushScore, t]);
 
   useEffect(() => {
-    if (tab !== "battle" || !battleId || battleStatus !== "waiting") return;
+    if (tab !== "battle" || !battleId) return;
+    if (battleStatus !== "waiting" && battleStatus !== "active") return;
     const poll = setInterval(() => {
       puzzlesApi.battleGet(battleId).then(({ data }) => {
         setBattleStatus(data.status);
-        if (data.puzzle) {
+        if (data.player1_id != null) setBattlePlayer1Id(data.player1_id);
+        if (data.opponent) setBattleOpponent(data.opponent);
+        if (data.puzzle && battleStatus === "waiting") {
           setPuzzle(data.puzzle);
           setUciMoves([]);
           setResult(null);
+          setStartTime(Date.now());
         }
         if (data.score1 != null) {
-          setBattleScoreYou(data.score1);
-          setBattleScoreOpp(data.score2);
+          const { you, opp } = mapBattleScores(
+            user?.id,
+            data.score1,
+            data.score2 ?? 0,
+            data.player1_id ?? battlePlayer1Id,
+            data.player2_id
+          );
+          setBattleScoreYou(you);
+          setBattleScoreOpp(opp);
+        }
+        if (data.status === "completed" && data.winner_id != null) {
+          setResult(
+            data.winner_id === user?.id
+              ? t("puzzles.battle.win")
+              : data.winner_id
+                ? t("puzzles.battle.loss")
+                : t("puzzles.battle.draw")
+          );
         }
       }).catch(() => {});
     }, 2000);
     return () => clearInterval(poll);
-  }, [tab, battleId, battleStatus]);
+  }, [tab, battleId, battleStatus, user?.id, battlePlayer1Id, t]);
 
   const loadDaily = () => {
     setResult(null);
@@ -398,6 +433,7 @@ export default function PuzzlesPage() {
     setBattleOpponent(null);
     setBattleScoreYou(0);
     setBattleScoreOpp(0);
+    setBattlePlayer1Id(null);
     setPuzzle(null);
     setResult(null);
     setUciMoves([]);
@@ -414,7 +450,19 @@ export default function PuzzlesPage() {
       const { data } = await puzzlesApi.battleQueue();
       setBattleId(data.battle_id);
       setBattleStatus(data.status);
+      if (data.player1_id != null) setBattlePlayer1Id(data.player1_id);
       if (data.opponent) setBattleOpponent(data.opponent);
+      if (data.score1 != null) {
+        const { you, opp } = mapBattleScores(
+          user.id,
+          data.score1,
+          data.score2 ?? 0,
+          data.player1_id,
+          data.player2_id
+        );
+        setBattleScoreYou(you);
+        setBattleScoreOpp(opp);
+      }
       if (data.puzzle) {
         setPuzzle(data.puzzle);
         setStartTime(Date.now());
@@ -594,8 +642,14 @@ export default function PuzzlesPage() {
           setResult(t("puzzles.solved.wrong"));
           return;
         }
-        const you = data.score1 ?? battleScoreYou;
-        const opp = data.score2 ?? battleScoreOpp;
+        if (data.player1_id != null) setBattlePlayer1Id(data.player1_id);
+        const { you, opp } = mapBattleScores(
+          user?.id,
+          data.score1 ?? battleScoreYou,
+          data.score2 ?? battleScoreOpp,
+          data.player1_id ?? battlePlayer1Id,
+          data.player2_id
+        );
         setBattleScoreYou(you);
         setBattleScoreOpp(opp);
         if (data.completed) {

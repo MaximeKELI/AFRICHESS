@@ -10,10 +10,13 @@ if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
   python manage.py migrate --noinput
 fi
 
+# Toujours synchroniser le catalogue bots (idempotent) — évite /bots vide
+python manage.py seed_bots 2>/dev/null || true
+
 if [ "${RUN_SEED:-false}" = "true" ]; then
   python manage.py seed_puzzles --download 2>/dev/null || true
-  python manage.py seed_bots 2>/dev/null || true
   python manage.py seed_league 2>/dev/null || true
+  python manage.py seed_level3 2>/dev/null || true
 fi
 
 # Si docker-compose passe une commande (celery, etc.), l'exécuter telle quelle

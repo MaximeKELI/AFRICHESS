@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { socialApi } from "@/lib/api";
+import { socialApi, gamesApi, type GameChallenge } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
@@ -39,6 +39,7 @@ function FriendsContent() {
   const [friends, setFriends] = useState<UserPublic[]>([]);
   const [pending, setPending] = useState<Friendship[]>([]);
   const [sent, setSent] = useState<Friendship[]>([]);
+  const [gameChallenges, setGameChallenges] = useState<GameChallenge[]>([]);
   const [username, setUsername] = useState(addFromUrl || "");
   const [mode, setMode] = useState("blitz");
   const [timePreset, setTimePreset] = useState<TimePresetId>(() => defaultPresetForMode("blitz"));
@@ -54,8 +55,13 @@ function FriendsContent() {
 
   const load = useCallback(() => {
     setLoadError(null);
-    Promise.all([socialApi.friends(), socialApi.pendingFriends(), socialApi.sentFriends()])
-      .then(([friendsRes, pendingRes, sentRes]) => {
+    Promise.all([
+      socialApi.friends(),
+      socialApi.pendingFriends(),
+      socialApi.sentFriends(),
+      gamesApi.pendingChallenges().catch(() => ({ data: [] as GameChallenge[] })),
+    ])
+      .then(([friendsRes, pendingRes, sentRes, challengesRes]) => {
         const list: Friendship[] = Array.isArray(friendsRes.data) ? friendsRes.data : [];
         const users = list.map((f) =>
           f.from_user.id === user?.id ? f.to_user : f.from_user
@@ -63,11 +69,14 @@ function FriendsContent() {
         setFriends(users);
         setPending(Array.isArray(pendingRes.data) ? pendingRes.data : []);
         setSent(Array.isArray(sentRes.data) ? sentRes.data : []);
+        const ch = challengesRes.data;
+        setGameChallenges(Array.isArray(ch) ? ch : []);
       })
       .catch((err) => {
         setFriends([]);
         setPending([]);
         setSent([]);
+        setGameChallenges([]);
         setLoadError(formatApiError(err, t("friends.error.load")));
       });
   }, [user?.id, t]);
@@ -118,6 +127,31 @@ function FriendsContent() {
   const decline = async (id: number) => {
     await socialApi.declineFriend(id);
     load();
+  };
+
+  const acceptGameChallenge = async (id: number) => {
+    try {
+      const { data } = await gamesApi.acceptChallenge(id);
+      const gameId = data.game?.id ?? data.challenge?.game_id;
+      if (gameId) {
+        router.push(`/play?game=${gameId}`);
+        return;
+      }
+      setMsg(t("friends.gameChallenge.accepted"));
+      load();
+    } catch (err) {
+      setMsg(formatApiError(err, t("friends.gameChallenge.acceptFailed")));
+    }
+  };
+
+  const declineGameChallenge = async (id: number) => {
+    try {
+      await gamesApi.declineChallenge(id);
+      setMsg(t("friends.gameChallenge.declined"));
+      load();
+    } catch (err) {
+      setMsg(formatApiError(err, t("friends.gameChallenge.declineFailed")));
+    }
   };
 
   const cancelSent = async (id: number) => {
@@ -216,6 +250,47 @@ function FriendsContent() {
                   <button
                     type="button"
                     onClick={() => decline(f.id)}
+                    className="text-sm px-3 py-1 rounded-lg border opacity-70"
+                  >
+                    {t("social.friend.decline")}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {gameChallenges.length > 0 && (
+        <div className="glass-card p-4 mb-6">
+          <h2 className="font-semibold mb-3">{t("friends.gameChallenge.title")}</h2>
+          <ul className="space-y-2">
+            {gameChallenges.map((c) => (
+              <li key={c.id} className="flex justify-between items-center gap-2">
+                <div className="min-w-0">
+                  <Link
+                    href={`/profile/${c.challenger.username}`}
+                    className="hover:text-africhess-gold font-medium truncate block"
+                  >
+                    {c.challenger.display_name || c.challenger.username}
+                  </Link>
+                  <p className="text-xs opacity-60">
+                    {c.mode}
+                    {c.time_control ? ` · ${c.time_control}` : ""}
+                    {c.is_rated ? ` · ${t("friends.gameChallenge.rated")}` : ""}
+                  </p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => acceptGameChallenge(c.id)}
+                    className="text-sm px-3 py-1 rounded-lg african-gradient text-white"
+                  >
+                    {t("friends.pending.accept")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => declineGameChallenge(c.id)}
                     className="text-sm px-3 py-1 rounded-lg border opacity-70"
                   >
                     {t("social.friend.decline")}
