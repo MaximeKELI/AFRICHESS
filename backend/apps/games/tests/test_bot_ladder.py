@@ -58,7 +58,8 @@ class BotLadderUnlockTests(TestCase):
         self.assertTrue(is_bot_unlocked(self.user, self.strong))
 
     def test_premium_bot_requires_subscription(self):
-        BotVictory.objects.create(user=self.user, bot=self.strong, bot_elo=2000)
+        # Elo assez haut pour le plafond, mais premium toujours requis
+        BotVictory.objects.create(user=self.user, bot=self.strong, bot_elo=2400)
         self.assertFalse(is_bot_unlocked(self.user, self.legend))
         self.user.subscription_tier = User.SubscriptionTier.GOLD
         self.user.save(update_fields=["subscription_tier"])
