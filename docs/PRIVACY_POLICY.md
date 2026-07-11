@@ -270,7 +270,7 @@ The Fair Play system may:
 - generate **suspicion scores**;
 - trigger **human review** before any sanction.
 
-**No final sanction is applied solely on automated decision** without human intervention for contested cases. You have a **right of appeal** via the `/api/games/fairplay/appeal/` API.
+**No final sanction is applied solely on automated decision** without human intervention for contested cases. You have a **right of appeal** via the `/api/games/fairplay/appeals/` API.
 
 **Legal basis:** legitimate interest (competitive integrity) + consent for telemetry.
 

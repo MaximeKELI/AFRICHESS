@@ -270,7 +270,7 @@ Le système Fair Play peut :
 - générer des **scores de suspicion** ;
 - déclencher une **revue humaine** avant toute sanction.
 
-**Aucune sanction définitive n’est appliquée uniquement sur décision automatisée** sans intervention humaine pour les cas contestés. Vous disposez d’un **droit de recours** via l’API `/api/games/fairplay/appeal/`.
+**Aucune sanction définitive n’est appliquée uniquement sur décision automatisée** sans intervention humaine pour les cas contestés. Vous disposez d’un **droit de recours** via l’API `/api/games/fairplay/appeals/`.
 
 **Base légale :** intérêt légitime (intégrité compétitive) + consentement pour la télémétrie.
 
