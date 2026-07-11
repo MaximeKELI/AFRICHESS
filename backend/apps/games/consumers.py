@@ -217,9 +217,7 @@ class ChessConsumer(AsyncWebsocketConsumer):
             )
         except Game.DoesNotExist:
             return False
-        if game.is_vote_chess:
-            if not self.user or not getattr(self.user, "is_authenticated", False):
-                return False
+        if game.is_vote_chess and self.user and getattr(self.user, "is_authenticated", False):
             try:
                 meta = game.vote_meta
             except Exception:
@@ -230,7 +228,6 @@ class ChessConsumer(AsyncWebsocketConsumer):
 
                 if Club.objects.filter(pk__in=club_ids, members=self.user).exists():
                     return True
-            return False
         return game.status == Game.Status.ACTIVE and not game.is_vs_ai
 
     async def _handle_draw_offer(self):
