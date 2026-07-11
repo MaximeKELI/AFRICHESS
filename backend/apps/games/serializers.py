@@ -101,6 +101,7 @@ class ChessBotSerializer(serializers.ModelSerializer):
             "name_en",
             "country",
             "elo",
+            "tier",
             "avatar_id",
             "avatar_url",
             "personality",

@@ -111,9 +111,19 @@ class CreateAIGameView(APIView):
                 bot = ChessBot.objects.get(slug=bot_slug, is_active=True)
             except ChessBot.DoesNotExist:
                 return Response({"error": "Bot introuvable."}, status=404)
-            if bot.is_premium and not request.user.is_premium:
+            from .bot_progress import is_bot_unlocked
+
+            if not is_bot_unlocked(request.user, bot):
+                if bot.is_premium and not request.user.is_premium:
+                    return Response(
+                        {"error": "Ce bot nécessite un abonnement Gold ou Diamond."},
+                        status=403,
+                    )
                 return Response(
-                    {"error": "Ce bot nécessite un abonnement Gold ou Diamond."},
+                    {
+                        "error": "Bot verrouillé — battez des bots plus faibles pour progresser dans l'échelle.",
+                        "code": "bot_locked",
+                    },
                     status=403,
                 )
         game = GameService().create_ai_game(
@@ -575,7 +585,21 @@ class BotListView(generics.ListAPIView):
         legends = self.request.query_params.get("legends")
         if legends == "1":
             qs = qs.filter(elo__gte=2400)
-        return qs.order_by("-elo", "name")
+        tier = self.request.query_params.get("tier", "").strip()
+        if tier:
+            qs = qs.filter(tier=tier)
+        return qs.order_by("elo", "name")
+
+
+@extend_schema(summary="Échelle bots niveau par niveau (style Chess.com)")
+class BotLadderView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        from .bot_progress import ladder_payload
+
+        locale = (request.query_params.get("lang") or "fr")[:5]
+        return Response(ladder_payload(request.user, locale=locale))
 
 
 @extend_schema(summary="Détail d'un bot IA")

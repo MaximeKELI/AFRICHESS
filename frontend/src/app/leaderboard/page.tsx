@@ -44,7 +44,8 @@ export default function LeaderboardPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold mb-6">{t("leaderboard.title")}</h1>
+      <h1 className="font-display text-3xl font-bold mb-2">{t("leaderboard.title")}</h1>
+      <p className="text-sm opacity-60 mb-2">{t("leaderboard.subtitle")}</p>
       <p className="text-sm opacity-60 mb-4">{t("leaderboard.establishedNote")}</p>
       {error && <InlineAlert className="mb-4">{error}</InlineAlert>}
       {loading && <p className="text-sm opacity-60 mb-4">{t("common.loading")}</p>}
@@ -52,13 +53,13 @@ export default function LeaderboardPage() {
       <div className="flex flex-wrap gap-2 mb-6">
         <button
           onClick={() => setTab("african")}
-          className={`px-4 py-2 rounded-lg ${tab === "african" ? "african-gradient text-white" : "border"}`}
+          className={`px-4 py-2 rounded-lg ${tab === "african" ? "african-gradient text-white" : "border border-white/20"}`}
         >
           {t("leaderboard.african")}
         </button>
         <button
           onClick={() => setTab("global")}
-          className={`px-4 py-2 rounded-lg ${tab === "global" ? "african-gradient text-white" : "border"}`}
+          className={`px-4 py-2 rounded-lg ${tab === "global" ? "african-gradient text-white" : "border border-white/20"}`}
         >
           {t("leaderboard.global")}
         </button>
@@ -66,7 +67,7 @@ export default function LeaderboardPage() {
           <select
             value={country}
             onChange={(e) => setCountry(e.target.value)}
-            className="px-3 py-2 rounded-lg border bg-transparent text-sm"
+            className="px-3 py-2 rounded-lg border border-white/20 bg-transparent text-sm"
           >
             {AFRICAN_COUNTRIES.map((c) => (
               <option key={c.code || "all"} value={c.code}>
@@ -75,13 +76,21 @@ export default function LeaderboardPage() {
             ))}
           </select>
         )}
-        {["bullet", "blitz", "rapid"].map((m) => (
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-6">
+        <span className="text-xs uppercase tracking-wide opacity-50 self-center mr-1">{t("leaderboard.modeLabel")}</span>
+        {["bullet", "blitz", "rapid", "classical"].map((m) => (
           <button
             key={m}
             onClick={() => setMode(m)}
-            className={`px-4 py-2 rounded-lg capitalize ${mode === m ? "ring-2 ring-africhess-gold" : "border"}`}
+            className={`px-4 py-2 rounded-lg capitalize ${
+              mode === m
+                ? "ring-2 ring-africhess-gold bg-africhess-gold/10"
+                : "border border-white/20"
+            }`}
           >
-            {m}
+            {t(`modes.${m}`)}
           </button>
         ))}
       </div>

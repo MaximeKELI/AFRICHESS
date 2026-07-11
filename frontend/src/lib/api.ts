@@ -193,14 +193,17 @@ export const gamesApi = {
     time_minutes?: number | null;
     time_control?: string;
   }) => api.post("/games/ai/", data),
-  bots: (params?: { q?: string; premium?: boolean; legends?: boolean }) =>
+  bots: (params?: { q?: string; premium?: boolean; legends?: boolean; tier?: string }) =>
     api.get("/games/bots/", {
       params: {
         q: params?.q,
         premium: params?.premium === true ? "1" : params?.premium === false ? "0" : undefined,
         legends: params?.legends ? "1" : undefined,
+        tier: params?.tier,
       },
     }),
+  botLadder: (lang?: string) =>
+    api.get("/games/bots/ladder/", { params: lang ? { lang } : undefined }),
   bot: (slug: string) => api.get(`/games/bots/${slug}/`),
   aiPreview: (mode: string, aiElo?: number) =>
     api.get("/games/ai/preview/", {

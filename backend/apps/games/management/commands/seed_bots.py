@@ -3,6 +3,7 @@
 from django.core.management.base import BaseCommand
 
 from apps.games.bot_catalog import BOT_CATALOG
+from apps.games.bot_tiers import tier_id_for_elo
 from apps.games.models import ChessBot
 
 
@@ -30,6 +31,7 @@ class Command(BaseCommand):
                     "name_en": spec["name_en"],
                     "country": spec["country"],
                     "elo": spec["elo"],
+                    "tier": tier_id_for_elo(spec["elo"]),
                     "avatar_id": spec["avatar_id"],
                     "personality": spec["personality"],
                     "opening_style": spec["opening_style"],

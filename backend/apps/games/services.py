@@ -528,6 +528,13 @@ class GameService:
         """ELO, stats et tournoi après fin de partie (idempotent)."""
         if not game.is_vs_ai and game.white_player and game.black_player:
             self.rating_service.update_ratings(game)
+        if game.is_vs_ai and game.bot_id:
+            try:
+                from .bot_progress import record_bot_victory
+
+                record_bot_victory(game)
+            except Exception as exc:
+                logger.warning("Bot victory not recorded for game %s: %s", game.id, exc)
         on_game_completed(game)
         if game.tournament_id:
             try:

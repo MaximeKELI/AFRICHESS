@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import clsx from "clsx";
 import { AI_LEVELS, normalizeToPreset, type AiLevelElo } from "@/lib/aiStrength";
 import { aiAvatarForLevelElo } from "@/lib/avatars";
@@ -79,6 +80,12 @@ export function AiStrengthPicker({ value, onChange }: AiStrengthPickerProps) {
           );
         })}
       </div>
+      <Link
+        href="/bots"
+        className="mt-3 inline-block text-xs text-africhess-gold hover:underline"
+      >
+        {t("play.aiLevel.browseBots")} →
+      </Link>
     </div>
   );
 }

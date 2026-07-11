@@ -7,11 +7,24 @@ from django.db import models
 class ChessBot(models.Model):
     """Adversaire IA nommé (catalogue type Chess.com)."""
 
+    class Tier(models.TextChoices):
+        BEGINNER = "beginner", "Beginner"
+        NOVICE = "novice", "Novice"
+        INTERMEDIATE = "intermediate", "Intermediate"
+        CLUB = "club", "Club"
+        ADVANCED = "advanced", "Advanced"
+        EXPERT = "expert", "Expert"
+        MASTER = "master", "Master"
+        ELITE = "elite", "Elite"
+
     slug = models.SlugField(unique=True)
     name = models.CharField(max_length=100)
     name_en = models.CharField(max_length=100, blank=True)
     country = models.CharField(max_length=2, default="SN")
     elo = models.PositiveIntegerField()
+    tier = models.CharField(
+        max_length=20, choices=Tier.choices, default=Tier.INTERMEDIATE, db_index=True
+    )
     avatar_id = models.CharField(max_length=20, default="avatar-1")
     personality = models.CharField(max_length=50, blank=True)
     opening_style = models.CharField(max_length=100, blank=True)
@@ -27,6 +40,29 @@ class ChessBot(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.elo})"
+
+
+class BotVictory(models.Model):
+    """Victoire d'un joueur contre un bot nommé (progression ladder)."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="bot_victories",
+    )
+    bot = models.ForeignKey(ChessBot, on_delete=models.CASCADE, related_name="victories")
+    bot_elo = models.PositiveIntegerField()
+    game = models.ForeignKey(
+        "Game", on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("user", "bot")]
+        ordering = ["-bot_elo"]
+
+    def __str__(self):
+        return f"{self.user_id} beat {self.bot_id} ({self.bot_elo})"
 
 
 class Game(models.Model):

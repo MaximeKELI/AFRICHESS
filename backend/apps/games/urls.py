@@ -8,6 +8,7 @@ urlpatterns = [
     path("ai/preview/", views.ai_strength_preview, name="ai-strength-preview"),
     path("tts/", views.speech_tts, name="speech-tts"),
     path("bots/", views.BotListView.as_view(), name="bot-list"),
+    path("bots/ladder/", views.BotLadderView.as_view(), name="bot-ladder"),
     path("bots/<slug:slug>/", views.BotDetailView.as_view(), name="bot-detail"),
     path("active/", views.active_games, name="active-games"),
     path("matchmaking/", views.MatchmakingView.as_view(), name="matchmaking"),

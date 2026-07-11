@@ -1,21 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Lock, Check, Trophy } from "lucide-react";
 import { gamesApi } from "@/lib/api";
 import { getAiAvatarSrc } from "@/lib/avatars";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuthStore } from "@/store/auth";
 
-interface Bot {
+interface LadderBot {
   slug: string;
   name: string;
   name_en: string;
   country: string;
   elo: number;
+  tier: string;
   avatar_id: string;
   personality: string;
   opening_style: string;
@@ -23,171 +26,215 @@ interface Bot {
   description_en: string;
   is_premium: boolean;
   is_legend?: boolean;
-  games_played: number;
+  unlocked: boolean;
+  beaten: boolean;
+  locked_reason: "premium" | "progress" | null;
+}
+
+interface LadderTier {
+  id: string;
+  label: string;
+  description: string;
+  min_elo: number;
+  max_elo: number;
+  preset_elo: number;
+  bots: LadderBot[];
+  bots_count: number;
+  beaten_count: number;
+}
+
+interface LadderData {
+  max_beaten_elo: number;
+  unlock_ceiling: number;
+  tiers: LadderTier[];
+  total_bots: number;
+  total_beaten: number;
 }
 
 export default function BotsPage() {
   const { t, locale } = useTranslation();
   const { user } = useAuthStore();
-  const [bots, setBots] = useState<Bot[]>([]);
-  const [featured, setFeatured] = useState<Bot[]>([]);
-  const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"all" | "legends" | "free" | "premium">("all");
+  const [ladder, setLadder] = useState<LadderData | null>(null);
+  const [activeTier, setActiveTier] = useState<string>("beginner");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    gamesApi.bots({ legends: true }).then(({ data }) => {
-      const list: Bot[] = Array.isArray(data) ? data : data.results ?? [];
-      setFeatured(list.slice(0, 8));
-    }).catch(() => setFeatured([]));
-  }, []);
-
-  useEffect(() => {
     setLoading(true);
     gamesApi
-      .bots({
-        q: q || undefined,
-        premium: filter === "premium" ? true : filter === "free" ? false : undefined,
-        legends: filter === "legends",
-      })
+      .botLadder(locale.startsWith("fr") ? "fr" : "en")
       .then(({ data }) => {
-        const list: Bot[] = Array.isArray(data) ? data : data.results ?? [];
-        setBots(list);
+        setLadder(data);
+        const firstWithUnlocked = data.tiers.find((tier) =>
+          tier.bots.some((b) => b.unlocked && !b.beaten)
+        );
+        const firstPartial = data.tiers.find((tier) => tier.bots.some((b) => b.unlocked));
+        setActiveTier(firstWithUnlocked?.id ?? firstPartial?.id ?? data.tiers[0]?.id ?? "beginner");
         setError(null);
       })
       .catch((err) => setError(formatApiError(err, t("bots.error.load"))))
       .finally(() => setLoading(false));
-  }, [q, filter, t]);
+  }, [locale, t, user?.id]);
 
-  const label = (b: Bot) => (locale === "fr" ? b.name : b.name_en || b.name);
-  const desc = (b: Bot) => (locale === "fr" ? b.description : b.description_en || b.description);
+  const tier = useMemo(
+    () => ladder?.tiers.find((x) => x.id === activeTier) ?? null,
+    [ladder, activeTier]
+  );
 
-  const challengeHref = (b: Bot) => {
+  const label = (b: LadderBot) => (locale === "fr" ? b.name : b.name_en || b.name);
+  const desc = (b: LadderBot) => (locale === "fr" ? b.description : b.description_en || b.description);
+
+  const challengeHref = (b: LadderBot) => {
     if (!user) return "/login";
-    if (b.is_premium && !user.is_premium) return "/premium";
+    if (!b.unlocked) {
+      if (b.locked_reason === "premium") return "/premium";
+      return "#";
+    }
     return `/play?mode=blitz&bot=${b.slug}`;
   };
 
-  const challengeLabel = (b: Bot) => {
-    if (b.is_premium && user && !user.is_premium) return t("premium.subscribe");
-    return user ? t("bots.challenge") : t("bots.loginToPlay");
+  const challengeLabel = (b: LadderBot) => {
+    if (!user) return t("bots.loginToPlay");
+    if (!b.unlocked) {
+      if (b.locked_reason === "premium") return t("premium.subscribe");
+      return t("bots.locked");
+    }
+    if (b.beaten) return t("bots.rematch");
+    return t("bots.challenge");
   };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold mb-2">{t("bots.title")}</h1>
-      <p className="opacity-70 mb-6">{t("bots.subtitle")}</p>
-
-      <div className="flex flex-wrap gap-3 mb-6">
-        <input
-          type="search"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={t("bots.search")}
-          className="flex-1 min-w-[200px] border rounded-lg px-3 py-2 bg-transparent"
-        />
-        {(["all", "legends", "free", "premium"] as const).map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setFilter(f)}
-            className={`px-3 py-2 rounded-lg text-sm border ${
-              filter === f ? "border-africhess-gold text-africhess-gold" : "border-white/15"
-            }`}
-          >
-            {t(`bots.filter.${f}`)}
-          </button>
-        ))}
-      </div>
-
-      {featured.length > 0 && filter === "all" && !q && (
-        <section className="mb-8">
-          <h2 className="font-display text-lg font-semibold mb-3">{t("bots.featuredLegends")}</h2>
-          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
-            {featured.map((b) => (
-              <Link
-                key={b.slug}
-                href={challengeHref(b)}
-                className="glass-card p-3 min-w-[140px] snap-start flex flex-col items-center gap-2 hover:ring-1 hover:ring-africhess-gold/50 transition"
-              >
-                <span className="relative w-16 h-16 rounded-xl overflow-hidden ring-2 ring-emerald-400/50">
-                  <Image
-                    src={getAiAvatarSrc(b.avatar_id)}
-                    alt={label(b)}
-                    fill
-                    className="object-cover"
-                    sizes="64px"
-                  />
-                </span>
-                <span className="text-xs font-semibold text-center line-clamp-2">{label(b)}</span>
-                <span className="text-[10px] text-africhess-gold font-mono">{b.elo}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {error && (
-        <InlineAlert className="mb-4" onDismiss={() => setError(null)}>
-          {error}
-        </InlineAlert>
-      )}
-
-      {loading && <p className="opacity-60">{t("common.loading")}</p>}
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {bots.map((b) => (
-          <div key={b.slug} className="glass-card p-4 flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <span className="relative w-12 h-12 rounded-xl overflow-hidden ring-2 ring-africhess-gold shrink-0">
-                <Image
-                  src={getAiAvatarSrc(b.avatar_id)}
-                  alt={label(b)}
-                  fill
-                  className="object-cover"
-                  sizes="48px"
-                />
-              </span>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-semibold truncate">{label(b)}</h3>
-                <p className="text-xs text-africhess-gold font-mono">{b.elo} ELO</p>
-              </div>
-              <div className="flex flex-col gap-1 items-end shrink-0">
-              {(b.is_legend ?? b.elo >= 2400) && (
-                <span className="text-[10px] uppercase tracking-wide text-emerald-400 border border-emerald-400/40 px-2 py-0.5 rounded">
-                  {t("bots.legend")}
-                </span>
-              )}
-              {b.is_premium && (
-                <span className="text-[10px] uppercase tracking-wide text-africhess-gold border border-africhess-gold/40 px-2 py-0.5 rounded">
-                  {t("bots.premium")}
-                </span>
-              )}
-              </div>
-            </div>
-            <p className="text-xs opacity-60 line-clamp-2">{desc(b)}</p>
-            <p className="text-[10px] opacity-45">
-              {b.personality} · {b.opening_style} · {b.country}
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div>
+          <h1 className="font-display text-3xl font-bold mb-2">{t("bots.title")}</h1>
+          <p className="opacity-70">{t("bots.ladder.subtitle")}</p>
+        </div>
+        {ladder && (
+          <div className="text-sm opacity-80 space-y-1 text-right">
+            <p className="flex items-center gap-2 justify-end">
+              <Trophy size={16} className="text-africhess-gold" />
+              {t("bots.ladder.progress", {
+                beaten: ladder.total_beaten,
+                total: ladder.total_bots,
+              })}
             </p>
-            {user ? (
-              <Link
-                href={challengeHref(b)}
-                className="mt-auto text-center py-2 rounded-lg african-gradient text-white text-sm font-medium"
-              >
-                {challengeLabel(b)}
-              </Link>
-            ) : (
-              <Link href="/login" className="mt-auto text-center text-sm text-africhess-gold hover:underline">
-                {t("bots.loginToPlay")}
-              </Link>
-            )}
+            <p className="text-xs opacity-60">
+              {t("bots.ladder.ceiling", { elo: ladder.unlock_ceiling })}
+            </p>
           </div>
-        ))}
+        )}
       </div>
 
-      {!loading && bots.length === 0 && !error && (
-        <p className="opacity-60 text-center py-12">{t("bots.empty")}</p>
+      <p className="text-sm opacity-60 mb-6">{t("bots.ladder.hint")}</p>
+
+      {error && <InlineAlert className="mb-4">{error}</InlineAlert>}
+      {loading && <LoadingState />}
+
+      {ladder && (
+        <>
+          <div className="flex flex-wrap gap-2 mb-8">
+            {ladder.tiers.map((tr) => {
+              const unlockedCount = tr.bots.filter((b) => b.unlocked).length;
+              return (
+                <button
+                  key={tr.id}
+                  type="button"
+                  onClick={() => setActiveTier(tr.id)}
+                  className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                    activeTier === tr.id
+                      ? "african-gradient text-white border-transparent"
+                      : unlockedCount > 0
+                        ? "border-white/20 hover:border-africhess-gold/50"
+                        : "border-white/10 opacity-50"
+                  }`}
+                >
+                  <span className="font-medium">{tr.label}</span>
+                  <span className="block text-[10px] opacity-70">
+                    {tr.min_elo}–{tr.max_elo > 9000 ? "3200+" : tr.max_elo} · {tr.beaten_count}/{tr.bots_count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {tier && (
+            <section className="mb-10">
+              <h2 className="font-display text-xl font-bold mb-1">{tier.label}</h2>
+              <p className="text-sm opacity-60 mb-4">{tier.description}</p>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {tier.bots.map((b) => {
+                  const href = challengeHref(b);
+                  const locked = !b.unlocked;
+                  return (
+                    <article
+                      key={b.slug}
+                      className={`relative rounded-xl border p-4 transition-colors ${
+                        b.beaten
+                          ? "border-africhess-green/40 bg-africhess-green/5"
+                          : locked
+                            ? "border-white/10 opacity-70"
+                            : "border-white/15 hover:border-africhess-gold/40"
+                      }`}
+                    >
+                      {locked && (
+                        <div className="absolute top-3 right-3 text-africhess-gold/80">
+                          <Lock size={16} />
+                        </div>
+                      )}
+                      {b.beaten && (
+                        <div className="absolute top-3 right-3 text-africhess-green">
+                          <Check size={16} />
+                        </div>
+                      )}
+                      <div className="flex gap-3 mb-3">
+                        <span className="relative w-14 h-14 rounded-xl overflow-hidden ring-2 ring-africhess-gold/30 shrink-0">
+                          <Image
+                            src={getAiAvatarSrc(b.avatar_id)}
+                            alt=""
+                            fill
+                            className={`object-cover ${locked ? "grayscale" : ""}`}
+                            sizes="56px"
+                          />
+                        </span>
+                        <div className="min-w-0">
+                          <h3 className="font-semibold truncate">{label(b)}</h3>
+                          <p className="text-africhess-gold font-mono text-sm">{b.elo} Elo</p>
+                          <p className="text-[11px] opacity-50 truncate">
+                            {b.personality} · {b.opening_style}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-xs opacity-60 line-clamp-2 mb-3">{desc(b)}</p>
+                      {locked ? (
+                        <p className="text-xs text-africhess-gold/80">
+                          {b.locked_reason === "premium"
+                            ? t("bots.lockedPremium")
+                            : t("bots.lockedProgress")}
+                        </p>
+                      ) : (
+                        <Link
+                          href={href}
+                          className="inline-flex w-full justify-center py-2 rounded-lg african-gradient text-white text-sm font-medium"
+                        >
+                          {challengeLabel(b)}
+                        </Link>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          <div className="rounded-xl border border-white/10 p-4 text-sm opacity-70">
+            <p className="font-medium text-africhess-gold mb-1">{t("bots.ladder.howTitle")}</p>
+            <p>{t("bots.ladder.howBody")}</p>
+            <Link href="/leaderboard" className="inline-block mt-3 text-africhess-gold hover:underline">
+              {t("bots.ladder.seeRatings")} →
+            </Link>
+          </div>
+        </>
       )}
     </div>
   );
