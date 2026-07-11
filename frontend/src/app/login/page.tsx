@@ -48,38 +48,36 @@ function LoginContent() {
       <h1 className="font-display text-3xl font-bold mb-8 text-center">{t("auth.login.title")}</h1>
       <form onSubmit={handleSubmit} className="glass-card p-8 space-y-4">
         <div>
-          <label htmlFor="login-username" className="sr-only">
+          <label htmlFor="login-username" className="block text-sm font-medium mb-1.5">
             {t("auth.login.username")}
           </label>
           <input
             id="login-username"
             type="text"
-            placeholder={t("auth.login.username")}
             autoComplete="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg border bg-transparent"
+            className="w-full px-4 py-3 rounded-lg border border-white/20 bg-transparent focus:border-africhess-gold focus:outline-none focus:ring-1 focus:ring-africhess-gold/40"
             required
           />
         </div>
         <div>
-          <label htmlFor="login-password" className="sr-only">
+          <label htmlFor="login-password" className="block text-sm font-medium mb-1.5">
             {t("auth.login.password")}
           </label>
           <input
             id="login-password"
             type="password"
-            placeholder={t("auth.login.password")}
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg border bg-transparent"
+            className="w-full px-4 py-3 rounded-lg border border-white/20 bg-transparent focus:border-africhess-gold focus:outline-none focus:ring-1 focus:ring-africhess-gold/40"
             required
           />
         </div>
         {needsTotp && (
           <div>
-            <label htmlFor="login-totp" className="sr-only">
+            <label htmlFor="login-totp" className="block text-sm font-medium mb-1.5">
               {t("auth.login.totpLabel")}
             </label>
             <input
@@ -87,10 +85,9 @@ function LoginContent() {
               type="text"
               inputMode="numeric"
               autoComplete="one-time-code"
-              placeholder={t("auth.login.totpLabel")}
               value={totpCode}
               onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              className="w-full px-4 py-3 rounded-lg border bg-transparent tracking-widest"
+              className="w-full px-4 py-3 rounded-lg border border-white/20 bg-transparent tracking-widest focus:border-africhess-gold focus:outline-none focus:ring-1 focus:ring-africhess-gold/40"
               required
               maxLength={6}
             />

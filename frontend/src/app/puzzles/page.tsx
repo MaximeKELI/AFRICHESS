@@ -886,6 +886,7 @@ export default function PuzzlesPage() {
         </InlineAlert>
       )}
 
+      {tab === "training" && (
       <div className="glass-card p-4 mb-6">
         <p className="text-sm font-medium mb-1">{t("puzzles.paths.title")}</p>
         <p className="text-xs opacity-60 mb-3">{t("puzzles.paths.hint")}</p>
@@ -896,7 +897,7 @@ export default function PuzzlesPage() {
               type="button"
               onClick={() => startThematicPath(path.theme)}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                tab === "training" && theme === path.theme
+                theme === path.theme
                   ? "border-africhess-gold bg-africhess-gold/15 text-africhess-gold"
                   : "border-white/20 hover:border-africhess-gold/40"
               }`}
@@ -906,6 +907,7 @@ export default function PuzzlesPage() {
           ))}
         </div>
       </div>
+      )}
 
       <div className="flex flex-wrap gap-2 mb-6 items-center">
         {(["daily", "training", "rush"] as const).map((id) => (
