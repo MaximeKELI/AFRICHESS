@@ -86,6 +86,7 @@ class UserSerializer(serializers.ModelSerializer):
             "premium_until",
             "is_premium",
             "is_diamond",
+            "is_staff",
             "title",
             "fide_id",
             "flair",
@@ -99,6 +100,7 @@ class UserSerializer(serializers.ModelSerializer):
             "is_african_highlight",
             "subscription_tier",
             "premium_until",
+            "is_staff",
         ]
 
 
@@ -139,6 +141,7 @@ class UserPublicSerializer(serializers.ModelSerializer):
             "city",
             "title",
             "chess_level",
+            "flair",
             "is_african_highlight",
             "date_joined",
             "stats",
