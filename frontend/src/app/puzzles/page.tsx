@@ -14,6 +14,8 @@ import { PuzzleSettingsPanel } from "@/components/puzzles/PuzzleSettingsPanel";
 import { PuzzleSessionRecapModal } from "@/components/puzzles/PuzzleSessionRecap";
 import { PuzzleBadgeToast } from "@/components/puzzles/PuzzleBadgeToast";
 import { OptionSection } from "@/components/ui/OptionSection";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { puzzlesApi, ratingsApi } from "@/lib/api";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { formatApiError } from "@/lib/errors";
@@ -896,7 +898,7 @@ export default function PuzzlesPage() {
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 tab === "training" && theme === path.theme
                   ? "border-africhess-gold bg-africhess-gold/15 text-africhess-gold"
-                  : "border-white/15 hover:border-africhess-gold/40"
+                  : "border-white/20 hover:border-africhess-gold/40"
               }`}
             >
               {t(path.labelKey)}
@@ -905,61 +907,48 @@ export default function PuzzlesPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-6">
-        <button
-          type="button"
-          onClick={() => setTab("daily")}
-          className={`px-4 py-2 rounded-lg ${tab === "daily" ? "african-gradient text-white" : "border"}`}
+      <div className="flex flex-wrap gap-2 mb-6 items-center">
+        {(["daily", "training", "rush"] as const).map((id) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setTab(id)}
+            className={`px-4 py-2 rounded-lg ${
+              tab === id
+                ? "african-gradient text-white"
+                : "border border-white/20 hover:border-africhess-gold/50"
+            }`}
+          >
+            {t(`puzzles.tab.${id}`)}
+          </button>
+        ))}
+        <select
+          aria-label={t("puzzles.tab.more")}
+          className="px-3 py-2 rounded-lg border border-white/20 bg-transparent text-sm"
+          value={
+            tab === "battle" || tab === "survival" || tab === "leaderboard" ? tab : ""
+          }
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === "build") {
+              window.location.href = "/puzzles/build";
+              return;
+            }
+            if (v === "battle" || v === "survival" || v === "leaderboard") setTab(v);
+          }}
         >
-          {t("puzzles.tab.daily")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("training")}
-          className={`px-4 py-2 rounded-lg ${tab === "training" ? "african-gradient text-white" : "border"}`}
-        >
-          {t("puzzles.tab.training")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("rush")}
-          className={`px-4 py-2 rounded-lg ${tab === "rush" ? "african-gradient text-white" : "border"}`}
-        >
-          {t("puzzles.tab.rush")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("battle")}
-          className={`px-4 py-2 rounded-lg ${tab === "battle" ? "african-gradient text-white" : "border"}`}
-        >
-          {t("puzzles.tab.battle")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("survival")}
-          className={`px-4 py-2 rounded-lg ${tab === "survival" ? "african-gradient text-white" : "border"}`}
-        >
-          {t("puzzles.tab.survival")}
-        </button>
-        <Link
-          href="/puzzles/build"
-          className="px-4 py-2 rounded-lg border text-sm hover:border-africhess-gold"
-        >
-          {t("nav.puzzleBuild")}
-        </Link>
-        <button
-          type="button"
-          onClick={() => setTab("leaderboard")}
-          className={`px-4 py-2 rounded-lg ${tab === "leaderboard" ? "african-gradient text-white" : "border"}`}
-        >
-          {t("puzzles.tab.leaderboard")}
-        </button>
+          <option value="">{t("puzzles.tab.more")}</option>
+          <option value="battle">{t("puzzles.tab.battle")}</option>
+          <option value="survival">{t("puzzles.tab.survival")}</option>
+          <option value="build">{t("nav.puzzleBuild")}</option>
+          <option value="leaderboard">{t("puzzles.tab.leaderboard")}</option>
+        </select>
         {tab === "training" && (
           <>
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
-              className="px-3 py-2 rounded-lg border bg-transparent text-sm"
+              className="px-3 py-2 rounded-lg border border-white/20 bg-transparent text-sm"
             >
               <option value="beginner">{chessLevelLabel(t, "beginner")}</option>
               <option value="intermediate">{chessLevelLabel(t, "intermediate")}</option>
@@ -969,7 +958,7 @@ export default function PuzzlesPage() {
             <select
               value={theme}
               onChange={(e) => setTheme(e.target.value)}
-              className="px-3 py-2 rounded-lg border bg-transparent text-sm"
+              className="px-3 py-2 rounded-lg border border-white/20 bg-transparent text-sm"
             >
               <option value="">{t("puzzles.theme.all")}</option>
               {themes.map((th) => (
@@ -986,7 +975,7 @@ export default function PuzzlesPage() {
         <div className="glass-card p-4 mb-6">
           <h3 className="font-semibold text-sm mb-2">{t("puzzles.rush.leaderboard.title")}</h3>
           {rushLeaderboard.length === 0 ? (
-            <p className="text-xs opacity-60">{t("puzzles.leaderboard.empty")}</p>
+            <EmptyState>{t("puzzles.leaderboard.empty")}</EmptyState>
           ) : (
             <ol className="text-sm space-y-1">
               {rushLeaderboard.slice(0, 10).map((row, i) => (
@@ -1179,7 +1168,11 @@ export default function PuzzlesPage() {
           {result && <p className="mt-4 text-lg font-semibold">{result}</p>}
         </div>
       ) : tab !== "leaderboard" && tab !== "battle" ? (
-        <p>{t("puzzles.loading")}</p>
+        loadError ? (
+          <EmptyState>{loadError}</EmptyState>
+        ) : (
+          <LoadingState label={t("puzzles.loading")} />
+        )
       ) : null}
 
       <PuzzleSessionRecapModal
