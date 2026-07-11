@@ -1199,19 +1199,19 @@ function PlayContent() {
       <div className="mb-3 py-2 border-t border-white/10">
         <CommentsToggle />
       </div>
-      <button
-        type="button"
-        onClick={startAI}
-        disabled={aiStarting}
-        data-testid="play-start-ai"
-        className="w-full py-2 rounded-lg african-gradient text-white font-medium disabled:opacity-50"
-      >
-        {aiStarting
-          ? t("common.loading")
-          : selectedBot
-            ? t("play.botChallenge.start")
-            : t("play.vsAi.start")}
-      </button>
+      {selectedBot && (
+        <button
+          type="button"
+          onClick={startAI}
+          disabled={aiStarting}
+          className="w-full py-2 rounded-lg african-gradient text-white font-medium disabled:opacity-50"
+        >
+          {aiStarting ? t("common.loading") : t("play.botChallenge.start")}
+        </button>
+      )}
+      {!selectedBot && (
+        <p className="text-xs opacity-50">{t("play.cta.useAbove")}</p>
+      )}
     </OptionSection>
   );
 
@@ -1223,6 +1223,7 @@ function PlayContent() {
           {t("play.online.searchingPool", { count: searchingPool })}
         </p>
       )}
+      <p className="text-xs opacity-50 mb-2">{t("play.cta.useAbove")}</p>
       {(searching || wsSearching) && (
         <button
           type="button"
@@ -1232,7 +1233,7 @@ function PlayContent() {
             setSearching(false);
             setStatus(t("play.status.searchCancelled"));
           }}
-          className="w-full py-1 text-xs opacity-60 hover:opacity-100"
+          className="w-full py-2 text-sm border border-white/20 rounded-lg opacity-80 hover:opacity-100"
         >
           {t("play.online.cancel")}
         </button>
@@ -1338,7 +1339,7 @@ function PlayContent() {
             type="button"
             onClick={findMatch}
             disabled={searching || wsSearching || aiStarting}
-            data-testid="play-find-opponent-quick"
+            data-testid="play-find-opponent"
             className="flex-1 py-3 rounded-xl border-2 border-africhess-green text-africhess-green text-sm font-semibold disabled:opacity-50"
           >
             {searching || wsSearching ? t("play.online.searching") : t("play.online.find")}
@@ -1347,7 +1348,7 @@ function PlayContent() {
             type="button"
             onClick={startAI}
             disabled={aiStarting}
-            data-testid="play-start-ai-quick"
+            data-testid="play-start-ai"
             className="flex-1 py-3 rounded-xl african-gradient text-white text-sm font-semibold disabled:opacity-50"
           >
             {aiStarting ? t("common.loading") : t("play.vsAi.start")}
