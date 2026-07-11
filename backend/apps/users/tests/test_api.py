@@ -87,3 +87,18 @@ class UsersApiTests(TestCase):
         res2 = self.client.get("/api/users/profile/")
         self.assertEqual(res2.status_code, 200)
         self.assertEqual(res2.data["username"], "u1")
+
+    def test_profile_includes_is_staff(self):
+        self.user.is_staff = True
+        self.user.save(update_fields=["is_staff"])
+        self.client.force_authenticate(self.user)
+        res = self.client.get("/api/users/profile/")
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(res.data["is_staff"])
+
+    def test_public_profile_includes_flair(self):
+        self.user.flair = "🦁"
+        self.user.save(update_fields=["flair"])
+        res = self.client.get(f"/api/users/{self.user.username}/")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.data["flair"], "🦁")

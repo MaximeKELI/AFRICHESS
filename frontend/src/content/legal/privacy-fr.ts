@@ -445,7 +445,7 @@ export const PRIVACY_FR: LegalDocument = {
         },
         {
           type: "p",
-          text: "Aucune sanction définitive n'est appliquée uniquement sur décision automatisée sans intervention humaine pour les cas contestés. Vous disposez d'un droit de recours via l'API /api/games/fairplay/appeal/.",
+          text: "Aucune sanction définitive n'est appliquée uniquement sur décision automatisée sans intervention humaine pour les cas contestés. Vous disposez d'un droit de recours via l'API /api/games/fairplay/appeals/.",
         },
         {
           type: "p",

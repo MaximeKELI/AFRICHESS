@@ -121,14 +121,37 @@ class ChessConsumerTests(TransactionTestCase):
         self.assertEqual(count, 0)
         await communicator.disconnect()
 
-    def test_unauthenticated_connection_rejected(self):
-        async_to_sync(self._test_unauthenticated_connection_rejected)()
+    def test_unauthenticated_can_spectate_active_human_game(self):
+        async_to_sync(self._test_unauthenticated_can_spectate_active_human_game)()
 
-    async def _test_unauthenticated_connection_rejected(self):
-        user = await User.objects.acreate(username="wsg2", password="x")
+    async def _test_unauthenticated_can_spectate_active_human_game(self):
+        white = await User.objects.acreate(username="wsg2", password="x")
+        black = await User.objects.acreate(username="wsg2b", password="x")
+        game = await Game.objects.acreate(
+            white_player=white,
+            black_player=black,
+            status=Game.Status.ACTIVE,
+            is_vs_ai=False,
+        )
+        communicator = WebsocketCommunicator(
+            application,
+            f"/ws/game/{game.id}/",
+        )
+        connected, _ = await communicator.connect()
+        self.assertTrue(connected)
+        msg = await communicator.receive_json_from()
+        self.assertEqual(msg["event"], "game_state")
+        await communicator.disconnect()
+
+    def test_unauthenticated_rejected_vs_ai(self):
+        async_to_sync(self._test_unauthenticated_rejected_vs_ai)()
+
+    async def _test_unauthenticated_rejected_vs_ai(self):
+        user = await User.objects.acreate(username="wsg_ai_anon", password="x")
         game = await Game.objects.acreate(
             white_player=user,
             status=Game.Status.ACTIVE,
+            is_vs_ai=True,
         )
         communicator = WebsocketCommunicator(
             application,

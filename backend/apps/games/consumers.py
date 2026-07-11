@@ -29,18 +29,16 @@ class ChessConsumer(AsyncWebsocketConsumer):
         self.game_id = self.scope["url_route"]["kwargs"]["game_id"]
         self.room_group_name = f"game_{self.game_id}"
         self.user = self.scope.get("user")
-
-        if not self.user or not self.user.is_authenticated:
-            await self.close(code=4001)
-            return
-
         self.is_spectator = False
-        if not await self._is_participant():
-            if await self._can_spectate():
-                self.is_spectator = True
-            else:
-                await self.close(code=4003)
-                return
+
+        authenticated = bool(self.user and self.user.is_authenticated)
+        if authenticated and await self._is_participant():
+            pass
+        elif await self._can_spectate():
+            self.is_spectator = True
+        else:
+            await self.close(code=4001 if not authenticated else 4003)
+            return
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await accept_websocket(self)
@@ -51,7 +49,12 @@ class ChessConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
-        if not allow_ws_event(self.user.id, f"game_{self.game_id}", limit=90):
+        rate_id = (
+            self.user.id
+            if self.user and getattr(self.user, "is_authenticated", False)
+            else f"anon:{self.channel_name}"
+        )
+        if not allow_ws_event(rate_id, f"game_{self.game_id}", limit=90):
             await self._send_event("error", {"message": "Trop de messages — ralentissez"})
             return
         try:
@@ -198,6 +201,8 @@ class ChessConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def _is_participant(self):
+        if not self.user or not getattr(self.user, "is_authenticated", False):
+            return False
         try:
             game = Game.objects.get(id=self.game_id)
             return self.user.id in (game.white_player_id, game.black_player_id)
@@ -213,6 +218,8 @@ class ChessConsumer(AsyncWebsocketConsumer):
         except Game.DoesNotExist:
             return False
         if game.is_vote_chess:
+            if not self.user or not getattr(self.user, "is_authenticated", False):
+                return False
             try:
                 meta = game.vote_meta
             except Exception:
@@ -223,6 +230,7 @@ class ChessConsumer(AsyncWebsocketConsumer):
 
                 if Club.objects.filter(pk__in=club_ids, members=self.user).exists():
                     return True
+            return False
         return game.status == Game.Status.ACTIVE and not game.is_vs_ai
 
     async def _handle_draw_offer(self):

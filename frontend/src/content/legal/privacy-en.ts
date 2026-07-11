@@ -445,7 +445,7 @@ export const PRIVACY_EN: LegalDocument = {
         },
         {
           type: "p",
-          text: "No final sanction is applied solely on automated decision without human intervention for contested cases. You have a right of appeal via the /api/games/fairplay/appeal/ API.",
+          text: "No final sanction is applied solely on automated decision without human intervention for contested cases. You have a right of appeal via the /api/games/fairplay/appeals/ API.",
         },
         {
           type: "p",
