@@ -75,7 +75,8 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    command: sh -c "mkdir -p staticfiles && celery -A config worker -l info"
+    entrypoint: ["/app/docker-entrypoint.sh"]
+    command: ["celery", "-A", "config", "worker", "-l", "info"]
     volumes:
       - ./backend:/app
       - ./anticheat-cpp:/anticheat-cpp
@@ -92,15 +93,19 @@ services:
       - DISCONNECT_FORFEIT_SECONDS=${DISCONNECT_FORFEIT_SECONDS:-90}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - RUN_MIGRATIONS=false
     depends_on:
-      - backend
-      - redis
+      backend:
+        condition: service_started
+      redis:
+        condition: service_healthy
 
   celery-beat:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    command: sh -c "mkdir -p staticfiles && celery -A config beat -l info"
+    entrypoint: ["/app/docker-entrypoint.sh"]
+    command: ["celery", "-A", "config", "beat", "-l", "info"]
     volumes:
       - ./backend:/app
       - ./anticheat-cpp:/anticheat-cpp
@@ -114,9 +119,12 @@ services:
       - FAIRPLAY_BIN=/usr/local/bin/africhess-fairplay
       - STOCKFISH_PATH=/usr/games/stockfish
       - DISCONNECT_FORFEIT_SECONDS=${DISCONNECT_FORFEIT_SECONDS:-90}
+      - RUN_MIGRATIONS=false
     depends_on:
-      - backend
-      - redis
+      backend:
+        condition: service_started
+      redis:
+        condition: service_healthy
 
   frontend:
     build:

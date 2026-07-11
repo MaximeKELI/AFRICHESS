@@ -83,8 +83,8 @@ if ! docker info >/dev/null 2>&1; then
 fi
 echo "✓ Docker OK"
 
-echo "→ Démarrage db + redis + backend + celery…"
-docker compose up -d --build db redis backend celery celery-beat
+echo "→ Démarrage db + redis…"
+docker compose up -d db redis
 
 echo "→ Attente santé Postgres…"
 for i in $(seq 1 40); do
@@ -94,8 +94,21 @@ for i in $(seq 1 40); do
   sleep 1
 done
 
-echo "→ Migrations…"
-docker compose exec -T backend python manage.py migrate --noinput
+echo "→ Démarrage backend (migrations)…"
+docker compose up -d --build backend
+
+echo "→ Attente API…"
+for i in $(seq 1 60); do
+  code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/api/puzzles/daily/ 2>/dev/null || echo "000")
+  if [ "$code" = "200" ] || [ "$code" = "401" ] || [ "$code" = "403" ]; then
+    echo "✓ Backend répond ($code)"
+    break
+  fi
+  sleep 2
+done
+
+echo "→ Démarrage celery…"
+docker compose up -d celery celery-beat
 
 # ── 6. Frontend ────────────────────────────────────────────
 echo "→ Arrêt éventuel de Next.js sur :3000…"

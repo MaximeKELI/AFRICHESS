@@ -16,6 +16,11 @@ if [ "${RUN_SEED:-false}" = "true" ]; then
   python manage.py seed_league 2>/dev/null || true
 fi
 
+# Si docker-compose passe une commande (celery, etc.), l'exécuter telle quelle
+if [ "$#" -gt 0 ]; then
+  exec "$@"
+fi
+
 case "$TIER" in
   api)
     exec gunicorn config.asgi_http:application \
