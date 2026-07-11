@@ -310,7 +310,7 @@ export function Navbar() {
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              className="lg:hidden p-2 rounded-lg hover:bg-white/10"
+              className="hidden md:inline-flex lg:hidden p-2 rounded-lg hover:bg-white/10"
               aria-label={t("nav.menu.open")}
             >
               <Menu size={20} />
