@@ -4,6 +4,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+PG_PASS="${POSTGRES_PASSWORD:-africhess_dev_pg}"
+REDIS_PASS="${REDIS_PASSWORD:-africhess_redis_dev}"
+
 echo "→ Arrêt des anciennes instances (ports 8000 / 3000)…"
 pkill -f "daphne.*127.0.0.1.*8000" 2>/dev/null || true
 pkill -f "daphne.*0.0.0.0.*8000" 2>/dev/null || true
@@ -20,16 +23,26 @@ docker compose up -d db redis
 
 export POSTGRES_HOST=127.0.0.1
 export POSTGRES_PORT=5433
-export POSTGRES_PASSWORD=africhess
-export REDIS_URL=redis://:africhess_redis_dev@127.0.0.1:6379/0
-export REDIS_CACHE_URL=redis://:africhess_redis_dev@127.0.0.1:6379/4
+export POSTGRES_DB=africhess
+export POSTGRES_USER=africhess
+export POSTGRES_PASSWORD="$PG_PASS"
+export REDIS_URL="redis://:${REDIS_PASS}@127.0.0.1:6379/0"
+export REDIS_CACHE_URL="redis://:${REDIS_PASS}@127.0.0.1:6379/4"
 export DJANGO_SETTINGS_MODULE=config.settings.development
 export SECRET_KEY=dev-local-docker-compose-secret-key-minimum-fifty-characters-long
+export PATH="${ROOT}/backend/.venv/bin:${HOME}/.local/bin:${PATH}"
 
 mkdir -p "$ROOT/backend/media/avatars" "$ROOT/backend/.media_dev/avatars" 2>/dev/null || true
 
+if [ ! -x "$ROOT/backend/.venv/bin/daphne" ]; then
+  echo "✗ backend/.venv manquant. Lancez d'abord : ./scripts/dev-all.sh"
+  exit 1
+fi
+
+(cd backend && .venv/bin/python manage.py migrate --noinput)
+
 trap 'kill 0' EXIT
 echo "→ Backend http://127.0.0.1:8000"
-(cd backend && daphne -b 127.0.0.1 -p 8000 config.asgi:application) &
+(cd backend && .venv/bin/daphne -b 127.0.0.1 -p 8000 config.asgi:application) &
 echo "→ Frontend http://localhost:3000"
 cd frontend && npm run dev
