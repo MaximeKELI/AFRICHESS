@@ -14,13 +14,7 @@ const BoardThemePicker = dynamic(
   { ssr: false }
 );
 
-export type PlaySetupCategory =
-  | "game"
-  | "ai"
-  | "online"
-  | "board"
-  | "pieces"
-  | "background";
+export type PlaySetupCategory = "game" | "ai" | "online" | "style";
 
 interface PlaySetupOptionsProps {
   setupCategory: PlaySetupCategory;
@@ -45,9 +39,7 @@ export function PlaySetupOptions({
     { id: "game", label: t("play.options.game") },
     { id: "ai", label: t("play.vsAi.title") },
     { id: "online", label: t("play.online.title") },
-    { id: "board", label: t("board.picker.title") },
-    { id: "pieces", label: t("board.picker.pieces") },
-    { id: "background", label: t("background.picker.title") },
+    { id: "style", label: t("play.options.style") },
   ];
 
   return (
@@ -63,22 +55,30 @@ export function PlaySetupOptions({
       {setupCategory === "ai" && aiSection}
       {setupCategory === "online" && onlineSection}
 
-      {setupCategory === "board" && (
-        <OptionSection compact title={t("board.picker.title")} description={t("board.picker.hint")}>
-          <BoardThemePicker compact showHeader={false} showPieces={false} />
-        </OptionSection>
-      )}
-
-      {setupCategory === "pieces" && (
-        <OptionSection compact title={t("board.picker.pieces")} description={t("board.picker.piecesHint")}>
-          <BoardThemePicker compact showHeader={false} showColors={false} />
-        </OptionSection>
-      )}
-
-      {setupCategory === "background" && (
-        <OptionSection compact title={t("background.picker.title")} description={t("background.picker.hint")}>
-          <BackgroundPicker compact showHeader={false} />
-        </OptionSection>
+      {setupCategory === "style" && (
+        <div className="space-y-4">
+          <OptionSection compact title={t("board.picker.title")} description={t("board.picker.hint")}>
+            <BoardThemePicker compact showHeader={false} showPieces={false} />
+          </OptionSection>
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-africhess-gold py-2 list-none flex items-center justify-between">
+              {t("board.picker.pieces")}
+              <span className="opacity-50 group-open:rotate-180 transition-transform">▾</span>
+            </summary>
+            <OptionSection compact title="" description={t("board.picker.piecesHint")}>
+              <BoardThemePicker compact showHeader={false} showColors={false} />
+            </OptionSection>
+          </details>
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-africhess-gold py-2 list-none flex items-center justify-between">
+              {t("background.picker.title")}
+              <span className="opacity-50 group-open:rotate-180 transition-transform">▾</span>
+            </summary>
+            <OptionSection compact title="" description={t("background.picker.hint")}>
+              <BackgroundPicker compact showHeader={false} />
+            </OptionSection>
+          </details>
+        </div>
       )}
 
       {status}

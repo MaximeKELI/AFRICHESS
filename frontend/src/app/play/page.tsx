@@ -355,8 +355,8 @@ function PlayContent() {
 
   useEffect(() => {
     if (!setupFromUrl) return;
-    if (setupFromUrl === "background") {
-      setSetupCategory("background");
+    if (setupFromUrl === "background" || setupFromUrl === "board" || setupFromUrl === "pieces") {
+      setSetupCategory("style");
       setMobileTab("setup");
     } else if (setupFromUrl === "ai") {
       setSetupCategory("ai");
@@ -1199,14 +1199,6 @@ function PlayContent() {
       <div className="mb-3 py-2 border-t border-white/10">
         <CommentsToggle />
       </div>
-      <div className="mb-3 py-2 border-t border-white/10">
-        <TimeControlPicker
-          isTimed={useClock}
-          preset={timePreset}
-          onTimedChange={setUseClock}
-          onPresetChange={setTimePreset}
-        />
-      </div>
       <button
         type="button"
         onClick={startAI}
@@ -1231,14 +1223,6 @@ function PlayContent() {
           {t("play.online.searchingPool", { count: searchingPool })}
         </p>
       )}
-      <button
-        onClick={findMatch}
-        disabled={searching || wsSearching}
-        data-testid="play-find-opponent"
-        className="w-full py-2 rounded-lg border-2 border-africhess-green text-africhess-green font-medium hover:bg-africhess-green/10 disabled:opacity-50"
-      >
-        {searching || wsSearching ? t("play.online.searching") : t("play.online.find")}
-      </button>
       {(searching || wsSearching) && (
         <button
           type="button"
@@ -1248,7 +1232,7 @@ function PlayContent() {
             setSearching(false);
             setStatus(t("play.status.searchCancelled"));
           }}
-          className="w-full mt-2 py-1 text-xs opacity-60 hover:opacity-100"
+          className="w-full py-1 text-xs opacity-60 hover:opacity-100"
         >
           {t("play.online.cancel")}
         </button>
@@ -1258,11 +1242,21 @@ function PlayContent() {
 
   if (!user) {
     return (
-      <div className="max-w-lg mx-auto px-4 py-20 text-center">
-        <p className="mb-4">{t("play.loginRequired")}</p>
-        <Link href="/login" className="text-africhess-gold underline">
+      <div className="max-w-md mx-auto px-4 py-16 text-center">
+        <h1 className="font-display text-2xl font-bold mb-3">{t("play.title", { mode: t("modes.blitz") })}</h1>
+        <p className="mb-6 opacity-70 text-sm">{t("play.guest.benefit")}</p>
+        <Link
+          href="/login"
+          className="inline-block px-8 py-3 african-gradient text-white rounded-xl font-semibold"
+        >
           {t("nav.login")}
         </Link>
+        <p className="mt-4 text-sm opacity-60">
+          {t("auth.login.noAccount")}{" "}
+          <Link href="/register" className="text-africhess-gold underline">
+            {t("nav.signup")}
+          </Link>
+        </p>
       </div>
     );
   }
@@ -1342,14 +1336,6 @@ function PlayContent() {
         <div className="flex gap-2 mb-4">
           <button
             type="button"
-            onClick={startAI}
-            disabled={aiStarting}
-            className="flex-1 py-3 rounded-xl african-gradient text-white text-sm font-semibold disabled:opacity-50"
-          >
-            {aiStarting ? t("common.loading") : t("play.vsAi.start")}
-          </button>
-          <button
-            type="button"
             onClick={findMatch}
             disabled={searching || wsSearching || aiStarting}
             data-testid="play-find-opponent-quick"
@@ -1357,11 +1343,20 @@ function PlayContent() {
           >
             {searching || wsSearching ? t("play.online.searching") : t("play.online.find")}
           </button>
+          <button
+            type="button"
+            onClick={startAI}
+            disabled={aiStarting}
+            data-testid="play-start-ai-quick"
+            className="flex-1 py-3 rounded-xl african-gradient text-white text-sm font-semibold disabled:opacity-50"
+          >
+            {aiStarting ? t("common.loading") : t("play.vsAi.start")}
+          </button>
         </div>
       )}
 
       {!gameId && selectedBot && (
-        <div className="glass-card p-4 mb-4 border border-africhess-gold/25 space-y-4 lg:hidden">
+        <div className="glass-card p-4 mb-4 border border-africhess-gold/25 space-y-3 lg:hidden">
           <div>
             <h2 className="font-semibold text-sm text-africhess-gold">
               {t("play.botChallenge.title", {
@@ -1370,12 +1365,6 @@ function PlayContent() {
             </h2>
             <p className="text-xs opacity-60 mt-1">{t("play.botChallenge.hint")}</p>
           </div>
-          <TimeControlPicker
-            isTimed={useClock}
-            preset={timePreset}
-            onTimedChange={setUseClock}
-            onPresetChange={setTimePreset}
-          />
           <button
             type="button"
             onClick={startAI}
