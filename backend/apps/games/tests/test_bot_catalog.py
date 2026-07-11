@@ -31,3 +31,6 @@ class BotCatalogTests(TestCase):
         magnus = ChessBot.objects.get(slug="magnus-carlsen")
         self.assertEqual(magnus.elo, 3200)
         self.assertEqual(magnus.avatar_id, "magnus-carlsen")
+        self.assertEqual(magnus.tier, "elite")
+        beginner = ChessBot.objects.filter(tier="beginner", is_active=True).count()
+        self.assertGreater(beginner, 0)
