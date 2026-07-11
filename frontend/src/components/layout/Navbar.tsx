@@ -43,6 +43,7 @@ const NAV_GROUPS = [
       { href: "/learning/videos", key: "videos.title" },
       { href: "/learning/repertoires", key: "nav.repertoire" },
       { href: "/learning/study", key: "study.title" },
+      { href: "/studies", key: "nav.studies" },
       { href: "/insights", key: "nav.insights" },
       { href: "/coaches", key: "nav.coaches" },
       { href: "/classroom", key: "nav.classroom" },
