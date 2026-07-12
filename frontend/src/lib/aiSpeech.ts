@@ -1,14 +1,12 @@
 /**
  * Synthèse vocale — commentaires IA et coach.
- *
- * Sur Firefox/Linux, speechSynthesis (espeak) est robotique ET se bloque après cancel().
- * On privilégie donc le WAV (/api/tts puis /api/games/tts/), et on n'utilise le
- * navigateur qu'en dernier recours.
+ * WAV (/api/tts → /api/games/tts/) en priorité ; speechSynthesis en dernier recours.
  */
 
 import Cookies from "js-cookie";
 import { apiBase } from "@/lib/apiConfig";
 import { normalizeSpeechText, splitSpeechChunks } from "@/lib/speechText";
+import { buildTtsUrls, shouldPreferWavTts } from "@/lib/ttsEndpoints";
 
 let preferredVoice: SpeechSynthesisVoice | null = null;
 let voicesListenerAttached = false;
@@ -31,6 +29,19 @@ let lastSpeakingText = "";
 const MAX_TTS_CHARS = 1200;
 const FAIL_STREAK_DISABLE = 3;
 
+/** Clés déjà lues — niveau module pour survivre au Strict Mode remount. */
+export const liveSpokenCommentKeys = new Set<string>();
+export let liveSpeechPrimed = false;
+
+export function resetLiveSpeechTracking() {
+  liveSpokenCommentKeys.clear();
+  liveSpeechPrimed = false;
+}
+
+export function setLiveSpeechPrimed(value: boolean) {
+  liveSpeechPrimed = value;
+}
+
 function authHeaders(): HeadersInit {
   const token = Cookies.get("access_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -41,28 +52,9 @@ function isFirefox(): boolean {
   return /firefox/i.test(navigator.userAgent);
 }
 
-function voiceScore(v: SpeechSynthesisVoice): number {
-  const n = v.name.toLowerCase();
-  const lang = v.lang.toLowerCase();
-  const isFr = lang.startsWith("fr") || /french|français|francais/.test(n);
-  let score = 0;
-
-  if (isFr && !v.localService && /google/.test(n)) score = 120;
-  else if (isFr && /google français|google french/.test(n)) score = 115;
-  else if (isFr && /neural|natural|premium|wavenet|online \(natural\)|enhanced/.test(n)) score = 110;
-  else if (isFr && /microsoft.*(hortense|julie|pauline|denise|henri)|azure/.test(n)) score = 100;
-  else if (isFr && /thomas|amélie|aurelie|aurélie|marie|virginie|stephanie/.test(n)) score = 95;
-  else if (isFr && /apple|siri|éloquence|eloquence|compact/.test(n)) score = 88;
-  else if (isFr && /google/.test(n)) score = 85;
-  else if (isFr && /microsoft|azure/.test(n)) score = 78;
-  else if (isFr && v.localService && !/espeak|festival|rhvoice/.test(n)) score = 72;
-  else if (isFr) score = 60;
-  else if (!v.localService && /google/.test(n)) score = 40;
-  else score = 20;
-
-  if (/espeak|festival|rhvoice|mbrola/.test(n)) score = Math.min(score, 8);
-  if (!v.localService) score += 5;
-  return score;
+function isRoboticVoice(v: SpeechSynthesisVoice | null): boolean {
+  if (!v) return true;
+  return /espeak|festival|rhvoice|mbrola/.test(v.name.toLowerCase());
 }
 
 function isFrenchVoice(v: SpeechSynthesisVoice): boolean {
@@ -70,9 +62,18 @@ function isFrenchVoice(v: SpeechSynthesisVoice): boolean {
   return lang.startsWith("fr") || lang.includes("fr-") || /french|français|francais/.test(v.name.toLowerCase());
 }
 
-function isRoboticVoice(v: SpeechSynthesisVoice | null): boolean {
-  if (!v) return true;
-  return /espeak|festival|rhvoice|mbrola/.test(v.name.toLowerCase());
+function voiceScore(v: SpeechSynthesisVoice): number {
+  const n = v.name.toLowerCase();
+  const lang = v.lang.toLowerCase();
+  const isFr = lang.startsWith("fr") || /french|français|francais/.test(n);
+  let score = 0;
+  if (isFr && !v.localService && /google/.test(n)) score = 120;
+  else if (isFr && /neural|natural|premium|wavenet|enhanced/.test(n)) score = 110;
+  else if (isFr && /microsoft|azure/.test(n)) score = 90;
+  else if (isFr) score = 60;
+  else score = 20;
+  if (/espeak|festival|rhvoice|mbrola/.test(n)) score = Math.min(score, 8);
+  return score;
 }
 
 function pickFrenchVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
@@ -99,13 +100,6 @@ function hasHumanBrowserVoice(): boolean {
   if (typeof window === "undefined" || !window.speechSynthesis) return false;
   refreshVoices();
   return Boolean(preferredVoice && !isRoboticVoice(preferredVoice));
-}
-
-/** WAV d'abord sur Firefox ou quand seules des voix robotiques existent. */
-function preferWavTts(): boolean {
-  if (isFirefox()) return true;
-  if (!hasHumanBrowserVoice()) return true;
-  return false;
 }
 
 function startKeepAlive() {
@@ -135,7 +129,6 @@ function clearStuckSpeechSynthesis() {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   try {
     window.speechSynthesis.cancel();
-    // Firefox : cancel() laisse parfois speaking=true ; un resume aide
     window.speechSynthesis.resume();
   } catch {
     /* ignore */
@@ -162,33 +155,35 @@ function playWavBufferAndWait(buf: ArrayBuffer): Promise<boolean> {
     audio.onended = () => finish(true);
     audio.onerror = () => finish(false);
 
-    const tryPlay = async () => {
-      try {
-        await audio.play();
-      } catch (err) {
+    void audio.play().then(
+      () => undefined,
+      (err: unknown) => {
         if (err instanceof DOMException && err.name === "NotAllowedError") {
-          pendingPlay = tryPlay;
+          pendingPlay = () => audio.play().then(() => undefined);
           finish(false);
           return;
         }
         finish(false);
       }
-    };
-
-    void tryPlay();
+    );
   });
+}
+
+/** Exposé pour les tests : URLs réellement appelées. */
+export function getTtsFetchUrls(): { local: string; backend: string } {
+  return buildTtsUrls(apiBase());
 }
 
 async function fetchTtsWav(text: string): Promise<ArrayBuffer | null> {
   const payload = text.slice(0, MAX_TTS_CHARS);
+  const urls = buildTtsUrls(apiBase());
   const sources: { url: string; auth: boolean; mark: "local" | "backend" }[] = [];
 
   if (localTtsOk !== false) {
-    sources.push({ url: "/api/tts", auth: false, mark: "local" });
+    sources.push({ url: urls.local, auth: false, mark: "local" });
   }
-  // Correct path: /api/gamesS/tts/ (pas /game/tts/)
   if (backendTtsOk !== false) {
-    sources.push({ url: `${apiBase()}/games/tts/`, auth: true, mark: "backend" });
+    sources.push({ url: urls.backend, auth: true, mark: "backend" });
   }
 
   for (const { url, auth, mark } of sources) {
@@ -287,16 +282,15 @@ function speakBrowserChunk(text: string, byAi: boolean, generation: number): Pro
     }, 60);
     window.setTimeout(() => {
       if (!settled && !synth.speaking && !synth.pending) done(false);
-    }, 6000);
+    }, 4000);
   });
 }
 
 async function speakChunk(text: string, byAi: boolean, generation: number): Promise<boolean> {
   if (generation !== speechGeneration) return false;
 
-  const useWavFirst = preferWavTts();
-
-  if (useWavFirst) {
+  // WAV d'abord (Chromium + Firefox Linux) — speechSynthesis est peu fiable
+  if (shouldPreferWavTts()) {
     const buf = await fetchTtsWav(text);
     if (generation !== speechGeneration) return false;
     if (buf) {
@@ -305,24 +299,12 @@ async function speakChunk(text: string, byAi: boolean, generation: number): Prom
     }
   }
 
-  // Voix navigateur humaines (Chrome/Edge avec Google FR, etc.)
   if (typeof window !== "undefined" && window.speechSynthesis && hasHumanBrowserVoice()) {
     const ok = await speakBrowserChunk(text, byAi, generation);
     if (generation !== speechGeneration) return false;
     if (ok) return true;
   }
 
-  // WAV si on n'avait pas essayé en premier
-  if (!useWavFirst) {
-    const buf = await fetchTtsWav(text);
-    if (generation !== speechGeneration) return false;
-    if (buf) {
-      const ok = await playWavBufferAndWait(buf);
-      if (ok) return true;
-    }
-  }
-
-  // Dernier recours navigateur (même robotique) — sauf Firefox où ça se bloque
   if (!isFirefox() && typeof window !== "undefined" && window.speechSynthesis) {
     return speakBrowserChunk(text, byAi, generation);
   }
@@ -341,21 +323,16 @@ async function runSpeechPipeline(): Promise<void> {
     if (!fullText) continue;
 
     lastSpeakingText = fullText;
-    const chunks = splitSpeechChunks(fullText);
-
-    for (const chunk of chunks) {
+    for (const chunk of splitSpeechChunks(fullText)) {
       if (job.generation !== speechGeneration) break;
       await speakChunk(chunk, job.byAi, job.generation);
-      // Petite pause entre phrases pour laisser l'audio se terminer proprement
-      if (job.generation === speechGeneration) await delay(40);
+      if (job.generation === speechGeneration) await delay(30);
     }
   }
 
   lastSpeakingText = "";
   pipelineRunning = false;
-  if (pendingJobs.length > 0) {
-    void runSpeechPipeline();
-  }
+  if (pendingJobs.length > 0) void runSpeechPipeline();
 }
 
 function enqueueSpeech(text: string, byAi: boolean, interrupt: boolean): void {
@@ -365,7 +342,6 @@ function enqueueSpeech(text: string, byAi: boolean, interrupt: boolean): void {
     stopCurrentAudio();
     clearStuckSpeechSynthesis();
   }
-
   pendingJobs.push({ text, byAi, generation: speechGeneration });
   void runSpeechPipeline();
 }
@@ -374,7 +350,7 @@ export function initAiSpeech() {
   if (typeof window === "undefined") return;
   attachVoicesListener();
   refreshVoices();
-  [50, 200, 500, 1200, 2500].forEach((ms) => window.setTimeout(refreshVoices, ms));
+  [50, 200, 500, 1200].forEach((ms) => window.setTimeout(refreshVoices, ms));
 }
 
 export function unlockAiSpeech(): boolean {
@@ -388,24 +364,25 @@ export function unlockAiSpeech(): boolean {
     void play();
   }
 
-  // Warmup AudioContext / autoplay via élément silencieux (plus fiable que speechSynthesis)
   if (!warmupDone && typeof window !== "undefined") {
     try {
       const silent = new Audio(
         "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="
       );
       silent.volume = 0.01;
-      void silent.play().then(() => {
-        silent.pause();
-        warmupDone = true;
-      }).catch(() => {
-        warmupDone = true;
-      });
+      void silent.play().then(
+        () => {
+          silent.pause();
+          warmupDone = true;
+        },
+        () => {
+          warmupDone = true;
+        }
+      );
     } catch {
       warmupDone = true;
     }
   }
-
   return true;
 }
 
@@ -426,21 +403,15 @@ export function stopAiSpeech() {
 export function isSpeechActive(): boolean {
   if (pipelineRunning || pendingJobs.length > 0) return true;
   if (currentAudio && !currentAudio.paused && !currentAudio.ended) return true;
-  // Ne pas faire confiance à speechSynthesis.speaking sur Firefox (reste coincé à true)
-  if (!isFirefox() && typeof window !== "undefined" && window.speechSynthesis?.speaking) {
-    return true;
-  }
   return false;
 }
 
-/** Attend la fin de la lecture (timeout court pour ne pas bloquer la file). */
-export function waitForSpeechIdle(timeoutMs = 20_000): Promise<void> {
+export function waitForSpeechIdle(timeoutMs = 15_000): Promise<void> {
   return new Promise((resolve) => {
     const started = Date.now();
     const tick = () => {
       if (!isSpeechActive() || Date.now() - started > timeoutMs) {
-        // Si encore « actif » après timeout Firefox, forcer le reset
-        if (isSpeechActive() && Date.now() - started > timeoutMs) {
+        if (isSpeechActive()) {
           clearStuckSpeechSynthesis();
           pipelineRunning = false;
         }
@@ -464,7 +435,6 @@ export function speakComment(
     byAi?: boolean;
     enabled?: boolean;
     forceUnlock?: boolean;
-    /** false = met en file sans couper la lecture en cours */
     interrupt?: boolean;
   } = {}
 ): Promise<void> {
@@ -491,8 +461,7 @@ export function speakComment(
 export async function testAiSpeech(phrase: string): Promise<boolean> {
   unlockAiSpeech();
   stopAiSpeech();
-  // Laisser Firefox digérer le cancel
-  await delay(100);
+  await delay(80);
   enqueueSpeech(phrase, false, false);
   await waitForSpeechIdle(30_000);
   return true;
@@ -511,4 +480,17 @@ export function bindAiSpeechToUserGestures(active: boolean) {
     window.removeEventListener("keydown", onGesture, { capture: true });
     window.removeEventListener("touchstart", onGesture, { capture: true });
   };
+}
+
+/** Reset module state for unit tests. */
+export function __resetAiSpeechForTests() {
+  stopAiSpeech();
+  localTtsOk = null;
+  backendTtsOk = null;
+  localFailStreak = 0;
+  backendFailStreak = 0;
+  audioUnlocked = false;
+  warmupDone = false;
+  pendingPlay = null;
+  resetLiveSpeechTracking();
 }
