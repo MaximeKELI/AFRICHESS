@@ -20,7 +20,7 @@ const PRIMARY_LINKS = [
   { href: "/play", key: "nav.play" },
   { href: "/puzzles", key: "nav.puzzles" },
   { href: "/learning", key: "nav.learn" },
-  { href: "/live", key: "nav.live" },
+  { href: "/tv", key: "nav.watch" },
 ] as const;
 
 const NAV_GROUPS = [
@@ -68,6 +68,15 @@ const NAV_GROUPS = [
     ],
   },
   {
+    key: "nav.group.watch",
+    links: [
+      { href: "/tv", key: "nav.tv" },
+      { href: "/live", key: "nav.currentGames" },
+      { href: "/streamers", key: "nav.streamers" },
+      { href: "/broadcasts", key: "nav.broadcasts" },
+    ],
+  },
+  {
     key: "nav.group.compete",
     links: [
       { href: "/tournaments", key: "nav.tournaments" },
@@ -84,7 +93,6 @@ const NAV_GROUPS = [
       { href: "/clubs", key: "nav.clubs" },
       { href: "/community", key: "nav.community" },
       { href: "/blog", key: "nav.blog" },
-      { href: "/coaches", key: "nav.coaches" },
       { href: "/classroom", key: "nav.classroom" },
       { href: "/stats", key: "nav.stats" },
     ],
