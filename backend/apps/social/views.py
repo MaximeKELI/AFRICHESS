@@ -1,17 +1,23 @@
 from django.contrib.auth import get_user_model
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import generics, permissions, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.common.text_validation import FORUM_COMMENT_MAX, validate_user_text
+from apps.common.text_validation import (
+    CHAT_MESSAGE_MAX,
+    FORUM_COMMENT_MAX,
+    validate_user_text,
+)
+from apps.common.throttles import ChatThrottle
 from apps.games.serializers import GameSerializer
 from apps.notifications.models import Notification
 from apps.ratings.models import PlayerRating
 
-from .chat_access import user_can_access_chat_room
+from .chat_access import user_can_send_chat_message, user_can_view_chat_room
 from .models import ChatMessage, Club, ClubEvent, ForumComment, ForumPost, ForumPostLike, Friendship, UserFollow
 from .relationships import are_friends, friendship_row, is_blocked, relationship_payload
 from .serializers import (
@@ -29,6 +35,10 @@ from .serializers import (
 User = get_user_model()
 
 
+def _get_user_by_username(username: str):
+    return User.objects.get(username__iexact=(username or "").strip())
+
+
 def _notify_friend_request(from_user, to_user, friendship_id: int):
     Notification.objects.create(
         user=to_user,
@@ -36,6 +46,20 @@ def _notify_friend_request(from_user, to_user, friendship_id: int):
         title=f"{from_user.display_name or from_user.username} vous a ajouté",
         body="Acceptez ou refusez la demande d'amitié",
         data={"friendship_id": friendship_id, "from_username": from_user.username},
+    )
+
+
+def _notify_friend_accepted(accepter, requester, friendship_id: int):
+    Notification.objects.create(
+        user=requester,
+        type=Notification.Type.FRIEND_REQUEST,
+        title=f"{accepter.display_name or accepter.username} a accepté",
+        body="Vous êtes maintenant amis",
+        data={
+            "friendship_id": friendship_id,
+            "from_username": accepter.username,
+            "accepted": True,
+        },
     )
 
 
@@ -85,7 +109,7 @@ class SendFriendRequestView(APIView):
         if not username:
             return Response({"error": "Username required"}, status=400)
         try:
-            to_user = User.objects.get(username__iexact=username)
+            to_user = _get_user_by_username(username)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
         if to_user == request.user:
@@ -93,32 +117,34 @@ class SendFriendRequestView(APIView):
         if is_blocked(request.user, to_user):
             return Response({"error": "Action non autorisée"}, status=403)
 
-        reverse = Friendship.objects.filter(
-            from_user=to_user,
-            to_user=request.user,
-            status=Friendship.Status.PENDING,
-        ).first()
-        if reverse:
-            reverse.status = Friendship.Status.ACCEPTED
-            reverse.save(update_fields=["status"])
-            return Response(FriendshipSerializer(reverse).data)
+        with transaction.atomic():
+            reverse = Friendship.objects.filter(
+                from_user=to_user,
+                to_user=request.user,
+                status=Friendship.Status.PENDING,
+            ).first()
+            if reverse:
+                reverse.status = Friendship.Status.ACCEPTED
+                reverse.save(update_fields=["status"])
+                _notify_friend_accepted(request.user, to_user, reverse.id)
+                return Response(FriendshipSerializer(reverse).data)
 
-        existing = friendship_row(request.user, to_user)
-        if existing:
-            if existing.status == Friendship.Status.ACCEPTED:
-                return Response({"error": "Déjà amis"}, status=400)
-            if existing.status == Friendship.Status.BLOCKED:
-                return Response({"error": "Action non autorisée"}, status=403)
-            if existing.status == Friendship.Status.PENDING:
-                if existing.from_user_id == request.user.id:
-                    return Response(FriendshipSerializer(existing).data)
-                return Response({"error": "Demande déjà reçue — acceptez-la"}, status=400)
+            existing = friendship_row(request.user, to_user)
+            if existing:
+                if existing.status == Friendship.Status.ACCEPTED:
+                    return Response({"error": "Déjà amis"}, status=400)
+                if existing.status == Friendship.Status.BLOCKED:
+                    return Response({"error": "Action non autorisée"}, status=403)
+                if existing.status == Friendship.Status.PENDING:
+                    if existing.from_user_id == request.user.id:
+                        return Response(FriendshipSerializer(existing).data)
+                    return Response({"error": "Demande déjà reçue — acceptez-la"}, status=400)
 
-        friendship = Friendship.objects.create(
-            from_user=request.user,
-            to_user=to_user,
-            status=Friendship.Status.PENDING,
-        )
+            friendship = Friendship.objects.create(
+                from_user=request.user,
+                to_user=to_user,
+                status=Friendship.Status.PENDING,
+            )
         _notify_friend_request(request.user, to_user, friendship.id)
         return Response(FriendshipSerializer(friendship).data, status=201)
 
