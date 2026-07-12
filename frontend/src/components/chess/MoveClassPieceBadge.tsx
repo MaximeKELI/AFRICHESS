@@ -7,6 +7,7 @@ const BADGE_STYLES: Record<string, string> = {
   brilliant: "bg-cyan-500 border-cyan-300 text-white shadow-cyan-500/50",
   great: "bg-sky-500 border-sky-300 text-white shadow-sky-500/50",
   best: "bg-emerald-600 border-emerald-400 text-white shadow-emerald-600/40",
+  book: "bg-violet-600 border-violet-300 text-white shadow-violet-600/40",
   good: "bg-emerald-700/90 border-emerald-500/80 text-white shadow-emerald-700/30",
   inaccuracy: "bg-yellow-500 border-yellow-300 text-black shadow-yellow-500/40",
   mistake: "bg-orange-500 border-orange-300 text-white shadow-orange-500/40",
