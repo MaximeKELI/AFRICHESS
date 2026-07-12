@@ -10,10 +10,13 @@ import { GameInviteRedirect } from "@/components/notifications/GameInviteRedirec
 import { initAiSpeech } from "@/lib/aiSpeech";
 import { refreshAuthTokens } from "@/lib/api";
 import { JWT_REFRESH_HTTPONLY } from "@/lib/authConfig";
+import { setChessSoundTheme } from "@/lib/chessSounds";
+import { usePreferencesStore } from "@/store/preferences";
 import Cookies from "js-cookie";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const { fetchProfile, darkMode, lowBandwidth, locale, logout } = useAuthStore();
+  const soundTheme = usePreferencesStore((s) => s.soundTheme);
 
   useEffect(() => {
     const init = async () => {
@@ -62,6 +65,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     document.documentElement.lang = locale;
     document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
   }, [locale]);
+
+  useEffect(() => {
+    setChessSoundTheme(soundTheme);
+  }, [soundTheme]);
 
   useEffect(() => {
     initAiSpeech();

@@ -13,6 +13,10 @@ const BoardThemePicker = dynamic(
   () => import("@/components/chess/BoardThemePicker").then((m) => m.BoardThemePicker),
   { ssr: false }
 );
+const SoundThemePicker = dynamic(
+  () => import("@/components/chess/SoundThemePicker").then((m) => m.SoundThemePicker),
+  { ssr: false }
+);
 
 export type PlaySetupCategory = "game" | "ai" | "online" | "style";
 
@@ -67,6 +71,15 @@ export function PlaySetupOptions({
             </summary>
             <OptionSection compact title="" description={t("board.picker.piecesHint")}>
               <BoardThemePicker compact showHeader={false} showColors={false} />
+            </OptionSection>
+          </details>
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-africhess-gold py-2 list-none flex items-center justify-between">
+              {t("sound.picker.title")}
+              <span className="opacity-50 group-open:rotate-180 transition-transform">▾</span>
+            </summary>
+            <OptionSection compact title="" description={t("sound.picker.hint")}>
+              <SoundThemePicker compact showHeader={false} />
             </OptionSection>
           </details>
           <details className="group">
