@@ -79,8 +79,8 @@ export default function WatchGamePage() {
   const { wsError } = useGameWebSocket(id ?? null, Boolean(id), handleUpdate);
 
   const loadGame = useCallback(() => {
-    if (!id) return;
-    gamesApi
+    if (!id) return Promise.resolve();
+    return gamesApi
       .get(id)
       .then(({ data }) => {
         setFen(data.fen);
@@ -92,16 +92,29 @@ export default function WatchGamePage() {
       })
       .catch((err) => {
         setError(formatApiError(err, t("watch.error")));
-      })
-      .finally(() => setLoading(false));
+      });
   }, [id, t]);
 
   useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
     setLoading(true);
-    loadGame();
-  }, [loadGame]);
+    setError(null);
+    loadGame().finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps -- reload only on game id
 
-  useVisibilityInterval(loadGame, 3000, isExhibition);
+  useVisibilityInterval(
+    () => {
+      void loadGame();
+    },
+    3000,
+    isExhibition && !loading
+  );
 
   const display = useMemo(() => {
     if (moves.length) return buildGameDisplayFromMoves("start", moves);
