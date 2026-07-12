@@ -12,6 +12,7 @@ import {
   testAiSpeech,
   waitForSpeechIdle,
 } from "@/lib/aiSpeech";
+import { selectLiveCommentsToSpeak } from "@/lib/liveCommentarySpeech";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface AiCommentaryPanelProps {
@@ -48,8 +49,6 @@ export function AiCommentaryPanel({
     unlockAiSpeech();
     if (latest) {
       spokenKeysRef.current.add(commentKey(latest));
-    }
-    if (latest) {
       void speakComment(latest.text, { byAi: latest.byAi, enabled: true, forceUnlock: true });
     }
   };
@@ -75,25 +74,16 @@ export function AiCommentaryPanel({
     const fresh = comments.filter((c) => c.text.trim() && !spokenKeysRef.current.has(commentKey(c)));
     if (!fresh.length) return;
 
-    // Première hydratation (reprise de partie) : marquer sans lire le backlog
-    if (!primedRef.current) {
-      primedRef.current = true;
-      const isFreshGame = comments.length <= 2 && fresh.length <= 2;
-      if (!isFreshGame) {
-        for (const c of fresh) {
-          spokenKeysRef.current.add(commentKey(c));
-        }
-        return;
-      }
-    }
+    const decision = selectLiveCommentsToSpeak(fresh, comments.length, primedRef.current);
+    primedRef.current = decision.primed;
 
     for (const c of fresh) {
       spokenKeysRef.current.add(commentKey(c));
     }
 
-    // Si on est en retard (plusieurs coups d'un coup), ne lire que le dernier
-    const toSpeak = fresh.length > 2 ? fresh.slice(-1) : fresh.slice(-2);
+    if (decision.skipSpeech || !decision.toSpeak.length) return;
 
+    const toSpeak = decision.toSpeak;
     const queueId = ++speakQueueRef.current;
     void (async () => {
       unlockAiSpeech();
