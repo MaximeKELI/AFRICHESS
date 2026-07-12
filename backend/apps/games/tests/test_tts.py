@@ -67,8 +67,7 @@ class TtsTests(SimpleTestCase):
         self.assertEqual(mock_edge.await_count, 2)
         self.assertEqual(mock_edge.await_args_list[0].args[1], FALLBACK_VOICES[0])
 
-    @patch("apps.games.tts._edge_tts_mp3", new_callable=AsyncMock)
-    def test_edge_tts_mp3_skips_non_audio_chunks(self, mock_communicate):
+    def test_edge_tts_mp3_skips_non_audio_chunks(self):
         async def fake_stream():
             yield {"type": "WordBoundary", "data": b""}
             yield {"type": "audio", "data": b"\xff\xfb\x01\x02"}
