@@ -57,7 +57,7 @@ export interface MoveComment {
 export function commentsFromMoves(
   moves: ApiMove[],
   playerIsWhite: boolean,
-  vsAi = true
+  _vsAi = true
 ): MoveComment[] {
   return moves
     .filter((m) => m.comment?.trim())
