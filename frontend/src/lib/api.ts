@@ -188,7 +188,8 @@ export interface GameChallenge {
 }
 
 export const gamesApi = {
-  list: () => api.get("/games/"),
+  list: (params?: { opponent?: string; mode?: string; result?: string; status?: string }) =>
+    api.get("/games/", { params }),
   get: (id: string) => api.get(`/games/${id}/`),
   createAI: (data: {
     mode: string;

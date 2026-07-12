@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Chess, Square } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import { gamesApi } from "@/lib/api";
@@ -11,9 +12,9 @@ import { usePreferencesStore } from "@/store/preferences";
 
 const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-/** Analyse libre : éditeur de plateau avec moteur Stockfish */
-export default function AnalyzeBoardPage() {
+function AnalyzeBoardInner() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
   const boardThemeId = usePreferencesStore((s) => s.boardTheme);
   const theme = getBoardTheme(boardThemeId);
   const squareBase = useMemo(() => getThemedSquareStyles(theme), [theme]);
@@ -25,16 +26,6 @@ export default function AnalyzeBoardPage() {
   const [evalCp, setEvalCp] = useState<number | null>(null);
   const [moves, setMoves] = useState<string[]>([]);
 
-  const loadFen = (fen: string) => {
-    try {
-      setGame(new Chess(fen));
-      setMoves([]);
-      fetchEval(fen);
-    } catch {
-      /* FEN invalide */
-    }
-  };
-
   const fetchEval = async (fen: string) => {
     try {
       const { data } = await gamesApi.engineEval(fen);
@@ -44,6 +35,21 @@ export default function AnalyzeBoardPage() {
     }
   };
 
+  const loadFen = useCallback((fen: string) => {
+    try {
+      setGame(new Chess(fen));
+      setMoves([]);
+      void fetchEval(fen);
+    } catch {
+      /* FEN invalide */
+    }
+  }, []);
+
+  useEffect(() => {
+    const fen = searchParams.get("fen");
+    if (fen) loadFen(fen);
+  }, [searchParams, loadFen]);
+
   const onDrop = (from: string, to: string) => {
     if (setupMode) return false;
     const g = new Chess(game.fen());
@@ -52,7 +58,7 @@ export default function AnalyzeBoardPage() {
       if (!m) return false;
       setGame(g);
       setMoves((prev) => [...prev, m.san]);
-      fetchEval(g.fen());
+      void fetchEval(g.fen());
       return true;
     } catch {
       return false;
@@ -68,7 +74,7 @@ export default function AnalyzeBoardPage() {
     try {
       g.put({ type, color }, square as Square);
       setGame(g);
-      fetchEval(g.fen());
+      void fetchEval(g.fen());
     } catch {
       /* placement invalide */
     }
@@ -87,8 +93,8 @@ export default function AnalyzeBoardPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      <Link href="/learning/analyze" className="text-sm text-africhess-gold hover:underline">
-        ← {t("analyzeBoard.back")}
+      <Link href="/tools" className="text-sm text-africhess-gold hover:underline">
+        ← {t("nav.group.tools")}
       </Link>
       <div>
         <h1 className="font-display text-3xl font-bold">{t("analyzeBoard.title")}</h1>
@@ -124,6 +130,12 @@ export default function AnalyzeBoardPage() {
         >
           {t("analyzeBoard.clear")}
         </button>
+        <Link href="/editor" className="px-3 py-1.5 text-sm border rounded-lg hover:bg-white/10">
+          {t("nav.boardEditor")}
+        </Link>
+        <Link href="/opening" className="px-3 py-1.5 text-sm border rounded-lg hover:bg-white/10">
+          {t("nav.openingExplorer")}
+        </Link>
       </div>
 
       {setupMode && (
@@ -171,5 +183,13 @@ export default function AnalyzeBoardPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AnalyzeBoardPage() {
+  return (
+    <Suspense fallback={null}>
+      <AnalyzeBoardInner />
+    </Suspense>
   );
 }

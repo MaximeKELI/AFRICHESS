@@ -100,6 +100,17 @@ const NAV_GROUPS = [
       { href: "/streamers", key: "nav.streamers" },
     ],
   },
+  {
+    key: "nav.group.tools",
+    links: [
+      { href: "/analysis", key: "nav.analysisBoard" },
+      { href: "/opening", key: "nav.openingExplorer" },
+      { href: "/editor", key: "nav.boardEditor" },
+      { href: "/paste", key: "nav.importGame" },
+      { href: "/games/search", key: "nav.advancedSearch" },
+      { href: "/clock", key: "nav.clocks" },
+    ],
+  },
 ] as const;
 
 function NavDropdown({

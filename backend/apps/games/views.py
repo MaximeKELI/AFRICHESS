@@ -54,14 +54,38 @@ class GameListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return (
+        qs = (
             Game.objects.filter(
                 models.Q(white_player=user) | models.Q(black_player=user)
             )
             .select_related("white_player", "black_player")
             .distinct()
-            .order_by("-ended_at", "-created_at")[:50]
+            .order_by("-ended_at", "-created_at")
         )
+        opponent = (self.request.query_params.get("opponent") or "").strip()
+        if opponent:
+            qs = qs.filter(
+                models.Q(white_player=user, black_player__username__icontains=opponent)
+                | models.Q(black_player=user, white_player__username__icontains=opponent)
+            )
+        mode = (self.request.query_params.get("mode") or "").strip()
+        if mode:
+            qs = qs.filter(mode=mode)
+        result = (self.request.query_params.get("result") or "").strip().lower()
+        if result == "win":
+            qs = qs.filter(winner=user)
+        elif result == "loss":
+            qs = qs.filter(winner__isnull=False).exclude(winner=user)
+        elif result == "draw":
+            qs = qs.filter(
+                models.Q(result=Game.Result.DRAW)
+                | models.Q(status=Game.Status.DRAW)
+                | models.Q(winner__isnull=True, status=Game.Status.COMPLETED)
+            )
+        status = (self.request.query_params.get("status") or "").strip()
+        if status:
+            qs = qs.filter(status=status)
+        return qs[:100]
 
 
 @extend_schema(summary="Détail d'une partie (lecture, replay, spectateur)")
