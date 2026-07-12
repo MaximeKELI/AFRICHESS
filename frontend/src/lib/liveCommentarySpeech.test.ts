@@ -8,7 +8,7 @@ function c(text: string, moveNumber = 1) {
 describe("selectLiveCommentsToSpeak", () => {
   it("skips backlog when hydrating a resumed game", () => {
     const fresh = [c("a", 1), c("b", 1), c("c", 2), c("d", 2), c("e", 3)];
-    const result = selectLiveCommentsToSpeak(fresh, 10, false);
+    const result = selectLiveCommentsToSpeak(fresh, 5, false);
     expect(result.skipSpeech).toBe(true);
     expect(result.toSpeak).toEqual([]);
     expect(result.primed).toBe(true);
@@ -20,6 +20,13 @@ describe("selectLiveCommentsToSpeak", () => {
     expect(result.skipSpeech).toBe(false);
     expect(result.toSpeak).toHaveLength(2);
     expect(result.primed).toBe(true);
+  });
+
+  it("speaks the first comment of a brand-new game", () => {
+    const fresh = [c("C'est parti.", 1)];
+    const result = selectLiveCommentsToSpeak(fresh, 1, false);
+    expect(result.skipSpeech).toBe(false);
+    expect(result.toSpeak).toHaveLength(1);
   });
 
   it("speaks only the latest when catching up mid-game", () => {

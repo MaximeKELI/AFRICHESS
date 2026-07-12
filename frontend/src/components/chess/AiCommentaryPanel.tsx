@@ -56,7 +56,7 @@ export function AiCommentaryPanel({
   useEffect(() => {
     initAiSpeech();
     unlockAiSpeech();
-    return () => stopAiSpeech();
+    // Ne pas stopAiSpeech au démontage : Strict Mode / remount coupait toute la voix
   }, []);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 /**
  * Synthèse vocale — commentaires IA et coach.
- * Priorité : voix navigateur FR naturelles → Web Speech FR → TTS serveur (dernier recours).
+ * Navigateur d'abord ; TTS serveur en secours si la voix navigateur échoue.
  */
 
 import Cookies from "js-cookie";
@@ -13,7 +13,9 @@ let keepAliveId: number | null = null;
 let backendTtsOk: boolean | null = null;
 let localTtsOk: boolean | null = null;
 let audioUnlocked = false;
+let warmupDone = false;
 let pendingPlay: (() => Promise<void>) | null = null;
+let speakAfterCancelTimer: number | null = null;
 
 type SpeechJob = { text: string; byAi: boolean; generation: number };
 const pendingJobs: SpeechJob[] = [];
@@ -35,7 +37,6 @@ function voiceScore(v: SpeechSynthesisVoice): number {
   const isFr = lang.startsWith("fr") || /french|français|francais/.test(n);
   let score = 0;
 
-  // Voix cloud / neurales FR — les plus humaines
   if (isFr && !v.localService && /google/.test(n)) score = 120;
   else if (isFr && /google français|google french/.test(n)) score = 115;
   else if (isFr && /neural|natural|premium|wavenet|online \(natural\)|enhanced/.test(n)) score = 110;
@@ -49,9 +50,7 @@ function voiceScore(v: SpeechSynthesisVoice): number {
   else if (!v.localService && /google/.test(n)) score = 40;
   else score = 20;
 
-  // Pénaliser fortement les synthèses robotiques
   if (/espeak|festival|rhvoice|mbrola/.test(n)) score = Math.min(score, 8);
-  // Préférer les voix cloud aux locales quand c'est égal
   if (!v.localService) score += 5;
   return score;
 }
@@ -59,6 +58,11 @@ function voiceScore(v: SpeechSynthesisVoice): number {
 function isFrenchVoice(v: SpeechSynthesisVoice): boolean {
   const lang = v.lang.toLowerCase();
   return lang.startsWith("fr") || lang.includes("fr-") || /french|français|francais/.test(v.name.toLowerCase());
+}
+
+function isRoboticVoice(v: SpeechSynthesisVoice | null): boolean {
+  if (!v) return true;
+  return /espeak|festival|rhvoice|mbrola/.test(v.name.toLowerCase());
 }
 
 function pickFrenchVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
@@ -81,18 +85,18 @@ function attachVoicesListener() {
   refreshVoices();
 }
 
-/** Toute voix navigateur vaut mieux qu'espeak robotique. */
 function hasAnyBrowserVoice(): boolean {
   if (typeof window === "undefined" || !window.speechSynthesis) return false;
   refreshVoices();
   return window.speechSynthesis.getVoices().length > 0;
 }
 
-/** Jamais espeak/serveur si le navigateur a au moins une voix. */
-function shouldUseServerTts(): boolean {
-  if (hasAnyBrowserVoice()) return false;
+/** TTS serveur utile si pas de voix, ou seulement des voix robotiques. */
+function shouldPreferServerTts(): boolean {
   if (localTtsOk === false && backendTtsOk === false) return false;
-  return true;
+  if (!hasAnyBrowserVoice()) return true;
+  refreshVoices();
+  return isRoboticVoice(preferredVoice);
 }
 
 function startKeepAlive() {
@@ -163,7 +167,7 @@ async function fetchTtsWav(text: string): Promise<ArrayBuffer | null> {
     sources.push({ url: "/api/tts", auth: false, mark: "local" });
   }
   if (backendTtsOk !== false) {
-    sources.push({ url: `${apiBase()}/games/tts/`, auth: true, mark: "backend" });
+    sources.push({ url: `${apiBase()}/game/tts/`, auth: true, mark: "backend" });
   }
 
   for (const { url, auth, mark } of sources) {
@@ -195,25 +199,34 @@ async function fetchTtsWav(text: string): Promise<ArrayBuffer | null> {
   return null;
 }
 
-function speakBrowserChunk(text: string, byAi: boolean): Promise<boolean> {
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function speakBrowserChunk(text: string, byAi: boolean, generation: number): Promise<boolean> {
   return new Promise((resolve) => {
     if (typeof window === "undefined" || !window.speechSynthesis) {
       resolve(false);
       return;
     }
+    if (generation !== speechGeneration) {
+      resolve(false);
+      return;
+    }
 
     const synth = window.speechSynthesis;
-    // Chrome : parfois bloqué tant que cancel n'a pas « drainé »
     if (synth.paused) synth.resume();
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = preferredVoice?.lang?.startsWith("fr") ? preferredVoice.lang : "fr-FR";
-    // Prosodie plus naturelle (moins « robot lecture »)
-    utterance.rate = byAi ? 0.88 : 0.92;
-    utterance.pitch = byAi ? 0.98 : 1.06;
+    utterance.rate = byAi ? 0.9 : 0.94;
+    utterance.pitch = byAi ? 1 : 1.05;
     utterance.volume = 1;
     refreshVoices();
-    if (preferredVoice) utterance.voice = preferredVoice;
+    // Éviter d'attacher une voix robotique qui peut échouer / sonner faux
+    if (preferredVoice && !isRoboticVoice(preferredVoice)) {
+      utterance.voice = preferredVoice;
+    }
 
     let settled = false;
     const done = (ok: boolean) => {
@@ -225,7 +238,15 @@ function speakBrowserChunk(text: string, byAi: boolean): Promise<boolean> {
 
     utterance.onstart = () => startKeepAlive();
     utterance.onend = () => done(true);
-    utterance.onerror = () => done(false);
+    utterance.onerror = (ev) => {
+      const reason = (ev as SpeechSynthesisErrorEvent).error;
+      // Annulation volontaire → pas un échec « voix morte »
+      if (reason === "interrupted" || reason === "canceled") {
+        done(false);
+        return;
+      }
+      done(false);
+    };
 
     try {
       synth.speak(utterance);
@@ -234,7 +255,6 @@ function speakBrowserChunk(text: string, byAi: boolean): Promise<boolean> {
       return;
     }
 
-    // Contournement Chrome : utterance fantôme / pause silencieuse
     window.setTimeout(() => {
       if (synth.paused) synth.resume();
     }, 60);
@@ -247,29 +267,34 @@ function speakBrowserChunk(text: string, byAi: boolean): Promise<boolean> {
 async function speakChunk(text: string, byAi: boolean, generation: number): Promise<boolean> {
   if (generation !== speechGeneration) return false;
 
-  // Toujours navigateur d'abord — le TTS serveur (espeak) sonne robotique
-  if (typeof window !== "undefined" && window.speechSynthesis) {
-    // Attendre brièvement les voix si pas encore chargées (Chrome)
+  const preferServer = shouldPreferServerTts();
+
+  // Voix navigateur humaines d'abord
+  if (!preferServer && typeof window !== "undefined" && window.speechSynthesis) {
     if (!hasAnyBrowserVoice()) {
-      await new Promise((r) => window.setTimeout(r, 120));
+      await delay(150);
       refreshVoices();
     }
-    if (hasAnyBrowserVoice()) {
-      const ok = await speakBrowserChunk(text, byAi);
+    if (hasAnyBrowserVoice() && !isRoboticVoice(preferredVoice)) {
+      const ok = await speakBrowserChunk(text, byAi, generation);
+      if (generation !== speechGeneration) return false;
       if (ok) return true;
     }
   }
 
-  if (shouldUseServerTts()) {
+  // Secours serveur (espeak) — mieux que le silence
+  if (localTtsOk !== false || backendTtsOk !== false) {
     const buf = await fetchTtsWav(text);
+    if (generation !== speechGeneration) return false;
     if (buf) {
       const ok = await playWavBufferAndWait(buf);
       if (ok) return true;
     }
   }
 
+  // Dernier recours : n'importe quelle voix navigateur (y compris robotique)
   if (typeof window !== "undefined" && window.speechSynthesis) {
-    return speakBrowserChunk(text, byAi);
+    return speakBrowserChunk(text, byAi, generation);
   }
   return false;
 }
@@ -296,6 +321,10 @@ async function runSpeechPipeline(): Promise<void> {
 
   lastSpeakingText = "";
   pipelineRunning = false;
+  // Si des jobs sont arrivés pendant le drain
+  if (pendingJobs.length > 0) {
+    void runSpeechPipeline();
+  }
 }
 
 function enqueueSpeech(text: string, byAi: boolean, interrupt: boolean): void {
@@ -306,6 +335,18 @@ function enqueueSpeech(text: string, byAi: boolean, interrupt: boolean): void {
     if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
+    // Chrome : speak() juste après cancel() est souvent silencieux
+    if (speakAfterCancelTimer != null) {
+      window.clearTimeout(speakAfterCancelTimer);
+      speakAfterCancelTimer = null;
+    }
+    const generation = speechGeneration;
+    pendingJobs.push({ text, byAi, generation });
+    speakAfterCancelTimer = window.setTimeout(() => {
+      speakAfterCancelTimer = null;
+      void runSpeechPipeline();
+    }, 80);
+    return;
   }
 
   pendingJobs.push({ text, byAi, generation: speechGeneration });
@@ -313,6 +354,7 @@ function enqueueSpeech(text: string, byAi: boolean, interrupt: boolean): void {
 }
 
 export function initAiSpeech() {
+  if (typeof window === "undefined") return;
   attachVoicesListener();
   refreshVoices();
   [50, 200, 500, 1200, 2500, 5000].forEach((ms) => window.setTimeout(refreshVoices, ms));
@@ -331,17 +373,26 @@ export function unlockAiSpeech(): boolean {
 
   if (typeof window === "undefined" || !window.speechSynthesis) return true;
 
+  // Warmup une seule fois — le répéter à chaque clic coupe la lecture en cours
+  if (warmupDone) {
+    try {
+      if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+    } catch {
+      /* ignore */
+    }
+    return true;
+  }
+
   const synth = window.speechSynthesis;
   refreshVoices();
   try {
-    // Warmup silencieux pour lever le blocage autoplay
-    const warmup = new SpeechSynthesisUtterance("\u200b");
+    const warmup = new SpeechSynthesisUtterance(" ");
     warmup.volume = 0;
     warmup.rate = 2;
     warmup.lang = "fr-FR";
-    if (preferredVoice) warmup.voice = preferredVoice;
     synth.speak(warmup);
     if (synth.paused) synth.resume();
+    warmupDone = true;
   } catch {
     /* ignore */
   }
@@ -356,6 +407,10 @@ export function isAiSpeechUnlocked(): boolean {
 export function stopAiSpeech() {
   speechGeneration += 1;
   pendingJobs.length = 0;
+  if (speakAfterCancelTimer != null) {
+    window.clearTimeout(speakAfterCancelTimer);
+    speakAfterCancelTimer = null;
+  }
   stopKeepAlive();
   stopCurrentAudio();
   if (typeof window !== "undefined" && window.speechSynthesis) {
@@ -366,8 +421,9 @@ export function stopAiSpeech() {
 }
 
 export function isSpeechActive(): boolean {
-  if (pipelineRunning || pendingJobs.length > 0) return true;
+  if (pipelineRunning || pendingJobs.length > 0 || speakAfterCancelTimer != null) return true;
   if (typeof window !== "undefined" && window.speechSynthesis?.speaking) return true;
+  if (typeof window !== "undefined" && window.speechSynthesis?.pending) return true;
   if (currentAudio && !currentAudio.paused && !currentAudio.ended) return true;
   return false;
 }

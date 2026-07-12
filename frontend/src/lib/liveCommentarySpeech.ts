@@ -2,8 +2,8 @@ import type { MoveComment } from "@/lib/chessDisplay";
 
 /**
  * Quels commentaires live lire à voix haute.
- * - reprise / backlog : silence (éviter la rafale en fin de partie)
- * - retard (>2 nouveaux) : uniquement le dernier
+ * - reprise / backlog (>2 nouveaux d'un coup, pas encore amorcé) : silence
+ * - retard (>2 nouveaux en cours de partie) : uniquement le dernier
  * - flux normal : jusqu'à 2 (coup joueur + réponse IA)
  */
 export function selectLiveCommentsToSpeak<T extends Pick<MoveComment, "text">>(
@@ -15,11 +15,9 @@ export function selectLiveCommentsToSpeak<T extends Pick<MoveComment, "text">>(
     return { skipSpeech: true, toSpeak: [], primed: alreadyPrimed };
   }
 
-  if (!alreadyPrimed) {
-    const isFreshGame = totalCommentCount <= 2 && fresh.length <= 2;
-    if (!isFreshGame) {
-      return { skipSpeech: true, toSpeak: [], primed: true };
-    }
+  // Reprise de partie : beaucoup de commentaires déjà là
+  if (!alreadyPrimed && totalCommentCount > 2 && fresh.length === totalCommentCount) {
+    return { skipSpeech: true, toSpeak: [], primed: true };
   }
 
   const toSpeak = fresh.length > 2 ? fresh.slice(-1) : fresh.slice(-2);
