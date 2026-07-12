@@ -243,6 +243,7 @@ REST_FRAMEWORK = {
         "auth": "20/hour",
         "login_burst": "10/minute",
         "analyze": "30/hour",
+        "chat": "60/minute",
     },
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",

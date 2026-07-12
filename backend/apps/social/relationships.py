@@ -10,13 +10,21 @@ from .models import Friendship, UserFollow
 def friendship_row(user_a, user_b) -> Friendship | None:
     if not user_a or not user_b or user_a.id == user_b.id:
         return None
-    return (
+    rows = list(
         Friendship.objects.filter(
             Q(from_user=user_a, to_user=user_b) | Q(from_user=user_b, to_user=user_a)
-        )
-        .select_related("from_user", "to_user")
-        .first()
+        ).select_related("from_user", "to_user")
     )
+    if not rows:
+        return None
+    # Priorité : blocked > accepted > pending (évite ambiguïté bi-directionnelle)
+    priority = {
+        Friendship.Status.BLOCKED: 0,
+        Friendship.Status.ACCEPTED: 1,
+        Friendship.Status.PENDING: 2,
+    }
+    rows.sort(key=lambda r: priority.get(r.status, 9))
+    return rows[0]
 
 
 def _are_friends(user_a, user_b) -> bool:
