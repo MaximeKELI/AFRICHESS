@@ -1782,6 +1782,7 @@ const en: Record<string, string> = {
   "play.rated.on": "Rated",
   "play.rated.off": "Casual",
   "play.rated.clock": "{mode} clock: {clock}",
+  "play.time.chosen": "Chosen time: {clock} ({mode})",
   "puzzles.playerElo": "Puzzle rating: {elo}",
   "daily.pool": "Open pool",
   "daily.poolHint": "Find a random opponent near your level.",

@@ -3,6 +3,7 @@ import {
   DEFAULT_TIME_PRESET,
   formatTimeControlLabel,
   inferPresetFromMs,
+  matchmakingTimeControl,
   playModeFromPreset,
   presetLabel,
   TIME_PRESETS,
@@ -28,8 +29,21 @@ describe("playModeFromPreset", () => {
     expect(playModeFromPreset("3+2")).toBe("blitz");
   });
 
-  it("maps classical to rapid for API", () => {
-    expect(playModeFromPreset("30+0")).toBe("rapid");
+  it("maps classical and rapid for API ratings", () => {
+    expect(playModeFromPreset("30+0")).toBe("classical");
+    expect(playModeFromPreset("10+0")).toBe("rapid");
+  });
+});
+
+describe("matchmakingTimeControl", () => {
+  it("sends the requester-chosen preset (not locked to blitz)", () => {
+    expect(matchmakingTimeControl(true, "10+0")).toBe("10+0");
+    expect(matchmakingTimeControl(true, "30+0")).toBe("30+0");
+    expect(matchmakingTimeControl(true, "1+0")).toBe("1+0");
+  });
+
+  it("omits time control for unlimited games", () => {
+    expect(matchmakingTimeControl(false, "3+2")).toBeUndefined();
   });
 });
 

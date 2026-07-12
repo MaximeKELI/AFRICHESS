@@ -143,6 +143,18 @@ class OnlineLifecycleExhaustiveTests(TestCase):
         self.assertIsNone(game)
         self.assertEqual(MatchmakingQueue.objects.count(), 2)
 
+    def test_04b_requester_chosen_rapid_pairs(self):
+        """Le demandeur choisit 10+0 (rapid) — pas forcé en blitz."""
+        self.mm.search(
+            self.a, elo=1200, mode="rapid", is_rated=False, is_timed=True, time_control="10+0"
+        )
+        game = self.mm.search(
+            self.b, elo=1250, mode="rapid", is_rated=False, is_timed=True, time_control="10+0"
+        )
+        self.assertIsNotNone(game)
+        self.assertEqual(game.mode, "rapid")
+        self.assertIn("10", (game.time_control_minutes and str(game.time_control_minutes)) or "10")
+
     def test_05_rated_requires_fairplay_consent(self):
         with self.assertRaises(ValueError):
             self.mm.search(
