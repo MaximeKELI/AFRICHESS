@@ -196,6 +196,9 @@ CELERY_TASK_ROUTES = {
     "apps.games.tasks.flag_expired_clocks": {"queue": "realtime"},
     "apps.games.tasks.pair_correspondence_queues": {"queue": "realtime"},
     "apps.games.tasks.forfeit_overdue_correspondence_games": {"queue": "realtime"},
+    "apps.tournaments.tasks.auto_start_due_tournaments": {"queue": "realtime"},
+    "apps.tournaments.tasks.complete_expired_arenas": {"queue": "realtime"},
+
     "apps.games.tasks.auto_analyze_completed_game": {"queue": "analysis"},
     "apps.games.tasks.analyze_game_async": {"queue": "analysis"},
     "apps.games.tasks.generate_move_comments_async": {"queue": "analysis"},
@@ -337,6 +340,14 @@ CELERY_BEAT_SCHEDULE = {
     "flag-expired-clocks": {
         "task": "apps.games.tasks.flag_expired_clocks",
         "schedule": 5.0,
+    },
+    "auto-start-tournaments": {
+        "task": "apps.tournaments.tasks.auto_start_due_tournaments",
+        "schedule": 30.0,
+    },
+    "complete-expired-arenas": {
+        "task": "apps.tournaments.tasks.complete_expired_arenas",
+        "schedule": 30.0,
     },
     "forfeit-correspondence": {
         "task": "apps.games.tasks.forfeit_overdue_correspondence_games",
