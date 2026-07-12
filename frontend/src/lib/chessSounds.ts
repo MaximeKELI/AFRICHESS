@@ -2,6 +2,8 @@
  * Sons de coups — fichiers MP3/OGG (Lichess), sons « killer » pour échec et mat.
  */
 
+import { Chess } from "chess.js";
+
 export type ChessSoundType =
   | "move"
   | "capture"
@@ -87,7 +89,7 @@ function playFileSound(type: FileSoundType) {
   node.volume = VOLUME[type];
   node.currentTime = 0;
   void node.play().catch(() => {
-    useFileSounds = false;
+    /* Autoplay bloqué ≠ fichier mort : repli synthétique pour ce coup seulement. */
     playSyntheticSound(type);
   });
 }
@@ -199,9 +201,54 @@ export function playChessSound(type: ChessSoundType, enabled = true) {
 export function soundForMove(flags: string, san?: string): ChessSoundType {
   if (san?.includes("#")) return "checkmate";
   if (san?.includes("+")) return "check";
-  if (flags.includes("c")) return "capture";
+  if (flags.includes("c") || flags.includes("e")) return "capture";
   if (flags.includes("k") || flags.includes("q")) return "castle";
   return "move";
+}
+
+function normalizeFenInput(fen: string): string {
+  if (fen === "start") return "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+  return fen.replace(/\[.*?\]/g, "").trim();
+}
+
+/**
+ * Infère le son d’un coup à partir d’un changement de FEN.
+ * Nécessaire en parties live : un FEN seul n’a pas d’historique chess.js.
+ */
+export function inferSoundFromFenChange(
+  prevFen: string,
+  nextFen: string,
+  lastMove?: { from: string; to: string } | null
+): ChessSoundType | null {
+  try {
+    const { Chess } = require("chess.js") as typeof import("chess.js");
+    const before = new Chess(normalizeFenInput(prevFen));
+    const after = new Chess(normalizeFenInput(nextFen));
+    const afterFen = after.fen();
+
+    const all = before.moves({ verbose: true });
+    const candidates =
+      lastMove?.from && lastMove?.to
+        ? all.filter((m) => m.from === lastMove.from && m.to === lastMove.to)
+        : all;
+
+    const pool = candidates.length > 0 ? candidates : all;
+    for (const m of pool) {
+      const probe = new Chess(before.fen());
+      const applied = probe.move({
+        from: m.from,
+        to: m.to,
+        promotion: m.promotion,
+      });
+      if (!applied) continue;
+      if (probe.fen() === afterFen) {
+        return soundForMove(applied.flags, applied.san);
+      }
+    }
+  } catch {
+    /* FEN invalide ou saut multi-coups */
+  }
+  return null;
 }
 
 export function playDrawWhistle(enabled = true) {
