@@ -58,7 +58,7 @@ export function MobileBottomNav({ onMenuOpen }: MobileBottomNavProps) {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 inset-x-0 z-layer-nav border-t border-white/10 bg-[var(--card)]/95 backdrop-blur-lg pb-[env(safe-area-inset-bottom)]"
+      className="md:hidden fixed bottom-0 inset-x-0 z-layer-nav border-t border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--card)_92%,transparent)] backdrop-blur-xl shadow-[0_-8px_32px_rgb(0_0_0/0.08)] pb-[env(safe-area-inset-bottom)]"
       aria-label={t("nav.mobileTabs")}
     >
       <div className="grid grid-cols-6 h-14">
@@ -69,10 +69,13 @@ export function MobileBottomNav({ onMenuOpen }: MobileBottomNavProps) {
               key={href}
               href={href}
               className={clsx(
-                "flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors",
-                active ? "text-africhess-gold" : "text-[var(--text)]/60 hover:text-africhess-gold"
+                "relative flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors duration-200",
+                active ? "text-africhess-gold" : "text-muted hover:text-africhess-gold"
               )}
             >
+              {active && (
+                <span className="absolute top-1 w-1 h-1 rounded-full bg-africhess-gold" aria-hidden />
+              )}
               <Icon size={20} strokeWidth={active ? 2.5 : 2} />
               <span className="truncate max-w-full px-0.5">{t(key)}</span>
             </Link>
