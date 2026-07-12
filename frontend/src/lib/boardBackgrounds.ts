@@ -43,9 +43,44 @@ export type BoardBackgroundId =
   | "animal-zebra"
   | "animal-eagle"
   | "animal-giraffe"
-  | "animal-whale";
+  | "animal-whale"
+  | "lichess-landscape"
+  | "lichess-01"
+  | "lichess-02"
+  | "lichess-03"
+  | "lichess-04"
+  | "lichess-05"
+  | "lichess-06"
+  | "lichess-07"
+  | "lichess-08"
+  | "lichess-09"
+  | "lichess-10"
+  | "lichess-11"
+  | "lichess-12"
+  | "lichess-13"
+  | "lichess-14"
+  | "lichess-15"
+  | "lichess-16"
+  | "lichess-17"
+  | "lichess-18"
+  | "lichess-19"
+  | "lichess-20"
+  | "lichess-21"
+  | "lichess-22"
+  | "lichess-23"
+  | "lichess-24"
+  | "lichess-25"
+  | "lichess-26"
+  | "lichess-27"
+  | "lichess-28";
 
-export type BoardBackgroundCategory = "africa" | "nature" | "classic" | "abstract" | "animals";
+export type BoardBackgroundCategory =
+  | "africa"
+  | "nature"
+  | "classic"
+  | "abstract"
+  | "animals"
+  | "lichess";
 
 export interface BoardBackground {
   id: BoardBackgroundId;
