@@ -1,7 +1,6 @@
 """Tests approfondis Section 1 — Rush / Storm / Survival / Battle (parité Lichess)."""
 
 from datetime import timedelta
-from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -199,21 +198,20 @@ class BattleIndependentIndexTests(TestCase):
 
     def test_battle_completes_when_both_finished(self):
         battle = self._active_battle()
-        # 3 puzzles chacun
-        for _ in range(3):
-            battle_submit(battle, self.u1, ["e2e4"])  # may or may not match current
-            battle.refresh_from_db()
-        # Force finish properly
-        battle = self._active_battle()
         for p in self.puzzles:
             battle_submit(battle, self.u1, p.solution_moves)
             battle.refresh_from_db()
         self.assertEqual(battle.index1, 3)
-        self.assertFalse(battle.status == PuzzleBattle.Status.COMPLETED)
-        for p in self.puzzles:
+        self.assertNotEqual(battle.status, PuzzleBattle.Status.COMPLETED)
+        # P2 rate le premier, résout les suivants → P1 gagne
+        battle_submit(battle, self.u2, ["a2a3"])
+        battle.refresh_from_db()
+        for p in self.puzzles[1:]:
             battle_submit(battle, self.u2, p.solution_moves)
             battle.refresh_from_db()
         self.assertEqual(battle.status, PuzzleBattle.Status.COMPLETED)
+        self.assertEqual(battle.score1, 3)
+        self.assertEqual(battle.score2, 2)
         self.assertEqual(battle.winner_id, self.u1.id)
 
     def test_queue_match_resets_indexes(self):
