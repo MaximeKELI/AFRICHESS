@@ -449,6 +449,7 @@ export const socialApi = {
   cancelFriendRequest: (id: number) => api.post(`/social/friends/${id}/cancel/`),
   unfriend: (username: string) => api.post(`/social/friends/unfriend/${username}/`),
   blockUser: (username: string) => api.post(`/social/friends/block/${username}/`),
+  unblockUser: (username: string) => api.post(`/social/friends/unblock/${username}/`),
   searchUsers: async (q: string, country?: string) => {
     const params = { q, country };
     try {
@@ -485,6 +486,9 @@ export const socialApi = {
     api.get("/social/clubs/", { params: { country } }),
   club: (slug: string) => api.get(`/social/clubs/${slug}/`),
   joinClub: (slug: string) => api.post(`/social/clubs/${slug}/join/`),
+  leaveClub: (slug: string) => api.post(`/social/clubs/${slug}/leave/`),
+  kickClubMember: (slug: string, username: string) =>
+    api.post(`/social/clubs/${slug}/kick/`, { username }),
   clubEvents: (slug: string) => api.get(`/social/clubs/${slug}/events/`),
   createClubEvent: (slug: string, data: { title: string; description?: string; event_type?: string; starts_at?: string }) =>
     api.post(`/social/clubs/${slug}/events/`, data),
