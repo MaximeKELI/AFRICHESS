@@ -78,14 +78,11 @@ export function AiCommentaryPanel({
     // Première hydratation (reprise de partie) : marquer sans lire le backlog
     if (!primedRef.current) {
       primedRef.current = true;
-      for (const c of fresh) {
-        spokenKeysRef.current.add(commentKey(c));
-      }
-      // Si un seul nouveau commentaire arrive juste après un coup, le lire
-      // (évite le silence au premier coup d'une partie neuve)
-      if (fresh.length <= 2 && comments.length <= 2) {
-        // fall through to speak
-      } else {
+      const isFreshGame = comments.length <= 2 && fresh.length <= 2;
+      if (!isFreshGame) {
+        for (const c of fresh) {
+          spokenKeysRef.current.add(commentKey(c));
+        }
         return;
       }
     }

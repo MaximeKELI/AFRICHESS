@@ -102,7 +102,7 @@ export function GameReview({
     moveCount,
   });
   const [selectedIdx, setSelectedIdx] = useState(0);
-  const [voiceOn, setVoiceOn] = useState(true);
+  const [voiceOn, setVoiceOn] = useState(false);
   const [userMovesOnly, setUserMovesOnly] = useState(false);
   const [autoTour, setAutoTour] = useState(false);
   const [classFilter, setClassFilter] = useState<string>("all");
@@ -151,10 +151,8 @@ export function GameReview({
   useEffect(() => {
     if (!analysis?.best_moves_json.length || analysisTourStartedRef.current) return;
     analysisTourStartedRef.current = true;
-    if (voiceOn) {
-      setAutoTour(true);
-    }
-  }, [analysis, voiceOn]);
+    // Revue : pas d'auto-lecture — l'utilisateur active la voix / le tour manuellement
+  }, [analysis]);
 
   const moves = analysis?.best_moves_json ?? [];
   const selectedMove = moves[selectedIdx] ?? null;

@@ -1692,7 +1692,7 @@ function PlayContent() {
                 comments={moveComments}
                 enabled={aiCommentsEnabled}
                 compact={mobileTab === "board"}
-                autoSpeak
+                autoSpeak={!reviewOpen}
               />
             </div>
           )}
