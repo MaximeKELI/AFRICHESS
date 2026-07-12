@@ -95,9 +95,19 @@ const THEMATIC_PATHS = [
 ] as const;
 
 export default function PuzzlesPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center opacity-70">…</div>}>
+      <PuzzlesPageContent />
+    </Suspense>
+  );
+}
+
+function PuzzlesPageContent() {
   const { user, lowBandwidth } = useAuthStore();
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>("daily");
+  const deepLinkApplied = useRef(false);
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [trainingQueue, setTrainingQueue] = useState<Puzzle[]>([]);
   const [trainingIndex, setTrainingIndex] = useState(0);
@@ -153,6 +163,31 @@ export default function PuzzlesPage() {
   trainingIndexRef.current = trainingIndex;
   const usedHintRef = useRef(usedHint);
   usedHintRef.current = usedHint;
+
+  useEffect(() => {
+    if (deepLinkApplied.current) return;
+    const mode = (searchParams.get("mode") || "").toLowerCase();
+    const themeParam = searchParams.get("theme") || "";
+    const modeMap: Record<string, Tab> = {
+      daily: "daily",
+      training: "training",
+      rush: "rush",
+      storm: "storm",
+      battle: "battle",
+      racer: "battle",
+      survival: "survival",
+      leaderboard: "leaderboard",
+    };
+    if (mode in modeMap) {
+      setTab(modeMap[mode]);
+      deepLinkApplied.current = true;
+    }
+    if (themeParam) {
+      setTheme(themeParam);
+      if (!mode || mode === "training") setTab("training");
+      deepLinkApplied.current = true;
+    }
+  }, [searchParams]);
 
   const resetPuzzleUiForNewPuzzle = useCallback(() => {
     setUciMoves([]);
