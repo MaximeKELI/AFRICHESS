@@ -349,8 +349,15 @@ function PlayContent() {
     return fallback;
   }, [gameData.bot, selectedBotInfo, selectedBot, headerAiElo]);
   const headerAiDisplay = headerAi;
+  const rejoinMatchmakingRef = useRef<() => void>(() => {});
   const timeOpts = useMemo(
-    () => ({ isTimed: useClock, timePreset, isRated, variant }),
+    () => ({
+      isTimed: useClock,
+      timePreset,
+      isRated,
+      variant,
+      onListenOnlyOpen: () => rejoinMatchmakingRef.current(),
+    }),
     [useClock, timePreset, isRated, variant]
   );
   const ratedClockLabel = MODE_CLOCK_LABEL[mode] ?? "10+0";
@@ -850,6 +857,23 @@ function PlayContent() {
     },
     [user?.id, applyGameResponse, t, syncGameInUrl]
   );
+
+  rejoinMatchmakingRef.current = () => {
+    const mmTimeControl = matchmakingTimeControl(mode, useClock, isRated, timePreset);
+    gamesApi
+      .matchmaking(mode, {
+        is_timed: useClock,
+        is_rated: isRated,
+        time_control: mmTimeControl,
+        variant,
+      })
+      .then(({ data, status }) => {
+        if (status === 201 && data?.id) {
+          handleMatchFound(data.id);
+        }
+      })
+      .catch(() => {});
+  };
 
   const { searching: wsSearching, mmError, search: wsSearch, cancel: wsCancel } =
     useMatchmakingWebSocket(Boolean(user), mode, handleMatchFound, timeOpts);
