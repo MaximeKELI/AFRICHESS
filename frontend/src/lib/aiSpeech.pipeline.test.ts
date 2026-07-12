@@ -139,7 +139,113 @@ describe("speakComment pipeline (mocked window + fetch)", () => {
     expect(played.length).toBeGreaterThan(0);
   });
 
-  it("prefers neural /api/tts over browser speech even when a premium voice exists", async () => {
+  it("does not use browser espeak when only local robotic voices exist", async () => {
+    class FakeUtterance {
+      text = "";
+      constructor(text: string) {
+        this.text = text;
+      }
+    }
+    const speakCalls: string[] = [];
+    vi.stubGlobal("SpeechSynthesisUtterance", FakeUtterance);
+    vi.stubGlobal(
+      "window",
+      Object.assign(globalThis, {
+        setTimeout: globalThis.setTimeout.bind(globalThis),
+        clearTimeout: globalThis.clearTimeout.bind(globalThis),
+        setInterval: globalThis.setInterval.bind(globalThis),
+        clearInterval: globalThis.clearInterval.bind(globalThis),
+        SpeechSynthesisUtterance: FakeUtterance,
+        speechSynthesis: {
+          speaking: false,
+          pending: false,
+          paused: false,
+          getVoices: () => [
+            { name: "eSpeak French", lang: "fr", localService: true, default: true, voiceURI: "espeak" },
+          ],
+          addEventListener: () => undefined,
+          cancel: () => undefined,
+          resume: () => undefined,
+          speak: (u: FakeUtterance) => speakCalls.push(u.text),
+        },
+      })
+    );
+
+    fetchMock.mockImplementation(async () => ({
+      ok: false,
+      status: 503,
+      arrayBuffer: async () => new ArrayBuffer(0),
+    }));
+
+    vi.resetModules();
+    const mod = await import("@/lib/aiSpeech");
+    mod.__resetAiSpeechForTests();
+    mod.unlockAiSpeech();
+    await mod.speakComment("Pas de voix robotique.", { interrupt: true, forceUnlock: true });
+    await mod.waitForSpeechIdle(5000);
+
+    expect(speakCalls).toHaveLength(0);
+    expect(played.length).toBe(0);
+  });
+
+  it("falls back to premium browser voice only when neural TTS fails", async () => {
+    const humanVoice = {
+      name: "Microsoft Paul Online (Natural)",
+      lang: "fr-FR",
+      localService: false,
+      default: true,
+      voiceURI: "ms",
+    };
+    class FakeUtterance {
+      text = "";
+      onend: ((ev: Event) => void) | null = null;
+      constructor(text: string) {
+        this.text = text;
+      }
+    }
+    const speakCalls: string[] = [];
+    vi.stubGlobal("SpeechSynthesisUtterance", FakeUtterance);
+    vi.stubGlobal(
+      "window",
+      Object.assign(globalThis, {
+        setTimeout: globalThis.setTimeout.bind(globalThis),
+        clearTimeout: globalThis.clearTimeout.bind(globalThis),
+        setInterval: globalThis.setInterval.bind(globalThis),
+        clearInterval: globalThis.clearInterval.bind(globalThis),
+        SpeechSynthesisUtterance: FakeUtterance,
+        speechSynthesis: {
+          speaking: false,
+          pending: false,
+          paused: false,
+          getVoices: () => [humanVoice],
+          addEventListener: () => undefined,
+          cancel: () => undefined,
+          resume: () => undefined,
+          speak: (u: FakeUtterance) => {
+            speakCalls.push(u.text);
+            queueMicrotask(() => u.onend?.(new Event("end")));
+          },
+        },
+      })
+    );
+
+    fetchMock.mockImplementation(async () => ({
+      ok: false,
+      status: 503,
+      arrayBuffer: async () => new ArrayBuffer(0),
+    }));
+
+    vi.resetModules();
+    const mod = await import("@/lib/aiSpeech");
+    mod.__resetAiSpeechForTests();
+    mod.unlockAiSpeech();
+    await mod.speakComment("Secours premium.", { interrupt: true, forceUnlock: true });
+    await mod.waitForSpeechIdle(5000);
+
+    expect(speakCalls).toContain("Secours premium.");
+    expect(played.length).toBe(0);
+  });
+
     const humanVoice = {
       name: "Google français",
       lang: "fr-FR",
