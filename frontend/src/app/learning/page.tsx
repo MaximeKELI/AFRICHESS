@@ -86,9 +86,20 @@ export default function LearningDashboardPage() {
         Parcours complet : <strong>15 volumes</strong>, <strong>60 documents</strong> (~20 pages chacun),
         tous les plans du jeu.
       </p>
-      <p className="text-sm opacity-50 mb-8">
+      <p className="text-sm opacity-50 mb-4">
         Commencez par le Volume 1 si vous débutez. Chaque leçon affiche le temps de lecture estimé.
       </p>
+      <div className="flex flex-wrap gap-3 mb-8 text-sm">
+        <Link href="/learn" className="px-3 py-1.5 rounded-lg african-gradient text-white">
+          {t("nav.chessBasics")}
+        </Link>
+        <Link href="/practice" className="px-3 py-1.5 rounded-lg border border-white/20">
+          {t("nav.practice")}
+        </Link>
+        <Link href="/learning/coordinates" className="px-3 py-1.5 rounded-lg border border-white/20">
+          {t("nav.coordinates")}
+        </Link>
+      </div>
 
       <div className="grid lg:grid-cols-3 gap-6 mb-8">
         <div className="glass-card p-6 flex items-center gap-4">
