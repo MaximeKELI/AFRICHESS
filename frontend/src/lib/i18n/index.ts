@@ -3606,6 +3606,9 @@ const ar: Record<string, string> = {
   "nav.live": "مباشر",
   "nav.clubs": "أندية",
   "nav.friends": "أصدقاء",
+  "nav.players": "لاعبون",
+  "nav.forums": "منتديات",
+  "nav.teams": "فرق",
   "nav.background": "الخلفية",
   "nav.tournaments": "بطولات",
   "nav.community": "مجتمع",
@@ -3625,6 +3628,7 @@ const ar: Record<string, string> = {
   "play.loginRequired": "سجّل الدخول للعب عبر الإنترنت.",
   "profile.loginRequired": "سجّل الدخول لعرض ملفك.",
   "stats.loginRequired": "سجّل الدخول لعرض الإحصائيات.",
+  "clubs.title": "فرق",
 };
 
 const pt: Record<string, string> = {
@@ -3637,6 +3641,9 @@ const pt: Record<string, string> = {
   "nav.live": "Ao vivo",
   "nav.clubs": "Clubes",
   "nav.friends": "Amigos",
+  "nav.players": "Jogadores",
+  "nav.forums": "Fóruns",
+  "nav.teams": "Equipas",
   "nav.tournaments": "Torneios",
   "nav.community": "Comunidade",
   "nav.stats": "Estatísticas",
@@ -3655,6 +3662,7 @@ const pt: Record<string, string> = {
   "play.loginRequired": "Entre para jogar online.",
   "profile.loginRequired": "Entre para ver seu perfil.",
   "stats.loginRequired": "Entre para ver suas estatísticas.",
+  "clubs.title": "Equipas",
   "chess.review.deep.title": "Coach IA — análise profunda",
   "chess.review.deep.turningPoints": "Momentos decisivos",
   "chess.review.deep.integrity": "AIE — integridade",
@@ -3671,6 +3679,9 @@ const sw: Record<string, string> = {
   "nav.live": "Moja kwa moja",
   "nav.clubs": "Vilabu",
   "nav.friends": "Marafiki",
+  "nav.players": "Wachezaji",
+  "nav.forums": "Majukwaa",
+  "nav.teams": "Timu",
   "nav.tournaments": "Mashindano",
   "nav.community": "Jamii",
   "nav.stats": "Takwimu",
@@ -3689,6 +3700,7 @@ const sw: Record<string, string> = {
   "play.loginRequired": "Ingia ili kucheza mtandaoni.",
   "profile.loginRequired": "Ingia kuona wasifu wako.",
   "stats.loginRequired": "Ingia kuona takwimu zako.",
+  "clubs.title": "Timu",
 };
 
 const catalogs: Record<Locale, Record<string, string>> = { fr, en, ar, pt, sw };

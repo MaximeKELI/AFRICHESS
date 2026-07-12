@@ -69,7 +69,7 @@ export default function ForumPostPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      <Link href="/community" className="inline-flex items-center gap-2 text-sm opacity-70 hover:opacity-100">
+      <Link href="/forum" className="inline-flex items-center gap-2 text-sm opacity-70 hover:opacity-100">
         <ArrowLeft size={16} />
         {t("forum.back")}
       </Link>

@@ -65,7 +65,12 @@ export default function ClubsPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display text-3xl font-bold">{t("clubs.title")}</h1>
+        <div>
+          <Link href="/community" className="text-sm text-africhess-gold hover:underline mb-1 inline-block">
+            ← {t("nav.community")}
+          </Link>
+          <h1 className="font-display text-3xl font-bold">{t("clubs.title")}</h1>
+        </div>
         {user && (
           <button
             type="button"
