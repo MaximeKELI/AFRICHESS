@@ -1,13 +1,12 @@
 """Tests approfondis Section 7 — Compte / Admin."""
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from rest_framework.test import APIClient
 
 from apps.games.fairplay_review import apply_review_decision, open_review_case
 from apps.games.fairplay_service import persist_fairplay_report
 from apps.games.models import FairPlayReviewCase, Game
-from apps.users.totp_service import generate_totp_secret, verify_totp
 
 User = get_user_model()
 
