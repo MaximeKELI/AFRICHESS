@@ -454,6 +454,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
         self.user_group = f"user_{self.user.id}"
         await self.channel_layer.group_add(self.user_group, self.channel_name)
         await accept_websocket(self)
+        await self._refresh_presence()
         await self.send(
             text_data=json.dumps(
                 {"event": "connected", "data": {"user_id": self.user.id}}
@@ -463,8 +464,8 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         if getattr(self, "user_group", None) and self.user.is_authenticated:
-            if getattr(self, "_leave_queue_on_disconnect", False):
-                await self._leave_queue()
+            # Toujours quitter la file : HTTP + WS listenOnly laissait des fantômes.
+            await self._leave_queue()
             await self.channel_layer.group_discard(self.user_group, self.channel_name)
 
     async def receive(self, text_data):
@@ -583,6 +584,12 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def _leave_queue(self):
         MatchmakingService().leave_queue(self.user)
+
+    @database_sync_to_async
+    def _refresh_presence(self):
+        from . import matchmaking_redis as mmr
+
+        mmr.refresh_user_presence(self.user.id)
 
     @database_sync_to_async
     def _is_in_queue(self):

@@ -77,6 +77,26 @@ def can_claim_threefold_from_game(game) -> bool:
         return False
 
 
+def is_fivefold_repetition_from_game(game) -> bool:
+    """Répétition quintuple — nulle automatique (FIDE)."""
+    counts = game.repetition_counts or {}
+    if counts:
+        key = _position_key(game.fen, game.variant)
+        if counts.get(key, 0) >= 5:
+            return True
+    try:
+        return board_from_game_moves(game).is_fivefold_repetition()
+    except Exception:
+        return False
+
+
+def can_claim_fifty_moves_from_game(game) -> bool:
+    try:
+        return board_from_game_moves(game).can_claim_fifty_moves()
+    except Exception:
+        return False
+
+
 def finalize_repetition_draw(game: Game) -> None:
     game.result = Game.Result.DRAW
     game.status = Game.Status.COMPLETED

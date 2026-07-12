@@ -314,12 +314,24 @@ class GameService:
                 self._finalize_game_on_timeout(game, winner_white=False)
                 game.save()
                 self._after_human_game_finished(game)
-                return {"error": "Time out", "game_over": True}
+                return {
+                    "game_over": True,
+                    "result": game.result,
+                    "termination_reason": game.termination_reason or "timeout",
+                    "fen": game.fen,
+                    "reason": "timeout",
+                }
             if timed_out == "black":
                 self._finalize_game_on_timeout(game, winner_white=True)
                 game.save()
                 self._after_human_game_finished(game)
-                return {"error": "Time out", "game_over": True}
+                return {
+                    "game_over": True,
+                    "result": game.result,
+                    "termination_reason": game.termination_reason or "timeout",
+                    "fen": game.fen,
+                    "reason": "timeout",
+                }
 
         complexity_pre = None
         if game.variant == Game.Variant.STANDARD:

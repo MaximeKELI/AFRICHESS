@@ -42,14 +42,25 @@ local best_joined = nil
 
 for i, cid in ipairs(candidates) do
   if cid ~= user_id then
-    local cid_elo = tonumber(redis.call('ZSCORE', pool, cid))
-    if cid_elo then
-      local cid_joined = redis.call('HGET', 'mm:user:' .. cid, 'joined_at') or ''
-      local diff = math.abs(cid_elo - elo)
-      if diff < best_diff or (diff == best_diff and cid_joined < (best_joined or 'z')) then
-        best = cid
-        best_diff = diff
-        best_joined = cid_joined
+    local cid_key = 'mm:user:' .. cid
+    -- Sans hash actif = fantôme (quitté / TTL expiré) → ne pas appairer
+    if redis.call('EXISTS', cid_key) == 0 then
+      redis.call('ZREM', pool, cid)
+      local rem = redis.call('SREM', '{WAITING_SET}', cid)
+      if rem == 1 then
+        local cnt = redis.call('GET', '{WAITING_COUNT}')
+        if cnt and tonumber(cnt) > 0 then redis.call('DECR', '{WAITING_COUNT}') end
+      end
+    else
+      local cid_elo = tonumber(redis.call('ZSCORE', pool, cid))
+      if cid_elo then
+        local cid_joined = redis.call('HGET', cid_key, 'joined_at') or ''
+        local diff = math.abs(cid_elo - elo)
+        if diff < best_diff or (diff == best_diff and cid_joined < (best_joined or 'z')) then
+          best = cid
+          best_diff = diff
+          best_joined = cid_joined
+        end
       end
     end
   end
@@ -260,6 +271,51 @@ def leave_user(user_id: int) -> bool:
     except Exception as exc:
         logger.warning("Redis leave_user failed: %s", exc)
         return False
+
+
+def refresh_user_presence(user_id: int) -> bool:
+    """Prolonge le TTL du hash joueur (heartbeat pendant la recherche)."""
+    if not is_redis_matchmaking_available():
+        return False
+    try:
+        client = _get_client()
+        user_key = f"{USER_KEY_PREFIX}{user_id}"
+        if client.exists(user_key):
+            client.expire(user_key, USER_TTL_SECONDS)
+            return True
+        return False
+    except Exception as exc:
+        logger.warning("Redis refresh_user_presence failed: %s", exc)
+        return False
+
+
+def purge_orphan_pool_members(pool: str | None = None) -> int:
+    """Retire les membres ZSET sans hash mm:user (fantômes)."""
+    if not is_redis_matchmaking_available():
+        return 0
+    try:
+        client = _get_client()
+        removed = 0
+        pools: list[str] = []
+        if pool:
+            pools = [pool]
+        else:
+            prefix = getattr(settings, "MATCHMAKING_REDIS_PREFIX", "mm:pool")
+            pools = list(client.scan_iter(f"{prefix}:*"))
+        for p in pools:
+            for cid in client.zrange(p, 0, -1):
+                if not client.exists(f"{USER_KEY_PREFIX}{cid}"):
+                    client.zrem(p, cid)
+                    rem = client.srem(WAITING_SET, cid)
+                    if rem:
+                        raw = client.get(WAITING_COUNT)
+                        if raw and int(raw) > 0:
+                            client.decr(WAITING_COUNT)
+                    removed += 1
+        return removed
+    except Exception as exc:
+        logger.warning("Redis purge_orphan_pool_members failed: %s", exc)
+        return 0
 
 
 def searching_count() -> int:

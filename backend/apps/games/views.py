@@ -376,14 +376,14 @@ class MatchmakingStatusView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
+        """Lecture seule — ne pas appairer ici (évite matchs surprise hors recherche)."""
         from django.core.cache import cache
 
         from . import matchmaking_redis as mmr
-        from .matchmaking_pools import pool_stats, retry_all_waiting_pools
+        from .matchmaking_pools import pool_stats
 
-        if mmr.is_redis_matchmaking_available():
-            retry_all_waiting_pools()
-        MatchmakingService().pair_all_waiting()
+        if request.user and request.user.is_authenticated:
+            mmr.refresh_user_presence(request.user.id)
 
         cached = cache.get("mm:status")
         if cached is not None:
