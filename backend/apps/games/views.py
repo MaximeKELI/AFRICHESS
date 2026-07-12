@@ -658,15 +658,32 @@ class LiveTvView(APIView):
         if payload.get("current_game_id"):
             ids.append(payload["current_game_id"])
         ids.extend(payload.get("queue_game_ids") or [])
-        # Conserver l'ordre
         games = list(
             Game.objects.filter(id__in=ids)
             .select_related("white_player", "black_player")
         )
         by_id = {str(g.id): g for g in games}
+        # Cache périmé (parties terminées) → rafraîchir sans cache
+        current_id = payload.get("current_game_id")
+        if current_id and current_id not in by_id:
+            from django.core.cache import cache
+
+            cache.delete(f"live_tv:meta:{payload.get('channel', channel)}")
+            payload = build_tv_payload(channel)
+            ids = []
+            if payload.get("current_game_id"):
+                ids.append(payload["current_game_id"])
+            ids.extend(payload.get("queue_game_ids") or [])
+            games = list(
+                Game.objects.filter(id__in=ids)
+                .select_related("white_player", "black_player")
+            )
+            by_id = {str(g.id): g for g in games}
+            current_id = payload.get("current_game_id")
+
         ordered = [by_id[i] for i in ids if i in by_id]
         elo_ctx = {"elo_map": batch_player_elos(ordered)}
-        current = by_id.get(payload.get("current_game_id") or "")
+        current = by_id.get(current_id or "")
         queue = [
             by_id[g_id]
             for g_id in (payload.get("queue_game_ids") or [])

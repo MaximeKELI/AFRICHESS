@@ -7,7 +7,6 @@ from rest_framework.test import APIClient
 
 from apps.games.live_tv import build_tv_payload, tv_games_for_channel
 from apps.games.models import Broadcast, BroadcastBoard, Game, SimulBoard, SimulSession
-from apps.games.services import GameService
 
 User = get_user_model()
 
