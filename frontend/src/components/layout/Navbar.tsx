@@ -21,6 +21,7 @@ const PRIMARY_LINKS = [
   { href: "/puzzles", key: "nav.puzzles" },
   { href: "/learning", key: "nav.learn" },
   { href: "/tv", key: "nav.watch" },
+  { href: "/community", key: "nav.community" },
 ] as const;
 
 const NAV_GROUPS = [
@@ -34,7 +35,6 @@ const NAV_GROUPS = [
       { href: "/play", key: "nav.playQuick" },
       { href: "/play/daily", key: "nav.daily" },
       { href: "/bots", key: "nav.bots" },
-      { href: "/friends", key: "nav.friends" },
     ],
   },
   {
@@ -65,6 +65,7 @@ const NAV_GROUPS = [
       { href: "/insights", key: "nav.insights" },
       { href: "/learning/glossary", key: "nav.glossary" },
       { href: "/learning/analyze", key: "nav.analyze" },
+      { href: "/classroom", key: "nav.classroom" },
     ],
   },
   {
@@ -85,16 +86,18 @@ const NAV_GROUPS = [
       { href: "/leaderboard", key: "leaderboard.title" },
       { href: "/achievements", key: "nav.achievements" },
       { href: "/premium", key: "nav.premium" },
+      { href: "/stats", key: "nav.stats" },
     ],
   },
   {
     key: "nav.group.community",
     links: [
-      { href: "/clubs", key: "nav.clubs" },
-      { href: "/community", key: "nav.community" },
+      { href: "/players", key: "nav.players" },
+      { href: "/friends", key: "nav.friends" },
+      { href: "/forum", key: "nav.forums" },
       { href: "/blog", key: "nav.blog" },
-      { href: "/classroom", key: "nav.classroom" },
-      { href: "/stats", key: "nav.stats" },
+      { href: "/teams", key: "nav.teams" },
+      { href: "/streamers", key: "nav.streamers" },
     ],
   },
 ] as const;

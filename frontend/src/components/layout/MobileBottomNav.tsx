@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Menu, Play, Puzzle, Radio } from "lucide-react";
+import { BookOpen, Menu, Play, Puzzle, Radio, Users } from "lucide-react";
 import clsx from "clsx";
 import { useTranslation } from "@/hooks/useTranslation";
 import { isImmersiveRoute } from "@/lib/immersiveRoutes";
@@ -28,7 +28,20 @@ const TABS = [
       p.startsWith("/tv") ||
       p.startsWith("/live") ||
       p.startsWith("/watch") ||
-      p.startsWith("/broadcasts") ||
+      p.startsWith("/broadcasts"),
+  },
+  {
+    href: "/community",
+    key: "nav.community",
+    icon: Users,
+    match: (p: string) =>
+      p.startsWith("/community") ||
+      p.startsWith("/forum") ||
+      p.startsWith("/friends") ||
+      p.startsWith("/players") ||
+      p.startsWith("/teams") ||
+      p.startsWith("/clubs") ||
+      p.startsWith("/blog") ||
       p.startsWith("/streamers"),
   },
 ] as const;
@@ -48,7 +61,7 @@ export function MobileBottomNav({ onMenuOpen }: MobileBottomNavProps) {
       className="md:hidden fixed bottom-0 inset-x-0 z-layer-nav border-t border-white/10 bg-[var(--card)]/95 backdrop-blur-lg pb-[env(safe-area-inset-bottom)]"
       aria-label={t("nav.mobileTabs")}
     >
-      <div className="grid grid-cols-5 h-14">
+      <div className="grid grid-cols-6 h-14">
         {TABS.map(({ href, key, icon: Icon, match }) => {
           const active = match(pathname);
           return (
@@ -61,7 +74,7 @@ export function MobileBottomNav({ onMenuOpen }: MobileBottomNavProps) {
               )}
             >
               <Icon size={20} strokeWidth={active ? 2.5 : 2} />
-              <span className="truncate max-w-full px-1">{t(key)}</span>
+              <span className="truncate max-w-full px-0.5">{t(key)}</span>
             </Link>
           );
         })}
