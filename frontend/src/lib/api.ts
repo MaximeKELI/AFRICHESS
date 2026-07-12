@@ -536,6 +536,9 @@ export const tournamentsApi = {
   get: (slug: string) => api.get(`/tournaments/${slug}/`),
   register: (slug: string, clubId?: number) =>
     api.post(`/tournaments/${slug}/register/`, clubId != null ? { club_id: clubId } : {}),
+  withdraw: (slug: string) => api.post(`/tournaments/${slug}/withdraw/`),
+  setAvailability: (slug: string, available: boolean) =>
+    api.post(`/tournaments/${slug}/availability/`, { available }),
   start: (slug: string) => api.post(`/tournaments/${slug}/start/`),
   standings: (slug: string) => api.get(`/tournaments/${slug}/standings/`),
   teamScores: (slug: string) => api.get(`/tournaments/${slug}/team-scores/`),

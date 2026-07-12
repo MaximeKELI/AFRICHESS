@@ -30,6 +30,8 @@ interface Tournament {
   prize_pool: string;
   starts_at: string;
   country: string;
+  club_a?: number | null;
+  club_b?: number | null;
   club_a_name?: string | null;
   club_b_name?: string | null;
   created_by?: { id: number; username: string };
