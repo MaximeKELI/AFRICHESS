@@ -32,6 +32,17 @@ export default function BroadcastsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="flex flex-wrap gap-3 text-sm mb-4">
+        <Link href="/tv" className="text-africhess-gold hover:underline">
+          {t("nav.tv")}
+        </Link>
+        <Link href="/live" className="text-africhess-gold hover:underline">
+          {t("nav.currentGames")}
+        </Link>
+        <Link href="/streamers" className="text-africhess-gold hover:underline">
+          {t("nav.streamers")}
+        </Link>
+      </div>
       <h1 className="font-display text-3xl font-bold mb-2">{t("broadcasts.title")}</h1>
       <p className="text-sm opacity-70 mb-6">{t("broadcasts.subtitle")}</p>
 
