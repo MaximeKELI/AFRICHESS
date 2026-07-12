@@ -159,9 +159,17 @@ export const usersApi = {
   setVacation: (days: number) => api.post("/users/vacation/", { days }),
   clearVacation: () => api.delete("/users/vacation/"),
   totpStatus: () => api.get("/users/security/2fa/status/"),
-  totpSetup: () => api.post("/users/security/2fa/setup/"),
-  totpEnable: (code: string) => api.post("/users/security/2fa/enable/", { code }),
-  totpDisable: (code: string) => api.post("/users/security/2fa/disable/", { code }),
+  totpSetup: (password: string) =>
+    api.post("/users/security/2fa/setup/", { password }),
+  totpEnable: (code: string, password: string) =>
+    api.post("/users/security/2fa/enable/", { code, password }),
+  totpDisable: (code: string, password: string) =>
+    api.post("/users/security/2fa/disable/", { code, password }),
+  changePassword: (old_password: string, new_password1: string, new_password2: string) =>
+    api.post("/auth/password/change/", { old_password, new_password1, new_password2 }),
+  exportAccount: () => api.get("/users/account/export/"),
+  closeAccount: (password: string) =>
+    api.post("/users/account/close/", { password, confirm: "DELETE" }),
 };
 
 export interface GameChallenge {

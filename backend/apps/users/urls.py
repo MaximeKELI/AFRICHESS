@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import totp_views, views
+from . import account_lifecycle, totp_views, views
 from apps.social.views import UserSearchView
 
 urlpatterns = [
@@ -20,5 +20,15 @@ urlpatterns = [
     path("security/2fa/setup/", totp_views.TotpSetupView.as_view(), name="totp-setup"),
     path("security/2fa/enable/", totp_views.TotpEnableView.as_view(), name="totp-enable"),
     path("security/2fa/disable/", totp_views.TotpDisableView.as_view(), name="totp-disable"),
+    path(
+        "account/export/",
+        account_lifecycle.ExportAccountDataView.as_view(),
+        name="account-export",
+    ),
+    path(
+        "account/close/",
+        account_lifecycle.CloseAccountView.as_view(),
+        name="account-close",
+    ),
     path("<str:username>/", views.UserDetailView.as_view(), name="user-detail"),
 ]
