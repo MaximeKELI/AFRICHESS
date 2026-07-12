@@ -71,6 +71,46 @@ class CreateAIGameServiceTests(TestCase):
         call_kwargs = mock_engine.get_best_move.call_args
         self.assertEqual(call_kwargs.kwargs.get("target_elo"), 3200)
 
+    @patch("apps.games.services.GameService.__init__", lambda self: None)
+    def test_checkmate_wins_even_if_repetition_counter_is_high(self):
+        """Mat > fausse quintuple : ne pas enregistrer 1/2-1/2."""
+        import chess
+        from apps.games.draw_rules import _position_key
+
+        fen_before = "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4"
+        board = chess.Board(fen_before)
+        board.push_uci("h5f7")
+        mate_fen = board.fen()
+        self.assertTrue(board.is_checkmate())
+        mate_key = _position_key(mate_fen, "standard")
+
+        mock_engine = MagicMock()
+        mock_engine.apply_move.return_value = (mate_fen, "Qxf7#", True)
+
+        svc = GameService()
+        svc.engine = mock_engine
+        svc.rating_service = MagicMock()
+
+        game = Game.objects.create(
+            white_player=self.user,
+            is_vs_ai=True,
+            ai_target_elo=1200,
+            ai_difficulty=8,
+            status=Game.Status.ACTIVE,
+            fen=fen_before,
+            repetition_counts={mate_key: 4},
+        )
+
+        result = svc.make_move(game, self.user, "h5f7", include_comments=False)
+        self.assertNotIn("error", result)
+        game.refresh_from_db()
+        self.assertEqual(game.status, Game.Status.COMPLETED)
+        self.assertEqual(game.result, Game.Result.WHITE_WIN)
+        self.assertEqual(game.termination_reason, "checkmate")
+        self.assertNotEqual(game.result, Game.Result.DRAW)
+        self.assertNotEqual(result.get("draw_claim"), "fivefold")
+        mock_engine.get_best_move.assert_not_called()
+
 
 class AIGameAPITests(TestCase):
     def setUp(self):

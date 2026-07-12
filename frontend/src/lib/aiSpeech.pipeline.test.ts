@@ -127,4 +127,58 @@ describe("speakComment pipeline (mocked window + fetch)", () => {
     expect(urls.some((u) => u.includes("/games/tts/"))).toBe(true);
     expect(played.length).toBeGreaterThan(0);
   });
+
+  it("interrupt mid-play still allows the next comment to speak (no deadlock)", async () => {
+    let holdOpen = true;
+
+    class ControllableAudio {
+      volume = 1;
+      paused = false;
+      ended = false;
+      onended: ((this: ControllableAudio, ev: Event) => void) | null = null;
+      onerror: ((this: ControllableAudio, ev: Event) => void) | null = null;
+      __africhessAbort?: () => void;
+      play() {
+        played.push("play");
+        this.paused = false;
+        if (!holdOpen) {
+          queueMicrotask(() => {
+            this.ended = true;
+            this.paused = true;
+            this.onended?.(new Event("ended"));
+          });
+        }
+        return Promise.resolve();
+      }
+      pause() {
+        this.paused = true;
+      }
+    }
+
+    vi.stubGlobal("Audio", ControllableAudio);
+
+    vi.resetModules();
+    const mod = await import("@/lib/aiSpeech");
+    mod.__resetAiSpeechForTests();
+    mod.unlockAiSpeech();
+
+    const first = mod.speakComment("Premier commentaire long.", {
+      interrupt: true,
+      forceUnlock: true,
+    });
+    await new Promise((r) => setTimeout(r, 20));
+
+    holdOpen = false;
+    const second = mod.speakComment("Deuxieme commentaire.", {
+      interrupt: true,
+      forceUnlock: true,
+    });
+
+    await Promise.race([
+      Promise.all([first, second]),
+      new Promise((_, rej) => setTimeout(() => rej(new Error("deadlock")), 3000)),
+    ]);
+
+    expect(played.length).toBeGreaterThanOrEqual(2);
+  });
 });
