@@ -181,14 +181,38 @@ class StudyReviewView(APIView):
         except StudyLine.DoesNotExist:
             return Response({"error": "Introuvable"}, status=404)
         played = request.data.get("moves") or request.data.get("moves_uci") or []
-        expected = line.moves_uci[: len(played)]
-        correct = played == expected
-        quality = 5 if correct and len(played) >= len(line.moves_uci) else (3 if correct else 1)
-        review = schedule_review(request.user, line, quality)
+        if not isinstance(played, list):
+            return Response({"error": "moves doit être une liste"}, status=400)
+        played = [str(m) for m in played]
+        expected = line.moves_uci or []
+        if len(played) > len(expected):
+            return Response({"error": "Trop de coups"}, status=400)
+
+        prefix_ok = played == expected[: len(played)]
+        completed = prefix_ok and len(played) == len(expected) and len(expected) > 0
+
+        # Ne planifie le SRS que sur échec ou ligne complète (pas les préfixes)
+        if not prefix_ok:
+            review = schedule_review(request.user, line, quality=1)
+            return Response({
+                "correct": False,
+                "completed": False,
+                "scheduled": True,
+                "next_review": review.next_review.isoformat(),
+            })
+        if not completed:
+            return Response({
+                "correct": True,
+                "completed": False,
+                "scheduled": False,
+                "next_review": None,
+            })
+        review = schedule_review(request.user, line, quality=5)
         return Response({
-            "correct": correct,
+            "correct": True,
+            "completed": True,
+            "scheduled": True,
             "next_review": review.next_review.isoformat(),
-            "completed": correct and len(played) >= len(line.moves_uci),
         })
 
 
@@ -203,7 +227,10 @@ class ClassroomListCreateView(APIView):
             except ClassroomSession.DoesNotExist:
                 return Response({"error": "Salle introuvable"}, status=404)
             return Response(_classroom_payload(room))
-        rooms = ClassroomSession.objects.filter(is_active=True).select_related("host")[:20]
+        # Ne pas exposer toutes les salles actives — uniquement celles de l'hôte
+        rooms = ClassroomSession.objects.filter(
+            is_active=True, host=request.user
+        ).select_related("host")[:20]
         return Response([
             {
                 "code": r.code,
@@ -233,8 +260,18 @@ class ClassroomDetailView(APIView):
         if room.host_id != request.user.id:
             return Response({"error": "Réservé à l'hôte"}, status=403)
         fen = request.data.get("fen")
-        if fen:
-            room.current_fen = fen[:100]
+        if fen is not None:
+            fen = str(fen).strip()
+            if fen in ("", "startpos"):
+                room.current_fen = "startpos"
+            else:
+                try:
+                    chess.Board(fen)
+                except ValueError:
+                    return Response({"error": "FEN invalide"}, status=400)
+                if len(fen) > 120:
+                    return Response({"error": "FEN trop longue"}, status=400)
+                room.current_fen = fen
         if "is_active" in request.data:
             room.is_active = bool(request.data["is_active"])
         room.save()
@@ -265,7 +302,8 @@ def _uci_from_pgn(pgn: str) -> list[str]:
     game = chess.pgn.read_game(io.StringIO(pgn))
     if not game:
         return []
-    board = chess.Board()
+    # Respecte FEN / SetUp du PGN (pas toujours la position initiale)
+    board = game.board()
     moves = []
     node = game
     while node.variations:

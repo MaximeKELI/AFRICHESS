@@ -224,8 +224,12 @@ class SubmitQuizView(APIView):
                     user=request.user, course=quiz.course
                 )
                 prog.quiz_passed = True
-                prog.progress_percent = 100
-                prog.save()
+                # Le % reste basé sur les leçons complétées (pas forcé à 100)
+                total = quiz.course.lessons.count()
+                completed = len(prog.completed_lesson_ids or [])
+                if total:
+                    prog.progress_percent = min(100, int((completed / total) * 100))
+                prog.save(update_fields=["quiz_passed", "progress_percent"])
         elif not created:
             attempt.score = max(attempt.score, score)
             if passed:
