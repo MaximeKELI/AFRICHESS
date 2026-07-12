@@ -74,7 +74,7 @@ interface GameReviewProps {
   openingLabel?: string;
 }
 
-const MOVE_FILTERS = ["all", "brilliant", "great", "best", "good", "inaccuracy", "mistake", "blunder"] as const;
+const MOVE_FILTERS = ["all", "brilliant", "great", "best", "book", "good", "inaccuracy", "mistake", "blunder"] as const;
 
 export function GameReview({
   gameId,

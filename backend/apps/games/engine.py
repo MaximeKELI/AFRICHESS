@@ -447,7 +447,10 @@ class ChessEngineService:
                             eval_after=eval_after / 100,
                             centipawn_loss=cp_loss,
                             classification=self._classify_move(
-                                cp_loss, eval_gain, is_best
+                                cp_loss,
+                                eval_gain,
+                                is_best,
+                                ply=len(evaluations),
                             ),
                             best_uci=best_uci,
                             best_san=best_san,

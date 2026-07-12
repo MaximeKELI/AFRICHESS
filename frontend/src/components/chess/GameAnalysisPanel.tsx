@@ -363,7 +363,7 @@ export function GameAnalysisPanel({ gameId, completed }: GameAnalysisPanelProps)
           )}
 
           <div className="flex flex-wrap gap-1">
-            {["all", "brilliant", "great", "best", "good", "inaccuracy", "mistake", "blunder"].map((f) => (
+            {["all", "brilliant", "great", "best", "book", "good", "inaccuracy", "mistake", "blunder"].map((f) => (
               <button
                 key={f}
                 type="button"
