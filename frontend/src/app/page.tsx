@@ -39,7 +39,13 @@ const featureLinks = [
   },
 ] as const;
 
-const staggerDelays = ["", "delay-75", "delay-150", "delay-200", "delay-300"] as const;
+const staggerDelays = [
+  "",
+  "animation-delay-75",
+  "animation-delay-150",
+  "animation-delay-200",
+  "animation-delay-300",
+] as const;
 
 export default function HomePage() {
   const { t } = useTranslation();
@@ -104,30 +110,27 @@ export default function HomePage() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {featureLinks.map(({ href, titleKey, descKey, icon: Icon }, i) => (
-            <ButtonLink
+            <Link
               key={titleKey}
               href={href}
-              variant="ghost"
-              className={`feature-card group text-left h-full animate-slide-up-sm ${staggerDelays[i] ?? "delay-300"} !px-0 !py-0 !rounded-2xl !justify-start !items-stretch`}
+              className={`feature-card group animate-slide-up-sm ${staggerDelays[i] ?? "animation-delay-300"}`}
             >
-              <span className="block p-5 md:p-6 w-full">
-                <span className="feature-card-icon">
-                  <Icon size={22} strokeWidth={1.75} />
-                </span>
-                <span className="flex items-start justify-between gap-3">
-                  <span>
-                    <span className="block font-semibold text-lg group-hover:text-africhess-gold transition-colors duration-200">
-                      {t(titleKey)}
-                    </span>
-                    <span className="block text-sm text-muted mt-1.5 leading-relaxed">{t(descKey)}</span>
-                  </span>
-                  <ArrowRight
-                    size={18}
-                    className="shrink-0 mt-1 opacity-0 -translate-x-1 group-hover:opacity-70 group-hover:translate-x-0 transition-all duration-200 text-africhess-gold"
-                  />
-                </span>
+              <span className="feature-card-icon">
+                <Icon size={22} strokeWidth={1.75} />
               </span>
-            </ButtonLink>
+              <span className="flex items-start justify-between gap-3">
+                <span>
+                  <h3 className="font-semibold text-lg group-hover:text-africhess-gold transition-colors duration-200">
+                    {t(titleKey)}
+                  </h3>
+                  <p className="text-sm text-muted mt-1.5 leading-relaxed">{t(descKey)}</p>
+                </span>
+                <ArrowRight
+                  size={18}
+                  className="shrink-0 mt-1 opacity-0 -translate-x-1 group-hover:opacity-70 group-hover:translate-x-0 transition-all duration-200 text-africhess-gold"
+                />
+              </span>
+            </Link>
           ))}
         </div>
       </section>

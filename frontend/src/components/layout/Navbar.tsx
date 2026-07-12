@@ -16,6 +16,7 @@ import { MessagesNavButton } from "./MessagesNavButton";
 import { UserSearchBar } from "@/components/social/UserSearchBar";
 import { MobileBottomNav } from "./MobileBottomNav";
 import clsx from "clsx";
+import { ButtonLink } from "@/components/ui/Button";
 
 const PRIMARY_LINKS = [
   { href: "/play", key: "nav.play" },
