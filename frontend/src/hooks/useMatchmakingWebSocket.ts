@@ -10,10 +10,18 @@ export function useMatchmakingWebSocket(
   enabled: boolean,
   mode: string,
   onMatch: (gameId: string, roomId: string) => void,
-  timeOpts?: { isTimed: boolean; timePreset: string; isRated?: boolean; variant?: string }
+  timeOpts?: {
+    isTimed: boolean;
+    timePreset: string;
+    isRated?: boolean;
+    variant?: string;
+    /** Après reconnect listenOnly (ex. Strict Mode) : réinscrire en file HTTP. */
+    onListenOnlyOpen?: () => void | Promise<void>;
+  }
 ) {
   const wsRef = useRef<WebSocket | null>(null);
   const onMatchRef = useRef(onMatch);
+  const onListenOnlyOpenRef = useRef(timeOpts?.onListenOnlyOpen);
   const listenOnlyRef = useRef(false);
   const [searching, setSearching] = useState(false);
   const [active, setActive] = useState(false);
@@ -22,6 +30,10 @@ export function useMatchmakingWebSocket(
   useEffect(() => {
     onMatchRef.current = onMatch;
   }, [onMatch]);
+
+  useEffect(() => {
+    onListenOnlyOpenRef.current = timeOpts?.onListenOnlyOpen;
+  }, [timeOpts?.onListenOnlyOpen]);
 
   const search = useCallback((opts?: { listenOnly?: boolean }) => {
     listenOnlyRef.current = opts?.listenOnly ?? false;
@@ -64,7 +76,11 @@ export function useMatchmakingWebSocket(
     ws.onopen = () => {
       opened = true;
       if (closed) return;
-      if (listenOnly) return;
+      if (listenOnly) {
+        // Le disconnect précédent a vidé la file — réinscription HTTP.
+        void onListenOnlyOpenRef.current?.();
+        return;
+      }
       const tc =
         timeOpts?.isTimed === false
           ? null
@@ -132,7 +148,6 @@ export function useMatchmakingWebSocket(
       wsRef.current = null;
       if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
         if (ws.readyState === WebSocket.OPEN) {
-          // Toujours quitter (y compris listenOnly) pour éviter les fantômes Redis/PG.
           ws.send(JSON.stringify({ event: "quitter_file" }));
         }
         ws.close();
@@ -145,7 +160,8 @@ export function useMatchmakingWebSocket(
     timeOpts?.isTimed,
     timeOpts?.timePreset,
     timeOpts?.isRated,
+    timeOpts?.variant,
   ]);
 
   return { searching, mmError, search, cancel };
-};
+}
