@@ -182,7 +182,11 @@ describe("speakComment pipeline (mocked window + fetch)", () => {
     mod.__resetAiSpeechForTests();
     mod.unlockAiSpeech();
     played.length = 0;
-    await mod.speakComment("Pas de voix robotique.", { interrupt: true, forceUnlock: true });
+    await mod.speakComment("Pas de voix robotique.", {
+      interrupt: true,
+      forceUnlock: false,
+      enabled: true,
+    });
     await mod.waitForSpeechIdle(5000);
 
     expect(speakCalls).toHaveLength(0);
@@ -241,7 +245,11 @@ describe("speakComment pipeline (mocked window + fetch)", () => {
     mod.__resetAiSpeechForTests();
     mod.unlockAiSpeech();
     played.length = 0;
-    await mod.speakComment("Secours premium.", { interrupt: true, forceUnlock: true });
+    await mod.speakComment("Secours premium.", {
+      interrupt: true,
+      forceUnlock: false,
+      enabled: true,
+    });
     await mod.waitForSpeechIdle(5000);
 
     expect(speakCalls).toContain("Secours premium.");
