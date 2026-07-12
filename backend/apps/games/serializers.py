@@ -253,6 +253,7 @@ class LiveGameSerializer(serializers.ModelSerializer):
     black_player = UserPublicSerializer(read_only=True)
     white_elo = serializers.SerializerMethodField()
     black_elo = serializers.SerializerMethodField()
+    tv_analysis = serializers.SerializerMethodField()
 
     def _elo_for(self, obj: Game, player_id: int | None, player) -> int | None:
         if not player_id:
@@ -271,6 +272,13 @@ class LiveGameSerializer(serializers.ModelSerializer):
     def get_black_elo(self, obj: Game):
         return self._elo_for(obj, obj.black_player_id, obj.black_player)
 
+    def get_tv_analysis(self, obj: Game):
+        if not obj.is_tv_exhibition:
+            return None
+        from .tv_exhibition import tv_analysis_payload
+
+        return tv_analysis_payload(obj)
+
     class Meta:
         model = Game
         fields = [
@@ -288,6 +296,7 @@ class LiveGameSerializer(serializers.ModelSerializer):
             "black_time_ms",
             "is_timed",
             "is_tv_exhibition",
+            "tv_analysis",
         ]
 
 

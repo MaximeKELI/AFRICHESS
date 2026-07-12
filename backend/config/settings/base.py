@@ -380,7 +380,8 @@ CELERY_BEAT_SCHEDULE = {
     },
     "tick-tv-exhibitions": {
         "task": "apps.games.tasks.tick_tv_exhibition_games",
-        "schedule": 8.0,
+        # 5 parties × ~1s Stockfish + analyse — laisser de la marge
+        "schedule": 12.0,
     },
 }
 
