@@ -2344,6 +2344,7 @@ const en: Record<string, string> = {
   "background.picker.category.classic": "Classic",
   "background.picker.category.abstract": "Abstract",
   "background.picker.category.animals": "Animals",
+  "background.picker.category.lichess": "Lichess",
   "comments.toggle": "AI commentary",
   "comments.toggle.hint": "AI + coach: spoken and written commentary",
   "comments.voice.listen": "Listen to comment",
