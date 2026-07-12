@@ -246,6 +246,7 @@ describe("speakComment pipeline (mocked window + fetch)", () => {
     expect(played.length).toBe(0);
   });
 
+  it("prefers neural /api/tts over browser speech even when a premium voice exists", async () => {
     const humanVoice = {
       name: "Google français",
       lang: "fr-FR",
