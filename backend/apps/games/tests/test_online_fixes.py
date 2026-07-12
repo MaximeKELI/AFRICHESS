@@ -7,7 +7,6 @@ from django.test import TestCase
 from django.utils import timezone
 
 from apps.games.draw_rules import (
-    bump_repetition_count,
     can_claim_threefold_from_game,
     init_repetition_counts,
 )
