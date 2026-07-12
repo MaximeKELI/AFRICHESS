@@ -843,7 +843,7 @@ const fr: Record<string, string> = {
   "daily.error.challenge": "Impossible de lancer le défi.",
   "openings.title": "Explorateur d'ouvertures",
   "openings.subtitle": "Explorez les lignes principales et leurs noms ECO.",
-  "openings.explorerStats": "Base de parties — {w}B / {d}N / {b}N",
+  "openings.explorerStats": "Base de parties — {w} blancs / {d} nuls / {b} noirs",
   "openings.start": "Position initiale",
   "openings.boardHint": "Échiquier de départ — cliquez les coups ci-contre",
   "openings.continue": "Coups possibles",
