@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Swords, Puzzle, Trophy, Users, Globe2, ArrowRight } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { ButtonLink } from "@/components/ui/Button";
