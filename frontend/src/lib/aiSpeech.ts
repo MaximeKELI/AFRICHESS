@@ -31,20 +31,29 @@ function authHeaders(): HeadersInit {
 
 function voiceScore(v: SpeechSynthesisVoice): number {
   const n = v.name.toLowerCase();
-  // Voix neurales / cloud — les plus humaines
-  if (/google français|google french|google ukrainian|google/.test(n) && /fr/.test(v.lang.toLowerCase())) {
-    return 100;
-  }
-  if (/neural|natural|premium|wavenet|online \(natural\)|enhanced/.test(n)) return 98;
-  if (/microsoft.*(hortense|julie|pauline|denise|henri)|azure/.test(n)) return 92;
-  if (/thomas|amélie|aurelie|aurélie|marie|virginie|stephanie/.test(n)) return 88;
-  if (/apple|siri|éloquence|eloquence|compact/.test(n)) return 82;
-  if (/google/.test(n)) return 80;
-  if (/microsoft|azure/.test(n)) return 75;
-  if (v.localService && !/espeak|festival|rhvoice/.test(n)) return 70;
-  if (/mbrola/.test(n)) return 50;
-  if (/espeak|festival|rhvoice/.test(n)) return 5;
-  return 45;
+  const lang = v.lang.toLowerCase();
+  const isFr = lang.startsWith("fr") || /french|français|francais/.test(n);
+  let score = 0;
+
+  // Voix cloud / neurales FR — les plus humaines
+  if (isFr && !v.localService && /google/.test(n)) score = 120;
+  else if (isFr && /google français|google french/.test(n)) score = 115;
+  else if (isFr && /neural|natural|premium|wavenet|online \(natural\)|enhanced/.test(n)) score = 110;
+  else if (isFr && /microsoft.*(hortense|julie|pauline|denise|henri)|azure/.test(n)) score = 100;
+  else if (isFr && /thomas|amélie|aurelie|aurélie|marie|virginie|stephanie/.test(n)) score = 95;
+  else if (isFr && /apple|siri|éloquence|eloquence|compact/.test(n)) score = 88;
+  else if (isFr && /google/.test(n)) score = 85;
+  else if (isFr && /microsoft|azure/.test(n)) score = 78;
+  else if (isFr && v.localService && !/espeak|festival|rhvoice/.test(n)) score = 72;
+  else if (isFr) score = 60;
+  else if (!v.localService && /google/.test(n)) score = 40;
+  else score = 20;
+
+  // Pénaliser fortement les synthèses robotiques
+  if (/espeak|festival|rhvoice|mbrola/.test(n)) score = Math.min(score, 8);
+  // Préférer les voix cloud aux locales quand c'est égal
+  if (!v.localService) score += 5;
+  return score;
 }
 
 function isFrenchVoice(v: SpeechSynthesisVoice): boolean {

@@ -318,7 +318,10 @@ function PlayContent() {
 
   const handleGameEndContinue = useCallback(() => {
     setGameEndOverlay(null);
-    if (gameId) setReviewOpen(true);
+    if (gameId) {
+      stopAiSpeech();
+      setReviewOpen(true);
+    }
   }, [gameId]);
   const { consumePatch: consumeFairPlayPatch, notePremove } = useFairPlayTelemetry(telemetryEnabled);
   const gameIsTimed = gameData.is_timed !== false;
@@ -1664,7 +1667,10 @@ function PlayContent() {
           {gameCompleted && gameId && !reviewOpen && (
             <button
               type="button"
-              onClick={() => setReviewOpen(true)}
+              onClick={() => {
+                stopAiSpeech();
+                setReviewOpen(true);
+              }}
               className="w-full py-3 rounded-xl african-gradient text-white text-sm font-semibold shadow-lg"
             >
               {t("chess.review.open")}
