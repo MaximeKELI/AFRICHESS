@@ -48,6 +48,7 @@ const CLASS_COLORS: Record<string, string> = {
   brilliant: "text-cyan-300",
   great: "text-sky-300",
   best: "text-africhess-green",
+  book: "text-violet-300",
   good: "text-emerald-400",
   inaccuracy: "text-yellow-400",
   mistake: "text-orange-400",

@@ -15,6 +15,7 @@ const CLASS_BADGE: Record<string, string> = {
   brilliant: "bg-cyan-500/20 text-cyan-200 border-cyan-400/40",
   great: "bg-sky-500/20 text-sky-200 border-sky-400/40",
   best: "bg-emerald-500/20 text-emerald-200 border-emerald-400/40",
+  book: "bg-violet-500/20 text-violet-200 border-violet-400/40",
   good: "bg-emerald-500/15 text-emerald-300 border-emerald-400/30",
   inaccuracy: "bg-yellow-500/20 text-yellow-200 border-yellow-400/40",
   mistake: "bg-orange-500/20 text-orange-200 border-orange-400/40",
