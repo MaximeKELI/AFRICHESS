@@ -577,7 +577,7 @@ export default function PuzzlesPage() {
   useEffect(() => {
     if (tab === "daily") loadDaily();
     else if (tab === "training") loadTraining();
-    else     if (tab === "rush") {
+    else if (tab === "rush") {
       loadRushLeaderboard("rush");
       loadRush();
     }
@@ -918,7 +918,7 @@ export default function PuzzlesPage() {
 
   const handlePuzzleWrong = useCallback(
     (played: string[]) => {
-      if (puzzle && tab !== "rush" && tab !== "storm" && tab !== "survival") {
+      if (puzzle && tab !== "rush" && tab !== "storm" && tab !== "survival" && tab !== "battle") {
         sessionRef.current.recordWrong(puzzle.id);
         setShowMiniError(true);
         window.setTimeout(() => setShowMiniError(false), 700);
@@ -926,13 +926,9 @@ export default function PuzzlesPage() {
           setHintOffered(true);
         }
       }
-      if (tab === "rush" || tab === "storm" || tab === "survival") {
+      if (tab === "rush" || tab === "storm" || tab === "survival" || tab === "battle") {
         void submitWithMoves(played);
         return;
-      }
-      if (tab === "battle") {
-        setPuzzleFailed(true);
-        setResult(t("puzzles.solved.wrong"));
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -989,6 +985,11 @@ export default function PuzzlesPage() {
   };
 
   const reset = () => {
+    // En modes chronométrés, reset = abandon du puzzle courant (pas d'undo gratuit)
+    if (puzzle && (tab === "rush" || tab === "storm" || tab === "survival" || tab === "battle")) {
+      void submitWithMoves([]);
+      return;
+    }
     resetPuzzleUiForNewPuzzle();
   };
 
@@ -1253,6 +1254,7 @@ export default function PuzzlesPage() {
                 onComplete={(moves) => handlePuzzleComplete(moves)}
                 onWrong={handlePuzzleWrong}
                 onPlayedChange={setLocalPlayed}
+                lockOnWrong={tab === "rush" || tab === "storm" || tab === "survival" || tab === "battle"}
                 disabled={puzzleSolved && !celebration && tab !== "rush" && tab !== "storm" && tab !== "survival"}
                 hintRevealed={hintRevealed}
                 onHintStatus={handleHintStatus}
