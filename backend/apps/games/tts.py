@@ -54,6 +54,14 @@ async def _edge_tts_mp3(text: str, voice: str) -> bytes | None:
     return b"".join(chunks)
 
 
+async def _synthesize_neural(text: str, voices: list[str]) -> bytes | None:
+    for voice in voices:
+        mp3 = await _edge_tts_mp3(text, voice)
+        if mp3 and len(mp3) > 64:
+            return mp3
+    return None
+
+
 def synthesize_speech(text: str, *, lang: str = "fr") -> tuple[bytes, str] | None:
     """Génère de l'audio neural.
 
@@ -64,14 +72,13 @@ def synthesize_speech(text: str, *, lang: str = "fr") -> tuple[bytes, str] | Non
     if not cleaned:
         return None
 
-    voices = list(dict.fromkeys(FALLBACK_VOICES))  # unique, ordre préservé
+    voices = list(dict.fromkeys(FALLBACK_VOICES))
     if lang and not lang.startswith("fr"):
         voices = [DEFAULT_VOICE, *voices]
 
-    for voice in voices:
-        mp3 = _run_async(_edge_tts_mp3(cleaned, voice))
-        if mp3 and len(mp3) > 64:
-            return mp3, "audio/mpeg"
+    mp3 = _run_async(_synthesize_neural(cleaned, voices))
+    if mp3:
+        return mp3, "audio/mpeg"
     return None
 
 
