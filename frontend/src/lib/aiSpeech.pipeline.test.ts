@@ -128,6 +128,78 @@ describe("speakComment pipeline (mocked window + fetch)", () => {
     expect(played.length).toBeGreaterThan(0);
   });
 
+  it("does not call WAV TTS when a human browser voice is available", async () => {
+    const humanVoice = {
+      name: "Google français",
+      lang: "fr-FR",
+      localService: false,
+      default: true,
+      voiceURI: "Google français",
+    };
+
+    class FakeUtterance {
+      text = "";
+      lang = "";
+      rate = 1;
+      pitch = 1;
+      volume = 1;
+      voice: unknown = null;
+      onstart: ((ev: Event) => void) | null = null;
+      onend: ((ev: Event) => void) | null = null;
+      onerror: ((ev: Event) => void) | null = null;
+      constructor(text: string) {
+        this.text = text;
+      }
+    }
+
+    const speakCalls: string[] = [];
+    const synth = {
+      speaking: false,
+      pending: false,
+      paused: false,
+      getVoices: () => [humanVoice],
+      addEventListener: () => undefined,
+      cancel: () => undefined,
+      resume: () => undefined,
+      speak: (u: FakeUtterance) => {
+        speakCalls.push(u.text);
+        synth.speaking = true;
+        queueMicrotask(() => {
+          synth.speaking = false;
+          u.onend?.(new Event("end"));
+        });
+      },
+    };
+
+    vi.stubGlobal("SpeechSynthesisUtterance", FakeUtterance);
+    vi.stubGlobal(
+      "window",
+      Object.assign(globalThis, {
+        setTimeout: globalThis.setTimeout.bind(globalThis),
+        clearTimeout: globalThis.clearTimeout.bind(globalThis),
+        setInterval: globalThis.setInterval.bind(globalThis),
+        clearInterval: globalThis.clearInterval.bind(globalThis),
+        SpeechSynthesisUtterance: FakeUtterance,
+        speechSynthesis: synth,
+      })
+    );
+
+    fetchMock.mockClear();
+    vi.resetModules();
+    const mod = await import("@/lib/aiSpeech");
+    mod.__resetAiSpeechForTests();
+    mod.unlockAiSpeech();
+    await mod.speakComment("Uniquement la voix humaine.", {
+      interrupt: true,
+      forceUnlock: true,
+    });
+    await mod.waitForSpeechIdle(5000);
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(speakCalls).toContain("Uniquement la voix humaine.");
+    expect(played.length).toBe(0);
+  });
+
   it("interrupt mid-play still allows the next comment to speak (no deadlock)", async () => {
     let holdOpen = true;
 

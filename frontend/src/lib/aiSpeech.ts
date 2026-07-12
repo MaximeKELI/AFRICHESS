@@ -47,22 +47,9 @@ function authHeaders(): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-function isFirefox(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /firefox/i.test(navigator.userAgent);
-}
-
 function isRoboticVoice(v: SpeechSynthesisVoice | null): boolean {
   if (!v) return true;
-  const n = v.name.toLowerCase();
-  // espeak et assimilés = voix robotique à exclure
-  if (/espeak|festival|rhvoice|mbrola|pico|svox/.test(n)) return true;
-  // Sur Linux, les voix "localService" sans marqueur neural/google/microsoft
-  // sont souvent espeak déguisé
-  if (v.localService && !/neural|natural|premium|wavenet|enhanced|google|microsoft|apple|samsung/.test(n)) {
-    return true;
-  }
-  return false;
+  return /espeak|festival|rhvoice|mbrola|pico|svox/.test(v.name.toLowerCase());
 }
 
 function isFrenchVoice(v: SpeechSynthesisVoice): boolean {
@@ -78,16 +65,20 @@ function voiceScore(v: SpeechSynthesisVoice): number {
   if (isFr && !v.localService && /google/.test(n)) score = 120;
   else if (isFr && /neural|natural|premium|wavenet|enhanced/.test(n)) score = 110;
   else if (isFr && /microsoft|azure/.test(n)) score = 90;
+  else if (isFr && /apple|thomas|amélie|amelie|aurelie|aurélie/.test(n)) score = 85;
   else if (isFr) score = 60;
   else score = 20;
-  if (/espeak|festival|rhvoice|mbrola/.test(n)) score = Math.min(score, 8);
+  if (/espeak|festival|rhvoice|mbrola|pico|svox/.test(n)) score = Math.min(score, 8);
   return score;
 }
 
 function pickFrenchVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
   if (!voices.length) return null;
-  const fr = voices.filter(isFrenchVoice);
-  const pool = fr.length ? fr : voices;
+  // Exclure les voix robotiques du choix — sinon on rejoue espeak via le navigateur
+  const human = voices.filter((v) => !isRoboticVoice(v));
+  if (!human.length) return null;
+  const fr = human.filter(isFrenchVoice);
+  const pool = fr.length ? fr : human;
   return [...pool].sort((a, b) => voiceScore(b) - voiceScore(a))[0];
 }
 
