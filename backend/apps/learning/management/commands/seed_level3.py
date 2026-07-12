@@ -1,10 +1,8 @@
-"""Seed vidéos, coaches et streamers niveau 3."""
+"""Seed vidéos niveau 3 (pas de coachs fictifs)."""
 
 from django.core.management.base import BaseCommand
 
 from apps.learning.models import Video
-from apps.social.models import CoachProfile, StreamerProfile
-from apps.users.models import User
 
 
 VIDEOS = [
@@ -15,39 +13,9 @@ VIDEOS = [
     ("Attaque du roi", "King attack", "https://www.youtube.com/watch?v=O7YQd3Kq_cQ", "strategy"),
 ]
 
-DEMO_COACHES = [
-    {
-        "username": "coach_amina",
-        "display_name": "Amina Diallo",
-        "bio": "Championne africaine — débutants et intermédiaires. Cours en français.",
-        "fide_title": "WFM",
-        "hourly_rate_eur": 25,
-        "languages": "fr,en",
-        "booking_url": "https://calendly.com/",
-    },
-    {
-        "username": "coach_kwame",
-        "display_name": "Kwame Mensah",
-        "bio": "Entraîneur FIDE — tactiques et finales. English & Twi.",
-        "fide_title": "FM",
-        "hourly_rate_eur": 35,
-        "languages": "en,fr",
-        "booking_url": "https://calendly.com/",
-    },
-    {
-        "username": "coach_sara",
-        "display_name": "Sara Benali",
-        "bio": "Préparation tournois et ouvertures modernes. Arabe & français.",
-        "fide_title": "IM",
-        "hourly_rate_eur": 45,
-        "languages": "fr,ar,en",
-        "booking_url": "https://calendly.com/",
-    },
-]
-
 
 class Command(BaseCommand):
-    help = "Seed Level 3 content (videos, sample coaches/streamers)"
+    help = "Seed Level 3 videos only (no fictional coaches)"
 
     def handle(self, *args, **options):
         for i, (title, title_en, url, cat) in enumerate(VIDEOS):
@@ -60,58 +28,4 @@ class Command(BaseCommand):
                     "order": i,
                 },
             )
-        self.stdout.write(f"Videos: {Video.objects.count()}")
-
-        for spec in DEMO_COACHES:
-            parts = spec["display_name"].split(" ", 1)
-            first = parts[0]
-            last = parts[1] if len(parts) > 1 else ""
-            user, created = User.objects.get_or_create(
-                username=spec["username"],
-                defaults={
-                    "email": f"{spec['username']}@africhess.local",
-                    "first_name": first,
-                    "last_name": last,
-                },
-            )
-            if created:
-                user.set_password("coachdemo123")
-                user.save()
-            else:
-                updated = False
-                if not user.first_name:
-                    user.first_name = first
-                    updated = True
-                if not user.last_name and last:
-                    user.last_name = last
-                    updated = True
-                if updated:
-                    user.save(update_fields=["first_name", "last_name"])
-
-            CoachProfile.objects.update_or_create(
-                user=user,
-                defaults={
-                    "bio": spec["bio"],
-                    "fide_title": spec["fide_title"],
-                    "hourly_rate_eur": spec["hourly_rate_eur"],
-                    "languages": spec["languages"],
-                    "booking_url": spec["booking_url"],
-                    "is_available": True,
-                },
-            )
-
-        staff = User.objects.filter(is_staff=True).first()
-        if staff:
-            StreamerProfile.objects.get_or_create(
-                user=staff,
-                defaults={
-                    "display_name": "AFRICHESS Live",
-                    "twitch_username": "",
-                    "youtube_channel_id": "",
-                    "bio": "Parties en direct et analyses sur AFRICHESS.",
-                    "is_featured": True,
-                },
-            )
-
-        n_coaches = CoachProfile.objects.filter(is_available=True).count()
-        self.stdout.write(self.style.SUCCESS(f"Level 3 seed OK — coaches available: {n_coaches}"))
+        self.stdout.write(self.style.SUCCESS(f"Videos: {Video.objects.count()}"))

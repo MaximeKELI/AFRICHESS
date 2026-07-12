@@ -44,10 +44,7 @@ export default function CoachesPage() {
           </div>
         ))}
         {coaches.length === 0 && (
-          <div className="glass-card p-6 text-sm space-y-2">
-            <p className="opacity-70">{t("coaches.empty")}</p>
-            <p className="text-xs opacity-50">{t("coaches.emptyHint")}</p>
-          </div>
+          <p className="text-sm opacity-60">{t("coaches.empty")}</p>
         )}
       </div>
     </div>
