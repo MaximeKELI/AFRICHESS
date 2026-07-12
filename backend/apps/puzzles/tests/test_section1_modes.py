@@ -121,14 +121,9 @@ class StormParityTests(TestCase):
 
     def test_storm_score_only_on_solve(self):
         session = start_storm_session(self.user)
-        puzzle = Puzzle.objects.get(pk=session.puzzle_ids[0])
         storm_submit(session, ["a2a3"])
         session.refresh_from_db()
         self.assertEqual(session.score, 0)
-        result = storm_submit(session, puzzle.solution_moves)
-        # Après miss, index a avancé — solution du 1er ne matche plus le 2e
-        # On résout le puzzle courant
-        session.refresh_from_db()
         current = Puzzle.objects.get(pk=session.puzzle_ids[session.current_index])
         result = storm_submit(session, current.solution_moves)
         self.assertTrue(result["solved"])
