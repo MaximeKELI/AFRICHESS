@@ -80,18 +80,41 @@ function TournamentsPageContent() {
     load();
   }, [load]);
 
-  const register = async (slug: string) => {
+  const register = async (slug: string, clubId?: number) => {
     if (!user) {
       setStatus(t("tournaments.status.loginRequired"));
       return;
     }
     setStatus("");
     try {
-      await tournamentsApi.register(slug);
+      await tournamentsApi.register(slug, clubId);
       setStatus(t("tournaments.status.registered"));
       load();
     } catch {
       setStatus(t("tournaments.status.registerFailed"));
+    }
+  };
+
+  const withdraw = async (slug: string) => {
+    if (!user) return;
+    try {
+      await tournamentsApi.withdraw(slug);
+      setStatus(t("tournaments.status.withdrawn"));
+      load();
+    } catch {
+      setStatus(t("tournaments.status.withdrawFailed"));
+    }
+  };
+
+  const setPaused = async (slug: string, available: boolean) => {
+    if (!user) return;
+    try {
+      await tournamentsApi.setAvailability(slug, available);
+      setStatus(
+        available ? t("tournaments.status.resumed") : t("tournaments.status.paused")
+      );
+    } catch {
+      setStatus(t("tournaments.status.withdrawFailed"));
     }
   };
 
@@ -185,13 +208,47 @@ function TournamentsPageContent() {
 
             <div className="flex flex-wrap gap-2">
               {tournament.status === "registration" && user && (
-                <button
-                  type="button"
-                  onClick={() => register(tournament.slug)}
-                  className="px-4 py-2 rounded-lg african-gradient text-white text-sm"
-                >
-                  {t("tournaments.register")}
-                </button>
+                <>
+                  {tournament.format === "team_battle" &&
+                  tournament.club_a &&
+                  tournament.club_b ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => register(tournament.slug, tournament.club_a!)}
+                        className="px-4 py-2 rounded-lg african-gradient text-white text-sm"
+                      >
+                        {t("tournaments.registerAs", {
+                          club: tournament.club_a_name || "A",
+                        })}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => register(tournament.slug, tournament.club_b!)}
+                        className="px-4 py-2 rounded-lg african-gradient text-white text-sm"
+                      >
+                        {t("tournaments.registerAs", {
+                          club: tournament.club_b_name || "B",
+                        })}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => register(tournament.slug)}
+                      className="px-4 py-2 rounded-lg african-gradient text-white text-sm"
+                    >
+                      {t("tournaments.register")}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => withdraw(tournament.slug)}
+                    className="px-4 py-2 rounded-lg border border-white/20 text-sm"
+                  >
+                    {t("tournaments.withdraw")}
+                  </button>
+                </>
               )}
               {user &&
                 tournament.created_by?.id === user.id &&
@@ -205,13 +262,35 @@ function TournamentsPageContent() {
                   </button>
                 )}
               {tournament.status === "active" && user && (
-                <button
-                  type="button"
-                  onClick={() => openMyGame(tournament.slug)}
-                  className="px-4 py-2 rounded-lg border text-sm"
-                >
-                  {t("tournaments.myGame")}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => openMyGame(tournament.slug)}
+                    className="px-4 py-2 rounded-lg border text-sm"
+                  >
+                    {t("tournaments.myGame")}
+                  </button>
+                  {(tournament.format === "arena" ||
+                    tournament.format === "club_arena" ||
+                    tournament.format === "team_battle") && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setPaused(tournament.slug, false)}
+                        className="px-4 py-2 rounded-lg border border-white/20 text-sm"
+                      >
+                        {t("tournaments.pause")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaused(tournament.slug, true)}
+                        className="px-4 py-2 rounded-lg border border-white/20 text-sm"
+                      >
+                        {t("tournaments.resume")}
+                      </button>
+                    </>
+                  )}
+                </>
               )}
               <button
                 type="button"
