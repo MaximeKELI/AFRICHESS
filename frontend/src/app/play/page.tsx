@@ -201,7 +201,9 @@ function PlayContent() {
   const playerColor = orientation === "white" ? "w" : "b";
   const playerIsWhite = orientation === "white";
   const levelLabel = user?.chess_level ? chessLevelLabel(t, user.chess_level) : undefined;
-  const modeLabelText = modeLabel(t, mode);
+  /** Mode effectif = cadence choisie (bullet/blitz/rapid/classical), pas le ?mode= URL. */
+  const searchMode = useClock ? playModeFromPreset(timePreset) : mode;
+  const modeLabelText = modeLabel(t, searchMode);
   const gameReady =
     gameData.status === "active" || gameData.status === "completed";
   const gameActive = Boolean(activeGameId && gameData.status === "active");
