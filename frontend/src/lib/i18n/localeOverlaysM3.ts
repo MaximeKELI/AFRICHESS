@@ -46,7 +46,7 @@ export const ptOverlayM3: Record<string, string> = {
   "daily.poolBtn": "Procurar partida",
   "daily.poolHint": "Encontre um adversário aleatório do seu nível.",
   "daily.poolSearching": "Procurando… Volte em instantes.",
-  "daily.subtitle": "Xadrez por correspondência — vários dias por lance, como no Chess.com.",
+  "daily.subtitle": "Xadrez por correspondência — vários dias por lance.",
   "daily.title": "Xadrez Daily",
   "daily.vacation": "Modo férias",
   "daily.vacationHint": "Suspende seus prazos de xadrez daily por 7 dias.",
