@@ -816,10 +816,15 @@ class ResignGameView(APIView):
         if "error" in result:
             return Response(result, status=400)
         game.refresh_from_db()
-        from .realtime_services import build_ws_payload
-        from .ws_notify import notify_game_room
+        if not result.get("already_finished"):
+            from .realtime_services import build_ws_payload
+            from .ws_notify import notify_game_room
 
-        notify_game_room(game.id, "broadcast_game_over", build_ws_payload(game, {"game_over": True, "reason": "resignation"}))
+            notify_game_room(
+                game.id,
+                "broadcast_game_over",
+                build_ws_payload(game, {"game_over": True, "reason": "resignation"}),
+            )
         return Response(GameSerializer(game).data)
 
 
