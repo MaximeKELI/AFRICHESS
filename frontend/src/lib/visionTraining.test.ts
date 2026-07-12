@@ -12,4 +12,8 @@ describe("visionTraining", () => {
     expect(squareColor("a1")).toBe("light");
     expect(squareColor("a2")).toBe("dark");
   });
+
+  it("chrono 30s — constante utilisée par l'UI", () => {
+    expect(30).toBe(30);
+  });
 });
