@@ -79,10 +79,11 @@ export function ForumCreateForm({ onCreated }: ForumCreateFormProps) {
         onChange={(e) => setCategory(e.target.value)}
         className="w-full px-4 py-3 rounded-lg border bg-transparent"
       >
-        <option value="general">{t("forum.category.general")}</option>
-        <option value="strategy">{t("forum.category.strategy")}</option>
-        <option value="openings">{t("forum.category.openings")}</option>
-        <option value="community">{t("forum.category.community")}</option>
+        <option value="general">{t("forum.cat.general")}</option>
+        <option value="africa">{t("forum.cat.africa")}</option>
+        <option value="news">{t("forum.cat.news")}</option>
+        <option value="strategy">{t("forum.cat.strategy")}</option>
+        <option value="blog">{t("forum.cat.blog")}</option>
       </select>
       <textarea
         value={body}
