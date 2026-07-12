@@ -426,6 +426,20 @@ export const puzzlesApi = {
   survivalSubmit: (sessionId: number, moves: string[], time_seconds: number) =>
     api.post(`/puzzles/survival/${sessionId}/submit/`, { moves, time_seconds }),
   streak: () => api.get("/puzzles/streak/"),
+  dashboard: () => api.get("/puzzles/dashboard/"),
+  streakRunStart: () => api.post("/puzzles/streak-run/start/"),
+  streakRunSubmit: (
+    sessionId: number,
+    payload: { moves?: string[]; time_seconds?: number; skip?: boolean }
+  ) => api.post(`/puzzles/streak-run/${sessionId}/submit/`, payload),
+  createCustom: (data: {
+    fen: string;
+    solution_moves: string[];
+    themes?: string[];
+    is_public?: boolean;
+    difficulty?: string;
+  }) => api.post("/puzzles/custom/", data),
+  customMine: () => api.get("/puzzles/custom/"),
 };
 
 export interface UserRelationship {
