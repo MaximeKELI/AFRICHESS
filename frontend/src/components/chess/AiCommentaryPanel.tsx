@@ -101,12 +101,12 @@ export function AiCommentaryPanel({
       for (let index = 0; index < toSpeak.length; index += 1) {
         if (speakQueueRef.current !== queueId) return;
         const comment = toSpeak[index];
-        // Enfiler sans couper entre coach + IA ; interrupt seulement si on remplace une lecture
+        // Couper la lecture précédente ; stopCurrentAudio résout la promesse (pas de deadlock)
         await speakComment(comment.text, {
           byAi: comment.byAi,
           enabled: true,
           forceUnlock: true,
-          interrupt: index === 0 && decision.toSpeak.length === fresh.length,
+          interrupt: index === 0,
         });
         if (speakQueueRef.current !== queueId) return;
         liveSpokenCommentKeys.add(commentKey(comment));
