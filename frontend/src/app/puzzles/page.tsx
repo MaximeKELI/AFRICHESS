@@ -1255,7 +1255,7 @@ function PuzzlesPageContent() {
           }}
         >
           <option value="">{t("puzzles.tab.more")}</option>
-          <option value="battle">{t("puzzles.tab.battle")}</option>
+          <option value="battle">{t("puzzles.tab.racer")}</option>
           <option value="survival">{t("puzzles.tab.survival")}</option>
           <option value="build">{t("nav.puzzleBuild")}</option>
           <option value="leaderboard">{t("puzzles.tab.leaderboard")}</option>
