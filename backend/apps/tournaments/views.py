@@ -19,6 +19,11 @@ class TournamentListView(generics.ListAPIView):
         qs = tournament_list_queryset()
         if self.request.query_params.get("african"):
             qs = qs.filter(is_african_cup=True)
+        fmt = (self.request.query_params.get("tournament_format") or "").strip().lower()
+        if fmt:
+            allowed = {c.value for c in Tournament.Format}
+            if fmt in allowed:
+                qs = qs.filter(format=fmt)
         return qs.order_by("-starts_at")
 
 

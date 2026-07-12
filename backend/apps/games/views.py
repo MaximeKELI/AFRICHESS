@@ -490,7 +490,11 @@ class ChallengeDetailView(APIView):
             ).get(pk=pk)
         except GameChallenge.DoesNotExist:
             return Response({"error": "Défi introuvable"}, status=404)
-        if request.user.id not in (challenge.challenger_id, challenge.opponent_id):
+        allowed = {challenge.challenger_id, challenge.opponent_id}
+        # Seek lobby ouvert : visible à tout utilisateur authentifié
+        if challenge.opponent_id is None and challenge.status == GameChallenge.Status.PENDING:
+            return Response(GameChallengeSerializer(challenge).data)
+        if request.user.id not in allowed:
             return Response({"error": "Action non autorisée"}, status=403)
         return Response(GameChallengeSerializer(challenge).data)
 
@@ -551,6 +555,92 @@ class ChallengeCancelView(APIView):
             challenge = GameChallenge.objects.get(pk=pk)
         except GameChallenge.DoesNotExist:
             return Response({"error": "Défi introuvable"}, status=404)
+        try:
+            challenge = cancel_challenge(challenge, request.user)
+        except ChallengeError as exc:
+            payload = {"error": exc.message}
+            if exc.code:
+                payload["code"] = exc.code
+            return Response(payload, status=exc.status)
+        return Response(GameChallengeSerializer(challenge).data)
+
+
+class LobbySeekListCreateView(APIView):
+    """Liste / création de seeks lobby ouverts (opponent=null)."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        from .challenge_service import list_open_seeks
+
+        qs = list_open_seeks(exclude_user=None, include_own=True)
+        return Response(GameChallengeSerializer(qs, many=True).data)
+
+    def post(self, request):
+        from .challenge_service import ChallengeError, create_lobby_seek
+
+        mode = request.data.get("mode", "blitz")
+        is_rated = bool(request.data.get("is_rated", False))
+        time_control = request.data.get("time_control")
+        is_timed = request.data.get("is_timed", True)
+        color = (request.data.get("color") or "random").lower()
+        if color not in ("white", "black", "random"):
+            color = "random"
+        try:
+            challenge = create_lobby_seek(
+                request.user,
+                mode=mode,
+                is_rated=is_rated,
+                is_timed=bool(is_timed),
+                time_control=time_control,
+                color=color,
+            )
+        except ChallengeError as exc:
+            payload = {"error": exc.message}
+            if exc.code:
+                payload["code"] = exc.code
+            return Response(payload, status=exc.status)
+        return Response(GameChallengeSerializer(challenge).data, status=status.HTTP_201_CREATED)
+
+
+class LobbySeekAcceptView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk: int):
+        from .challenge_service import ChallengeError, accept_lobby_seek
+
+        try:
+            challenge = GameChallenge.objects.select_related("challenger").get(pk=pk)
+        except GameChallenge.DoesNotExist:
+            return Response({"error": "Seek introuvable"}, status=404)
+        try:
+            challenge = accept_lobby_seek(challenge, request.user)
+        except ChallengeError as exc:
+            payload = {"error": exc.message}
+            if exc.code:
+                payload["code"] = exc.code
+            return Response(payload, status=exc.status)
+        return Response(
+            {
+                "challenge": GameChallengeSerializer(challenge).data,
+                "game": GameSerializer(challenge.game).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class LobbySeekCancelView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, pk: int):
+        from .challenge_service import ChallengeError, cancel_challenge
+
+        try:
+            challenge = GameChallenge.objects.get(pk=pk)
+        except GameChallenge.DoesNotExist:
+            return Response({"error": "Seek introuvable"}, status=404)
+        if challenge.opponent_id is not None:
+            return Response({"error": "Ce n'est pas un seek lobby"}, status=400)
         try:
             challenge = cancel_challenge(challenge, request.user)
         except ChallengeError as exc:

@@ -182,7 +182,7 @@ export interface GameChallenge {
   time_control?: string;
   game_id?: string | null;
   challenger: { id: number; username: string; display_name?: string };
-  opponent: { id: number; username: string; display_name?: string };
+  opponent: { id: number; username: string; display_name?: string } | null;
   created_at: string;
   responded_at?: string | null;
 }
@@ -262,6 +262,19 @@ export const gamesApi = {
     ),
   declineChallenge: (id: number) => api.post<GameChallenge>(`/games/challenges/${id}/decline/`),
   cancelChallenge: (id: number) => api.post<GameChallenge>(`/games/challenges/${id}/cancel/`),
+  listLobbySeeks: () => api.get<GameChallenge[]>("/games/lobby/"),
+  createLobbySeek: (opts: {
+    mode?: string;
+    time_control?: string;
+    is_rated?: boolean;
+    is_timed?: boolean;
+    color?: "white" | "black" | "random";
+  }) => api.post<GameChallenge>("/games/lobby/", opts),
+  acceptLobbySeek: (id: number) =>
+    api.post<{ challenge: GameChallenge; game: { id: string; mode?: string } }>(
+      `/games/lobby/${id}/accept/`
+    ),
+  cancelLobbySeek: (id: number) => api.delete<GameChallenge>(`/games/lobby/${id}/`),
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),
   analyzeAsync: (id: string) => api.post(`/games/${id}/analyze/async/`),
   analyzeStatus: (id: string) => api.get(`/games/${id}/analyze/status/`),
@@ -545,8 +558,16 @@ export const notificationsApi = {
 };
 
 export const tournamentsApi = {
-  list: (african?: boolean) =>
-    api.get("/tournaments/", { params: { african: african ? "1" : undefined } }),
+  list: (opts?: boolean | { african?: boolean; format?: string }) => {
+    const african = typeof opts === "boolean" ? opts : opts?.african;
+    const format = typeof opts === "object" ? opts?.format : undefined;
+    return api.get("/tournaments/", {
+      params: {
+        african: african ? "1" : undefined,
+        tournament_format: format || undefined,
+      },
+    });
+  },
   get: (slug: string) => api.get(`/tournaments/${slug}/`),
   register: (slug: string, clubId?: number) =>
     api.post(`/tournaments/${slug}/register/`, clubId != null ? { club_id: clubId } : {}),

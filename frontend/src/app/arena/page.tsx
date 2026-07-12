@@ -2,11 +2,12 @@
 
 import { TournamentListPanel } from "@/components/tournaments/TournamentListPanel";
 
-export default function TournamentsPage() {
+export default function ArenaPage() {
   return (
     <TournamentListPanel
-      titleKey="tournaments.title"
-      subtitleKey="tournaments.subtitle"
+      format="arena"
+      titleKey="arena.title"
+      subtitleKey="arena.subtitle"
       showAfricanFilter
     />
   );

@@ -500,6 +500,9 @@ class GameChallenge(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="challenges_received",
+        null=True,
+        blank=True,
+        help_text="Null = seek lobby ouvert (n'importe qui peut accepter)",
     )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     mode = models.CharField(max_length=20, default="blitz")

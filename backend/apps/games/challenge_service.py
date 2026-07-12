@@ -179,3 +179,91 @@ def cancel_challenge(challenge: GameChallenge, user) -> GameChallenge:
     challenge.responded_at = timezone.now()
     challenge.save(update_fields=["status", "responded_at"])
     return challenge
+
+
+def create_lobby_seek(
+    challenger,
+    *,
+    mode: str = "blitz",
+    is_rated: bool = False,
+    is_timed: bool = True,
+    time_control: str | None = None,
+    color: str = "random",
+):
+    """Seek ouvert type Lichess lobby — opponent=None jusqu'à acceptation."""
+    if is_timed and not time_control:
+        time_control = default_time_control_for_mode(mode)
+
+    if is_rated:
+        try:
+            MatchmakingService()._check_fairplay(challenger, True)
+        except ValueError as exc:
+            raise ChallengeError(str(exc), 403, "fairplay_sanction") from exc
+
+    existing = GameChallenge.objects.filter(
+        challenger=challenger,
+        opponent__isnull=True,
+        status=GameChallenge.Status.PENDING,
+    ).first()
+    if existing:
+        raise ChallengeError(
+            "Vous avez déjà une partie en attente dans le lobby",
+            400,
+            "lobby_seek_pending",
+        )
+
+    if color == "white":
+        challenger_plays_white = True
+    elif color == "black":
+        challenger_plays_white = False
+    else:
+        import random
+
+        challenger_plays_white = random.choice([True, False])
+
+    return GameChallenge.objects.create(
+        challenger=challenger,
+        opponent=None,
+        mode=mode,
+        odds="none",
+        is_rated=bool(is_rated),
+        is_timed=bool(is_timed),
+        time_control=time_control or "",
+        challenger_plays_white=challenger_plays_white,
+    )
+
+
+def list_open_seeks(*, exclude_user=None, include_own: bool = True):
+    qs = (
+        GameChallenge.objects.filter(
+            opponent__isnull=True,
+            status=GameChallenge.Status.PENDING,
+        )
+        .select_related("challenger")
+        .order_by("-created_at")
+    )
+    if exclude_user is not None and not include_own:
+        qs = qs.exclude(challenger=exclude_user)
+    return qs[:50]
+
+
+def accept_lobby_seek(challenge: GameChallenge, user) -> GameChallenge:
+    if challenge.opponent_id is not None:
+        raise ChallengeError("Ce n'est pas un seek lobby", 400)
+    if challenge.status != GameChallenge.Status.PENDING:
+        raise ChallengeError("Ce défi n'est plus disponible", 400)
+    if challenge.challenger_id == user.id:
+        raise ChallengeError("Impossible d'accepter votre propre seek", 400)
+
+    if is_blocked(challenge.challenger, user) or is_blocked(user, challenge.challenger):
+        raise ChallengeError("Action non autorisée", 403)
+
+    if challenge.is_rated:
+        try:
+            MatchmakingService()._check_fairplay(user, True)
+        except ValueError as exc:
+            raise ChallengeError(str(exc), 403, "fairplay_sanction") from exc
+
+    challenge.opponent = user
+    challenge.save(update_fields=["opponent"])
+    return accept_challenge(challenge, user)
