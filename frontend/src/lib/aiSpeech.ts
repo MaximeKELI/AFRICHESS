@@ -54,7 +54,15 @@ function isFirefox(): boolean {
 
 function isRoboticVoice(v: SpeechSynthesisVoice | null): boolean {
   if (!v) return true;
-  return /espeak|festival|rhvoice|mbrola/.test(v.name.toLowerCase());
+  const n = v.name.toLowerCase();
+  // espeak et assimilés = voix robotique à exclure
+  if (/espeak|festival|rhvoice|mbrola|pico|svox/.test(n)) return true;
+  // Sur Linux, les voix "localService" sans marqueur neural/google/microsoft
+  // sont souvent espeak déguisé
+  if (v.localService && !/neural|natural|premium|wavenet|enhanced|google|microsoft|apple|samsung/.test(n)) {
+    return true;
+  }
+  return false;
 }
 
 function isFrenchVoice(v: SpeechSynthesisVoice): boolean {
