@@ -180,7 +180,7 @@ def play_exhibition_move(game: Game) -> Optional[dict]:
         from .ws_notify import notify_game_room
         from .realtime_services import build_ws_payload
 
-        notify_game_room(str(game.id), "game_update", build_ws_payload(game))
+        notify_game_room(str(game.id), "broadcast_move", build_ws_payload(game, {"tv_exhibition": True}))
     except Exception:
         logger.debug("TV exhibition WS notify skipped", exc_info=True)
 
