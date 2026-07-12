@@ -30,6 +30,8 @@ interface PuzzleBoardProps {
   onComplete: (moves: string[], wrong: boolean) => void;
   onWrong?: (played: string[]) => void;
   disabled?: boolean;
+  /** Verrouille le plateau après une erreur (Rush / Storm / Survival / Battle). */
+  lockOnWrong?: boolean;
   hintRevealed?: boolean;
   /** true = flèche/UCI OK, false = échec, null = pas encore révélé */
   onHintStatus?: (status: boolean | null) => void;
@@ -42,6 +44,7 @@ export function PuzzleBoard({
   onComplete,
   onWrong,
   disabled,
+  lockOnWrong = false,
   hintRevealed,
   onHintStatus,
   reviewHighlight,
@@ -59,6 +62,7 @@ export function PuzzleBoard({
   const [wrongFlash, setWrongFlash] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [boardNonce, setBoardNonce] = useState(0);
+  const [lockedWrong, setLockedWrong] = useState(false);
 
   useEffect(() => {
     setPlayed([]);
@@ -67,6 +71,7 @@ export function PuzzleBoard({
     setShake(false);
     setWrongFlash(false);
     setBoardNonce(0);
+    setLockedWrong(false);
   }, [puzzle.id, puzzle.fen]);
 
   const orientation = useMemo(() => puzzleOrientation(puzzle.fen), [puzzle.fen]);
@@ -79,7 +84,7 @@ export function PuzzleBoard({
 
   const handleMove = useCallback(
     (uci: string) => {
-      if (disabled || !isPlayerTurn(puzzle.fen, played)) return;
+      if (disabled || lockedWrong || !isPlayerTurn(puzzle.fen, played)) return;
 
       const result = applyPuzzleMove(puzzle.fen, solution, played, uci);
 
@@ -88,6 +93,9 @@ export function PuzzleBoard({
         setWrongFlash(true);
         setFeedback(t("puzzles.wrongMove"));
         playPuzzleWrong(puzzleSoundsActive(lowBandwidth));
+        if (lockOnWrong) {
+          setLockedWrong(true);
+        }
         onWrong?.(played);
         setBoardNonce((n) => n + 1);
         setTimeout(() => {
@@ -107,7 +115,19 @@ export function PuzzleBoard({
         onComplete(result.moves, false);
       }
     },
-    [disabled, puzzle.fen, solution, played, onComplete, onWrong, onPlayedChange, t, lowBandwidth]
+    [
+      disabled,
+      lockedWrong,
+      lockOnWrong,
+      puzzle.fen,
+      solution,
+      played,
+      onComplete,
+      onWrong,
+      onPlayedChange,
+      t,
+      lowBandwidth,
+    ]
   );
 
   const progress = solution.length ? Math.round((played.length / solution.length) * 100) : 0;
@@ -160,7 +180,7 @@ export function PuzzleBoard({
         orientation={orientation}
         onMove={handleMove}
         playerColor={playerColor}
-        disabled={disabled || !isPlayerTurn(puzzle.fen, played)}
+        disabled={disabled || lockedWrong || !isPlayerTurn(puzzle.fen, played)}
         lastMove={lastMove}
         playSoundOnFenChange
         serverValidated

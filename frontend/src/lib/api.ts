@@ -389,7 +389,8 @@ export const puzzlesApi = {
     api.post(`/puzzles/storm/${sessionId}/submit/`, { moves, time_seconds }),
   rushSubmit: (sessionId: number, moves: string[], time_seconds: number) =>
     api.post(`/puzzles/rush/${sessionId}/submit/`, { moves, time_seconds }),
-  rushLeaderboard: () => api.get("/puzzles/rush/leaderboard/"),
+  rushLeaderboard: (mode: "rush" | "storm" | "survival" = "rush") =>
+    api.get("/puzzles/rush/leaderboard/", { params: { mode } }),
   battleQueue: () => api.post("/puzzles/battle/queue/"),
   battleLeave: () => api.delete("/puzzles/battle/queue/"),
   battleGet: (id: number) => api.get(`/puzzles/battle/${id}/`),
