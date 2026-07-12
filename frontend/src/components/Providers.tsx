@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { useAuthStore } from "@/store/auth";
 import { ActivityTracker } from "@/components/analytics/ActivityTracker";
 import { SiteBackground } from "@/components/layout/SiteBackground";
@@ -8,6 +8,7 @@ import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { PushRegistration } from "@/components/notifications/PushRegistration";
 import { GameInviteRedirect } from "@/components/notifications/GameInviteRedirect";
 import { initAiSpeech } from "@/lib/aiSpeech";
+import { hydrateClientStoresFromStorage } from "@/lib/clientHydration";
 import { refreshAuthTokens } from "@/lib/api";
 import { JWT_REFRESH_HTTPONLY } from "@/lib/authConfig";
 import { setChessSoundTheme } from "@/lib/chessSounds";
@@ -17,6 +18,10 @@ import Cookies from "js-cookie";
 export function Providers({ children }: { children: React.ReactNode }) {
   const { fetchProfile, darkMode, lowBandwidth, locale, logout } = useAuthStore();
   const soundTheme = usePreferencesStore((s) => s.soundTheme);
+
+  useLayoutEffect(() => {
+    hydrateClientStoresFromStorage();
+  }, []);
 
   useEffect(() => {
     const init = async () => {

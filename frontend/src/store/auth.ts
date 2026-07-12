@@ -10,6 +10,13 @@ import { clearAuthCookies } from "@/lib/session";
 import { syncPreferencesForUser } from "@/store/preferences";
 import { syncPuzzlePreferencesFromStorage } from "@/store/puzzlePreferences";
 
+/** Defaults SSR — localStorage lu après mount via hydrateClientStoresFromStorage(). */
+export const AUTH_SSR_DEFAULTS = {
+  locale: "fr" as const,
+  darkMode: false,
+  lowBandwidth: false,
+};
+
 interface User {
   id: number;
   username: string;
@@ -60,10 +67,9 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: false,
-  locale: (typeof window !== "undefined" && (localStorage.getItem("locale") as AuthState["locale"])) || "fr",
-  darkMode: typeof window !== "undefined" && localStorage.getItem("theme") === "dark",
-  lowBandwidth:
-    typeof window !== "undefined" && localStorage.getItem("lowBandwidth") === "1",
+  locale: AUTH_SSR_DEFAULTS.locale,
+  darkMode: AUTH_SSR_DEFAULTS.darkMode,
+  lowBandwidth: AUTH_SSR_DEFAULTS.lowBandwidth,
 
   setLocale: (locale) => {
     localStorage.setItem("locale", locale);

@@ -109,13 +109,13 @@ interface PreferencesState {
 }
 
 export const usePreferencesStore = create<PreferencesState>((set) => ({
-  boardTheme: readBoardTheme(),
-  boardBackground: readBoardBackground(),
-  pieceSet: readPieceSet(),
-  soundTheme: readSoundTheme(),
-  aiCommentsEnabled: readAiComments(),
-  zenMode: readZenMode(),
-  blindMode: readBlindMode(),
+  boardTheme: DEFAULT_BOARD_THEME,
+  boardBackground: DEFAULT_BOARD_BACKGROUND,
+  pieceSet: "classic" as PieceSetId,
+  soundTheme: DEFAULT_SOUND_THEME,
+  aiCommentsEnabled: true,
+  zenMode: false,
+  blindMode: false,
   setBoardTheme: (id) => {
     localStorage.setItem(preferenceStorageKey(BOARD_THEME_KEY), id);
     set({ boardTheme: id });

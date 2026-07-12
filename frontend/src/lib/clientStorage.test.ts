@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 import {
   applyAuthDomClasses,
   readStoredDarkMode,
@@ -64,15 +64,52 @@ describe("clientStorage SSR-safe reads", () => {
 });
 
 describe("auth store SSR defaults", () => {
-  it("does not read localStorage during module init on server", async () => {
-    const originalWindow = globalThis.window;
-    // @ts-expect-error simulate SSR
-    delete globalThis.window;
+  it("uses fixed defaults without reading localStorage at init", async () => {
+    vi.stubGlobal("window", undefined);
     vi.resetModules();
+    const { useAuthStore, AUTH_SSR_DEFAULTS } = await import("@/store/auth");
+    expect(useAuthStore.getState().darkMode).toBe(AUTH_SSR_DEFAULTS.darkMode);
+    expect(useAuthStore.getState().locale).toBe(AUTH_SSR_DEFAULTS.locale);
+    expect(useAuthStore.getState().lowBandwidth).toBe(AUTH_SSR_DEFAULTS.lowBandwidth);
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("clientHydration", () => {
+  beforeEach(() => {
+    const store = new Map<string, string>();
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      value: {
+        getItem: (k: string) => store.get(k) ?? null,
+        setItem: (k: string, v: string) => store.set(k, v),
+        removeItem: (k: string) => store.delete(k),
+        clear: () => store.clear(),
+      },
+    });
+    Object.defineProperty(globalThis, "window", { configurable: true, value: globalThis });
+    Object.defineProperty(globalThis, "document", {
+      configurable: true,
+      value: {
+        documentElement: {
+          classList: { toggle: () => undefined },
+        },
+      },
+    });
+  });
+
+  it("hydrates auth store from localStorage after SSR first paint", async () => {
+    localStorage.setItem("theme", "dark");
+    localStorage.setItem("locale", "en");
+
+    vi.resetModules();
+    const hydration = await import("@/lib/clientHydration");
+    hydration.__resetClientHydrationForTests();
     const { useAuthStore } = await import("@/store/auth");
+
     expect(useAuthStore.getState().darkMode).toBe(false);
-    expect(useAuthStore.getState().locale).toBe("fr");
-    expect(useAuthStore.getState().lowBandwidth).toBe(false);
-    globalThis.window = originalWindow;
+    hydration.hydrateClientStoresFromStorage();
+    expect(useAuthStore.getState().darkMode).toBe(true);
+    expect(useAuthStore.getState().locale).toBe("en");
   });
 });
