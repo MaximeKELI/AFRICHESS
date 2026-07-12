@@ -34,10 +34,13 @@ from apps.ratings.services import RatingService
 from .anticheat import validate_move_fairplay
 from .draw_rules import (
     bump_repetition_count,
+    can_claim_fifty_moves_from_game,
     can_claim_threefold_from_game,
+    finalize_draw,
     finalize_repetition_draw,
     init_repetition_counts,
     is_fivefold_repetition_from_game,
+    is_seventyfive_moves_from_game,
     rebuild_repetition_counts,
 )
 from .time_control import normalize_matchmaking_time_control, resolve_time_fields
@@ -397,6 +400,8 @@ class GameService:
         else:
             game.pgn = f"{(game.pgn or '').rstrip()} {san}".strip()
         bump_repetition_count(game)
+        # Lichess : proposer nulle puis jouer le coup répétitif = claim.
+        claim_intent_user_id = game.draw_offered_by_id
         # Coup joue → annule offre de nulle / takeback (parité Lichess)
         game.draw_offered_by = None
         game.takeback_requested_by = None
@@ -424,25 +429,16 @@ class GameService:
                     response["result"] = game.result
                 is_over = auto.get("game_over", is_over)
 
-        if is_fivefold_repetition_from_game(game):
-            finalize_repetition_draw(game)
-            game.save()
-            self._after_human_game_finished(game)
-            if pending_comment_specs:
-                schedule_move_comments(str(game.id), pending_comment_specs)
-            return {
-                "move": move,
-                "fen": game.fen,
-                "game_over": True,
-                "result": game.result,
-                "termination_reason": "repetition",
-                "draw_claim": "fivefold",
-                "comments_pending": bool(pending_comment_specs),
-            }
-
-        if can_claim_threefold_from_game(game):
-            # Triple répétition : claim joueur requis (pas de nulle auto).
-            response["threefold_available"] = True
+        claimed = self._apply_claimable_draw_rules(
+            game,
+            user=user,
+            move=move,
+            response=response,
+            claim_intent_user_id=claim_intent_user_id,
+            pending_comment_specs=pending_comment_specs,
+        )
+        if claimed is not None:
+            return claimed
 
         if game.is_vs_ai and not is_over:
             ai_move = self.engine.get_best_move(
@@ -486,17 +482,19 @@ class GameService:
                     response["game_over"] = ai_over
                     is_over = ai_over
 
-                    if is_fivefold_repetition_from_game(game):
-                        finalize_repetition_draw(game)
-                        game.save()
-                        self._after_human_game_finished(game)
-                        response["game_over"] = True
-                        response["result"] = game.result
-                        response["termination_reason"] = "repetition"
-                        response["draw_claim"] = "fivefold"
-                        is_over = True
-                    elif can_claim_threefold_from_game(game):
-                        response["threefold_available"] = True
+                    ai_claimed = self._apply_claimable_draw_rules(
+                        game,
+                        user=user,
+                        move=move,
+                        response=response,
+                        claim_intent_user_id=None,
+                        pending_comment_specs=pending_comment_specs,
+                        move_record_for_response=False,
+                    )
+                    if ai_claimed is not None:
+                        ai_claimed["ai_move"] = response.get("ai_move")
+                        ai_claimed["ai_move_record"] = response.get("ai_move_record")
+                        return ai_claimed
 
         if is_over:
             self._finalize_game(game)
@@ -506,6 +504,99 @@ class GameService:
             response["comments_pending"] = True
 
         return response
+
+    def _apply_claimable_draw_rules(
+        self,
+        game: Game,
+        *,
+        user,
+        move,
+        response: dict,
+        claim_intent_user_id: int | None,
+        pending_comment_specs: list,
+        move_record_for_response: bool = True,
+    ) -> dict | None:
+        """Nulle FIDE/Lichess : 75/5 auto ; 50/3 claim (ou claim via offre+coup)."""
+        if is_seventyfive_moves_from_game(game):
+            finalize_draw(game, "seventyfive_move")
+            game.save()
+            self._after_human_game_finished(game)
+            if pending_comment_specs:
+                schedule_move_comments(str(game.id), pending_comment_specs)
+            out = {
+                "fen": game.fen,
+                "game_over": True,
+                "result": game.result,
+                "termination_reason": "seventyfive_move",
+                "draw_claim": "seventyfive",
+                "comments_pending": bool(pending_comment_specs),
+            }
+            if move_record_for_response:
+                out["move"] = move
+            return out
+
+        if is_fivefold_repetition_from_game(game):
+            finalize_repetition_draw(game)
+            game.save()
+            self._after_human_game_finished(game)
+            if pending_comment_specs:
+                schedule_move_comments(str(game.id), pending_comment_specs)
+            out = {
+                "fen": game.fen,
+                "game_over": True,
+                "result": game.result,
+                "termination_reason": "repetition",
+                "draw_claim": "fivefold",
+                "comments_pending": bool(pending_comment_specs),
+            }
+            if move_record_for_response:
+                out["move"] = move
+            return out
+
+        if can_claim_threefold_from_game(game):
+            if claim_intent_user_id is not None and claim_intent_user_id == user.id:
+                finalize_repetition_draw(game)
+                game.save()
+                self._after_human_game_finished(game)
+                if pending_comment_specs:
+                    schedule_move_comments(str(game.id), pending_comment_specs)
+                out = {
+                    "fen": game.fen,
+                    "game_over": True,
+                    "result": game.result,
+                    "termination_reason": "repetition",
+                    "draw_claim": "threefold",
+                    "comments_pending": bool(pending_comment_specs),
+                }
+                if move_record_for_response:
+                    out["move"] = move
+                return out
+            response["threefold_available"] = True
+
+        if can_claim_fifty_moves_from_game(game):
+            if claim_intent_user_id is not None and claim_intent_user_id == user.id:
+                finalize_draw(game, "fifty_move")
+                game.save()
+                self._after_human_game_finished(game)
+                if pending_comment_specs:
+                    schedule_move_comments(str(game.id), pending_comment_specs)
+                out = {
+                    "fen": game.fen,
+                    "game_over": True,
+                    "result": game.result,
+                    "termination_reason": "fifty_move",
+                    "draw_claim": "fifty_move",
+                    "comments_pending": bool(pending_comment_specs),
+                }
+                if move_record_for_response:
+                    out["move"] = move
+                return out
+            response["fifty_available"] = True
+
+        return None
+
+    def _record_move_PLACEHOLDER_REMOVE(self):
+        pass
 
     def _record_move(
         self,

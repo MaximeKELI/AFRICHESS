@@ -97,10 +97,22 @@ def can_claim_fifty_moves_from_game(game) -> bool:
         return False
 
 
+def is_seventyfive_moves_from_game(game) -> bool:
+    """75 demi-coups sans prise/pion — nulle automatique (FIDE / Lichess)."""
+    try:
+        return board_from_game_moves(game).is_seventyfive_moves()
+    except Exception:
+        return False
+
+
 def finalize_repetition_draw(game: Game) -> None:
+    finalize_draw(game, "repetition")
+
+
+def finalize_draw(game: Game, termination_reason: str) -> None:
     game.result = Game.Result.DRAW
     game.status = Game.Status.COMPLETED
-    game.termination_reason = "repetition"
+    game.termination_reason = termination_reason
     game.ended_at = timezone.now()
     game.winner = None
     game.draw_offered_by = None
