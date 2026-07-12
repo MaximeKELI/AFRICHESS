@@ -12,6 +12,10 @@ export default defineConfig({
   reporter: process.env.CI ? "github" : "list",
   use: {
     ...devices["Desktop Chrome"],
+    // Ubuntu 26.04: bundled Chromium install may fail; use system Chrome via PLAYWRIGHT_CHANNEL=chrome
+    ...(process.env.PLAYWRIGHT_CHANNEL
+      ? { channel: process.env.PLAYWRIGHT_CHANNEL as "chrome" | "chrome-beta" | "msedge" }
+      : {}),
     baseURL,
     locale: "fr-FR",
     trace: "on-first-retry",
