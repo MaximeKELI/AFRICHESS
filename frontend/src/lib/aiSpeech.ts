@@ -1,12 +1,13 @@
 /**
  * Synthèse vocale — commentaires IA et coach.
- * Voix humaine navigateur en priorité ; WAV espeak uniquement en secours.
+ * TTS neural serveur (edge-tts Henri) en priorité ; navigateur premium en secours.
+ * Jamais espeak / voix robotique.
  */
 
 import Cookies from "js-cookie";
 import { apiBase } from "@/lib/apiConfig";
 import { normalizeSpeechText, splitSpeechChunks } from "@/lib/speechText";
-import { buildTtsUrls, shouldPreferWavTts } from "@/lib/ttsEndpoints";
+import { buildTtsUrls, shouldPreferNeuralTts } from "@/lib/ttsEndpoints";
 
 let preferredVoice: SpeechSynthesisVoice | null = null;
 let voicesListenerAttached = false;
@@ -95,10 +96,11 @@ function attachVoicesListener() {
   refreshVoices();
 }
 
-function hasHumanBrowserVoice(): boolean {
+function hasPremiumBrowserVoice(): boolean {
   if (typeof window === "undefined" || !window.speechSynthesis) return false;
   refreshVoices();
-  return Boolean(preferredVoice && !isRoboticVoice(preferredVoice));
+  // Uniquement Google remote / Microsoft neural — pas les voix locales type espeak
+  return Boolean(preferredVoice && voiceScore(preferredVoice) >= 90);
 }
 
 function startKeepAlive() {
@@ -124,7 +126,6 @@ function stopCurrentAudio() {
   audio.pause();
   audio.onended = null;
   audio.onerror = null;
-  // Résoudre la promesse playWavBufferAndWait — sinon pipelineRunning reste true
   abort?.();
 }
 
@@ -138,12 +139,27 @@ function clearStuckSpeechSynthesis() {
   }
 }
 
-function playWavBufferAndWait(buf: ArrayBuffer): Promise<boolean> {
+function sniffMime(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46
+  ) {
+    return "audio/wav";
+  }
+  return "audio/mpeg";
+}
+
+function playAudioBufferAndWait(buf: ArrayBuffer, mime?: string): Promise<boolean> {
   if (typeof window === "undefined") return Promise.resolve(false);
 
   return new Promise((resolve) => {
     stopCurrentAudio();
-    const blob = new Blob([buf], { type: "audio/wav" });
+    const type = mime || sniffMime(buf);
+    const blob = new Blob([buf], { type });
     const objectUrl = URL.createObjectURL(blob);
     const audio = new Audio(objectUrl) as HTMLAudioElement & { __africhessAbort?: () => void };
     currentAudio = audio;
@@ -176,6 +192,12 @@ function playWavBufferAndWait(buf: ArrayBuffer): Promise<boolean> {
     );
   });
 }
+
+/** @deprecated use playAudioBufferAndWait */
+function playWavBufferAndWait(buf: ArrayBuffer): Promise<boolean> {
+  return playAudioBufferAndWait(buf);
+}
+
 
 /** Exposé pour les tests : URLs réellement appelées. */
 export function getTtsFetchUrls(): { local: string; backend: string } {
@@ -297,8 +319,23 @@ function speakBrowserChunk(text: string, byAi: boolean, generation: number): Pro
 async function speakChunk(text: string, byAi: boolean, generation: number): Promise<boolean> {
   if (generation !== speechGeneration) return false;
 
-  // 1. Voix humaine navigateur uniquement — jamais de WAV espeak en parallèle
-  if (hasHumanBrowserVoice()) {
+  // 1. TTS neural serveur (edge-tts Henri) — voix humaine, une seule source
+  if (shouldPreferNeuralTts()) {
+    clearStuckSpeechSynthesis();
+    const buf = await fetchTtsWav(text);
+    if (generation !== speechGeneration) return false;
+    if (buf) {
+      const ok = await playAudioBufferAndWait(buf);
+      if (generation !== speechGeneration) {
+        stopCurrentAudio();
+        return false;
+      }
+      if (ok) return true;
+    }
+  }
+
+  // 2. Secours : voix navigateur premium uniquement (jamais espeak local)
+  if (hasPremiumBrowserVoice()) {
     stopCurrentAudio();
     const ok = await speakBrowserChunk(text, byAi, generation);
     if (generation !== speechGeneration) {
@@ -308,19 +345,7 @@ async function speakChunk(text: string, byAi: boolean, generation: number): Prom
     return ok;
   }
 
-  // 2. Secours robotique (espeak WAV) seulement s'il n'existe aucune voix humaine
-  if (!shouldPreferWavTts(false)) return false;
-
-  const buf = await fetchTtsWav(text);
-  if (generation !== speechGeneration) return false;
-  if (!buf) return false;
-
-  const ok = await playWavBufferAndWait(buf);
-  if (generation !== speechGeneration) {
-    stopCurrentAudio();
-    return false;
-  }
-  return ok;
+  return false;
 }
 
 async function runSpeechPipeline(): Promise<void> {

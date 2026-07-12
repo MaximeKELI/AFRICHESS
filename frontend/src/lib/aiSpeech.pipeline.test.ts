@@ -128,7 +128,7 @@ describe("speakComment pipeline (mocked window + fetch)", () => {
     expect(played.length).toBeGreaterThan(0);
   });
 
-  it("does not call WAV TTS when a human browser voice is available", async () => {
+  it("prefers neural /api/tts over browser speech even when a premium voice exists", async () => {
     const humanVoice = {
       name: "Google français",
       lang: "fr-FR",
@@ -163,11 +163,7 @@ describe("speakComment pipeline (mocked window + fetch)", () => {
       resume: () => undefined,
       speak: (u: FakeUtterance) => {
         speakCalls.push(u.text);
-        synth.speaking = true;
-        queueMicrotask(() => {
-          synth.speaking = false;
-          u.onend?.(new Event("end"));
-        });
+        queueMicrotask(() => u.onend?.(new Event("end")));
       },
     };
 
@@ -184,24 +180,22 @@ describe("speakComment pipeline (mocked window + fetch)", () => {
       })
     );
 
-    fetchMock.mockClear();
-    played.length = 0;
     vi.resetModules();
     const mod = await import("@/lib/aiSpeech");
     mod.__resetAiSpeechForTests();
     mod.unlockAiSpeech();
     played.length = 0;
     fetchMock.mockClear();
-    await mod.speakComment("Uniquement la voix humaine.", {
+    await mod.speakComment("Voix neurale uniquement.", {
       interrupt: true,
       forceUnlock: false,
       enabled: true,
     });
     await mod.waitForSpeechIdle(5000);
 
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(speakCalls).toContain("Uniquement la voix humaine.");
-    expect(played.length).toBe(0);
+    expect(fetchMock).toHaveBeenCalled();
+    expect(speakCalls).toHaveLength(0);
+    expect(played.length).toBeGreaterThan(0);
   });
 
   it("interrupt mid-play still allows the next comment to speak (no deadlock)", async () => {

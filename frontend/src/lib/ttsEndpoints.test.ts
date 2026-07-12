@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildTtsUrls, LOCAL_TTS_PATH, BACKEND_TTS_SUFFIX, shouldPreferWavTts } from "@/lib/ttsEndpoints";
+import {
+  buildTtsUrls,
+  LOCAL_TTS_PATH,
+  BACKEND_TTS_SUFFIX,
+  shouldPreferNeuralTts,
+  shouldPreferWavTts,
+} from "@/lib/ttsEndpoints";
 
 describe("ttsEndpoints", () => {
   it("builds local /api/tts and plural /games/tts/ (never /game/tts/)", () => {
@@ -17,8 +23,9 @@ describe("ttsEndpoints", () => {
     );
   });
 
-  it("prefers WAV only when no human browser voice is available", () => {
+  it("always prefers neural server TTS over browser/espeak", () => {
+    expect(shouldPreferNeuralTts()).toBe(true);
+    expect(shouldPreferWavTts(true)).toBe(true);
     expect(shouldPreferWavTts(false)).toBe(true);
-    expect(shouldPreferWavTts(true)).toBe(false);
   });
 });

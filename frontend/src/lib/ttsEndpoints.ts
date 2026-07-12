@@ -14,10 +14,14 @@ export function buildTtsUrls(apiBaseUrl: string): { local: string; backend: stri
 }
 
 /**
- * WAV (espeak) = secours robotique seulement.
- * Si une voix humaine navigateur est dispo, on ne doit PAS préférer le WAV
- * (sinon l’utilisateur entend humain + robot en parallèle / en alternance).
+ * Toujours préférer le TTS serveur neural (edge-tts).
+ * speechSynthesis Linux est souvent espeak robotique.
  */
-export function shouldPreferWavTts(hasHumanBrowserVoice = false): boolean {
-  return !hasHumanBrowserVoice;
+export function shouldPreferNeuralTts(): boolean {
+  return true;
+}
+
+/** @deprecated alias — le « WAV » serveur est désormais MP3 neural. */
+export function shouldPreferWavTts(_hasHumanBrowserVoice = false): boolean {
+  return shouldPreferNeuralTts();
 }

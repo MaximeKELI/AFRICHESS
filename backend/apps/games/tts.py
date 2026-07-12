@@ -1,120 +1,95 @@
-"""Synthèse vocale serveur (espeak-ng) — secours Linux sans voix navigateur."""
+"""Synthèse vocale serveur — voix neurale humaine (edge-tts), pas espeak."""
 from __future__ import annotations
 
-import ctypes
-import ctypes.util
-import io
+import asyncio
 import logging
-import shutil
-import subprocess
-import wave
+import os
 
 logger = logging.getLogger(__name__)
 
 MAX_TTS_CHARS = 1200
-# Voix française plus douce (espeak-ng variants)
-ESPEAK_VOICE = "fr+f3"
-ESPEAK_RATE = 145
-ESPEAK_PITCH = 48
+
+# Voix française masculine neurale (Microsoft Edge) — naturelle, pas robotique.
+DEFAULT_VOICE = os.environ.get("AFRICHESS_TTS_VOICE", "fr-FR-HenriNeural")
+# Secours féminin si Henri indisponible
+FALLBACK_VOICES = (
+    DEFAULT_VOICE,
+    "fr-FR-AlainNeural",
+    "fr-FR-DeniseNeural",
+    "fr-FR-EloiseNeural",
+)
 
 
-def _pcm_to_wav(pcm: bytes, sample_rate: int) -> bytes:
-    buf = io.BytesIO()
-    with wave.open(buf, "wb") as w:
-        w.setnchannels(1)
-        w.setsampwidth(2)
-        w.setframerate(sample_rate)
-        w.writeframes(pcm)
-    return buf.getvalue()
-
-
-def _synthesize_via_libespeak(text: str, *, lang: str = "fr") -> bytes | None:
-    """Utilise libespeak-ng.so quand le binaire espeak-ng n'est pas installé."""
-    lib_path = ctypes.util.find_library("espeak-ng")
-    if not lib_path:
-        return None
+def _run_async(coro):
     try:
-        lib = ctypes.CDLL(lib_path)
-    except OSError as exc:
-        logger.warning("libespeak-ng indisponible: %s", exc)
-        return None
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+    # Dans un event loop déjà actif (Daphne) : exécuter dans un thread dédié
+    import concurrent.futures
 
-    AUDIO_OUTPUT_RETRIEVAL = 2
-    samples = bytearray()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(asyncio.run, coro).result(timeout=60)
 
-    synth_cb = ctypes.CFUNCTYPE(
-        ctypes.c_int,
-        ctypes.POINTER(ctypes.c_short),
-        ctypes.c_int,
-        ctypes.c_void_p,
-    )
 
-    @synth_cb
-    def _callback(wav, numsamples, _events):
-        if numsamples > 0 and wav:
-            samples.extend(ctypes.string_at(wav, numsamples * 2))
-        return 0
-
+async def _edge_tts_mp3(text: str, voice: str) -> bytes | None:
     try:
-        rate = lib.espeak_Initialize(AUDIO_OUTPUT_RETRIEVAL, 500, None, 0)
-        if rate <= 0:
-            return None
-        lib.espeak_SetSynthCallback(_callback)
-        for voice in (b"fr+f2", b"fr+f1", b"fr"):
-            if lib.espeak_SetVoiceByName(voice) == 0:
-                break
-        payload = text.encode("utf-8")
-        uid = ctypes.c_uint(0)
-        if lib.espeak_Synth(payload, len(payload), 0, 1, 0, 1, ctypes.byref(uid), None) != 0:
-            return None
-        lib.espeak_Synchronize()
-    except (AttributeError, OSError) as exc:
-        logger.warning("libespeak-ng synthèse échec: %s", exc)
+        import edge_tts
+    except ImportError:
+        logger.warning("edge-tts non installé — voix neurale indisponible")
         return None
 
-    if not samples:
+    chunks: list[bytes] = []
+    try:
+        communicate = edge_tts.Communicate(text, voice)
+        async for part in communicate.stream():
+            if part.get("type") == "audio" and part.get("data"):
+                chunks.append(part["data"])
+    except Exception as exc:
+        logger.warning("edge-tts échec (%s): %s", voice, exc)
         return None
-    return _pcm_to_wav(bytes(samples), rate)
+
+    if not chunks:
+        return None
+    return b"".join(chunks)
 
 
-def synthesize_wav(text: str, *, lang: str = "fr") -> bytes | None:
-    """Génère un WAV via espeak-ng. Retourne None si indisponible."""
+def synthesize_speech(text: str, *, lang: str = "fr") -> tuple[bytes, str] | None:
+    """Génère de l'audio neural.
+
+    Retourne (bytes, content_type) — typiquement MP3 edge-tts.
+    None si indisponible (pas de repli espeak : trop robotique).
+    """
     cleaned = " ".join(text.split())[:MAX_TTS_CHARS].strip()
     if not cleaned:
         return None
 
-    espeak = shutil.which("espeak-ng") or shutil.which("espeak")
-    if espeak:
-        voices = [ESPEAK_VOICE, "fr+f1", "fr"]
-        for voice in voices:
-            try:
-                result = subprocess.run(
-                    [
-                        espeak,
-                        "-v",
-                        voice,
-                        "-s",
-                        str(ESPEAK_RATE),
-                        "-p",
-                        str(ESPEAK_PITCH),
-                        "-a",
-                        "180",
-                        "--stdout",
-                        cleaned,
-                    ],
-                    capture_output=True,
-                    timeout=45,
-                    check=False,
-                )
-            except (subprocess.TimeoutExpired, OSError) as exc:
-                logger.warning("TTS espeak échec: %s", exc)
-                return _synthesize_via_libespeak(cleaned, lang=lang)
+    voices = list(dict.fromkeys(FALLBACK_VOICES))  # unique, ordre préservé
+    if lang and not lang.startswith("fr"):
+        voices = [DEFAULT_VOICE, *voices]
 
-            if result.returncode == 0 and result.stdout:
-                return result.stdout
-        logger.warning(
-            "espeak stderr: %s",
-            result.stderr.decode(errors="replace")[:200],
-        )
+    for voice in voices:
+        mp3 = _run_async(_edge_tts_mp3(cleaned, voice))
+        if mp3 and len(mp3) > 64:
+            return mp3, "audio/mpeg"
+    return None
 
-    return _synthesize_via_libespeak(cleaned, lang=lang)
+
+def synthesize_wav(text: str, *, lang: str = "fr") -> bytes | None:
+    """Compat : retourne les bytes audio (MP3 neural). Nom historique."""
+    result = synthesize_speech(text, lang=lang)
+    if not result:
+        return None
+    return result[0]
+
+
+def audio_content_type(data: bytes) -> str:
+    """Détecte le type MIME à partir de l'en-tête."""
+    if data[:4] == b"RIFF":
+        return "audio/wav"
+    if data[:3] == b"ID3" or data[:2] == b"\xff\xfb" or data[:2] == b"\xff\xf3":
+        return "audio/mpeg"
+    # edge-tts renvoie souvent du MPEG sans ID3
+    if len(data) > 2 and data[0] == 0xFF and (data[1] & 0xE0) == 0xE0:
+        return "audio/mpeg"
+    return "audio/mpeg"

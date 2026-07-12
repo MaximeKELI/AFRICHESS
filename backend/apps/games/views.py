@@ -228,12 +228,13 @@ def speech_tts(request):
     wav = synthesize_wav(text)
     if not wav:
         return Response(
-            {"error": "Synthèse vocale indisponible (espeak-ng manquant sur le serveur)."},
+            {"error": "Synthèse vocale neurale indisponible (edge-tts)."},
             status=status.HTTP_503_SERVICE_UNAVAILABLE,
         )
     from django.http import HttpResponse
+    from .tts import audio_content_type
 
-    return HttpResponse(wav, content_type="audio/wav")
+    return HttpResponse(wav, content_type=audio_content_type(wav))
 
 
 @extend_schema(summary="Coups légaux (variantes Chess960 / Crazyhouse)")
