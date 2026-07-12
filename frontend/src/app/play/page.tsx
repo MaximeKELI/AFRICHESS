@@ -610,11 +610,13 @@ function PlayContent() {
         draw_offered_by:
           data.draw_offered_by !== undefined ? data.draw_offered_by : prev.draw_offered_by,
         threefold_available:
-          data.threefold_available !== undefined
-            ? data.threefold_available
-            : data.status === "completed"
-              ? false
-              : prev.threefold_available,
+          data.status === "completed"
+            ? false
+            : data.threefold_available === true
+              ? true
+              : data.fen !== undefined || data.delta || data.new_moves !== undefined
+                ? false
+                : prev.threefold_available,
         takeback_requested_by:
           data.takeback_requested_by !== undefined
             ? data.takeback_requested_by
@@ -1570,6 +1572,7 @@ function PlayContent() {
             serverValidated={isLiveHuman || activeVariant !== "standard"}
             pendingDrop={activeVariant === "crazyhouse" ? dropPiece : null}
             onDropAtSquare={(uci) => handleMove(uci)}
+            onFlag={handleClockFlag}
             topPlayer={topPlayerConfig}
             bottomPlayer={bottomPlayerConfig}
             captured={panelDisplay.captured}
@@ -1757,6 +1760,15 @@ function PlayContent() {
                   className="text-xs px-3 py-1 rounded border border-white/20"
                 >
                   {t("play.draw.offer")}
+                </button>
+              )}
+              {gameData.threefold_available && (
+                <button
+                  type="button"
+                  onClick={claimThreefoldDraw}
+                  className="text-xs px-3 py-1 rounded border border-africhess-gold text-africhess-gold"
+                >
+                  {t("play.draw.claimRepetition")}
                 </button>
               )}
               {gameData.draw_offered_by != null &&
