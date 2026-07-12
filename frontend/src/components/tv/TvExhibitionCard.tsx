@@ -168,35 +168,56 @@ export function TvExhibitionCard({ game, featured = false, onSelect }: TvExhibit
       <div className="mb-3 space-y-2 rounded-xl border border-black/10 dark:border-white/15 bg-white/80 dark:bg-black/40 p-3 shadow-sm">
         {analysis?.head_to_head && (
           <div className="rounded-lg border border-africhess-gold/25 bg-africhess-gold/5 px-3 py-2">
-            <p className="text-[10px] uppercase tracking-wider text-africhess-gold/90 mb-1">
+            <p className="text-[10px] uppercase tracking-wider text-africhess-gold/90 mb-1.5">
               {t("tv.h2hTitle")}
             </p>
-            <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-medium">
-              <span className="truncate max-w-[35%]">
-                {game.white_player?.display_name || game.white_player?.username || "?"}
-              </span>
-              <span className="font-mono tabular-nums text-center shrink-0">
-                <span className="text-emerald-600 dark:text-emerald-400">
-                  {analysis.head_to_head.white_wins ?? 0}
-                  {t("tv.h2hWinsShort")}
-                </span>
-                <span className="opacity-40 mx-1.5">·</span>
-                <span>
-                  {analysis.head_to_head.draws ?? 0}
-                  {t("tv.h2hDrawsShort")}
-                </span>
-                <span className="opacity-40 mx-1.5">·</span>
-                <span className="text-sky-700 dark:text-sky-300">
-                  {analysis.head_to_head.black_wins ?? 0}
-                  {t("tv.h2hWinsShort")}
-                </span>
-              </span>
-              <span className="truncate max-w-[35%] text-right">
-                {game.black_player?.display_name || game.black_player?.username || "?"}
-              </span>
+            <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-start text-sm">
+              <div className="min-w-0">
+                <p className="font-medium truncate text-xs sm:text-sm mb-1">
+                  {game.white_player?.display_name || game.white_player?.username || "?"}
+                </p>
+                <p className="font-mono tabular-nums text-xs space-x-1">
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    {analysis.head_to_head.white_wins ?? 0}
+                    {t("tv.h2hWinsShort")}
+                  </span>
+                  <span className="opacity-40">·</span>
+                  <span>
+                    {analysis.head_to_head.draws ?? 0}
+                    {t("tv.h2hDrawsShort")}
+                  </span>
+                  <span className="opacity-40">·</span>
+                  <span className="text-red-600 dark:text-red-400">
+                    {analysis.head_to_head.black_wins ?? 0}
+                    {t("tv.h2hLossesShort")}
+                  </span>
+                </p>
+              </div>
+              <div className="text-center opacity-40 text-[10px] pt-1 shrink-0">vs</div>
+              <div className="min-w-0 text-right">
+                <p className="font-medium truncate text-xs sm:text-sm mb-1">
+                  {game.black_player?.display_name || game.black_player?.username || "?"}
+                </p>
+                <p className="font-mono tabular-nums text-xs space-x-1">
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    {analysis.head_to_head.black_wins ?? 0}
+                    {t("tv.h2hWinsShort")}
+                  </span>
+                  <span className="opacity-40">·</span>
+                  <span>
+                    {analysis.head_to_head.draws ?? 0}
+                    {t("tv.h2hDrawsShort")}
+                  </span>
+                  <span className="opacity-40">·</span>
+                  <span className="text-red-600 dark:text-red-400">
+                    {analysis.head_to_head.white_wins ?? 0}
+                    {t("tv.h2hLossesShort")}
+                  </span>
+                </p>
+              </div>
             </div>
-            <p className="text-[10px] opacity-50 mt-1 text-center">
-              {t("tv.h2hPlayed", { count: analysis.head_to_head.played ?? 0 })}
+            <p className="text-[10px] opacity-50 mt-1.5 text-center">
+              {t("tv.h2hLegend")} · {t("tv.h2hPlayed", { count: analysis.head_to_head.played ?? 0 })}
             </p>
           </div>
         )}
