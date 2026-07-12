@@ -85,9 +85,7 @@ export function useMatchmakingWebSocket(
         timeOpts?.isTimed === false
           ? null
           : matchmakingTimeControl(
-              mode,
               timeOpts?.isTimed ?? true,
-              timeOpts?.isRated ?? true,
               (timeOpts?.timePreset ?? "3+2") as TimePresetId
             ) ?? null;
       ws.send(
