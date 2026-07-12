@@ -1760,7 +1760,7 @@ const fr: Record<string, string> = {
   "studies.title": "Études",
   "studies.create": "Nouvelle étude",
   "studies.newTitle": "Titre de l'étude",
-  "studies.subtitle": "Chapitres PGN partagés — parité Lichess Studies.",
+  "studies.subtitle": "Chapitres PGN partagés pour étudier ensemble.",
   "studies.empty": "Aucune étude.",
   "studies.back": "Retour aux études",
   "studies.save": "Enregistrer PGN",
