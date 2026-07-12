@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { gamesApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
@@ -36,6 +36,7 @@ export default function TvPage() {
   const [queue, setQueue] = useState<TvGame[]>([]);
   const [rotationSeconds, setRotationSeconds] = useState(30);
   const [nextAt, setNextAt] = useState<number | null>(null);
+  const [nowTs, setNowTs] = useState(() => Math.floor(Date.now() / 1000));
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
@@ -53,8 +54,13 @@ export default function TvPage() {
 
   useVisibilityInterval(load, 30000);
 
+  useEffect(() => {
+    const id = setInterval(() => setNowTs(Math.floor(Date.now() / 1000)), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   const secondsLeft =
-    nextAt != null ? Math.max(0, nextAt - Math.floor(Date.now() / 1000)) : null;
+    nextAt != null ? Math.max(0, nextAt - nowTs) : null;
 
   const playerLabel = (g: TvGame) => {
     const w = g.white_player?.display_name || g.white_player?.username || "?";
