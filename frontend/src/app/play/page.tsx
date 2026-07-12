@@ -1280,6 +1280,23 @@ function PlayContent() {
           <p className="text-xs opacity-60 mt-1">{t("play.keyboardHelp")}</p>
         )}
       </div>
+      <div className="mb-3 border-t border-white/10 pt-3">
+        <TimeControlPicker
+          isTimed={useClock}
+          preset={timePreset}
+          onTimedChange={setUseClock}
+          onPresetChange={setTimePreset}
+          compact
+        />
+        {useClock && (
+          <p className="text-xs opacity-60 mt-2" data-testid="play-ai-chosen-time">
+            {t("play.time.chosen", {
+              clock: timePreset,
+              mode: modeLabelText,
+            })}
+          </p>
+        )}
+      </div>
       {selectedBot ? (
         <div className="mb-3 p-2 rounded-lg border border-africhess-gold/30 text-sm flex items-center gap-3">
           {selectedBotInfo && (
