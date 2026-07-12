@@ -4,7 +4,12 @@ import { memo, useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Chessboard } from "react-chessboard";
 import type { CustomSquareProps } from "react-chessboard/dist/chessboard/types";
 import { Chess, Square } from "chess.js";
-import { playChessSound, preloadChessSounds, soundForMove } from "@/lib/chessSounds";
+import {
+  inferSoundFromFenChange,
+  playChessSound,
+  preloadChessSounds,
+  soundForMove,
+} from "@/lib/chessSounds";
 import { accentRgba, getBoardTheme, getThemedSquareStyles, themeHasTexturedSquares } from "@/lib/boardThemes";
 import { useAuthStore } from "@/store/auth";
 import { customPiecesForSet } from "@/lib/pieceSets";
@@ -109,6 +114,8 @@ function ChessBoardInner({
     to: Square;
   } | null>(null);
   const prevPliesRef = useRef(0);
+  const prevFenRef = useRef<string | null>(null);
+  const skipNextFenSoundRef = useRef(false);
   const soundsReadyRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const boardWidth = useBoardSize(containerRef, { extraBottom, min: 280, max: 820 });
@@ -162,30 +169,48 @@ function ChessBoardInner({
   useEffect(() => {
     try {
       const g = new Chess(displayFen === "start" ? undefined : displayFen);
-      const plies = g.history().length;
+      const prevFen = prevFenRef.current;
 
-      if (playSoundOnFenChange && plies > prevPliesRef.current && prevPliesRef.current > 0) {
-        const last = g.history({ verbose: true }).at(-1);
-        if (last) {
-          playChessSound(soundForMove(last.flags, last.san), soundsOn);
-          onMovePlayed?.({
-            uci: `${last.from}${last.to}${last.promotion || ""}`,
-            san: last.san,
-            from: last.from,
-            to: last.to,
-            flags: last.flags,
-          });
+      if (
+        playSoundOnFenChange &&
+        prevFen != null &&
+        prevFen !== displayFen &&
+        !skipNextFenSoundRef.current
+      ) {
+        const kind = inferSoundFromFenChange(prevFen, displayFen, lastMove);
+        if (kind) {
+          playChessSound(kind, soundsOn);
+          if (lastMove && onMovePlayed) {
+            const before = chessFromDisplayFen(prevFen);
+            if (before) {
+              const candidates = before
+                .moves({ verbose: true })
+                .filter((m) => m.from === lastMove.from && m.to === lastMove.to);
+              const last = candidates[0];
+              if (last) {
+                onMovePlayed({
+                  uci: `${last.from}${last.to}${last.promotion || ""}`,
+                  san: last.san,
+                  from: last.from,
+                  to: last.to,
+                  flags: last.flags,
+                });
+              }
+            }
+          }
         }
       }
 
-      prevPliesRef.current = plies;
+      skipNextFenSoundRef.current = false;
+      prevFenRef.current = displayFen;
+      prevPliesRef.current = g.history().length;
       setGame(g);
       setSelectedSquare(null);
       setLegalTargets([]);
     } catch {
       /* invalid fen */
     }
-  }, [displayFen, playSoundOnFenChange, soundsOn, onMovePlayed]);
+  }, [displayFen, playSoundOnFenChange, soundsOn, onMovePlayed, lastMove]);
 
   useEffect(() => {
     if (game.isCheckmate()) {
@@ -225,16 +250,32 @@ function ChessBoardInner({
   const applyMoveServer = useCallback(
     (from: Square, to: Square, promotion?: "q" | "r" | "b" | "n"): boolean => {
       const uci = `${from}${to}${promotion || ""}`;
+      const isPremove =
+        Boolean(enablePremoves && playerColor && playerColor !== activeTurn);
+
+      if (!isPremove) {
+        try {
+          const probe = new Chess(activeChess.fen());
+          const move = probe.move({ from, to, promotion });
+          if (move) {
+            playChessSound(soundForMove(move.flags, move.san), soundsOn);
+            skipNextFenSoundRef.current = true;
+          }
+        } catch {
+          /* serveur validera */
+        }
+      }
+
       setSelectedSquare(null);
       setLegalTargets([]);
       setPromotionPending(null);
-      if (enablePremoves && playerColor && playerColor !== activeTurn) {
+      if (isPremove) {
         onPremove?.();
       }
       onMove?.(uci);
       return true;
     },
-    [onMove, onPremove, enablePremoves, playerColor, activeTurn]
+    [onMove, onPremove, enablePremoves, playerColor, activeTurn, activeChess, soundsOn]
   );
 
   const applyMove = useCallback(
@@ -270,6 +311,7 @@ function ChessBoardInner({
       if (!move) return false;
 
       playChessSound(soundForMove(move.flags, move.san), soundsOn);
+      skipNextFenSoundRef.current = true;
 
       const uci = `${from}${to}${move.promotion || ""}`;
       onMovePlayed?.({

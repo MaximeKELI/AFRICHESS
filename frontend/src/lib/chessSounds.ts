@@ -221,7 +221,6 @@ export function inferSoundFromFenChange(
   lastMove?: { from: string; to: string } | null
 ): ChessSoundType | null {
   try {
-    const { Chess } = require("chess.js") as typeof import("chess.js");
     const before = new Chess(normalizeFenInput(prevFen));
     const after = new Chess(normalizeFenInput(nextFen));
     const afterFen = after.fen();

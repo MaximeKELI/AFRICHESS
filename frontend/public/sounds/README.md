@@ -2,8 +2,8 @@
 
 | Fichier      | Événement              | Source Lichess                          |
 |--------------|------------------------|-----------------------------------------|
-| move         | Déplacement            | `public/sound/lisp/Move`                |
-| capture      | Prise                  | `public/sound/lisp/Capture`             |
+| move         | Déplacement            | `public/sound/standard/Move`            |
+| capture      | Prise                  | `public/sound/standard/Capture`         |
 | castle       | Roque                  | `public/sound/lisp/Castles`             |
 | check        | **Échec** (alerte)     | `public/sound/sfx/Check`                |
 | checkmate    | **Mat** (victoire)     | `public/sound/sfx/Victory`              |
