@@ -10,7 +10,6 @@ import {
   stopAiSpeech,
   unlockAiSpeech,
   testAiSpeech,
-  waitForSpeechIdle,
 } from "@/lib/aiSpeech";
 import { selectLiveCommentsToSpeak } from "@/lib/liveCommentarySpeech";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -90,13 +89,13 @@ export function AiCommentaryPanel({
       for (let index = 0; index < toSpeak.length; index += 1) {
         if (speakQueueRef.current !== queueId) return;
         const comment = toSpeak[index];
+        // Enfiler sans couper entre coach + IA (interrupt seulement le 1er)
         await speakComment(comment.text, {
           byAi: comment.byAi,
           enabled: true,
           forceUnlock: true,
           interrupt: index === 0,
         });
-        await waitForSpeechIdle();
       }
     })();
   }, [comments, enabled, autoSpeak]);
