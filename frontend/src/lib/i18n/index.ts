@@ -786,7 +786,7 @@ const fr: Record<string, string> = {
   "tournaments.subtitle": "Arène, suisse et tournois communautaires",
   "tournaments.empty": "Aucun tournoi ouvert. Revenez bientôt !",
   "arena.title": "Tournois Arena",
-  "arena.subtitle": "Entrez, jouez, repartez — format libre à la Lichess",
+  "arena.subtitle": "Entrez, jouez, repartez — format libre",
   "swiss.title": "Tournois Swiss",
   "swiss.subtitle": "Appariements suisses par ronde",
   "community.title": "Communauté",
