@@ -1,8 +1,14 @@
 /**
- * Sons de coups — fichiers MP3/OGG (Lichess), sons « killer » pour échec et mat.
+ * Sons de coups — thèmes Lichess (MP3/OGG) + repli Web Audio.
  */
 
 import { Chess } from "chess.js";
+import {
+  DEFAULT_SOUND_THEME,
+  soundFilePaths,
+  type BoardSoundFile,
+  type SoundThemeId,
+} from "@/lib/soundThemes";
 
 export type ChessSoundType =
   | "move"
@@ -12,18 +18,7 @@ export type ChessSoundType =
   | "castle"
   | "draw";
 
-const FILE_SOUND_PATHS = {
-  move: { mp3: "/sounds/move.mp3", ogg: "/sounds/move.ogg" },
-  capture: { mp3: "/sounds/capture.mp3", ogg: "/sounds/capture.ogg" },
-  check: { mp3: "/sounds/check.mp3", ogg: "/sounds/check.ogg" },
-  checkmate: { mp3: "/sounds/checkmate.mp3", ogg: "/sounds/checkmate.ogg" },
-  castle: { mp3: "/sounds/castle.mp3", ogg: "/sounds/castle.ogg" },
-} as const;
-
-type FileSoundType = keyof typeof FILE_SOUND_PATHS;
-
-const SOUND_PATHS: Record<FileSoundType, { mp3: string; ogg: string }> =
-  FILE_SOUND_PATHS;
+type FileSoundType = BoardSoundFile;
 
 const VOLUME: Record<ChessSoundType, number> = {
   move: 0.75,
@@ -34,12 +29,32 @@ const VOLUME: Record<ChessSoundType, number> = {
   draw: 0.85,
 };
 
-const audioCache = new Map<FileSoundType, HTMLAudioElement>();
+const audioCache = new Map<string, HTMLAudioElement>();
 let useFileSounds = true;
-let preloaded = false;
+let preloadedTheme: SoundThemeId | null = null;
+let activeTheme: SoundThemeId = DEFAULT_SOUND_THEME;
 
-function createAudio(type: FileSoundType): HTMLAudioElement {
-  const { mp3, ogg } = SOUND_PATHS[type];
+/** Applique le thème choisi (préférence utilisateur). Vide le cache si besoin. */
+export function setChessSoundTheme(themeId: SoundThemeId) {
+  if (activeTheme === themeId) return;
+  activeTheme = themeId;
+  audioCache.clear();
+  useFileSounds = themeId !== "silent";
+  preloadedTheme = null;
+}
+
+export function getChessSoundTheme(): SoundThemeId {
+  return activeTheme;
+}
+
+function cacheKey(theme: SoundThemeId, type: FileSoundType): string {
+  return `${theme}:${type}`;
+}
+
+function createAudio(theme: SoundThemeId, type: FileSoundType): HTMLAudioElement | null {
+  const paths = soundFilePaths(theme, type);
+  if (!paths) return null;
+
   const audio = new Audio();
   audio.volume = VOLUME[type];
   audio.preload = "auto";
@@ -47,13 +62,13 @@ function createAudio(type: FileSoundType): HTMLAudioElement {
   const canOgg =
     typeof audio.canPlayType === "function" &&
     audio.canPlayType('audio/ogg; codecs="vorbis"') !== "";
-  audio.src = canOgg ? ogg : mp3;
+  audio.src = canOgg ? paths.ogg : paths.mp3;
 
   audio.addEventListener(
     "error",
     () => {
       if (audio.src.endsWith(".ogg")) {
-        audio.src = mp3;
+        audio.src = paths.mp3;
         audio.load();
         return;
       }
@@ -65,26 +80,35 @@ function createAudio(type: FileSoundType): HTMLAudioElement {
   return audio;
 }
 
-function getAudio(type: FileSoundType): HTMLAudioElement {
-  let audio = audioCache.get(type);
+function getAudio(type: FileSoundType): HTMLAudioElement | null {
+  if (activeTheme === "silent") return null;
+  const key = cacheKey(activeTheme, type);
+  let audio = audioCache.get(key);
   if (!audio) {
-    audio = createAudio(type);
-    audioCache.set(type, audio);
+    audio = createAudio(activeTheme, type) ?? undefined;
+    if (!audio) return null;
+    audioCache.set(key, audio);
   }
   return audio;
 }
 
-/** Précharge les sons (appeler après un geste utilisateur). */
+/** Précharge les sons du thème actif (appeler après un geste utilisateur). */
 export function preloadChessSounds() {
-  if (preloaded || typeof window === "undefined") return;
-  preloaded = true;
-  (Object.keys(SOUND_PATHS) as FileSoundType[]).forEach((type) => {
-    getAudio(type).load();
+  if (typeof window === "undefined") return;
+  if (activeTheme === "silent") return;
+  if (preloadedTheme === activeTheme) return;
+  preloadedTheme = activeTheme;
+  (["move", "capture", "castle", "check", "checkmate"] as FileSoundType[]).forEach((type) => {
+    getAudio(type)?.load();
   });
 }
 
 function playFileSound(type: FileSoundType) {
   const base = getAudio(type);
+  if (!base) {
+    playSyntheticSound(type);
+    return;
+  }
   const node = base.cloneNode(true) as HTMLAudioElement;
   node.volume = VOLUME[type];
   node.currentTime = 0;
@@ -133,7 +157,6 @@ function tone(
   osc.stop(start + duration);
 }
 
-/** Alerte percutante — échec */
 function playKillerCheckSynthetic() {
   tone(90, 0.18, 0.32, "sawtooth");
   tone(740, 0.07, 0.28, "square", 25);
@@ -141,7 +164,6 @@ function playKillerCheckSynthetic() {
   tone(520, 0.14, 0.2, "sawtooth", 130);
 }
 
-/** Fanfare grave — mat */
 function playKillerMateSynthetic() {
   tone(50, 0.4, 0.4, "sine");
   tone(100, 0.22, 0.32, "sawtooth", 60);
@@ -176,7 +198,6 @@ function playSyntheticSound(type: ChessSoundType) {
   }
 }
 
-/** Sifflet court — nulle par répétition */
 function playDrawWhistleSynthetic() {
   tone(880, 0.12, 0.22, "sine");
   tone(660, 0.1, 0.18, "sine", 90);
@@ -185,6 +206,7 @@ function playDrawWhistleSynthetic() {
 
 export function playChessSound(type: ChessSoundType, enabled = true) {
   if (!enabled || typeof window === "undefined") return;
+  if (activeTheme === "silent") return;
   if (type === "draw") {
     playSyntheticSound("draw");
     return;
@@ -257,6 +279,7 @@ export function playDrawWhistle(enabled = true) {
 /** Fanfare courte — victoire */
 export function playGameVictory(enabled = true) {
   if (!enabled || typeof window === "undefined") return;
+  if (activeTheme === "silent") return;
   tone(262, 0.14, 0.22, "triangle");
   tone(330, 0.14, 0.22, "triangle", 120);
   tone(392, 0.14, 0.24, "triangle", 240);
@@ -266,6 +289,7 @@ export function playGameVictory(enabled = true) {
 /** Son grave — défaite */
 export function playGameDefeat(enabled = true) {
   if (!enabled || typeof window === "undefined") return;
+  if (activeTheme === "silent") return;
   tone(220, 0.2, 0.2, "sawtooth");
   tone(165, 0.25, 0.18, "sine", 150);
   tone(110, 0.35, 0.15, "sine", 300);
