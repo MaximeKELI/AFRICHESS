@@ -38,6 +38,17 @@ const NAV_GROUPS = [
     ],
   },
   {
+    key: "nav.group.puzzles",
+    links: [
+      { href: "/puzzles", key: "nav.puzzles" },
+      { href: "/puzzles/themes", key: "nav.puzzleThemes" },
+      { href: "/puzzles/dashboard", key: "nav.puzzleDashboard" },
+      { href: "/puzzles/streak", key: "nav.puzzleStreak" },
+      { href: "/puzzles/storm", key: "nav.puzzleStorm" },
+      { href: "/puzzles/racer", key: "nav.puzzleRacer" },
+    ],
+  },
+  {
     key: "nav.group.learn",
     links: [
       { href: "/learning", key: "nav.learn" },
