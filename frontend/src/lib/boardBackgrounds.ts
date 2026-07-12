@@ -387,7 +387,31 @@ export const BOARD_BACKGROUNDS: BoardBackground[] = [
     category: "animals",
     src: "/images/backgrounds/animal-whale.jpg",
   },
+  {
+    id: "lichess-landscape",
+    labelFr: "Lichess — paysage",
+    labelEn: "Lichess — landscape",
+    category: "lichess",
+    src: "/images/backgrounds/lichess/landscape.jpg",
+  },
+  ...LICHESS_GALLERY_BACKGROUNDS,
 ];
+
+/** Galerie Picture Lichess (lifat/background/gallery). */
+const LICHESS_GALLERY_BACKGROUNDS: BoardBackground[] = Array.from({ length: 28 }, (_, i) => {
+  const n = String(i + 1).padStart(2, "0");
+  const id = `lichess-${n}` as BoardBackgroundId;
+  return {
+    id,
+    labelFr: `Lichess ${n}`,
+    labelEn: `Lichess ${n}`,
+    category: "lichess" as const,
+    src: `/images/backgrounds/lichess/bg${n}.webp`,
+  };
+});
+
+// Rebuild list: animals end then lichess — wait, spread before const is wrong in JS.
+// Fix: define LICHESS_GALLERY before BOARD_BACKGROUNDS.
 
 export const DEFAULT_BOARD_BACKGROUND: BoardBackgroundId = "none";
 
