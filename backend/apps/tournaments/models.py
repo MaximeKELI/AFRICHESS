@@ -48,6 +48,10 @@ class Tournament(models.Model):
     )
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="tournaments", blank=True)
+    is_rated = models.BooleanField(
+        default=True,
+        help_text="Parties du tournoi classées Elo (défaut Lichess)",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

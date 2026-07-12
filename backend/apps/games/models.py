@@ -211,6 +211,14 @@ class Game(models.Model):
         default=False,
         help_text="True une fois les UserStats mises à jour pour cette partie",
     )
+    tournament_recorded = models.BooleanField(
+        default=False,
+        help_text="True une fois le score tournoi appliqué (idempotent)",
+    )
+    league_recorded = models.BooleanField(
+        default=False,
+        help_text="True une fois les points de ligue appliqués (idempotent)",
+    )
     days_per_move = models.PositiveSmallIntegerField(
         default=3,
         help_text="Jours par coup (parties correspondance)",
