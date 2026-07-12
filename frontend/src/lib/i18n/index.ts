@@ -2964,6 +2964,7 @@ const en: Record<string, string> = {
   "coaches.rate": "€{rate}/hr",
   "coaches.book": "Book",
   "coaches.empty": "No coaches available yet.",
+  "coaches.emptyHint": "Coach profiles are seeded by the AFRICHESS team. Unlike Lichess, there is no live self-serve marketplace yet.",
   "classroom.title": "Classroom",
   "classroom.subtitle": "Shared board for teaching (REST).",
   "classroom.code": "Room code",
