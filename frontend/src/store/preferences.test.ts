@@ -22,19 +22,18 @@ describe("preferenceStorageKey", () => {
 describe("soundTheme preference", () => {
   beforeEach(() => {
     const store = new Map<string, string>();
-    Object.defineProperty(globalThis, "localStorage", {
-      configurable: true,
-      value: {
-        getItem: (k: string) => store.get(k) ?? null,
-        setItem: (k: string, v: string) => {
-          store.set(k, String(v));
-        },
-        removeItem: (k: string) => {
-          store.delete(k);
-        },
-        clear: () => store.clear(),
+    const ls = {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        store.set(k, String(v));
       },
-    });
+      removeItem: (k: string) => {
+        store.delete(k);
+      },
+      clear: () => store.clear(),
+    };
+    Object.defineProperty(globalThis, "localStorage", { configurable: true, value: ls });
+    Object.defineProperty(globalThis, "window", { configurable: true, value: globalThis });
     syncPreferencesForUser(null);
   });
 
