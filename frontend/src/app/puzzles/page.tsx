@@ -902,12 +902,23 @@ export default function PuzzlesPage() {
 
   const revealHint = () => {
     if (!puzzle) return;
+    const uci = hintPlayerSolutionMove(
+      puzzle.fen,
+      puzzle.solution_moves ?? [],
+      localPlayed
+    );
     setHintRevealed(true);
+    setHintAvailable(Boolean(uci && uci.length >= 4));
     setUsedHint(true);
   };
 
   const handleHintStatus = useCallback((status: boolean | null) => {
-    setHintAvailable(status);
+    // Le plateau confirme après rendu ; ne pas écraser un true local par un false transitoire
+    setHintAvailable((prev) => {
+      if (status === null) return null;
+      if (status === true) return true;
+      return prev === true ? true : status;
+    });
   }, []);
 
   const startThematicPath = (pathTheme: string) => {
@@ -1255,6 +1266,9 @@ export default function PuzzlesPage() {
             )}
             {hintRevealed && hintAvailable === true && !puzzleSolved && tab !== "rush" && tab !== "storm" && tab !== "survival" && (
               <span className="text-sm text-africhess-gold/80">{t("puzzles.hint.shown")}</span>
+            )}
+            {hintRevealed && hintAvailable === false && !puzzleSolved && tab !== "rush" && tab !== "storm" && tab !== "survival" && (
+              <span className="text-sm text-africhess-terracotta/90">{t("puzzles.hint.unavailable")}</span>
             )}
             {puzzleFailed && tab !== "rush" && tab !== "storm" && tab !== "survival" && (
               <button

@@ -115,7 +115,12 @@ export function PuzzleBoard({
   const hintArrow = useMemo(() => {
     if (!hintRevealed) return null;
     const uci = hintPlayerSolutionMove(puzzle.fen, solution, played);
-    if (!uci || uci.length < 4) return null;
+    if (!uci || uci.length < 4) {
+      // Dernier recours : premier coup solution brut (toujours affichable en texte / flèche)
+      const fallback = solution[played.length] || solution[0];
+      if (!fallback || fallback.length < 4) return null;
+      return { from: fallback.slice(0, 2), to: fallback.slice(2, 4), uci: fallback };
+    }
     return { from: uci.slice(0, 2), to: uci.slice(2, 4), uci };
   }, [hintRevealed, puzzle.fen, solution, played]);
 
