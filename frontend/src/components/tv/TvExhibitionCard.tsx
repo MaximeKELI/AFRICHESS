@@ -152,6 +152,7 @@ export function TvExhibitionCard({ game, featured = false, onSelect }: TvExhibit
         <Link
           href={`/watch/${game.id}`}
           className="text-africhess-gold hover:underline text-xs shrink-0"
+          onClick={(e) => e.stopPropagation()}
         >
           {t("live.watch")}
         </Link>
