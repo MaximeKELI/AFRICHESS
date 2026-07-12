@@ -347,6 +347,15 @@ class GameService:
             if not fast.get("ok"):
                 return {"error": "Illegal move"}
             new_fen, san, is_over = fast["fen"], fast["san"], fast["game_over"]
+            # Native / claim_draw peuvent marquer 50-coups comme terminé — FIDE/Lichess : claim only.
+            if is_over:
+                try:
+                    from .variant_utils import board_from_fen as _bf
+
+                    if not _bf(new_fen, game.variant).is_game_over(claim_draw=False):
+                        is_over = False
+                except Exception:
+                    pass
             complexity_pre = fast.get("complexity_pre")
         else:
             if not game.is_vs_ai:
@@ -684,26 +693,28 @@ class GameService:
 
         board = board_from_fen(game.fen, game.variant)
         outcome = board.outcome(claim_draw=False)
-        if outcome:
-            if outcome.winner is True:
-                game.result = Game.Result.WHITE_WIN
-                game.winner = game.white_player
-            elif outcome.winner is False:
-                game.result = Game.Result.BLACK_WIN
-                game.winner = game.black_player
-            else:
-                game.result = Game.Result.DRAW
-                game.winner = None
+        if not outcome:
+            return
+        if outcome.winner is True:
+            game.result = Game.Result.WHITE_WIN
+            game.winner = game.white_player
+        elif outcome.winner is False:
+            game.result = Game.Result.BLACK_WIN
+            game.winner = game.black_player
+        else:
+            game.result = Game.Result.DRAW
+            game.winner = None
         game.status = Game.Status.COMPLETED
         game.ended_at = timezone.now()
-        if outcome:
-            term_name = outcome.termination.name.lower() if outcome.termination else ""
-            if term_name == "checkmate":
-                game.termination_reason = "checkmate"
-            elif term_name == "stalemate":
-                game.termination_reason = "stalemate"
-            elif outcome.winner is None:
-                game.termination_reason = "draw"
+        term_name = outcome.termination.name.lower() if outcome.termination else ""
+        if term_name == "checkmate":
+            game.termination_reason = "checkmate"
+        elif term_name == "stalemate":
+            game.termination_reason = "stalemate"
+        elif term_name in ("seventyfive_moves", "seventyfive"):
+            game.termination_reason = "seventyfive_move"
+        elif outcome.winner is None:
+            game.termination_reason = "draw"
         game.save()
         self._after_human_game_finished(game)
 
