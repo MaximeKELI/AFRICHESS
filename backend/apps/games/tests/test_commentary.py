@@ -78,3 +78,39 @@ class CommentaryTests(SimpleTestCase):
         self.assertTrue(len(text) > 5)
         lowered = text.lower()
         self.assertTrue("mat" in lowered or "sauvage" in lowered or "pression" in lowered)
+
+    def test_live_heuristic_works_without_engine_evals(self):
+        """Commentaires live : eval matérielle interne, pas besoin de Stockfish."""
+        text = generate_move_comment(
+            START_FEN,
+            "e2e4",
+            "e4",
+            played_by_ai=False,
+            mover_is_white=True,
+            move_number=1,
+            eval_before=None,
+            eval_after=None,
+            best_san=None,
+        )
+        self.assertTrue(len(text) > 5)
+
+    def test_capture_comment_without_engine(self):
+        fen = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2"
+        text = generate_move_comment(
+            fen,
+            "e4d5",
+            "exd5",
+            played_by_ai=True,
+            mover_is_white=True,
+            move_number=2,
+        )
+        self.assertTrue(len(text) > 5)
+        lowered = text.lower()
+        self.assertTrue(
+            "prend" in lowered
+            or "capture" in lowered
+            or "pièce" in lowered
+            or "cadeau" in lowered
+            or "matériel" in lowered
+            or "échange" in lowered
+        )

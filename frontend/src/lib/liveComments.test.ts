@@ -88,8 +88,8 @@ describe("applyMoveDelta with live comments", () => {
       comments_pending: false,
     });
     expect(next.moves).toHaveLength(2);
-    expect(next.moves?.[0].comment).toBe("Solide.");
-    expect(next.moves?.[1].comment).toBe("À mon tour.");
+    expect(next.moves?.find((m) => m.played_by_white)?.comment).toBe("Solide.");
+    expect(next.moves?.find((m) => !m.played_by_white)?.comment).toBe("À mon tour.");
     expect(next.comments_pending).toBe(false);
   });
 });

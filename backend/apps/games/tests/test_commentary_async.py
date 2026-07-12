@@ -6,6 +6,7 @@ from django.test import TestCase, override_settings
 
 from apps.games.engine import EngineMove
 from apps.games.models import Game
+from apps.games.serializers import serialize_game_move_delta
 from apps.games.services import GameService
 
 User = get_user_model()
@@ -28,8 +29,7 @@ class LiveMoveCommentsTests(TestCase):
             password="x",
         )
 
-    @patch("apps.games.services.GameService.__init__", lambda self: None)
-    def test_make_move_writes_comments_sync_without_engine_analysis(self):
+    def _svc_with_e4_e5(self):
         mock_engine = MagicMock()
         mock_engine.get_best_move.return_value = EngineMove(uci="e7e5", san="e5")
         mock_engine.apply_move.side_effect = [
@@ -44,18 +44,24 @@ class LiveMoveCommentsTests(TestCase):
                 False,
             ),
         ]
-
         svc = GameService()
         svc.engine = mock_engine
         svc.rating_service = MagicMock()
+        return svc, mock_engine
 
-        game = Game.objects.create(
+    def _ai_game(self):
+        return Game.objects.create(
             white_player=self.user,
             is_vs_ai=True,
             ai_target_elo=1200,
             ai_difficulty=8,
             status=Game.Status.ACTIVE,
         )
+
+    @patch("apps.games.services.GameService.__init__", lambda self: None)
+    def test_make_move_writes_comments_sync_without_engine_analysis(self):
+        svc, mock_engine = self._svc_with_e4_e5()
+        game = self._ai_game()
 
         result = svc.make_move(game, self.user, "e2e4", include_comments=True)
 
@@ -70,6 +76,33 @@ class LiveMoveCommentsTests(TestCase):
         self.assertTrue(moves[1].comment.strip())
         self.assertTrue(result["move"].comment.strip())
         self.assertTrue(result["ai_move_record"].comment.strip())
+
+    @patch("apps.games.services.GameService.__init__", lambda self: None)
+    def test_make_move_delta_payload_includes_comments_immediately(self):
+        svc, _ = self._svc_with_e4_e5()
+        game = self._ai_game()
+        result = svc.make_move(game, self.user, "e2e4", include_comments=True)
+        game.refresh_from_db()
+
+        payload = serialize_game_move_delta(game, result)
+        self.assertTrue(payload.get("delta"))
+        self.assertFalse(payload.get("comments_pending"))
+        self.assertEqual(len(payload["new_moves"]), 2)
+        self.assertTrue(payload["new_moves"][0]["comment"].strip())
+        self.assertTrue(payload["new_moves"][1]["comment"].strip())
+
+    @patch("apps.games.services.GameService.__init__", lambda self: None)
+    def test_make_move_without_comments_leaves_comment_empty(self):
+        svc, mock_engine = self._svc_with_e4_e5()
+        game = self._ai_game()
+
+        result = svc.make_move(game, self.user, "e2e4", include_comments=False)
+
+        self.assertNotIn("error", result)
+        self.assertFalse(result.get("comments_pending"))
+        self.assertEqual(result["move"].comment, "")
+        self.assertEqual(result["ai_move_record"].comment, "")
+        mock_engine.analyze_position.assert_not_called()
 
     def test_generate_move_comments_for_specs_updates_db_without_engine(self):
         from apps.games.commentary_async import generate_move_comments_for_specs
@@ -115,3 +148,81 @@ class LiveMoveCommentsTests(TestCase):
         self.assertEqual(count, 1)
         move.refresh_from_db()
         self.assertEqual(move.comment, "Coup solide.")
+
+    def test_apply_live_move_comments_does_not_instantiate_engine(self):
+        from apps.games.commentary_async import apply_live_move_comments
+        from apps.games.models import Move
+
+        game = Game.objects.create(
+            white_player=self.user,
+            is_vs_ai=True,
+            status=Game.Status.ACTIVE,
+        )
+        move = Move.objects.create(
+            game=game,
+            move_number=1,
+            san="e4",
+            uci="e2e4",
+            from_square="e2",
+            to_square="e4",
+            fen_after=game.fen,
+            played_by_white=True,
+            comment="",
+        )
+        spec = {
+            "move_id": move.pk,
+            "fen_before": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            "fen_after": game.fen,
+            "uci": "e2e4",
+            "san": "e4",
+            "played_by_ai": False,
+            "mover_is_white": True,
+            "move_number": 1,
+        }
+
+        with patch("apps.games.engine.ChessEngineService") as engine_cls:
+            count = apply_live_move_comments([spec])
+            engine_cls.assert_not_called()
+
+        self.assertEqual(count, 1)
+        move.refresh_from_db()
+        self.assertTrue(move.comment.strip())
+
+    def test_skips_moves_that_already_have_comments(self):
+        from apps.games.commentary_async import generate_move_comments_for_specs
+        from apps.games.models import Move
+
+        game = Game.objects.create(
+            white_player=self.user,
+            is_vs_ai=True,
+            status=Game.Status.ACTIVE,
+        )
+        move = Move.objects.create(
+            game=game,
+            move_number=1,
+            san="e4",
+            uci="e2e4",
+            from_square="e2",
+            to_square="e4",
+            fen_after=game.fen,
+            played_by_white=True,
+            comment="Déjà là.",
+        )
+        count = generate_move_comments_for_specs(
+            [
+                {
+                    "move_id": move.pk,
+                    "fen_before": game.fen,
+                    "fen_after": game.fen,
+                    "uci": "e2e4",
+                    "san": "e4",
+                    "played_by_ai": False,
+                    "mover_is_white": True,
+                    "move_number": 1,
+                }
+            ],
+            use_engine=False,
+        )
+        self.assertEqual(count, 0)
+        move.refresh_from_db()
+        self.assertEqual(move.comment, "Déjà là.")
