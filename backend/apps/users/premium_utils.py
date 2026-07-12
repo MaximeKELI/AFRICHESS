@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from django.utils import timezone
 
-# Profondeur moteur par tier (analyse manuelle / approfondie).
-FREE_ANALYSIS_DEPTH = 12
-GOLD_ANALYSIS_DEPTH = 14
-DIAMOND_ANALYSIS_DEPTH = 16
+# Profondeur moteur par tier (analyse manuelle) — plafonnée pour latence.
+FREE_ANALYSIS_DEPTH = 10
+GOLD_ANALYSIS_DEPTH = 12
+DIAMOND_ANALYSIS_DEPTH = 14
 
 # Profondeur plus légère pour l'analyse auto post-partie (latence).
 FREE_AUTO_ANALYSIS_DEPTH = 8

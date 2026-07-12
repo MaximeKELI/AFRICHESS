@@ -344,13 +344,22 @@ class AnalyzeGameView(APIView):
             return Response({"error": "Forbidden"}, status=403)
         if game.status != Game.Status.COMPLETED:
             return Response({"error": "Game not completed"}, status=400)
+        from django.conf import settings
+
         from apps.users.premium_utils import analysis_engine_depth, max_analysis_moves
 
         from .game_analysis_service import build_and_save_game_analysis
 
         limit = max_analysis_moves(request.user)
         depth = analysis_engine_depth(request.user)
-        analysis = build_and_save_game_analysis(game, depth=depth, move_limit=limit)
+        movetime_ms = getattr(settings, "SYNC_ANALYSIS_MOVETIME_MS", 120)
+        analysis = build_and_save_game_analysis(
+            game,
+            depth=depth,
+            move_limit=limit,
+            movetime_ms=movetime_ms,
+            include_deep_review=False,
+        )
         if not analysis:
             return Response({"error": "No moves to analyze"}, status=400)
         return Response(GameSerializer(game).data)
