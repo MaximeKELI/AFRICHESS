@@ -90,7 +90,9 @@ class PuzzleBattle(models.Model):
         related_name="battles_as_p2",
     )
     puzzle_ids = models.JSONField(default=list)
-    current_index = models.PositiveSmallIntegerField(default=0)
+    current_index = models.PositiveSmallIntegerField(default=0)  # min(index1, index2) legacy
+    index1 = models.PositiveSmallIntegerField(default=0)  # progression joueur 1 (Racer)
+    index2 = models.PositiveSmallIntegerField(default=0)  # progression joueur 2
     score1 = models.PositiveSmallIntegerField(default=0)
     score2 = models.PositiveSmallIntegerField(default=0)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.WAITING)
