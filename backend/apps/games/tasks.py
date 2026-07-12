@@ -225,6 +225,14 @@ def batch_sync_shadow_pools_task():
     return batch_sync_shadow_pools()
 
 
+@shared_task(queue="realtime")
+def tick_tv_exhibition_games():
+    """Fait avancer les parties exhibition IA vs IA pour AFRICHESS TV."""
+    from .tv_exhibition import tick_tv_exhibitions
+
+    return tick_tv_exhibitions()
+
+
 @shared_task(queue="analysis")
 def generate_move_comments_async(game_id: str, specs: list[dict]):
     """Commentaires coach/IA après un coup — ne bloque pas la réponse move."""

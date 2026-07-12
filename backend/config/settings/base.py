@@ -378,6 +378,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.games.tasks.batch_sync_shadow_pools_task",
         "schedule": 300.0,
     },
+    "tick-tv-exhibitions": {
+        "task": "apps.games.tasks.tick_tv_exhibition_games",
+        "schedule": 8.0,
+    },
 }
 
 DISCONNECT_FORFEIT_SECONDS = config("DISCONNECT_FORFEIT_SECONDS", default=90, cast=int)
