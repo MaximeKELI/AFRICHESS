@@ -667,9 +667,13 @@ function PlayContent() {
       if (!id || !aiCommentsEnabled || !data.is_vs_ai) return;
       const missing = movesMissingComments(data.moves as ApiMove[] | undefined);
       if (!data.comments_pending && missing === 0) return;
-      void pollPendingMoveComments(id, (fresh) => {
-        applyGameResponse(fresh as Partial<GameState> & { id?: string; fen?: string });
-      });
+      void pollPendingMoveComments(
+        id,
+        (fresh) => {
+          applyGameResponse(fresh as Partial<GameState> & { id?: string; fen?: string });
+        },
+        { intervalMs: 400, maxAttempts: 40 }
+      );
     },
     [aiCommentsEnabled, applyGameResponse]
   );

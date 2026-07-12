@@ -94,9 +94,9 @@ function hasAnyBrowserVoice(): boolean {
   return window.speechSynthesis.getVoices().length > 0;
 }
 
-/** espeak seulement si le navigateur n'a aucune voix. */
+/** Jamais espeak/serveur si le navigateur a au moins une voix. */
 function shouldUseServerTts(): boolean {
-  if (hasBrowserFrenchVoice() || hasAnyBrowserVoice()) return false;
+  if (hasAnyBrowserVoice()) return false;
   if (localTtsOk === false && backendTtsOk === false) return false;
   return true;
 }
