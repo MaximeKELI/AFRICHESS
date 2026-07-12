@@ -113,6 +113,7 @@ const CLASS_SYMBOLS: Record<string, string> = {
   brilliant: "!!",
   great: "!",
   best: "✓",
+  book: "≡",
   good: "✓",
   inaccuracy: "?!",
   mistake: "?",
