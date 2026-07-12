@@ -22,6 +22,10 @@ interface AiCommentaryPanelProps {
   autoSpeak?: boolean;
 }
 
+function commentKey(c: MoveComment): string {
+  return `${c.moveNumber}|${c.san}|${c.text}`;
+}
+
 export function AiCommentaryPanel({
   comments,
   enabled,
@@ -31,7 +35,8 @@ export function AiCommentaryPanel({
   const { t } = useTranslation();
   const latest = comments.at(-1);
   const voiceSupported = isAiSpeechSupported();
-  const spokenCountRef = useRef(0);
+  const spokenKeysRef = useRef<Set<string>>(new Set());
+  const speakQueueRef = useRef(0);
 
   const handleTestVoice = () => {
     unlockAiSpeech();
@@ -41,35 +46,47 @@ export function AiCommentaryPanel({
   const handleListenLatest = () => {
     unlockAiSpeech();
     if (latest) {
-      speakComment(latest.text, { byAi: latest.byAi, enabled: true, forceUnlock: true });
+      spokenKeysRef.current.add(commentKey(latest));
+      void speakComment(latest.text, { byAi: latest.byAi, enabled: true, forceUnlock: true });
     }
   };
 
   useEffect(() => {
     initAiSpeech();
+    unlockAiSpeech();
     return () => stopAiSpeech();
   }, []);
 
   useEffect(() => {
     if (!enabled) {
       stopAiSpeech();
-      spokenCountRef.current = 0;
+      spokenKeysRef.current.clear();
+      speakQueueRef.current = 0;
     }
   }, [enabled]);
 
   useEffect(() => {
-    if (!enabled || !autoSpeak || comments.length <= spokenCountRef.current) return;
+    if (!enabled || !autoSpeak || comments.length === 0) return;
 
-    const newComments = comments.slice(spokenCountRef.current);
-    spokenCountRef.current = comments.length;
+    const fresh = comments.filter((c) => c.text.trim() && !spokenKeysRef.current.has(commentKey(c)));
+    if (!fresh.length) return;
 
+    for (const c of fresh) {
+      spokenKeysRef.current.add(commentKey(c));
+    }
+
+    const queueId = ++speakQueueRef.current;
     void (async () => {
-      for (let index = 0; index < newComments.length; index += 1) {
-        const comment = newComments[index];
+      // Le joueur vient de jouer : lever le blocage autoplay
+      unlockAiSpeech();
+      for (let index = 0; index < fresh.length; index += 1) {
+        if (speakQueueRef.current !== queueId) return;
+        const comment = fresh[index];
         await speakComment(comment.text, {
           byAi: comment.byAi,
           enabled: true,
-          forceUnlock: index === 0,
+          forceUnlock: true,
+          // Premier nouveau commentaire coupe l'intro ; les suivants s'enchaînent
           interrupt: index === 0,
         });
         await waitForSpeechIdle();
@@ -147,7 +164,7 @@ export function AiCommentaryPanel({
           } opacity-70`}
         >
           {[...comments].reverse().slice(1, 12).map((c) => (
-            <p key={`${c.moveNumber}-${c.san}`}>
+            <p key={`${c.moveNumber}-${c.san}-${c.text.slice(0, 24)}`}>
               <span className="font-mono text-africhess-gold">{c.san}</span>
               {" — "}
               <span className={c.byAi ? "" : "italic"}>{c.text}</span>

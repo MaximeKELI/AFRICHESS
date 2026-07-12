@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { normalizeSpeechText, splitSpeechChunks } from "@/lib/speechText";
+import {
+  expandChessNotationForSpeech,
+  normalizeSpeechText,
+  sanToSpokenFrench,
+  splitSpeechChunks,
+} from "@/lib/speechText";
 
 describe("splitSpeechChunks", () => {
   it("returns single chunk for short text", () => {
@@ -18,5 +23,21 @@ describe("splitSpeechChunks", () => {
   it("normalizes whitespace and caps length", () => {
     const long = "a".repeat(2000);
     expect(normalizeSpeechText(`  ${long}  `, 100).length).toBe(100);
+  });
+});
+
+describe("sanToSpokenFrench", () => {
+  it("reads castling and pieces in French", () => {
+    expect(sanToSpokenFrench("O-O")).toContain("petit roque");
+    expect(sanToSpokenFrench("O-O-O+")).toContain("grand roque");
+    expect(sanToSpokenFrench("Nf3")).toMatch(/cavalier/i);
+    expect(sanToSpokenFrench("exd5")).toMatch(/pion|prend/i);
+    expect(sanToSpokenFrench("Qh5#")).toMatch(/dame|mat/i);
+  });
+
+  it("expands SAN inside coach sentences", () => {
+    const out = expandChessNotationForSpeech("Beau coup : Nf3 développe une pièce.");
+    expect(out).toMatch(/cavalier/i);
+    expect(out).not.toMatch(/\bNf3\b/);
   });
 });

@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 
 MAX_TTS_CHARS = 1200
 # Voix française plus douce (espeak-ng variants)
-ESPEAK_VOICE = "fr+f2"
-ESPEAK_RATE = 132
-ESPEAK_PITCH = 42
+ESPEAK_VOICE = "fr+f3"
+ESPEAK_RATE = 145
+ESPEAK_PITCH = 48
 
 
 def _pcm_to_wav(pcm: bytes, sample_rate: int) -> bytes:

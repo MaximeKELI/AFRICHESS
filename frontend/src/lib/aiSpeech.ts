@@ -1,8 +1,6 @@
 /**
  * Synthèse vocale — commentaires IA et coach.
- * 1) Web Speech API si voix FR naturelle disponible
- * 2) TTS local Next.js /api/tts (espeak-ng)
- * 3) TTS backend Django /games/tts/
+ * Priorité : voix navigateur FR naturelles → Web Speech FR → TTS serveur (dernier recours).
  */
 
 import Cookies from "js-cookie";
@@ -33,21 +31,32 @@ function authHeaders(): HeadersInit {
 
 function voiceScore(v: SpeechSynthesisVoice): number {
   const n = v.name.toLowerCase();
-  if (/neural|natural|premium|wavenet/.test(n)) return 100;
-  if (/google/.test(n)) return 90;
-  if (/microsoft|azure/.test(n)) return 85;
-  if (/apple|siri/.test(n)) return 80;
-  if (/mbrola/.test(n)) return 55;
-  if (v.localService && !/espeak|festival/.test(n)) return 65;
-  if (/espeak|festival/.test(n)) return 5;
-  return 40;
+  // Voix neurales / cloud — les plus humaines
+  if (/google français|google french|google ukrainian|google/.test(n) && /fr/.test(v.lang.toLowerCase())) {
+    return 100;
+  }
+  if (/neural|natural|premium|wavenet|online \(natural\)|enhanced/.test(n)) return 98;
+  if (/microsoft.*(hortense|julie|pauline|denise|henri)|azure/.test(n)) return 92;
+  if (/thomas|amélie|aurelie|aurélie|marie|virginie|stephanie/.test(n)) return 88;
+  if (/apple|siri|éloquence|eloquence|compact/.test(n)) return 82;
+  if (/google/.test(n)) return 80;
+  if (/microsoft|azure/.test(n)) return 75;
+  if (v.localService && !/espeak|festival|rhvoice/.test(n)) return 70;
+  if (/mbrola/.test(n)) return 50;
+  if (/espeak|festival|rhvoice/.test(n)) return 5;
+  return 45;
+}
+
+function isFrenchVoice(v: SpeechSynthesisVoice): boolean {
+  const lang = v.lang.toLowerCase();
+  return lang.startsWith("fr") || lang.includes("fr-") || /french|français|francais/.test(v.name.toLowerCase());
 }
 
 function pickFrenchVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
   if (!voices.length) return null;
-  const fr = voices.filter((v) => v.lang.startsWith("fr") || v.lang.includes("FR"));
-  if (!fr.length) return voices[0] ?? null;
-  return [...fr].sort((a, b) => voiceScore(b) - voiceScore(a))[0];
+  const fr = voices.filter(isFrenchVoice);
+  const pool = fr.length ? fr : voices;
+  return [...pool].sort((a, b) => voiceScore(b) - voiceScore(a))[0];
 }
 
 function refreshVoices() {
@@ -60,24 +69,27 @@ function attachVoicesListener() {
   if (voicesListenerAttached || typeof window === "undefined" || !window.speechSynthesis) return;
   voicesListenerAttached = true;
   window.speechSynthesis.addEventListener("voiceschanged", refreshVoices);
+  refreshVoices();
 }
 
-function hasNaturalBrowserVoice(): boolean {
+/** Toute voix FR navigateur vaut mieux qu'espeak robotique. */
+function hasBrowserFrenchVoice(): boolean {
   if (typeof window === "undefined" || !window.speechSynthesis) return false;
   refreshVoices();
-  return window.speechSynthesis.getVoices().some((v) => {
-    if (!v.lang.startsWith("fr") && !v.lang.includes("FR")) return false;
-    return voiceScore(v) >= 55;
-  });
+  return window.speechSynthesis.getVoices().some(isFrenchVoice);
 }
 
-function shouldPreferBackendTts(): boolean {
-  if (hasNaturalBrowserVoice()) return false;
-  if (localTtsOk === true || backendTtsOk === true) return true;
-  if (localTtsOk === false && backendTtsOk === false) return false;
-  if (typeof window === "undefined" || !window.speechSynthesis) return true;
+function hasAnyBrowserVoice(): boolean {
+  if (typeof window === "undefined" || !window.speechSynthesis) return false;
   refreshVoices();
-  return window.speechSynthesis.getVoices().length === 0;
+  return window.speechSynthesis.getVoices().length > 0;
+}
+
+/** espeak seulement si le navigateur n'a aucune voix. */
+function shouldUseServerTts(): boolean {
+  if (hasBrowserFrenchVoice() || hasAnyBrowserVoice()) return false;
+  if (localTtsOk === false && backendTtsOk === false) return false;
+  return true;
 }
 
 function startKeepAlive() {
@@ -85,7 +97,7 @@ function startKeepAlive() {
   keepAliveId = window.setInterval(() => {
     const synth = window.speechSynthesis;
     if (synth.speaking && synth.paused) synth.resume();
-  }, 400);
+  }, 250);
 }
 
 function stopKeepAlive() {
@@ -188,35 +200,57 @@ function speakBrowserChunk(text: string, byAi: boolean): Promise<boolean> {
     }
 
     const synth = window.speechSynthesis;
+    // Chrome : parfois bloqué tant que cancel n'a pas « drainé »
+    if (synth.paused) synth.resume();
+
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "fr-FR";
-    utterance.rate = byAi ? 0.95 : 1.0;
-    utterance.pitch = byAi ? 0.92 : 1.02;
+    utterance.lang = preferredVoice?.lang?.startsWith("fr") ? preferredVoice.lang : "fr-FR";
+    // Prosodie plus naturelle (moins « robot »)
+    utterance.rate = byAi ? 0.92 : 0.96;
+    utterance.pitch = byAi ? 1.05 : 1.08;
     utterance.volume = 1;
     refreshVoices();
     if (preferredVoice) utterance.voice = preferredVoice;
 
-    utterance.onstart = () => startKeepAlive();
-    utterance.onend = () => {
+    let settled = false;
+    const done = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
       stopKeepAlive();
-      resolve(true);
-    };
-    utterance.onerror = () => {
-      stopKeepAlive();
-      resolve(false);
+      resolve(ok);
     };
 
-    synth.speak(utterance);
+    utterance.onstart = () => startKeepAlive();
+    utterance.onend = () => done(true);
+    utterance.onerror = () => done(false);
+
+    try {
+      synth.speak(utterance);
+    } catch {
+      done(false);
+      return;
+    }
+
+    // Contournement Chrome : utterance fantôme / pause silencieuse
     window.setTimeout(() => {
       if (synth.paused) synth.resume();
-    }, 80);
+    }, 60);
+    window.setTimeout(() => {
+      if (!settled && !synth.speaking && !synth.pending) done(false);
+    }, 8000);
   });
 }
 
 async function speakChunk(text: string, byAi: boolean, generation: number): Promise<boolean> {
   if (generation !== speechGeneration) return false;
 
-  if (shouldPreferBackendTts()) {
+  // Navigateur d'abord (voix humaines) ; serveur seulement en secours
+  if (typeof window !== "undefined" && window.speechSynthesis && hasAnyBrowserVoice()) {
+    const ok = await speakBrowserChunk(text, byAi);
+    if (ok) return true;
+  }
+
+  if (shouldUseServerTts() || !hasAnyBrowserVoice()) {
     const buf = await fetchTtsWav(text);
     if (buf) {
       const ok = await playWavBufferAndWait(buf);
@@ -271,7 +305,7 @@ function enqueueSpeech(text: string, byAi: boolean, interrupt: boolean): void {
 export function initAiSpeech() {
   attachVoicesListener();
   refreshVoices();
-  [120, 500, 1200, 2500].forEach((ms) => window.setTimeout(refreshVoices, ms));
+  [50, 200, 500, 1200, 2500, 5000].forEach((ms) => window.setTimeout(refreshVoices, ms));
 }
 
 export function unlockAiSpeech(): boolean {
@@ -285,20 +319,28 @@ export function unlockAiSpeech(): boolean {
     void play();
   }
 
+  if (typeof window === "undefined" || !window.speechSynthesis) return true;
+
   const synth = window.speechSynthesis;
   refreshVoices();
-  const warmup = new SpeechSynthesisUtterance(".");
-  warmup.volume = 0.01;
-  warmup.rate = 3;
-  warmup.lang = "fr-FR";
-  if (preferredVoice) warmup.voice = preferredVoice;
-  synth.speak(warmup);
+  try {
+    // Warmup silencieux pour lever le blocage autoplay
+    const warmup = new SpeechSynthesisUtterance("\u200b");
+    warmup.volume = 0;
+    warmup.rate = 2;
+    warmup.lang = "fr-FR";
+    if (preferredVoice) warmup.voice = preferredVoice;
+    synth.speak(warmup);
+    if (synth.paused) synth.resume();
+  } catch {
+    /* ignore */
+  }
 
   return true;
 }
 
 export function isAiSpeechUnlocked(): boolean {
-  return audioUnlocked || isAiSpeechSupported();
+  return audioUnlocked;
 }
 
 export function stopAiSpeech() {
@@ -329,7 +371,7 @@ export function waitForSpeechIdle(timeoutMs = 120_000): Promise<void> {
         resolve();
         return;
       }
-      window.setTimeout(tick, 120);
+      window.setTimeout(tick, 100);
     };
     tick();
   });
@@ -355,7 +397,7 @@ export function speakComment(
     return Promise.resolve();
   }
 
-  if (forceUnlock) unlockAiSpeech();
+  if (forceUnlock || !audioUnlocked) unlockAiSpeech();
 
   const normalized = text.trim();
   if (
@@ -384,9 +426,11 @@ export function bindAiSpeechToUserGestures(active: boolean) {
   const onGesture = () => unlockAiSpeech();
   window.addEventListener("pointerdown", onGesture, { capture: true, passive: true });
   window.addEventListener("keydown", onGesture, { capture: true, passive: true });
+  window.addEventListener("touchstart", onGesture, { capture: true, passive: true });
 
   return () => {
     window.removeEventListener("pointerdown", onGesture, { capture: true });
     window.removeEventListener("keydown", onGesture, { capture: true });
+    window.removeEventListener("touchstart", onGesture, { capture: true });
   };
 }

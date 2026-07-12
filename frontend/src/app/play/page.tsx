@@ -1103,7 +1103,9 @@ function PlayContent() {
       }
       if (!isMyTurn) return;
       if (isVsAi && movePending) return;
-      if (isVsAi) unlockAiSpeech();
+      if (isVsAi) {
+        unlockAiSpeech();
+      }
       setDropPiece(null);
       const poolMs = playerIsWhite ? gameData.white_time_ms : gameData.black_time_ms;
       const spentMs = gameIsTimed
