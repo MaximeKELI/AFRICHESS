@@ -50,6 +50,7 @@ class PuzzleRushSession(models.Model):
         RUSH = "rush", "Rush"
         STORM = "storm", "Storm"
         SURVIVAL = "survival", "Survival"
+        STREAK = "streak", "Streak"
 
     class Status(models.TextChoices):
         ACTIVE = "active", "Active"

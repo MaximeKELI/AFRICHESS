@@ -159,6 +159,134 @@ def survival_submit(session: PuzzleRushSession, moves: list[str]) -> dict:
     }
 
 
+# Puzzle Streak (Lichess) : difficulté croissante, 1 erreur = fin, 1 skip/run.
+STREAK_BASE_RATING = 800
+STREAK_RATING_STEP = 50
+
+
+def _streak_rating_floor(score: int) -> int:
+    return STREAK_BASE_RATING + max(0, score) * STREAK_RATING_STEP
+
+
+def _pick_streak_puzzle(rating_floor: int, exclude_ids: set[int] | None = None) -> Puzzle | None:
+    exclude_ids = exclude_ids or set()
+    qs = Puzzle.objects.filter(rating__gte=rating_floor).exclude(pk__in=exclude_ids)
+    picked = random_queryset(qs, 1)
+    if picked:
+        return picked[0]
+    # Fallback : n'importe quel puzzle hors déjà vus
+    qs = Puzzle.objects.exclude(pk__in=exclude_ids)
+    picked = random_queryset(qs, 1)
+    return picked[0] if picked else None
+
+
+def start_streak_session(user) -> PuzzleRushSession:
+    first = _pick_streak_puzzle(_streak_rating_floor(0))
+    return PuzzleRushSession.objects.create(
+        user=user,
+        mode=PuzzleRushSession.Mode.STREAK,
+        puzzle_ids=[first.id] if first else [],
+        ends_at=timezone.now() + timedelta(hours=2),
+    )
+
+
+def streak_submit(session: PuzzleRushSession, moves: list[str], *, skip: bool = False) -> dict:
+    """
+    misses = skip_used (0 ou 1). Une erreur termine la série.
+    skip=True consomme le skip unique et avance sans scorer.
+    """
+    if session.status != PuzzleRushSession.Status.ACTIVE:
+        return {
+            "error": "Session terminée",
+            "completed": True,
+            "score": session.score,
+            "skip_used": session.misses >= 1,
+            "mode": "streak",
+        }
+
+    if not session.puzzle_ids or session.current_index >= len(session.puzzle_ids):
+        session.status = PuzzleRushSession.Status.COMPLETED
+        session.save(update_fields=["status"])
+        return {
+            "solved": False,
+            "score": session.score,
+            "completed": True,
+            "skip_used": session.misses >= 1,
+            "next_puzzle_id": None,
+            "mode": "streak",
+            "reason": "empty",
+        }
+
+    puzzle = Puzzle.objects.get(pk=session.puzzle_ids[session.current_index])
+
+    if skip:
+        if session.misses >= 1:
+            return {
+                "error": "Skip déjà utilisé",
+                "solved": False,
+                "score": session.score,
+                "completed": False,
+                "skip_used": True,
+                "next_puzzle_id": puzzle.id,
+                "mode": "streak",
+            }
+        session.misses = 1
+        session.current_index += 1
+        nxt = _pick_streak_puzzle(
+            _streak_rating_floor(session.score),
+            exclude_ids=set(session.puzzle_ids),
+        )
+        if nxt:
+            session.puzzle_ids.append(nxt.id)
+        session.save()
+        next_puzzle = _session_next_puzzle(session)
+        return {
+            "solved": False,
+            "skipped": True,
+            "score": session.score,
+            "completed": next_puzzle is None,
+            "skip_used": True,
+            "next_puzzle_id": next_puzzle.id if next_puzzle else None,
+            "mode": "streak",
+            "rating_floor": _streak_rating_floor(session.score),
+        }
+
+    solved = moves_match_solution(moves, puzzle.solution_moves)
+    if solved:
+        session.score += 1
+        session.current_index += 1
+        nxt = _pick_streak_puzzle(
+            _streak_rating_floor(session.score),
+            exclude_ids=set(session.puzzle_ids),
+        )
+        if nxt:
+            session.puzzle_ids.append(nxt.id)
+        session.save()
+        next_puzzle = _session_next_puzzle(session)
+        return {
+            "solved": True,
+            "score": session.score,
+            "completed": next_puzzle is None,
+            "skip_used": session.misses >= 1,
+            "next_puzzle_id": next_puzzle.id if next_puzzle else None,
+            "mode": "streak",
+            "rating_floor": _streak_rating_floor(session.score),
+        }
+
+    session.status = PuzzleRushSession.Status.COMPLETED
+    session.save(update_fields=["status"])
+    return {
+        "solved": False,
+        "score": session.score,
+        "completed": True,
+        "skip_used": session.misses >= 1,
+        "next_puzzle_id": None,
+        "mode": "streak",
+        "reason": "fail",
+        "correct_moves": puzzle.solution_moves,
+    }
+
+
 def join_battle_queue(user) -> PuzzleBattle | None:
     opponent_entry = PuzzleBattleQueue.objects.exclude(user=user).order_by("joined_at").first()
     puzzles = random_queryset(Puzzle.objects.all(), 5)
