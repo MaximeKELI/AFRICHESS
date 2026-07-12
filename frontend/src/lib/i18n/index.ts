@@ -1225,6 +1225,8 @@ const fr: Record<string, string> = {
   "social.block.button": "Bloquer",
   "social.block.confirm": "Bloquer ce joueur ? Il ne pourra plus vous contacter.",
   "social.block.done": "Joueur bloqué",
+  "social.block.unblock": "Débloquer",
+  "social.block.undone": "Joueur débloqué",
   "social.error.action": "Action impossible",
   "notifications.friendRequest": "Voir la demande",
   "notifications.viewAll": "Tout voir",

@@ -166,6 +166,17 @@ export function ProfileSocialActions({ username, onChange }: ProfileSocialAction
             {t("social.block.button")}
           </button>
         )}
+
+        {friendship_status === "blocked" && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => run(() => socialApi.unblockUser(username), "social.block.undone")}
+            className="px-3 py-2 rounded-lg text-xs border border-white/20 disabled:opacity-50"
+          >
+            {t("social.block.unblock")}
+          </button>
+        )}
       </div>
 
       <p className="text-xs opacity-55">

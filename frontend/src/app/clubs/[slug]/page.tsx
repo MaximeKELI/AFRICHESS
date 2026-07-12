@@ -78,6 +78,21 @@ export default function ClubDetailPage() {
     }
   };
 
+  const handleLeave = async () => {
+    if (!user) return;
+    if (!window.confirm(t("clubs.leaveConfirm"))) return;
+    setJoining(true);
+    try {
+      await socialApi.leaveClub(slug);
+      load();
+      setError(null);
+    } catch (err) {
+      setError(formatApiError(err, t("clubs.error.leave")));
+    } finally {
+      setJoining(false);
+    }
+  };
+
   const createEvent = async () => {
     if (!eventTitle.trim()) return;
     try {
@@ -138,7 +153,19 @@ export default function ClubDetailPage() {
           {user ? (
             club.is_member ? (
               <div className="space-y-6">
-                <p className="text-sm text-africhess-green">{t("clubs.alreadyMember")}</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-sm text-africhess-green">{t("clubs.alreadyMember")}</p>
+                  {user.username !== club.owner.username && (
+                    <button
+                      type="button"
+                      disabled={joining}
+                      onClick={handleLeave}
+                      className="px-3 py-1.5 rounded-lg border border-white/20 text-sm disabled:opacity-50"
+                    >
+                      {t("clubs.leave")}
+                    </button>
+                  )}
+                </div>
                 <ClubChat slug={slug} />
 
                 <div className="glass-card p-4 space-y-3">
