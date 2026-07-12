@@ -118,7 +118,14 @@ export default function TvPage() {
           <div className="flex flex-wrap justify-between items-start gap-2 mb-4">
             <div>
               <p className="font-medium">{playerLabel(current)}</p>
-              <p className="text-xs opacity-60 capitalize">{current.mode}</p>
+              <p className="text-xs opacity-60 capitalize">
+                {current.mode}
+                {current.is_tv_exhibition && (
+                  <span className="ml-2 text-africhess-gold normal-case">
+                    · {t("tv.exhibition")}
+                  </span>
+                )}
+              </p>
             </div>
             {secondsLeft != null && (
               <span className="text-xs text-africhess-gold">
@@ -139,7 +146,7 @@ export default function TvPage() {
           </div>
         </section>
       ) : (
-        <p className="opacity-60 mb-8">{t("live.empty")}</p>
+        <p className="opacity-60 mb-8 text-sm">{t("tv.empty")}</p>
       )}
 
       {queue.length > 1 && (
