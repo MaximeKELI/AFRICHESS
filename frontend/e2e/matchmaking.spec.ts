@@ -20,6 +20,10 @@ test.describe("Matchmaking PvP", () => {
       await setUnratedMode(pageA);
       await setUnratedMode(pageB);
 
+      // Nettoyer une file résiduelle d'un run précédent.
+      await pageA.request.delete("http://127.0.0.1:8000/api/games/matchmaking/");
+      await pageB.request.delete("http://127.0.0.1:8000/api/games/matchmaking/");
+
       const findA = pageA.getByTestId("play-find-opponent").first();
       const findB = pageB.getByTestId("play-find-opponent").first();
       await expect(findA).toBeVisible();
