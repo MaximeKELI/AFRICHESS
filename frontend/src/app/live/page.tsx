@@ -90,13 +90,17 @@ export default function LiveGamesPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold mb-1">{t("live.title")}</h1>
+      <p className="text-sm opacity-60 mb-2">{t("nav.currentGames")}</p>
       {channel && <p className="text-sm text-africhess-gold mb-2">{channel}</p>}
-      <div className="flex gap-4 mb-6 text-sm">
+      <div className="flex flex-wrap gap-4 mb-6 text-sm">
         <Link href="/tv" className="text-africhess-gold hover:underline">
-          {t("tv.title")} →
+          {t("nav.tv")} →
+        </Link>
+        <Link href="/streamers" className="text-africhess-gold hover:underline">
+          {t("nav.streamers")} →
         </Link>
         <Link href="/broadcasts" className="text-africhess-gold hover:underline">
-          {t("broadcasts.title")} →
+          {t("nav.broadcasts")} →
         </Link>
       </div>
 
@@ -109,13 +113,25 @@ export default function LiveGamesPage() {
 
       {streamers.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-lg font-semibold mb-3">{t("live.streamers")}</h2>
+          <div className="flex justify-between items-baseline mb-3">
+            <h2 className="text-lg font-semibold">{t("live.streamers")}</h2>
+            <Link href="/streamers" className="text-xs text-africhess-gold hover:underline">
+              {t("streamers.watch")} →
+            </Link>
+          </div>
           <ul className="space-y-2">
             {streamers.map((s) => (
               <li key={s.display_name} className="glass-card p-3 text-sm">
                 {s.display_name}
                 {s.twitch && (
-                  <a href={`https://twitch.tv/${s.twitch}`} target="_blank" rel="noopener noreferrer" className="ml-2 text-africhess-gold hover:underline">Twitch</a>
+                  <a
+                    href={`https://twitch.tv/${s.twitch}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-2 text-africhess-gold hover:underline"
+                  >
+                    Twitch
+                  </a>
                 )}
               </li>
             ))}
