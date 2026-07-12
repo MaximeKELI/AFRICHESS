@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { PuzzleBoard } from "@/components/puzzles/PuzzleBoard";
 import {
