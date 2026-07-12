@@ -149,7 +149,8 @@ def decline_draw(game: Game, user) -> dict:
 
 def resign_game(game: Game, user) -> dict:
     if game.status != Game.Status.ACTIVE:
-        return {"error": "Partie terminée"}
+        # Idempotent : abandon après fin (horloge / mat) → pas d'erreur front.
+        return {"ok": True, "result": game.result, "already_finished": True}
     if not _participant(game, user):
         return {"error": "Non participant"}
 

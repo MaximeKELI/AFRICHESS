@@ -379,7 +379,8 @@ class GameService:
             )
         game.move_count += 1
         if is_white_turn:
-            game.pgn = f"{(game.pgn or '').rstrip()} {game.move_count}. {san}".strip()
+            full_move = (game.move_count + 1) // 2
+            game.pgn = f"{(game.pgn or '').rstrip()} {full_move}. {san}".strip()
         else:
             game.pgn = f"{(game.pgn or '').rstrip()} {san}".strip()
         bump_repetition_count(game)
