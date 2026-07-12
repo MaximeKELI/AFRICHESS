@@ -6,6 +6,12 @@ urlpatterns = [
     path("", views.TournamentListView.as_view(), name="tournament-list"),
     path("<slug:slug>/", views.TournamentDetailView.as_view(), name="tournament-detail"),
     path("<slug:slug>/register/", views.RegisterTournamentView.as_view(), name="tournament-register"),
+    path("<slug:slug>/withdraw/", views.WithdrawTournamentView.as_view(), name="tournament-withdraw"),
+    path(
+        "<slug:slug>/availability/",
+        views.TournamentAvailabilityView.as_view(),
+        name="tournament-availability",
+    ),
     path("<slug:slug>/start/", views.StartTournamentView.as_view(), name="tournament-start"),
     path("<slug:slug>/standings/", views.TournamentStandingsView.as_view(), name="tournament-standings"),
     path("<slug:slug>/team-scores/", views.TournamentTeamScoresView.as_view(), name="tournament-team-scores"),

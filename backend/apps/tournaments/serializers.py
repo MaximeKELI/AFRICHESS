@@ -18,6 +18,7 @@ class TournamentParticipantSerializer(serializers.ModelSerializer):
             "draws",
             "losses",
             "games_played",
+            "is_available",
             "club_name",
         ]
 

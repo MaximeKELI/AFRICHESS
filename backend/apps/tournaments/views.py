@@ -150,3 +150,42 @@ class MyTournamentGameView(APIView):
         if not game:
             return Response({"game": None})
         return Response({"game": GameSerializer(game).data})
+
+
+class WithdrawTournamentView(APIView):
+    """Désinscription (avant départ) ou pause arène (pendant)."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, slug):
+        try:
+            tournament = Tournament.objects.get(slug=slug)
+        except Tournament.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        result = TournamentEngine().withdraw(tournament, request.user)
+        if result.get("error"):
+            return Response(result, status=400)
+        return Response(result)
+
+
+class TournamentAvailabilityView(APIView):
+    """Pause / reprise en arène (is_available)."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, slug):
+        try:
+            tournament = Tournament.objects.get(slug=slug)
+        except Tournament.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        available = request.data.get("available")
+        if available is None:
+            return Response({"error": "available requis (bool)"}, status=400)
+        if isinstance(available, str):
+            available = available.lower() in ("1", "true", "yes")
+        result = TournamentEngine().set_availability(
+            tournament, request.user, bool(available)
+        )
+        if result.get("error"):
+            return Response(result, status=400)
+        return Response(result)
