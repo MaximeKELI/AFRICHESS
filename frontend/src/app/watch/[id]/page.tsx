@@ -59,6 +59,8 @@ export default function WatchGamePage() {
   const [evalLoading, setEvalLoading] = useState(false);
   const [isExhibition, setIsExhibition] = useState(false);
   const [tvAnalysis, setTvAnalysis] = useState<TvAnalysis | null>(null);
+  const [whiteName, setWhiteName] = useState("?");
+  const [blackName, setBlackName] = useState("?");
   const { user } = useAuthStore();
 
   const handleUpdate = useCallback((payload: WsGamePayload) => {
@@ -88,6 +90,12 @@ export default function WatchGamePage() {
         setStatus(data.status);
         setIsExhibition(Boolean(data.is_tv_exhibition));
         setTvAnalysis((data.tv_analysis as TvAnalysis) ?? null);
+        setWhiteName(
+          data.white_player?.display_name || data.white_player?.username || "?"
+        );
+        setBlackName(
+          data.black_player?.display_name || data.black_player?.username || "?"
+        );
         setError(null);
       })
       .catch((err) => {
@@ -189,6 +197,36 @@ export default function WatchGamePage() {
         <div className="mb-4 space-y-2 rounded-xl border border-black/10 dark:border-white/15 bg-white/80 dark:bg-black/40 p-3 shadow-sm">
           {isExhibition && (
             <>
+              {tvAnalysis?.head_to_head && (
+                <div className="rounded-lg border border-africhess-gold/25 bg-africhess-gold/5 px-3 py-2 mb-2">
+                  <p className="text-[10px] uppercase tracking-wider text-africhess-gold/90 mb-1">
+                    {t("tv.h2hTitle")}
+                  </p>
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-medium">
+                    <span className="truncate max-w-[35%]">{whiteName}</span>
+                    <span className="font-mono tabular-nums text-center shrink-0">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        {tvAnalysis.head_to_head.white_wins ?? 0}
+                        {t("tv.h2hWinsShort")}
+                      </span>
+                      <span className="opacity-40 mx-1.5">·</span>
+                      <span>
+                        {tvAnalysis.head_to_head.draws ?? 0}
+                        {t("tv.h2hDrawsShort")}
+                      </span>
+                      <span className="opacity-40 mx-1.5">·</span>
+                      <span className="text-sky-700 dark:text-sky-300">
+                        {tvAnalysis.head_to_head.black_wins ?? 0}
+                        {t("tv.h2hWinsShort")}
+                      </span>
+                    </span>
+                    <span className="truncate max-w-[35%] text-right">{blackName}</span>
+                  </div>
+                  <p className="text-[10px] opacity-50 mt-1 text-center">
+                    {t("tv.h2hPlayed", { count: tvAnalysis.head_to_head.played ?? 0 })}
+                  </p>
+                </div>
+              )}
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                 <span className="opacity-70">{t("tv.winChance")}</span>
                 <span className="font-mono tabular-nums">
