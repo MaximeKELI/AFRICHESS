@@ -214,9 +214,9 @@ function speakBrowserChunk(text: string, byAi: boolean): Promise<boolean> {
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = preferredVoice?.lang?.startsWith("fr") ? preferredVoice.lang : "fr-FR";
-    // Prosodie plus naturelle (moins « robot »)
-    utterance.rate = byAi ? 0.92 : 0.96;
-    utterance.pitch = byAi ? 1.05 : 1.08;
+    // Prosodie plus naturelle (moins « robot lecture »)
+    utterance.rate = byAi ? 0.88 : 0.92;
+    utterance.pitch = byAi ? 0.98 : 1.06;
     utterance.volume = 1;
     refreshVoices();
     if (preferredVoice) utterance.voice = preferredVoice;
