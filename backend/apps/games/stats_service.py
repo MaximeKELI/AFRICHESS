@@ -140,16 +140,20 @@ def on_game_completed(game: Game) -> None:
                 schedule_fairplay_analysis(str(game.id))
         except Exception:
             pass
-    try:
-        from apps.ratings.league_service import record_league_result
+    # Ligues : parties classées uniquement, une seule fois
+    if game.is_rated and not game.is_vs_ai and not game.league_recorded:
+        try:
+            from apps.ratings.league_service import record_league_result
 
-        for player in (game.white_player, game.black_player):
-            if player and not game.is_vs_ai:
-                outcome = _outcome_for_user(game, player.id)
-                if outcome in ("win", "draw", "loss"):
-                    record_league_result(player, outcome)
-    except Exception:
-        pass
+            for player in (game.white_player, game.black_player):
+                if player:
+                    outcome = _outcome_for_user(game, player.id)
+                    if outcome in ("win", "draw", "loss"):
+                        record_league_result(player, outcome)
+            game.league_recorded = True
+            game.save(update_fields=["league_recorded"])
+        except Exception:
+            pass
     try:
         from apps.analytics.events import log_event
 

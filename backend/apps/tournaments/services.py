@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import random
+from datetime import timedelta
 
 from django.db import transaction
 from django.db.models import Count, Sum
@@ -85,7 +86,7 @@ class TournamentEngine:
             )
             and not tournament.ends_at
         ):
-            tournament.ends_at = timezone.now() + timezone.timedelta(minutes=30)
+            tournament.ends_at = timezone.now() + timedelta(minutes=30)
         tournament.save(
             update_fields=["status", "current_round", "total_rounds", "ends_at"]
         )
