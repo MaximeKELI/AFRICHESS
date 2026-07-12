@@ -27,9 +27,12 @@ const NAV_GROUPS = [
   {
     key: "nav.group.play",
     links: [
-      { href: "/play", key: "nav.play" },
-      { href: "/play/daily", key: "nav.daily" },
+      { href: "/lobby", key: "nav.lobby" },
+      { href: "/arena", key: "nav.arena" },
+      { href: "/swiss", key: "nav.swiss" },
       { href: "/simul", key: "nav.simul" },
+      { href: "/play", key: "nav.playQuick" },
+      { href: "/play/daily", key: "nav.daily" },
       { href: "/bots", key: "nav.bots" },
       { href: "/friends", key: "nav.friends" },
     ],

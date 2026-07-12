@@ -8,6 +8,10 @@ export const LOCALES: Locale[] = ["fr", "en", "ar", "pt", "sw"];
 
 const fr: Record<string, string> = {
   "nav.play": "Jouer",
+  "nav.lobby": "Créer une partie",
+  "nav.arena": "Tournois Arena",
+  "nav.swiss": "Tournois Swiss",
+  "nav.playQuick": "Partie rapide",
   "nav.daily": "Partie du jour",
   "nav.openings": "Ouvertures",
   "nav.puzzles": "Problèmes",
@@ -1616,6 +1620,10 @@ const fr: Record<string, string> = {
 
 const en: Record<string, string> = {
   "nav.play": "Play",
+  "nav.lobby": "Create a game",
+  "nav.arena": "Arena tournaments",
+  "nav.swiss": "Swiss tournaments",
+  "nav.playQuick": "Quick play",
   "nav.daily": "Daily",
   "nav.openings": "Openings",
   "nav.puzzles": "Puzzles",
