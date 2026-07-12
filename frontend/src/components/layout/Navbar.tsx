@@ -280,7 +280,7 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="sticky top-0 z-layer-nav border-b border-white/10 bg-[var(--card)]/90 backdrop-blur-lg safe-top">
+      <nav className="sticky top-0 z-layer-nav nav-premium backdrop-blur-xl safe-top">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 md:h-16 flex items-center justify-between gap-2">
           <Link href="/" className="flex items-center gap-2 group shrink-0" onClick={closeDrawer}>
             <Image src="/images/logo.png" alt="AFRICHESS" width={36} height={36} className="rounded-lg md:w-10 md:h-10" />
