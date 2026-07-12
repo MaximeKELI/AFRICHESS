@@ -198,6 +198,70 @@ AI_REACT_PLAYER_NEUTRAL = [
     "Je vois {san}. Réponse en préparation.",
 ]
 
+AI_REACT_PLAYER_OPENING = [
+    "Tu ouvres avec {san} ? Classique… on verra si ça tient.",
+    "{san} — début prudent. Tu te caches ou tu prépares quelque chose ?",
+    "Intéressant, {san}. Je note ton style.",
+    "Ah, {san}. Tu veux me tester dès le départ ?",
+    "{san} — ok, la partie commence vraiment.",
+    "{san} dès l'ouverture — audacieux ou classique ?",
+    "Avec {san}, tu poses le décor. Moi aussi.",
+]
+
+AI_REACT_PLAYER_CAPTURE = [
+    "Tu captures avec {san} ? Vérifie bien ce que tu laisses en prise.",
+    "{san} — échange accepté. J'espère que tu as calculé.",
+    "Tu prends du matériel avec {san}. Osé.",
+    "Capture avec {san}… je vais te le faire regretter peut-être.",
+    "{san} prend du bois. On verra qui rit à la fin.",
+    "Échange via {san} — intéressant.",
+]
+
+AI_REACT_PLAYER_CHECK = [
+    "Échec avec {san} ! Mon roi n'a pas peur… enfin, presque.",
+    "Tu me mets échec ? {san} — je vais me défendre.",
+    "{san} et échec ! Tu veux me bousculer, c'est noté.",
+    "Échec ! {san} — tu prends l'initiative, bravo… pour l'instant.",
+    "{san} me force à réagir. Bien joué… pour un humain.",
+]
+
+AI_REACT_PLAYER_STRONG = [
+    "Hmm, {san}… solide. Je n'aime pas ce coup.",
+    "Pas mal, {san}. Tu me mets la pression.",
+    "{san} — tu joues bien là. Ça m'inquiète un peu.",
+    "Bon coup, {san}. Je dois réfléchir sérieusement.",
+    "{san} — tu me surprends. Continue comme ça et tu vas m'inquiéter.",
+    "Fort, {san}. Je ne m'y attendais pas.",
+]
+
+AI_REACT_PLAYER_WEAK = [
+    "Tu joues {san} ? Merci pour le cadeau.",
+    "{san}… intéressant choix. Tu me facilites la vie.",
+    "Aïe, {san} — tu aurais dû réfléchir encore un peu.",
+    "{san} ? Je ne m'y attendais pas… dans le bon sens pour moi.",
+    "Tu laisses des faiblesses avec {san}. J'en profite.",
+    "{san} — coup douteux. Je note pour plus tard.",
+]
+
+AI_REACT_PLAYER_NEAR_MATE = [
+    "Tu es proche du mat avec {san} ! Je suis en danger…",
+    "{san} — tu me mets au bord du gouffre. Impressionnant.",
+    "Attention, {san} me met en sursis. Tu vas me mater ?",
+    "{san} sent le mat. Je dois me démener.",
+]
+
+AI_REACT_PLAYER_CASTLE = [
+    "Tu roques avec {san} — ton roi est en sécurité, pour l'instant.",
+    "{san}, roque solide. Je vais devoir creuser.",
+    "Roque {san} — prudent. Moi aussi je sais me protéger.",
+]
+
+AI_REACT_PLAYER_PROMOTION = [
+    "Promotion avec {san} ! Une dame en plus pour toi…",
+    "{san} — dame ! Tu veux finir la partie en beauté ?",
+    "Promotion {san}. La fin approche… peut-être.",
+]
+
 
 def _pick(pool: list[str], move_number: int = 0, san: str = "") -> str:
     """Choisit une phrase en variant fortement d'un coup à l'autre."""
