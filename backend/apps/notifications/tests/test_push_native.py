@@ -35,16 +35,17 @@ class PushNativeTests(TestCase):
             platform=DeviceToken.Platform.ANDROID,
             kind=DeviceToken.Kind.EXPO,
         )
-        n = Notification.objects.create(
-            user=self.user,
-            type=Notification.Type.MATCH_FOUND,
-            title="Match",
-            body="vs opponent",
-            data={"game_id": "uuid"},
-        )
+        # Créer la notif avec signals push coupés pour ne compter qu'un seul envoi.
         with patch("apps.notifications.signals.push_notification_ws"), patch(
             "apps.notifications.signals.enqueue_native_push"
         ):
+            n = Notification.objects.create(
+                user=self.user,
+                type=Notification.Type.MATCH_FOUND,
+                title="Match",
+                body="vs opponent",
+                data={"game_id": "uuid"},
+            )
             deliver_notification_push(n)
         mock_expo.assert_called_once()
         mock_web.assert_called_once()

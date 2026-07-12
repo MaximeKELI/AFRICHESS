@@ -70,9 +70,10 @@ class FairPlayEngineUnavailableTests(TestCase):
             played_by_white=True,
         )
 
+    @patch("apps.games.board_native.fairplay_analyze_inprocess", return_value=None)
     @patch("apps.games.fairplay_service._fairplay_bin", return_value=None)
     @patch("apps.games.fairplay_service._notify_ops_engine_failure")
-    def test_analyze_persists_engine_unavailable(self, mock_notify, _mock_bin):
+    def test_analyze_persists_engine_unavailable(self, mock_notify, _mock_bin, _mock_inproc):
         report = analyze_and_store(self.game, self.white)
         self.assertIsNotNone(report)
         self.assertEqual(report.verdict, FairPlayReport.Verdict.ENGINE_UNAVAILABLE)
@@ -81,8 +82,9 @@ class FairPlayEngineUnavailableTests(TestCase):
             FairPlayReviewCase.objects.filter(report=report).exists()
         )
 
+    @patch("apps.games.board_native.fairplay_analyze_inprocess", return_value=None)
     @patch("apps.games.fairplay_service._fairplay_bin", return_value=None)
-    def test_run_fairplay_returns_error_tuple(self, _mock_bin):
+    def test_run_fairplay_returns_error_tuple(self, _mock_bin, _mock_inproc):
         result, error = run_fairplay_analysis(self.game, self.white)
         self.assertEqual(result["verdict"], "engine_unavailable")
         self.assertIsNotNone(error)
