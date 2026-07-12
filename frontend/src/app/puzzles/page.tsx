@@ -304,19 +304,33 @@ export default function PuzzlesPage() {
       const left = Math.max(0, Math.floor((rushEndsAt - Date.now()) / 1000));
       setRushTimeLeft(left);
       if (left <= 0) {
+        const sid = rushSessionId;
+        const mode = tab;
+        const score = rushScore;
         setResult(
-          tab === "storm"
-            ? t("puzzles.storm.timeUp", { score: rushScore })
-            : t("puzzles.rush.timeUp", { score: rushScore })
+          mode === "storm"
+            ? t("puzzles.storm.timeUp", { score })
+            : t("puzzles.rush.timeUp", { score })
         );
         setPuzzle(null);
         setRushSessionId(null);
+        setRushEndsAt(null);
+        // Clôture serveur (timeout) pour leaderboard
+        if (sid && user) {
+          const fin =
+            mode === "storm"
+              ? puzzlesApi.stormSubmit(sid, [], 180)
+              : puzzlesApi.rushSubmit(sid, [], 180);
+          void fin.catch(() => {});
+          loadRushLeaderboard(mode === "storm" ? "storm" : "rush");
+        }
       }
     };
     tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [tab, rushEndsAt, puzzle, rushScore, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, rushEndsAt, puzzle, rushScore, rushSessionId, user, t]);
 
   useEffect(() => {
     if (tab !== "battle" || !battleId) return;
@@ -376,9 +390,9 @@ export default function PuzzlesPage() {
       });
   };
 
-  const loadRushLeaderboard = () => {
+  const loadRushLeaderboard = (mode: "rush" | "storm" | "survival" = "rush") => {
     puzzlesApi
-      .rushLeaderboard()
+      .rushLeaderboard(mode)
       .then(({ data }) => setRushLeaderboard(Array.isArray(data) ? data : []))
       .catch(() => setRushLeaderboard([]));
   };
