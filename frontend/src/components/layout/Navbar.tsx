@@ -51,15 +51,20 @@ const NAV_GROUPS = [
   {
     key: "nav.group.learn",
     links: [
-      { href: "/learning", key: "nav.learn" },
-      { href: "/learning/openings", key: "nav.openings" },
+      { href: "/learn", key: "nav.chessBasics" },
+      { href: "/practice", key: "nav.practice" },
+      { href: "/learning/coordinates", key: "nav.coordinates" },
+      { href: "/studies", key: "nav.studies" },
+      { href: "/coaches", key: "nav.coaches" },
       { href: "/learning/videos", key: "videos.title" },
+      { href: "/learning", key: "nav.learnDashboard" },
+      { href: "/learning/openings", key: "nav.openings" },
       { href: "/learning/repertoires", key: "nav.repertoire" },
       { href: "/learning/study", key: "study.title" },
-      { href: "/studies", key: "nav.studies" },
       { href: "/training", key: "nav.training" },
       { href: "/insights", key: "nav.insights" },
       { href: "/learning/glossary", key: "nav.glossary" },
+      { href: "/learning/analyze", key: "nav.analyze" },
     ],
   },
   {
