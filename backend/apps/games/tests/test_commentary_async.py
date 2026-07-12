@@ -1,4 +1,4 @@
-"""Tests commentaires async (Celery / thread)."""
+"""Tests commentaires live (génération sync sans Stockfish)."""
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
@@ -20,7 +20,7 @@ User = get_user_model()
         "DEFAULT_THROTTLE_CLASSES": [],
     }
 )
-class AsyncMoveCommentsTests(TestCase):
+class LiveMoveCommentsTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username="async_comments",
@@ -28,9 +28,8 @@ class AsyncMoveCommentsTests(TestCase):
             password="x",
         )
 
-    @patch("apps.games.services.schedule_move_comments")
     @patch("apps.games.services.GameService.__init__", lambda self: None)
-    def test_make_move_skips_sync_analysis_when_comments_enabled(self, mock_schedule):
+    def test_make_move_writes_comments_sync_without_engine_analysis(self):
         mock_engine = MagicMock()
         mock_engine.apply_move.return_value = (
             "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
@@ -38,6 +37,18 @@ class AsyncMoveCommentsTests(TestCase):
             False,
         )
         mock_engine.get_best_move.return_value = EngineMove(uci="e7e5", san="e5")
+        mock_engine.apply_move.side_effect = [
+            (
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+                "e4",
+                False,
+            ),
+            (
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2",
+                "e5",
+                False,
+            ),
+        ]
 
         svc = GameService()
         svc.engine = mock_engine
@@ -54,20 +65,18 @@ class AsyncMoveCommentsTests(TestCase):
         result = svc.make_move(game, self.user, "e2e4", include_comments=True)
 
         self.assertNotIn("error", result)
-        self.assertTrue(result.get("comments_pending"))
+        self.assertFalse(result.get("comments_pending"))
         mock_engine.analyze_position.assert_not_called()
-        mock_schedule.assert_called_once()
-        specs = mock_schedule.call_args[0][1]
-        self.assertEqual(len(specs), 2)
 
         game.refresh_from_db()
-        moves = list(game.moves.order_by("move_number"))
+        moves = list(game.moves.order_by("move_number", "played_by_white"))
         self.assertEqual(len(moves), 2)
-        self.assertEqual(moves[0].comment, "")
-        self.assertEqual(moves[1].comment, "")
+        self.assertTrue(moves[0].comment.strip())
+        self.assertTrue(moves[1].comment.strip())
+        self.assertTrue(result["move"].comment.strip())
+        self.assertTrue(result["ai_move_record"].comment.strip())
 
-    @patch("apps.games.engine.ChessEngineService")
-    def test_generate_move_comments_for_specs_updates_db(self, mock_engine_cls):
+    def test_generate_move_comments_for_specs_updates_db_without_engine(self):
         from apps.games.commentary_async import generate_move_comments_for_specs
         from apps.games.models import Move
 
@@ -88,9 +97,6 @@ class AsyncMoveCommentsTests(TestCase):
             comment="",
         )
 
-        mock_engine = mock_engine_cls.return_value
-        mock_engine.analyze_position.side_effect = [0.0, 0.3]
-
         with patch(
             "apps.games.commentary.generate_move_comment",
             return_value="Coup solide.",
@@ -107,7 +113,8 @@ class AsyncMoveCommentsTests(TestCase):
                         "mover_is_white": True,
                         "move_number": 1,
                     }
-                ]
+                ],
+                use_engine=False,
             )
 
         self.assertEqual(count, 1)

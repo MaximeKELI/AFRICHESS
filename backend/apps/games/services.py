@@ -542,36 +542,32 @@ class GameService:
             finalize_draw(game, "seventyfive_move")
             game.save()
             self._after_human_game_finished(game)
-            if pending_comment_specs:
-                schedule_move_comments(str(game.id), pending_comment_specs)
             out = {
                 "fen": game.fen,
                 "game_over": True,
                 "result": game.result,
                 "termination_reason": "seventyfive_move",
                 "draw_claim": "seventyfive",
-                "comments_pending": bool(pending_comment_specs),
             }
             if move_record_for_response:
                 out["move"] = move
+            _finalize_live_comments(out, pending_comment_specs)
             return out
 
         if is_fivefold_repetition_from_game(game):
             finalize_repetition_draw(game)
             game.save()
             self._after_human_game_finished(game)
-            if pending_comment_specs:
-                schedule_move_comments(str(game.id), pending_comment_specs)
             out = {
                 "fen": game.fen,
                 "game_over": True,
                 "result": game.result,
                 "termination_reason": "repetition",
                 "draw_claim": "fivefold",
-                "comments_pending": bool(pending_comment_specs),
             }
             if move_record_for_response:
                 out["move"] = move
+            _finalize_live_comments(out, pending_comment_specs)
             return out
 
         if can_claim_threefold_from_game(game):
@@ -579,18 +575,16 @@ class GameService:
                 finalize_repetition_draw(game)
                 game.save()
                 self._after_human_game_finished(game)
-                if pending_comment_specs:
-                    schedule_move_comments(str(game.id), pending_comment_specs)
                 out = {
                     "fen": game.fen,
                     "game_over": True,
                     "result": game.result,
                     "termination_reason": "repetition",
                     "draw_claim": "threefold",
-                    "comments_pending": bool(pending_comment_specs),
                 }
                 if move_record_for_response:
                     out["move"] = move
+                _finalize_live_comments(out, pending_comment_specs)
                 return out
             response["threefold_available"] = True
 
@@ -599,18 +593,16 @@ class GameService:
                 finalize_draw(game, "fifty_move")
                 game.save()
                 self._after_human_game_finished(game)
-                if pending_comment_specs:
-                    schedule_move_comments(str(game.id), pending_comment_specs)
                 out = {
                     "fen": game.fen,
                     "game_over": True,
                     "result": game.result,
                     "termination_reason": "fifty_move",
                     "draw_claim": "fifty_move",
-                    "comments_pending": bool(pending_comment_specs),
                 }
                 if move_record_for_response:
                     out["move"] = move
+                _finalize_live_comments(out, pending_comment_specs)
                 return out
             response["fifty_available"] = True
 
