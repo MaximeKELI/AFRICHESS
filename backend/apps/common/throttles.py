@@ -17,3 +17,9 @@ class LoginBurstThrottle(AnonRateThrottle):
 
 class AnalyzeThrottle(UserRateThrottle):
     scope = "analyze"
+
+
+class ChatThrottle(UserRateThrottle):
+    """Anti-spam chat / DM REST."""
+
+    scope = "chat"
