@@ -902,21 +902,22 @@ export default function PuzzlesPage() {
 
   const revealHint = () => {
     if (!puzzle) return;
-    const uci = hintPlayerSolutionMove(
-      puzzle.fen,
-      puzzle.solution_moves ?? [],
-      localPlayed
-    );
+    const moves = puzzle.solution_moves ?? [];
+    const uci =
+      hintPlayerSolutionMove(puzzle.fen, moves, localPlayed) ||
+      moves[localPlayed.length] ||
+      moves[0] ||
+      null;
     setHintRevealed(true);
-    setHintAvailable(Boolean(uci && uci.length >= 4));
+    setHintAvailable(Boolean(uci && String(uci).length >= 4));
     setUsedHint(true);
   };
 
   const handleHintStatus = useCallback((status: boolean | null) => {
-    // Le plateau confirme après rendu ; ne pas écraser un true local par un false transitoire
     setHintAvailable((prev) => {
       if (status === null) return null;
       if (status === true) return true;
+      // Garder true si le clic a déjà résolu un UCI (évite flash « indisponible »)
       return prev === true ? true : status;
     });
   }, []);
