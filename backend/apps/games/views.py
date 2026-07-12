@@ -72,7 +72,7 @@ class GameDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         return Game.objects.select_related(
-            "white_player", "black_player", "winner", "bot"
+            "white_player", "black_player", "winner", "bot", "analysis"
         ).prefetch_related("moves")
 
     def get_object(self):

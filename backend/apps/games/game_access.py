@@ -12,10 +12,15 @@ def user_is_participant(user, game: Game) -> bool:
 
 
 def can_view_game(user, game: Game) -> bool:
-    """Replay public ; parties actives visibles en spectateur."""
-    if game.status == Game.Status.COMPLETED:
+    """Replay public ; parties actives / TV visibles en spectateur."""
+    # Exhibitions AFRICHESS TV : toujours visibles (stats + spectateurs)
+    if getattr(game, "is_tv_exhibition", False):
         return True
-    if game.status == Game.Status.ACTIVE:
+    if game.status in (
+        Game.Status.COMPLETED,
+        Game.Status.ACTIVE,
+        Game.Status.DRAW,
+    ):
         return True
     return user_is_participant(user, game)
 
