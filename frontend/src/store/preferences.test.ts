@@ -21,12 +21,26 @@ describe("preferenceStorageKey", () => {
 
 describe("soundTheme preference", () => {
   beforeEach(() => {
-    localStorage.clear();
+    const store = new Map<string, string>();
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      value: {
+        getItem: (k: string) => store.get(k) ?? null,
+        setItem: (k: string, v: string) => {
+          store.set(k, String(v));
+        },
+        removeItem: (k: string) => {
+          store.delete(k);
+        },
+        clear: () => store.clear(),
+      },
+    });
     syncPreferencesForUser(null);
   });
 
   it("defaults to standard and persists selection", async () => {
     const { usePreferencesStore } = await import("./preferences");
+    usePreferencesStore.setState({ soundTheme: "standard" });
     expect(usePreferencesStore.getState().soundTheme).toBe("standard");
     usePreferencesStore.getState().setSoundTheme("nes");
     expect(usePreferencesStore.getState().soundTheme).toBe("nes");
