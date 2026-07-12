@@ -92,15 +92,15 @@ def is_fivefold_repetition_from_game(game) -> bool:
 
 def can_claim_fifty_moves_from_game(game) -> bool:
     try:
-        return board_from_game_moves(game).can_claim_fifty_moves()
+        return board_from_fen(game.fen, game.variant).can_claim_fifty_moves()
     except Exception:
         return False
 
 
 def is_seventyfive_moves_from_game(game) -> bool:
-    """75 demi-coups sans prise/pion — nulle automatique (FIDE / Lichess)."""
+    """75 coups (150 demi-coups) — nulle automatique (FIDE / Lichess)."""
     try:
-        return board_from_game_moves(game).is_seventyfive_moves()
+        return board_from_fen(game.fen, game.variant).is_seventyfive_moves()
     except Exception:
         return False
 
