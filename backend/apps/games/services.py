@@ -200,8 +200,9 @@ class GameService:
                                 mover_is_white=True,
                             )
                         )
-                        schedule_move_comments(str(game.id), pending_comments)
-                        game.comments_pending = True
+                        apply_live_move_comments(pending_comments)
+                        ai_move_record.refresh_from_db()
+                        game.comments_pending = False
         return game
 
     def create_friend_game(
@@ -521,8 +522,7 @@ class GameService:
             self._finalize_game(game)
 
         if pending_comment_specs:
-            schedule_move_comments(str(game.id), pending_comment_specs)
-            response["comments_pending"] = True
+            _finalize_live_comments(response, pending_comment_specs)
 
         return response
 
