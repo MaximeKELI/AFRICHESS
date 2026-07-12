@@ -59,16 +59,14 @@ def ensure_tv_bot_users() -> list:
                 "first_name": spec["first_name"],
                 "last_name": spec["last_name"],
                 "chess_level": "master",
-                "initial_elo": spec["elo"],
             },
         )
         if created:
             user.set_unusable_password()
             user.save()
-        elif user.initial_elo < 3000:
-            user.initial_elo = spec["elo"]
+        elif user.chess_level != "master":
             user.chess_level = "master"
-            user.save(update_fields=["initial_elo", "chess_level"])
+            user.save(update_fields=["chess_level"])
         bots.append(user)
     return bots
 

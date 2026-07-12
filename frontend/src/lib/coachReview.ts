@@ -16,7 +16,7 @@ export function coachPhrase(
       : playedByWhite
         ? t("chess.analysis.coach.white")
         : t("chess.analysis.coach.black");
-  const known = ["brilliant", "great", "best", "good", "inaccuracy", "mistake", "blunder"];
+  const known = ["brilliant", "great", "best", "book", "good", "inaccuracy", "mistake", "blunder"];
   const key = known.includes(moveClass)
     ? `chess.analysis.coach.${moveClass}`
     : "chess.analysis.coach.mistake";
