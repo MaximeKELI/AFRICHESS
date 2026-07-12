@@ -8,6 +8,12 @@ import Cookies from "js-cookie";
 import { apiBase } from "@/lib/apiConfig";
 import { normalizeSpeechText, splitSpeechChunks } from "@/lib/speechText";
 import { buildTtsUrls, shouldPreferNeuralTts } from "@/lib/ttsEndpoints";
+import {
+  isPremiumBrowserVoice,
+  isRoboticVoice,
+  pickFrenchVoice,
+  voiceScore,
+} from "@/lib/ttsVoice";
 
 let preferredVoice: SpeechSynthesisVoice | null = null;
 let voicesListenerAttached = false;
@@ -48,45 +54,10 @@ function authHeaders(): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-function isRoboticVoice(v: SpeechSynthesisVoice | null): boolean {
-  if (!v) return true;
-  return /espeak|festival|rhvoice|mbrola|pico|svox/.test(v.name.toLowerCase());
-}
-
-function isFrenchVoice(v: SpeechSynthesisVoice): boolean {
-  const lang = v.lang.toLowerCase();
-  return lang.startsWith("fr") || lang.includes("fr-") || /french|français|francais/.test(v.name.toLowerCase());
-}
-
-function voiceScore(v: SpeechSynthesisVoice): number {
-  const n = v.name.toLowerCase();
-  const lang = v.lang.toLowerCase();
-  const isFr = lang.startsWith("fr") || /french|français|francais/.test(n);
-  let score = 0;
-  if (isFr && !v.localService && /google/.test(n)) score = 120;
-  else if (isFr && /neural|natural|premium|wavenet|enhanced/.test(n)) score = 110;
-  else if (isFr && /microsoft|azure/.test(n)) score = 90;
-  else if (isFr && /apple|thomas|amélie|amelie|aurelie|aurélie/.test(n)) score = 85;
-  else if (isFr) score = 60;
-  else score = 20;
-  if (/espeak|festival|rhvoice|mbrola|pico|svox/.test(n)) score = Math.min(score, 8);
-  return score;
-}
-
-function pickFrenchVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
-  if (!voices.length) return null;
-  // Exclure les voix robotiques du choix — sinon on rejoue espeak via le navigateur
-  const human = voices.filter((v) => !isRoboticVoice(v));
-  if (!human.length) return null;
-  const fr = human.filter(isFrenchVoice);
-  const pool = fr.length ? fr : human;
-  return [...pool].sort((a, b) => voiceScore(b) - voiceScore(a))[0];
-}
-
 function refreshVoices() {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   const voices = window.speechSynthesis.getVoices();
-  if (voices.length > 0) preferredVoice = pickFrenchVoice(voices);
+  if (voices.length > 0) preferredVoice = pickFrenchVoice(voices) as SpeechSynthesisVoice | null;
 }
 
 function attachVoicesListener() {
@@ -99,8 +70,7 @@ function attachVoicesListener() {
 function hasPremiumBrowserVoice(): boolean {
   if (typeof window === "undefined" || !window.speechSynthesis) return false;
   refreshVoices();
-  // Uniquement Google remote / Microsoft neural — pas les voix locales type espeak
-  return Boolean(preferredVoice && voiceScore(preferredVoice) >= 90);
+  return isPremiumBrowserVoice(preferredVoice);
 }
 
 function startKeepAlive() {
