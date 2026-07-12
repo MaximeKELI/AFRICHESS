@@ -242,3 +242,19 @@ class TournamentCupFilterTests(TestCase):
         slugs = {t["slug"] for t in data}
         self.assertIn("africa-cup-filter", slugs)
         self.assertIn("world-cup-filter", slugs)
+
+    def test_serializer_exposes_international_flag(self):
+        r = self.client.get("/api/tournaments/?cup=international")
+        self.assertEqual(r.status_code, 200)
+        data = r.data if isinstance(r.data, list) else r.data.get("results", [])
+        world = next(t for t in data if t["slug"] == "world-cup-filter")
+        self.assertTrue(world["is_international_cup"])
+        self.assertFalse(world["is_african_cup"])
+
+    def test_unfiltered_list_includes_both_cup_types(self):
+        r = self.client.get("/api/tournaments/")
+        self.assertEqual(r.status_code, 200)
+        data = r.data if isinstance(r.data, list) else r.data.get("results", [])
+        slugs = {t["slug"] for t in data}
+        self.assertIn("africa-cup-filter", slugs)
+        self.assertIn("world-cup-filter", slugs)

@@ -47,4 +47,12 @@ describe("soundTheme preference", () => {
     syncPreferencesForUser(null);
     expect(usePreferencesStore.getState().soundTheme).toBe("nes");
   });
+
+  it("accepte silent et woodland", async () => {
+    const { usePreferencesStore } = await import("./preferences");
+    usePreferencesStore.getState().setSoundTheme("silent");
+    expect(usePreferencesStore.getState().soundTheme).toBe("silent");
+    usePreferencesStore.getState().setSoundTheme("woodland");
+    expect(usePreferencesStore.getState().soundTheme).toBe("woodland");
+  });
 });
