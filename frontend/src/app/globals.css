@@ -9,9 +9,16 @@
   --africhess-gold: #D4A017;
   --africhess-green: #1B7A3D;
   --africhess-terracotta: #C45C26;
-  --bg: #F5F0E8;
+  --bg: #F3EDE3;
   --text: #0D1117;
-  --card: #ffffff;
+  --card: #FAF7F2;
+  --muted: color-mix(in srgb, var(--text) 58%, transparent);
+  --muted-strong: color-mix(in srgb, var(--text) 78%, transparent);
+  --border-subtle: color-mix(in srgb, var(--text) 9%, transparent);
+  --surface-elevated: color-mix(in srgb, var(--card) 94%, var(--gold) 6%);
+  --shadow-premium: 0 1px 0 rgb(255 255 255 / 0.55) inset, 0 8px 32px rgb(13 17 23 / 0.08);
+  --shadow-premium-lg: 0 1px 0 rgb(255 255 255 / 0.6) inset, 0 20px 60px rgb(13 17 23 / 0.12);
+  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
 
   /* Z-index scale — use utility classes z-layer-* in components */
   --z-bg: 0;
