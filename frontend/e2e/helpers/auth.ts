@@ -112,15 +112,36 @@ export async function loginViaApi(
 }
 
 export async function setUnratedMode(page: import("@playwright/test").Page) {
-  // Desktop + mobile rendent chacun un switch (même testid).
-  const switches = page.getByTestId("play-rated-switch");
-  const count = await switches.count();
-  for (let i = 0; i < count; i += 1) {
-    const sw = switches.nth(i);
-    if (!(await sw.isVisible())) continue;
-    if ((await sw.getAttribute("aria-checked")) === "true") {
-      await sw.click();
-    }
-    await expect(sw).toHaveAttribute("aria-checked", "false");
+  const ratedSwitch = page.locator('[data-testid="play-rated-switch"]:visible').first();
+  await ratedSwitch.scrollIntoViewIfNeeded();
+  await ratedSwitch.waitFor({ state: "visible", timeout: 15_000 });
+  if ((await ratedSwitch.getAttribute("aria-checked")) === "true") {
+    await ratedSwitch.click();
   }
+  await expect(ratedSwitch).toHaveAttribute("aria-checked", "false");
+}
+
+/** Écarte reprise IA / modal Fair Play pour un lobby matchmaking propre. */
+export async function preparePlayLobby(page: import("@playwright/test").Page) {
+  const newGame = page.getByRole("button", { name: /nouvelle partie|new game/i });
+  if (await newGame.isVisible().catch(() => false)) {
+    await newGame.click();
+  }
+
+  // Onglet mobile « options » si le switch classée n'est pas encore visible.
+  if ((await page.locator('[data-testid="play-rated-switch"]:visible').count()) === 0) {
+    const setupTab = page.getByRole("tab").filter({ hasText: /option|setup|en ligne|online/i }).first();
+    if (await setupTab.isVisible().catch(() => false)) {
+      await setupTab.click();
+    }
+  }
+
+  await setUnratedMode(page);
+
+  const declineFairPlay = page.getByRole("button", { name: /parties amicales|friendly only|amicales uniquement/i });
+  if (await declineFairPlay.isVisible().catch(() => false)) {
+    await declineFairPlay.click();
+  }
+
+  await expect(page.getByTestId("play-find-opponent").first()).toBeVisible({ timeout: 15_000 });
 }

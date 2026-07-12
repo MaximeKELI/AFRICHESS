@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { loadE2EPlayer, loginViaApi, setUnratedMode } from "./helpers/auth";
+import { loadE2EPlayer, loginViaApi, preparePlayLobby } from "./helpers/auth";
 
 test.describe("Matchmaking PvP", () => {
   test("deux joueurs se retrouvent en partie amicale blitz", async ({ browser }) => {
@@ -17,17 +17,14 @@ test.describe("Matchmaking PvP", () => {
       await pageA.goto("/play?mode=blitz");
       await pageB.goto("/play?mode=blitz");
 
-      await setUnratedMode(pageA);
-      await setUnratedMode(pageB);
+      await preparePlayLobby(pageA);
+      await preparePlayLobby(pageB);
 
-      // Nettoyer une file résiduelle d'un run précédent.
       await pageA.request.delete("http://127.0.0.1:8000/api/games/matchmaking/");
       await pageB.request.delete("http://127.0.0.1:8000/api/games/matchmaking/");
 
       const findA = pageA.getByTestId("play-find-opponent").first();
       const findB = pageB.getByTestId("play-find-opponent").first();
-      await expect(findA).toBeVisible();
-      await expect(findB).toBeVisible();
 
       const [resA] = await Promise.all([
         pageA.waitForResponse(
