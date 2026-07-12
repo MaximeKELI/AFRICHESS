@@ -173,23 +173,23 @@ export default function WatchGamePage() {
       )}
 
       {(isExhibition || user) && (
-        <div className="mb-4 space-y-2 rounded-xl border border-white/10 bg-black/25 p-3">
+        <div className="mb-4 space-y-2 rounded-xl border border-black/10 dark:border-white/15 bg-white/80 dark:bg-black/40 p-3 shadow-sm">
           {isExhibition && (
             <>
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                 <span className="opacity-70">{t("tv.winChance")}</span>
                 <span className="font-mono tabular-nums">
-                  <span className="text-white font-semibold">{winW.toFixed(1)}%</span>
+                  <span className="font-semibold">{winW.toFixed(1)}%</span>
                   <span className="opacity-40 mx-1.5">/</span>
-                  <span className="text-neutral-400">{winB.toFixed(1)}%</span>
+                  <span className="opacity-70">{winB.toFixed(1)}%</span>
                 </span>
               </div>
-              <div className="h-2.5 rounded-full overflow-hidden flex border border-white/10">
+              <div className="h-2.5 rounded-full overflow-hidden flex border border-black/10 dark:border-white/10">
                 <div
-                  className="h-full bg-white/90 transition-all duration-500"
+                  className="h-full bg-neutral-900 dark:bg-white/90 transition-all duration-500"
                   style={{ width: `${Math.max(2, Math.min(98, winW))}%` }}
                 />
-                <div className="h-full bg-neutral-800 flex-1" />
+                <div className="h-full bg-neutral-300 dark:bg-neutral-800 flex-1" />
               </div>
             </>
           )}
@@ -219,14 +219,14 @@ export default function WatchGamePage() {
                 <p className="font-medium">
                   {lastMove.san} — {t(classLabelKey(lastMove.class))}
                 </p>
-                <p className="text-xs opacity-50">
+                <p className="text-xs opacity-60">
                   {t("tv.evalNow")}: {formatEvalDisplay(evaluation)}
                 </p>
               </div>
             </div>
           )}
           {isExhibition && curve.length > 0 && (
-            <div className="rounded-xl border border-white/10 bg-black/20 p-2">
+            <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-black/20 p-2">
               <p className="text-[11px] font-medium uppercase tracking-wider text-africhess-gold/90 px-1 mb-1">
                 {t("tv.evalCurve")}
               </p>
