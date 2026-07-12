@@ -143,6 +143,28 @@ class OnlineLifecycleExhaustiveTests(TestCase):
         self.assertIsNone(game)
         self.assertEqual(MatchmakingQueue.objects.count(), 2)
 
+    def test_04c_elo_gap_over_200_keeps_searching(self):
+        """Deux chercheurs simultanés mais |ΔELO| > 200 → pas de partie."""
+        self.mm.search(
+            self.a, elo=1000, mode="blitz", is_rated=False, is_timed=True, time_control="3+2"
+        )
+        game = self.mm.search(
+            self.b, elo=1250, mode="blitz", is_rated=False, is_timed=True, time_control="3+2"
+        )
+        self.assertIsNone(game)
+        self.assertEqual(MatchmakingQueue.objects.count(), 2)
+        self.assertEqual(Game.objects.filter(is_vs_ai=False).count(), 0)
+
+    def test_04d_elo_gap_exactly_200_pairs(self):
+        self.mm.search(
+            self.a, elo=1200, mode="blitz", is_rated=False, is_timed=True, time_control="3+2"
+        )
+        game = self.mm.search(
+            self.b, elo=1400, mode="blitz", is_rated=False, is_timed=True, time_control="3+2"
+        )
+        self.assertIsNotNone(game)
+        self.assertEqual(MatchmakingQueue.objects.count(), 0)
+
     def test_04b_requester_chosen_rapid_pairs(self):
         """Le demandeur choisit 10+0 (rapid) — pas forcé en blitz."""
         self.mm.search(
