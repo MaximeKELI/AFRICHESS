@@ -7,6 +7,7 @@ from typing import Any
 
 from django.conf import settings
 from django.core.cache import cache
+from django.db.models import Q
 
 from apps.ratings.batch import batch_player_ratings
 
@@ -41,13 +42,17 @@ def _avg_elo(game: Game, elo_map: dict[tuple[int, str], int]) -> int:
 
 
 def tv_games_for_channel(channel: str, games: list[Game] | None = None) -> list[Game]:
+    """Canal TV : filtre mode + toujours les exhibitions IA (divertissement permanent)."""
     if games is None:
         qs = live_games_queryset()
         if channel != "best":
-            qs = qs.filter(mode=channel)
+            # Humans filtrés par cadence + TOUTES les exhibitions
+            qs = qs.filter(Q(mode=channel) | Q(is_tv_exhibition=True))
         games = list(qs[:50])
     elif channel != "best":
-        games = [g for g in games if g.mode == channel][:50]
+        games = [
+            g for g in games if g.mode == channel or g.is_tv_exhibition
+        ][:50]
     elo_map = batch_player_elos(games)
     games.sort(key=lambda g: (_avg_elo(g, elo_map), g.move_count), reverse=True)
     return games
