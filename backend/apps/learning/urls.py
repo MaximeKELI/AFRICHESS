@@ -59,6 +59,11 @@ urlpatterns = [
         name="shared-study-chapter-edit",
     ),
     path(
+        "studies/<int:study_id>/collaborators/",
+        shared_studies_views.StudyCollaboratorView.as_view(),
+        name="shared-study-collaborators",
+    ),
+    path(
         "studies/<int:study_id>/export/",
         shared_studies_views.StudyExportView.as_view(),
         name="shared-study-export",
