@@ -159,6 +159,7 @@ class AcceptFriendView(APIView):
             return Response({"error": "Not found"}, status=404)
         friendship.status = Friendship.Status.ACCEPTED
         friendship.save()
+        _notify_friend_accepted(request.user, friendship.from_user, friendship.id)
         return Response(FriendshipSerializer(friendship).data)
 
 
@@ -195,7 +196,7 @@ class UnfriendView(APIView):
 
     def post(self, request, username):
         try:
-            other = User.objects.get(username=username)
+            other = _get_user_by_username(username)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
         row = friendship_row(request.user, other)
@@ -210,23 +211,42 @@ class BlockUserView(APIView):
 
     def post(self, request, username):
         try:
-            other = User.objects.get(username=username)
+            other = _get_user_by_username(username)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
         if other == request.user:
             return Response({"error": "Impossible"}, status=400)
-        Friendship.objects.filter(
-            Q(from_user=request.user, to_user=other) | Q(from_user=other, to_user=request.user)
-        ).delete()
-        UserFollow.objects.filter(
-            Q(follower=request.user, following=other) | Q(follower=other, following=request.user)
-        ).delete()
-        friendship = Friendship.objects.create(
+        with transaction.atomic():
+            Friendship.objects.filter(
+                Q(from_user=request.user, to_user=other) | Q(from_user=other, to_user=request.user)
+            ).delete()
+            UserFollow.objects.filter(
+                Q(follower=request.user, following=other) | Q(follower=other, following=request.user)
+            ).delete()
+            friendship = Friendship.objects.create(
+                from_user=request.user,
+                to_user=other,
+                status=Friendship.Status.BLOCKED,
+            )
+        return Response(FriendshipSerializer(friendship).data, status=201)
+
+
+class UnblockUserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, username):
+        try:
+            other = _get_user_by_username(username)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+        deleted, _ = Friendship.objects.filter(
             from_user=request.user,
             to_user=other,
             status=Friendship.Status.BLOCKED,
-        )
-        return Response(FriendshipSerializer(friendship).data, status=201)
+        ).delete()
+        if not deleted:
+            return Response({"error": "Utilisateur non bloqué"}, status=400)
+        return Response(status=204)
 
 
 class UserSearchView(APIView):
