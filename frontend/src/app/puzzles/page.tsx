@@ -30,7 +30,7 @@ import {
   type PuzzleBadgeId,
 } from "@/lib/puzzleBadges";
 import { PuzzleSessionTracker, type PuzzleSessionRecap } from "@/lib/puzzleSession";
-import { alignMovesToSolution } from "@/lib/puzzleEngine";
+import { alignMovesToSolution, hintPlayerSolutionMove } from "@/lib/puzzleEngine";
 import {
   getLifetimePuzzleSolved,
   incrementLifetimePuzzleSolved,

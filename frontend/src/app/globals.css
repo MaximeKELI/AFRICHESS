@@ -1631,18 +1631,21 @@ html.has-site-background nav {
   overflow: visible;
 }
 .puzzle-hint-arrow-segment {
-  stroke-dasharray: 200;
-  animation: puzzle-hint-arrow-in 0.45s ease-out both;
+  opacity: 1;
+  stroke-dasharray: 12 4;
+  animation: puzzle-hint-arrow-in 0.4s ease-out;
 }
 .puzzle-hint-origin-ring {
+  opacity: 0.9;
   animation: puzzle-hint-ring-pulse 1.6s ease-in-out infinite;
 }
 .puzzle-hint-dest-dot {
-  animation: puzzle-hint-dot-pop 0.35s ease-out 0.2s both;
+  opacity: 0.85;
+  animation: puzzle-hint-dot-pop 0.35s ease-out 0.15s both;
 }
 @keyframes puzzle-hint-arrow-in {
-  from { stroke-dashoffset: 200; opacity: 0; }
-  to { stroke-dashoffset: 0; opacity: 1; }
+  from { opacity: 0.35; }
+  to { opacity: 1; }
 }
 @keyframes puzzle-hint-ring-pulse {
   0%, 100% { opacity: 0.75; r: 3.8; }
