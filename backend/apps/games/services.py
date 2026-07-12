@@ -537,7 +537,18 @@ class GameService:
         pending_comment_specs: list,
         move_record_for_response: bool = True,
     ) -> dict | None:
-        """Nulle FIDE/Lichess : 75/5 auto ; 50/3 claim (ou claim via offre+coup)."""
+        """Nulle FIDE/Lichess : 75/5 auto ; 50/3 claim (ou claim via offre+coup).
+
+        Le mat a toujours priorité sur les nulles automatiques.
+        """
+        from .variant_utils import board_from_fen
+
+        try:
+            if board_from_fen(game.fen, game.variant).is_checkmate():
+                return None
+        except Exception:
+            pass
+
         if is_seventyfive_moves_from_game(game):
             finalize_draw(game, "seventyfive_move")
             game.save()

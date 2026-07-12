@@ -23,10 +23,16 @@ def board_from_game_moves(game) -> chess.Board:
 
 
 def _position_key(fen: str, variant: str) -> str:
+    """Clé FIDE de transposition (pièces + couleurs + tour + roques + prise en passant)."""
     board = board_from_fen(fen, variant)
     key = board._transposition_key()
-    ep = key[3] if key[3] is not None else -1
-    return f"{key[0]}:{int(key[1])}:{key[2]}:{ep}"
+    # python-chess : (pawns, knights, bishops, rooks, queens, kings,
+    #                 occupied_w, occupied_b, turn, castling, ep)
+    ep = key[10] if key[10] is not None else -1
+    return (
+        f"{key[0]}:{key[1]}:{key[2]}:{key[3]}:{key[4]}:{key[5]}:"
+        f"{key[6]}:{key[7]}:{int(key[8])}:{key[9]}:{ep}"
+    )
 
 
 def init_repetition_counts(fen: str, variant: str) -> dict[str, int]:
