@@ -130,6 +130,7 @@ interface GameState {
   takeback_requested_by?: number | null;
   draw_offered_by?: number | null;
   threefold_available?: boolean;
+  fifty_available?: boolean;
   ai_target_elo?: number;
   variant?: GameVariant;
   analysis?: GameAnalysisData | null;
@@ -624,6 +625,14 @@ function PlayContent() {
               : data.fen !== undefined || data.delta || data.new_moves !== undefined
                 ? false
                 : prev.threefold_available,
+        fifty_available:
+          data.status === "completed"
+            ? false
+            : data.fifty_available === true
+              ? true
+              : data.fen !== undefined || data.delta || data.new_moves !== undefined
+                ? false
+                : prev.fifty_available,
         takeback_requested_by:
           data.takeback_requested_by !== undefined
             ? data.takeback_requested_by
@@ -697,6 +706,9 @@ function PlayContent() {
           threefold_available:
             (p as WsGamePayload & { threefold_available?: boolean }).threefold_available ??
             (g as { threefold_available?: boolean }).threefold_available,
+          fifty_available:
+            (p as WsGamePayload & { fifty_available?: boolean }).fifty_available ??
+            (g as { fifty_available?: boolean }).fifty_available,
         });
       });
     },
@@ -1786,13 +1798,15 @@ function PlayContent() {
                   {t("play.draw.offer")}
                 </button>
               )}
-              {gameData.threefold_available && (
+              {(gameData.threefold_available || gameData.fifty_available) && (
                 <button
                   type="button"
                   onClick={claimThreefoldDraw}
                   className="text-xs px-3 py-1 rounded border border-africhess-gold text-africhess-gold"
                 >
-                  {t("play.draw.claimRepetition")}
+                  {gameData.fifty_available && !gameData.threefold_available
+                    ? t("play.draw.claimFifty")
+                    : t("play.draw.claimRepetition")}
                 </button>
               )}
               {gameData.draw_offered_by != null &&
