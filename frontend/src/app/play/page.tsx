@@ -1153,18 +1153,6 @@ function PlayContent() {
           telemetry,
         });
         applyGameResponse(data);
-        if (isVsAi && aiCommentsEnabled) {
-          const payload = data as {
-            new_moves?: ApiMove[];
-            moves?: ApiMove[];
-            delta?: boolean;
-          };
-          speakLiveMoveComments(
-            payload.new_moves ?? payload.moves?.slice(-2),
-            playerIsWhite,
-            true
-          );
-        }
         refreshPendingComments(data, gameId);
         if (data.status === "completed" && data.termination_reason !== "repetition") {
           setStatus(
