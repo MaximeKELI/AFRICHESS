@@ -5,7 +5,8 @@ from __future__ import annotations
 CLASS_FR = {
     "brilliant": "brillant",
     "great": "excellent",
-    "best": "le meilleur",
+    "best": "très bon",
+    "book": "théorique",
     "good": "bon",
     "inaccuracy": "imprécision",
     "mistake": "faute",
@@ -18,6 +19,7 @@ ADVICE_FR = {
     "inaccuracy": "Léger écart du meilleur coup. Affinez votre calcul.",
     "good": "Coup solide, proche de l'optimal.",
     "best": "Le meilleur coup selon le moteur.",
+    "book": "Coup théorique — ligne d'ouverture connue.",
     "great": "Coup très fort — vous gardez ou reprenez l'initiative.",
     "brilliant": "Coup remarquable !",
 }
