@@ -2028,7 +2028,7 @@ const en: Record<string, string> = {
   "admin.fairplay.noCases": "No pending cases.",
   "fairplay.consent.title": "Fair Play — game integrity protection",
   "fairplay.consent.intro":
-    "For rated games against other players, AFRICHESS collects technical data to detect external assistance, aligned with Chess.com and Lichess standards.",
+    "For rated games against other players, AFRICHESS collects technical data to detect external assistance, aligned with online chess fair-play standards.",
   "fairplay.consent.item.timing": "Think time and move pacing",
   "fairplay.consent.item.focus": "Tab switches and focus loss (aggregated duration)",
   "fairplay.consent.item.input": "Copy-paste events and developer tools detection",
@@ -2595,7 +2595,7 @@ const en: Record<string, string> = {
   "tournaments.subtitle": "Arena, Swiss and community tournaments",
   "tournaments.empty": "No open tournaments. Check back soon!",
   "arena.title": "Arena tournaments",
-  "arena.subtitle": "Join, play, leave — free-for-all like Lichess",
+  "arena.subtitle": "Join, play, leave — free-for-all format",
   "swiss.title": "Swiss tournaments",
   "swiss.subtitle": "Round-based Swiss pairings",
   "community.title": "Community",
