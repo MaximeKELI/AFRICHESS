@@ -577,11 +577,14 @@ export default function PuzzlesPage() {
   useEffect(() => {
     if (tab === "daily") loadDaily();
     else if (tab === "training") loadTraining();
-    else if (tab === "rush") {
-      loadRushLeaderboard();
+    else     if (tab === "rush") {
+      loadRushLeaderboard("rush");
       loadRush();
     }
-    else if (tab === "storm") loadStorm();
+    else if (tab === "storm") {
+      loadRushLeaderboard("storm");
+      loadStorm();
+    }
     else if (tab === "battle") loadBattle();
     else if (tab === "survival") loadSurvival();
     else if (tab === "leaderboard") loadLeaderboard();
@@ -604,8 +607,8 @@ export default function PuzzlesPage() {
       if ((tab === "rush" || tab === "storm") && rushSessionId) {
         const submit =
           tab === "storm"
-            ? puzzlesApi.stormSubmit(rushSessionId, moves, time)
-            : puzzlesApi.rushSubmit(rushSessionId, moves, time);
+            ? puzzlesApi.stormSubmit(rushSessionId, submitMoves, time)
+            : puzzlesApi.rushSubmit(rushSessionId, submitMoves, time);
         const { data } = await submit;
         setRushScore(data.score ?? rushScore);
         setRushMisses(data.misses ?? rushMisses);
@@ -615,14 +618,20 @@ export default function PuzzlesPage() {
         }
         const solved = Boolean(data.solved);
         if (data.completed) {
-          const reason = data.reason === "timeout"
-            ? t("puzzles.rush.timeUp", { score: data.score })
-            : data.misses >= 3
-              ? t("puzzles.rush.threeMisses", { score: data.score })
-              : t("puzzles.rush.done", { score: data.score });
+          const reason =
+            data.reason === "timeout" || data.reason === null && data.time_left === 0
+              ? tab === "storm"
+                ? t("puzzles.storm.timeUp", { score: data.score })
+                : t("puzzles.rush.timeUp", { score: data.score })
+              : data.reason === "misses" || (tab === "rush" && (data.misses ?? 0) >= 3)
+                ? t("puzzles.rush.threeMisses", { score: data.score })
+                : tab === "storm"
+                  ? t("puzzles.storm.timeUp", { score: data.score })
+                  : t("puzzles.rush.done", { score: data.score });
           setResult(reason);
           setPuzzle(null);
           setRushSessionId(null);
+          loadRushLeaderboard(tab === "storm" ? "storm" : "rush");
           return;
         }
         if (!solved) {
@@ -634,7 +643,7 @@ export default function PuzzlesPage() {
           triggerCelebration(
             {
               current: newScore,
-              mode: "rush",
+              mode: tab === "storm" ? "rush" : "rush",
               manualContinue: false,
               sessionStreak: newScore,
             },
@@ -665,7 +674,7 @@ export default function PuzzlesPage() {
       }
 
       if (tab === "survival" && survivalSessionId) {
-        const { data } = await puzzlesApi.survivalSubmit(survivalSessionId, moves, time);
+        const { data } = await puzzlesApi.survivalSubmit(survivalSessionId, submitMoves, time);
         setSurvivalScore(data.score ?? survivalScore);
         if (data.completed) {
           setResult(
@@ -701,12 +710,7 @@ export default function PuzzlesPage() {
       }
 
       if (tab === "battle" && battleId) {
-        const { data } = await puzzlesApi.battleSubmit(battleId, moves, time);
-        if (!data.solved) {
-          setPuzzleFailed(true);
-          setResult(t("puzzles.solved.wrong"));
-          return;
-        }
+        const { data } = await puzzlesApi.battleSubmit(battleId, submitMoves, time);
         if (data.player1_id != null) setBattlePlayer1Id(data.player1_id);
         const { you, opp } = mapBattleScores(
           user?.id,
@@ -717,6 +721,10 @@ export default function PuzzlesPage() {
         );
         setBattleScoreYou(you);
         setBattleScoreOpp(opp);
+        if (!data.solved) {
+          playPuzzleWrong(puzzleSoundsActive(lowBandwidth));
+          setResult(t("puzzles.solved.wrong"));
+        }
         if (data.completed) {
           setResult(
             data.winner_id === user.id
@@ -728,21 +736,38 @@ export default function PuzzlesPage() {
           setPuzzle(null);
           return;
         }
-        setResult(t("puzzles.solved.bravo", { streak: streak, rush: "" }));
-        triggerCelebration(
-          { current: you, mode: "battle", manualContinue: false },
-          async () => {
-          if (battleId) {
-            const { data: detail } = await puzzlesApi.battleGet(battleId);
-            if (detail.puzzle) {
-              playPuzzleAdvance(puzzleSoundsActive(lowBandwidth));
-              setPuzzle(detail.puzzle);
-              setUciMoves([]);
-              setStartTime(Date.now());
-              setBoardKey((k) => k + 1);
-            }
+        const goNext = () => {
+          if (data.next_puzzle) {
+            playPuzzleAdvance(puzzleSoundsActive(lowBandwidth));
+            setPuzzle(data.next_puzzle);
+            setUciMoves([]);
+            setPuzzleFailed(false);
+            setStartTime(Date.now());
+            setBoardKey((k) => k + 1);
+            return;
           }
-        });
+          if (battleId) {
+            void puzzlesApi.battleGet(battleId).then(({ data: detail }) => {
+              if (detail.puzzle) {
+                playPuzzleAdvance(puzzleSoundsActive(lowBandwidth));
+                setPuzzle(detail.puzzle);
+                setUciMoves([]);
+                setPuzzleFailed(false);
+                setStartTime(Date.now());
+                setBoardKey((k) => k + 1);
+              }
+            });
+          }
+        };
+        if (data.solved) {
+          setResult(t("puzzles.solved.bravo", { streak: streak, rush: "" }));
+          triggerCelebration(
+            { current: you, mode: "battle", manualContinue: false },
+            goNext
+          );
+        } else {
+          setTimeout(goNext, 600);
+        }
         return;
       }
 
