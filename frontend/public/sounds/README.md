@@ -1,16 +1,17 @@
 # Sons d'échecs
 
-| Fichier      | Événement              | Source Lichess                          |
-|--------------|------------------------|-----------------------------------------|
-| move         | Déplacement            | `public/sound/standard/Move`            |
-| capture      | Prise                  | `public/sound/standard/Capture`         |
-| castle       | Roque                  | `public/sound/lisp/Castles`             |
-| check        | **Échec** (alerte)     | `public/sound/sfx/Check`                |
-| checkmate    | **Mat** (victoire)     | `public/sound/sfx/Victory`              |
-| puzzle-success | **Puzzle résolu**    | Synthèse locale (fanfare)               |
-| puzzle-wrong   | **Puzzle raté**      | Synthèse locale (buzz)                  |
-| puzzle-advance | **Puzzle suivant**   | Synthèse locale (tick)                  |
+Thèmes alignés sur Lichess (`SoundSet`) : Silent, Standard, Piano, NES, SFX, Futuristic, Lisp, Woodland, Robot.
+
+Fichiers par thème : `public/sounds/themes/<theme>/{move,capture,castle,check,checkmate}.{mp3,ogg}`
+
+| Événement | Fichier Lichess typique |
+|-----------|-------------------------|
+| move | `Move` |
+| capture | `Capture` |
+| castle | `Castles` (sinon `Move`) |
+| check | `Check` |
+| checkmate | `Checkmate` / `Victory` |
 
 Licence : [Lichess lila](https://github.com/lichess-org/lila) (AGPL-3.0).
 
-Si les fichiers ne chargent pas, un repli Web Audio « killer » (grave + aigu) est utilisé pour échec et mat.
+Sélection : Profil → Apparence → Sons, ou Jouer → Style → Sons.

@@ -18,3 +18,20 @@ describe("preferenceStorageKey", () => {
     expect(preferenceStorageKey("board_background")).toBe("board_background:guest");
   });
 });
+
+describe("soundTheme preference", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    syncPreferencesForUser(null);
+  });
+
+  it("defaults to standard and persists selection", async () => {
+    const { usePreferencesStore } = await import("./preferences");
+    expect(usePreferencesStore.getState().soundTheme).toBe("standard");
+    usePreferencesStore.getState().setSoundTheme("nes");
+    expect(usePreferencesStore.getState().soundTheme).toBe("nes");
+    expect(localStorage.getItem(preferenceStorageKey("sound_theme"))).toBe("nes");
+    syncPreferencesForUser(null);
+    expect(usePreferencesStore.getState().soundTheme).toBe("nes");
+  });
+});

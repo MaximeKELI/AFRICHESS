@@ -29,6 +29,10 @@ const BoardThemePicker = dynamic(
   () => import("@/components/chess/BoardThemePicker").then((m) => m.BoardThemePicker),
   { ssr: false }
 );
+const SoundThemePicker = dynamic(
+  () => import("@/components/chess/SoundThemePicker").then((m) => m.SoundThemePicker),
+  { ssr: false }
+);
 const BackgroundPicker = dynamic(
   () => import("@/components/chess/BackgroundPicker").then((m) => m.BackgroundPicker),
   { ssr: false }
@@ -200,6 +204,12 @@ export default function ProfilePage() {
           description={t("board.picker.piecesHint")}
         >
           <BoardThemePicker showHeader={false} showColors={false} />
+        </OptionSection>
+        <OptionSection
+          title={t("sound.picker.title")}
+          description={t("sound.picker.hint")}
+        >
+          <SoundThemePicker showHeader={false} />
         </OptionSection>
         <OptionSection
           title={t("background.picker.title")}
