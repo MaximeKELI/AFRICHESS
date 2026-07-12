@@ -31,11 +31,6 @@ class LiveMoveCommentsTests(TestCase):
     @patch("apps.games.services.GameService.__init__", lambda self: None)
     def test_make_move_writes_comments_sync_without_engine_analysis(self):
         mock_engine = MagicMock()
-        mock_engine.apply_move.return_value = (
-            "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
-            "e4",
-            False,
-        )
         mock_engine.get_best_move.return_value = EngineMove(uci="e7e5", san="e5")
         mock_engine.apply_move.side_effect = [
             (

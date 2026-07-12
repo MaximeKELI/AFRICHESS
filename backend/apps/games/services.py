@@ -62,7 +62,7 @@ from .clock_service import (
     check_timeout,
     tick_turn_started,
 )
-from .commentary_async import apply_live_move_comments, schedule_move_comments
+from .commentary_async import apply_live_move_comments
 from .elo_adapt import resolve_final_ai_elo
 from .elo_config import elo_to_difficulty_label
 from .stats_service import on_game_completed
