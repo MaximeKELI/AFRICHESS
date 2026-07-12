@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { isValidSquare, randomCoordinate, squareColor } from "./visionTraining";
+import {
+  COORDINATE_TIMED_SECONDS,
+  isValidSquare,
+  randomCoordinate,
+  squareColor,
+} from "./visionTraining";
 
 describe("visionTraining", () => {
   it("génère des coordonnées valides", () => {
@@ -13,7 +18,7 @@ describe("visionTraining", () => {
     expect(squareColor("a2")).toBe("dark");
   });
 
-  it("chrono 30s — constante utilisée par l'UI", () => {
-    expect(30).toBe(30);
+  it("expose la durée chrono Lichess", () => {
+    expect(COORDINATE_TIMED_SECONDS).toBe(30);
   });
 });

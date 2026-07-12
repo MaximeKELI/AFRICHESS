@@ -4,13 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Chessboard } from "react-chessboard";
 import { useTranslation } from "@/hooks/useTranslation";
-import { randomCoordinate, squareColor } from "@/lib/visionTraining";
+import { randomCoordinate, squareColor, COORDINATE_TIMED_SECONDS } from "@/lib/visionTraining";
 import { getBoardTheme, getThemedSquareStyles } from "@/lib/boardThemes";
 import { usePreferencesStore } from "@/store/preferences";
 
 type Drill = "coordinate" | "color" | "timed";
 
-const TIMED_SECONDS = 30;
+const TIMED_SECONDS = COORDINATE_TIMED_SECONDS;
 
 /** Entraînement vision : coordonnées, couleur, chrono 30 s (parité Lichess). */
 export default function VisionTrainingPage() {
