@@ -767,8 +767,13 @@ export function GameReview({
                 type="button"
                 onClick={() => {
                   unlockAiSpeech();
-                  setAutoTour((v) => !v);
-                  if (!autoTour) speakCurrent(true);
+                  if (autoTour) {
+                    setAutoTour(false);
+                    return;
+                  }
+                  setVoiceOn(true);
+                  setAutoTour(true);
+                  speakCurrent(true);
                 }}
                 className={clsx(
                   "w-full py-2 text-sm rounded-xl border",
