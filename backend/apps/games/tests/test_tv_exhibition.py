@@ -8,11 +8,14 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 
 from apps.games.game_actions import live_games_queryset
-from apps.games.models import Game
+from apps.games.models import Game, GameAnalysis
 from apps.games.tv_exhibition import (
+    MAX_ACTIVE_EXHIBITIONS,
     create_exhibition_game,
     ensure_tv_exhibitions,
     play_exhibition_move,
+    tv_analysis_payload,
+    win_chance_from_eval,
 )
 
 User = get_user_model()
@@ -46,8 +49,9 @@ class LiveTvFilterTests(TestCase):
 
 
 class TvExhibitionTests(TestCase):
+    @patch("apps.games.tv_exhibition.append_move_analysis")
     @patch("apps.games.tv_exhibition.ChessEngineService")
-    def test_play_exhibition_move(self, EngineCls):
+    def test_play_exhibition_move(self, EngineCls, append_analysis):
         engine = EngineCls.return_value
         engine.get_best_move.return_value = MagicMock(uci="e2e4")
         engine.apply_move.return_value = (
@@ -55,6 +59,13 @@ class TvExhibitionTests(TestCase):
             "e4",
             None,
         )
+        append_analysis.return_value = {
+            "san": "e4",
+            "class": "book",
+            "eval": 0.2,
+            "win_chance_white": 52.0,
+            "win_chance_black": 48.0,
+        }
         game = create_exhibition_game()
         self.assertTrue(game.is_tv_exhibition)
         result = play_exhibition_move(game)
@@ -62,14 +73,49 @@ class TvExhibitionTests(TestCase):
         game.refresh_from_db()
         self.assertEqual(game.move_count, 1)
         self.assertIn(game, list(live_games_queryset()))
+        append_analysis.assert_called_once()
 
     @patch("apps.games.tv_exhibition.ChessEngineService")
-    def test_ensure_creates_one(self, EngineCls):
+    def test_ensure_creates_five(self, EngineCls):
         engine = EngineCls.return_value
         engine.get_best_move.return_value = None
-        games = ensure_tv_exhibitions(1)
-        self.assertEqual(len(games), 1)
-        self.assertTrue(games[0].is_tv_exhibition)
+        games = ensure_tv_exhibitions(MAX_ACTIVE_EXHIBITIONS)
+        self.assertEqual(len(games), 5)
+        self.assertTrue(all(g.is_tv_exhibition for g in games))
+        usernames = set()
+        for g in games:
+            usernames.add(g.white_player.username)
+            usernames.add(g.black_player.username)
+        self.assertGreaterEqual(len(usernames), 8)
+
+    def test_win_chance_balanced(self):
+        w, b = win_chance_from_eval(0.0)
+        self.assertAlmostEqual(w, 50.0, delta=0.5)
+        self.assertAlmostEqual(b, 50.0, delta=0.5)
+
+    def test_tv_analysis_payload(self):
+        game = create_exhibition_game()
+        GameAnalysis.objects.filter(game=game).update(
+            best_moves_json=[
+                {
+                    "uci": "e2e4",
+                    "san": "e4",
+                    "eval": 0.3,
+                    "eval_before": 0.0,
+                    "class": "book",
+                    "cp_loss": 0,
+                    "played_by_white": True,
+                    "win_chance_white": 55.0,
+                    "win_chance_black": 45.0,
+                }
+            ]
+        )
+        game.refresh_from_db()
+        payload = tv_analysis_payload(game)
+        self.assertIsNotNone(payload)
+        self.assertEqual(payload["last_move"]["class"], "book")
+        self.assertEqual(payload["win_chance_white"], 55.0)
+        self.assertEqual(len(payload["curve"]), 1)
 
     def test_tv_api_empty_without_games(self):
         client = APIClient()
