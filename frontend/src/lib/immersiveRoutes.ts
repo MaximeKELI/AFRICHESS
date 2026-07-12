@@ -4,6 +4,9 @@ export const IMMERSIVE_ROUTE_PREFIXES = [
   "/puzzles",
   "/watch",
   "/learning/analyze/board",
+  "/analysis",
+  "/editor",
+  "/clock",
 ] as const;
 
 export function isImmersiveRoute(pathname: string): boolean {
