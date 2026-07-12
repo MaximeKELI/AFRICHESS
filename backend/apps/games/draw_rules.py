@@ -11,7 +11,12 @@ from .variant_utils import board_from_fen, starting_position_for_variant
 
 
 def board_from_game_moves(game) -> chess.Board:
-    board = chess.Board()
+    """Rejoue la partie depuis la position initiale correcte (variante / 960)."""
+    if game.chess960_position_id is not None:
+        start_fen = chess.Board.from_chess960_pos(game.chess960_position_id).fen()
+    else:
+        start_fen, _ = starting_position_for_variant(game.variant)
+    board = board_from_fen(start_fen, game.variant)
     for m in game.moves.order_by("move_number"):
         board.push_uci(m.uci)
     return board
@@ -55,18 +60,21 @@ def rebuild_repetition_counts(game: Game) -> dict[str, int]:
 
 
 def can_claim_threefold_from_game(game) -> bool:
-    """True si le joueur au trait peut revendiquer la nulle (règles FIDE + python-chess)."""
-    if game.moves.exists():
-        return board_from_game_moves(game).can_claim_threefold_repetition()
+    """True si répétition triple (compteurs O(1), repli replay variante-aware)."""
     counts = game.repetition_counts
     if not counts and game.move_count > 0:
         counts = rebuild_repetition_counts(game)
         game.repetition_counts = counts
         game.save(update_fields=["repetition_counts"])
-    if not counts:
+    if counts:
+        key = _position_key(game.fen, game.variant)
+        if counts.get(key, 0) >= 3:
+            return True
+    # Repli FIDE via python-chess (variante / 960)
+    try:
+        return board_from_game_moves(game).can_claim_threefold_repetition()
+    except Exception:
         return False
-    key = _position_key(game.fen, game.variant)
-    return counts.get(key, 0) >= 3
 
 
 def finalize_repetition_draw(game: Game) -> None:
@@ -75,3 +83,5 @@ def finalize_repetition_draw(game: Game) -> None:
     game.termination_reason = "repetition"
     game.ended_at = timezone.now()
     game.winner = None
+    game.draw_offered_by = None
+    game.takeback_requested_by = None
