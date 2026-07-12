@@ -12,17 +12,18 @@ import { gamesApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
 import { useGameWebSocket, type WsGamePayload } from "@/hooks/useGameWebSocket";
 import { buildGameDisplayFromFen, buildGameDisplayFromMoves, type ApiMove } from "@/lib/chessDisplay";
+import { mergeApiMoves } from "@/lib/gameMerge";
 import Link from "next/link";
 import { useTranslation } from "@/hooks/useTranslation";
 
 function wsMovesToApi(
-  raw: WsGamePayload["game"]["moves"]
+  raw: WsGamePayload["game"]["moves"] | WsGamePayload["game"]["new_moves"]
 ): ApiMove[] {
   return (raw ?? []).map((m, i) => ({
     uci: m.uci,
     san: m.san,
     played_by_white: m.played_by_white,
-    move_number: i + 1,
+    move_number: ("move_number" in m && m.move_number) || i + 1,
   }));
 }
 
@@ -39,9 +40,18 @@ export default function WatchGamePage() {
   const { user } = useAuthStore();
 
   const handleUpdate = useCallback((payload: WsGamePayload) => {
-    setFen(payload.game.fen);
-    setMoves(wsMovesToApi(payload.game.moves));
-    setStatus(payload.game.status ?? "");
+    const g = payload.game;
+    setFen(g.fen);
+    setStatus(g.status ?? "");
+    setMoves((prev) => {
+      if (g.delta && g.new_moves?.length) {
+        return mergeApiMoves(prev, wsMovesToApi(g.new_moves));
+      }
+      if (g.moves?.length) {
+        return wsMovesToApi(g.moves);
+      }
+      return prev;
+    });
   }, []);
 
   const { wsError } = useGameWebSocket(id ?? null, Boolean(id), handleUpdate);

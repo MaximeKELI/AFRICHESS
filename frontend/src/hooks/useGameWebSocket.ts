@@ -165,11 +165,10 @@ export function useGameWebSocket(
     const connect = () => {
       if (cancelled) return;
       const liveToken = Cookies.get("access_token");
-      if (!liveToken) {
-        setWsError(tr("ws.error.session"));
-        return;
-      }
-      const ws = new WebSocket(wsGameUrl(gameId), wsAuthProtocols(liveToken));
+      // Spectateurs anonymes : le backend autorise le WS sans JWT
+      const ws = liveToken
+        ? new WebSocket(wsGameUrl(gameId), wsAuthProtocols(liveToken))
+        : new WebSocket(wsGameUrl(gameId));
       wsRef.current = ws;
 
       ws.onopen = () => {
