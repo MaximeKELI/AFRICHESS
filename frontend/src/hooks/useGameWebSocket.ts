@@ -208,6 +208,11 @@ export function useGameWebSocket(
           if (event === "rematch_ready" && data?.game_id) {
             onRematchReadyRef.current?.(data as RematchReadyPayload);
           }
+          if (event === "rematch_offer" && data) {
+            onGamePatchRef.current?.({
+              rematch_offered_by: (data.offered_by as number) ?? null,
+            } as Record<string, unknown>);
+          }
           if (event === "proposition_nulle" && data) {
             if (data.declined) {
               onGamePatchRef.current?.({ draw_offered_by: null });

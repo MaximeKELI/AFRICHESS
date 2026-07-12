@@ -260,7 +260,13 @@ class GameService:
 
         import chess
 
-        board = chess.Board()
+        from .variant_utils import board_from_fen, starting_position_for_variant
+
+        if game.chess960_position_id is not None:
+            start_fen = chess.Board.from_chess960_pos(game.chess960_position_id).fen()
+        else:
+            start_fen, _ = starting_position_for_variant(game.variant)
+        board = board_from_fen(start_fen, game.variant)
         for m in game.moves.order_by("move_number"):
             board.push_uci(m.uci)
         game.fen = board.fen()
@@ -374,7 +380,10 @@ class GameService:
         game.move_count += 1
         game.pgn = (game.pgn or "") + f" {game.move_count}. {san}" if is_white_turn else f" {san}"
         bump_repetition_count(game)
-        if not game.is_vs_ai and not is_correspondence:
+        # Coup joue → annule offre de nulle / takeback (parité Lichess)
+        game.draw_offered_by = None
+        game.takeback_requested_by = None
+        if not is_correspondence and game.is_timed:
             apply_increment_after_move(game, is_white_turn)
             tick_turn_started(game)
         if is_correspondence and game.status == Game.Status.ACTIVE:
@@ -382,6 +391,8 @@ class GameService:
 
             refresh_turn_deadline(game)
         game.save()
+
+        response = {"move": move, "fen": new_fen, "game_over": is_over}
 
         if is_correspondence and not is_over and not game.is_vs_ai:
             from .game_actions import try_apply_conditional_response
@@ -411,8 +422,6 @@ class GameService:
                 "draw_claim": "threefold",
                 "comments_pending": bool(pending_comment_specs),
             }
-
-        response = {"move": move, "fen": new_fen, "game_over": is_over}
 
         if game.is_vs_ai and not is_over:
             ai_move = self.engine.get_best_move(
@@ -504,18 +513,36 @@ class GameService:
         )
 
     def _finalize_game_on_timeout(self, game: Game, winner_white: bool) -> None:
+        """Timeout : victoire sauf matériel insuffisant pour mater (parité FIDE/Lichess)."""
+        from .variant_utils import board_from_fen
+
+        try:
+            board = board_from_fen(game.fen, game.variant)
+            # Si le camp qui gagne n'a pas assez pour mater → nulle
+            if board.has_insufficient_material():
+                game.result = Game.Result.DRAW
+                game.winner = None
+                game.status = Game.Status.COMPLETED
+                game.ended_at = timezone.now()
+                game.termination_reason = "timeout_insufficient_material"
+                game.draw_offered_by = None
+                game.takeback_requested_by = None
+                return
+        except Exception:
+            pass
+
         game.result = (
             Game.Result.WHITE_WIN if winner_white else Game.Result.BLACK_WIN
         )
         if game.is_vs_ai:
-            game.winner = game.white_player if winner_white else None
-            if not winner_white:
-                game.winner = game.black_player
+            game.winner = game.white_player if winner_white else game.black_player
         else:
             game.winner = game.white_player if winner_white else game.black_player
         game.status = Game.Status.COMPLETED
         game.ended_at = timezone.now()
         game.termination_reason = "timeout"
+        game.draw_offered_by = None
+        game.takeback_requested_by = None
 
     def _after_human_game_finished(self, game: Game) -> None:
         """ELO, stats et tournoi après fin de partie (idempotent)."""

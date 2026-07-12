@@ -728,12 +728,23 @@ class RematchView(APIView):
         if not user_is_participant(request.user, game):
             return Response({"error": "Forbidden"}, status=403)
         new_game = create_rematch(game, request.user)
-        if not new_game:
+        if new_game:
+            return Response(GameSerializer(new_game).data, status=201)
+        game.refresh_from_db()
+        if game.rematch_offered_by_id == request.user.id:
             return Response(
-                {"error": "Rematch impossible (partie non terminée ou vs IA)."},
-                status=400,
+                {
+                    "ok": True,
+                    "status": "offered",
+                    "offered_by": request.user.id,
+                    "message": "En attente que l'adversaire accepte la revanche",
+                },
+                status=202,
             )
-        return Response(GameSerializer(new_game).data, status=201)
+        return Response(
+            {"error": "Rematch impossible (partie non terminée ou vs IA)."},
+            status=400,
+        )
 
 
 class AbortGameView(APIView):

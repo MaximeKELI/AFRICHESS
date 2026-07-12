@@ -1753,11 +1753,18 @@ function PlayContent() {
               onClick={() =>
                 gamesApi
                   .rematch(gameId)
-                  .then(({ data }) => {
-                    setGameId(data.id);
-                    syncGameInUrl(data.id, data.mode || mode);
-                    applyGameResponse(data);
-                    setStatus(t("play.rematch.started"));
+                  .then((res) => {
+                    const { data, status } = res;
+                    if (status === 202 || data?.status === "offered") {
+                      setStatus(t("play.rematch.offered"));
+                      return;
+                    }
+                    if (data?.id) {
+                      setGameId(data.id);
+                      syncGameInUrl(data.id, data.mode || mode);
+                      applyGameResponse(data);
+                      setStatus(t("play.rematch.started"));
+                    }
                   })
                   .catch((err) => setStatus(formatApiError(err, t("play.error.rematch"))))
               }
@@ -1767,13 +1774,31 @@ function PlayContent() {
             </button>
           )}
           {isVsAi && gameActive && (
-            <button
-              type="button"
-              onClick={handleUndo}
-              className="w-full block py-2 text-sm rounded-lg border border-white/20 hover:bg-white/5"
-            >
-              {t("play.undo.long")}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={handleUndo}
+                className="w-full block py-2 text-sm rounded-lg border border-white/20 hover:bg-white/5"
+              >
+                {t("play.undo.long")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!gameId) return;
+                  gamesApi
+                    .resign(gameId)
+                    .then(({ data }) => {
+                      applyGameResponse(data);
+                      setStatus(t("play.status.gameEnd", { result: data.result || "—" }));
+                    })
+                    .catch((err) => setStatus(formatApiError(err)));
+                }}
+                className="w-full block py-2 text-sm rounded-lg border border-africhess-terracotta text-africhess-terracotta"
+              >
+                {t("play.resign")}
+              </button>
+            </>
           )}
         </div>
 

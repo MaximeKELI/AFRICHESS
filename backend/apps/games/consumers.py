@@ -239,13 +239,19 @@ class ChessConsumer(AsyncWebsocketConsumer):
 
     async def _handle_draw_accept(self):
         payload = await self._draw_accept()
+        if payload.get("error"):
+            await self._send_event("error", payload)
+            return
         await self.channel_layer.group_send(
             self.room_group_name,
             {"type": "broadcast_game_over", "payload": payload},
         )
 
     async def _handle_draw_decline(self):
-        await self._draw_decline()
+        result = await self._draw_decline()
+        if result.get("error"):
+            await self._send_event("error", result)
+            return
         await self.channel_layer.group_send(
             self.room_group_name,
             {"type": "broadcast_draw", "payload": {"declined": True}},
@@ -297,6 +303,9 @@ class ChessConsumer(AsyncWebsocketConsumer):
     async def rematch_ready(self, event):
         await self._send_event("rematch_ready", event["payload"])
 
+    async def rematch_offer(self, event):
+        await self._send_event("rematch_offer", event["payload"])
+
     @database_sync_to_async
     def _draw_offer(self):
         from .game_actions import offer_draw
@@ -309,7 +318,9 @@ class ChessConsumer(AsyncWebsocketConsumer):
         from .game_actions import accept_draw
 
         game = Game.objects.get(id=self.game_id)
-        accept_draw(game, self.user)
+        result = accept_draw(game, self.user)
+        if result.get("error"):
+            return result
         game.refresh_from_db()
         return build_ws_payload(game, {"game_over": True})
 
@@ -318,7 +329,7 @@ class ChessConsumer(AsyncWebsocketConsumer):
         from .game_actions import decline_draw
 
         game = Game.objects.get(id=self.game_id)
-        decline_draw(game, self.user)
+        return decline_draw(game, self.user)
 
     @database_sync_to_async
     def _abort_game(self):

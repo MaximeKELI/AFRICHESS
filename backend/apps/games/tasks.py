@@ -48,6 +48,45 @@ def forfeit_disconnected_games():
                 _award_forfeit(game, winner_white=True, reason="disconnect")
 
 
+@shared_task(queue="realtime")
+def flag_expired_clocks():
+    """Flag proactif des parties chrono (PvP + IA) dont le temps est écoulé."""
+    from .clock_service import apply_clock_tick_and_check
+    from .ws_notify import notify_game_room
+    from .realtime_services import build_ws_payload
+
+    qs = (
+        Game.objects.filter(
+            status=Game.Status.ACTIVE,
+            is_timed=True,
+        )
+        .exclude(mode=Game.Mode.CORRESPONDENCE)
+        .filter(turn_started_at__isnull=False)[:80]
+    )
+    flagged = 0
+    svc = GameService()
+    for game in qs:
+        timed_out = apply_clock_tick_and_check(game)
+        if not timed_out:
+            # Persister le temps déduit même sans flag
+            game.save(update_fields=["white_time_ms", "black_time_ms"])
+            continue
+        winner_white = timed_out == "black"
+        svc._finalize_game_on_timeout(game, winner_white=winner_white)
+        game.save()
+        svc._after_human_game_finished(game)
+        try:
+            notify_game_room(
+                game.id,
+                "broadcast_game_over",
+                build_ws_payload(game, {"game_over": True, "reason": "timeout"}),
+            )
+        except Exception:
+            pass
+        flagged += 1
+    return flagged
+
+
 def _award_forfeit(game: Game, winner_white: bool, reason: str):
     if game.status != Game.Status.ACTIVE:
         return
@@ -56,6 +95,8 @@ def _award_forfeit(game: Game, winner_white: bool, reason: str):
     game.status = Game.Status.COMPLETED
     game.termination_reason = reason
     game.ended_at = timezone.now()
+    game.draw_offered_by = None
+    game.takeback_requested_by = None
     game.save()
     GameService()._after_human_game_finished(game)
 
