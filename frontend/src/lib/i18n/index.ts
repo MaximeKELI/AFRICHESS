@@ -2868,7 +2868,7 @@ const en: Record<string, string> = {
   "comments.toggle.hint": "AI + coach: spoken and written commentary",
   "comments.voice.listen": "Listen to comment",
   "comments.voice.gameStart": "Let's go, good game!",
-  "comments.voice.hint": "Click « Test voice » once, then play — the AI comments each move out loud.",
+  "comments.voice.hint": "During the game: the AI comments each move. After the game: enable voice in game review.",
   "comments.voice.test": "Test voice",
   "comments.voice.testPhrase": "Hello, I am your AFRICHESS coach. Voice is working correctly.",
   "auth.oauth.config": "Configure GOOGLE_OAUTH_* / GITHUB_OAUTH_* on the server",

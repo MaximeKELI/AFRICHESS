@@ -253,13 +253,20 @@ function speakBrowserChunk(text: string, byAi: boolean): Promise<boolean> {
 async function speakChunk(text: string, byAi: boolean, generation: number): Promise<boolean> {
   if (generation !== speechGeneration) return false;
 
-  // Navigateur d'abord (voix humaines) ; serveur seulement en secours
-  if (typeof window !== "undefined" && window.speechSynthesis && hasAnyBrowserVoice()) {
-    const ok = await speakBrowserChunk(text, byAi);
-    if (ok) return true;
+  // Toujours navigateur d'abord — le TTS serveur (espeak) sonne robotique
+  if (typeof window !== "undefined" && window.speechSynthesis) {
+    // Attendre brièvement les voix si pas encore chargées (Chrome)
+    if (!hasAnyBrowserVoice()) {
+      await new Promise((r) => window.setTimeout(r, 120));
+      refreshVoices();
+    }
+    if (hasAnyBrowserVoice()) {
+      const ok = await speakBrowserChunk(text, byAi);
+      if (ok) return true;
+    }
   }
 
-  if (shouldUseServerTts() || !hasAnyBrowserVoice()) {
+  if (shouldUseServerTts()) {
     const buf = await fetchTtsWav(text);
     if (buf) {
       const ok = await playWavBufferAndWait(buf);
