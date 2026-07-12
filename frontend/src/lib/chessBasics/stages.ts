@@ -1,6 +1,7 @@
 /**
  * Chess Basics — stages interactifs (parité Lichess Learn).
  * Objectifs : dest (atteindre une case), capture, check, mate, castling.
+ * Note : chess.js exige un roi blanc (et souvent noir) dans le FEN.
  */
 
 export type BasicsGoal =
@@ -16,8 +17,6 @@ export interface BasicsStage {
   hintKey: string;
   fen: string;
   goal: BasicsGoal;
-  /** Si true, n'importe quel coup légal du camp au trait qui satisfait le goal. */
-  freePiece?: boolean;
 }
 
 export const BASICS_STAGES: BasicsStage[] = [
@@ -25,49 +24,49 @@ export const BASICS_STAGES: BasicsStage[] = [
     id: "rook",
     titleKey: "learn.basics.rook.title",
     hintKey: "learn.basics.rook.hint",
-    fen: "8/8/8/8/4R3/8/8/8 w - - 0 1",
-    goal: { type: "dest", squares: ["e8", "e1", "a4", "h4"] },
+    fen: "4k3/8/8/8/4R3/8/8/4K3 w - - 0 1",
+    goal: { type: "dest", squares: ["e8", "e2", "a4", "h4", "e3", "e5", "e6", "e7"] },
   },
   {
     id: "bishop",
     titleKey: "learn.basics.bishop.title",
     hintKey: "learn.basics.bishop.hint",
-    fen: "8/8/8/8/4B3/8/8/8 w - - 0 1",
-    goal: { type: "dest", squares: ["a8", "h8", "b1", "h1"] },
+    fen: "4k3/8/8/8/4B3/8/8/4K3 w - - 0 1",
+    goal: { type: "dest", squares: ["a8", "h8", "b1", "h1", "c2", "d3", "f3", "g2"] },
   },
   {
     id: "queen",
     titleKey: "learn.basics.queen.title",
     hintKey: "learn.basics.queen.hint",
-    fen: "8/8/8/8/4Q3/8/8/8 w - - 0 1",
-    goal: { type: "dest", squares: ["e8", "a4", "h4", "a8", "h1"] },
+    fen: "4k3/8/8/8/4Q3/8/8/4K3 w - - 0 1",
+    goal: { type: "dest", squares: ["e8", "a4", "h4", "a8", "h1", "e2", "e3", "e5"] },
   },
   {
     id: "king",
     titleKey: "learn.basics.king.title",
     hintKey: "learn.basics.king.hint",
-    fen: "8/8/8/8/4K3/8/8/8 w - - 0 1",
+    fen: "4k3/8/8/8/4K3/8/8/8 w - - 0 1",
     goal: { type: "dest", squares: ["d4", "d5", "e5", "f5", "f4", "f3", "e3", "d3"] },
   },
   {
     id: "knight",
     titleKey: "learn.basics.knight.title",
     hintKey: "learn.basics.knight.hint",
-    fen: "8/8/8/8/4N3/8/8/8 w - - 0 1",
+    fen: "4k3/8/8/8/4N3/8/8/4K3 w - - 0 1",
     goal: { type: "dest", squares: ["d6", "f6", "c5", "g5", "c3", "g3", "d2", "f2"] },
   },
   {
     id: "pawn",
     titleKey: "learn.basics.pawn.title",
     hintKey: "learn.basics.pawn.hint",
-    fen: "8/8/8/8/8/8/4P3/8 w - - 0 1",
+    fen: "4k3/8/8/8/8/8/4P3/4K3 w - - 0 1",
     goal: { type: "dest", squares: ["e3", "e4"] },
   },
   {
     id: "capture",
     titleKey: "learn.basics.capture.title",
     hintKey: "learn.basics.capture.hint",
-    fen: "8/8/8/3p4/4P3/8/8/8 w - - 0 1",
+    fen: "4k3/8/8/3p4/4P3/8/8/4K3 w - - 0 1",
     goal: { type: "capture" },
   },
   {
@@ -109,16 +108,14 @@ export const BASICS_STAGES: BasicsStage[] = [
     id: "enpassant",
     titleKey: "learn.basics.enpassant.title",
     hintKey: "learn.basics.enpassant.hint",
-    fen: "8/8/8/3pP3/8/8/8/4K3 w - d6 0 1",
+    fen: "4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1",
     goal: { type: "capture" },
   },
   {
     id: "stalemate",
     titleKey: "learn.basics.stalemate.title",
     hintKey: "learn.basics.stalemate.hint",
-    fen: "k7/2Q5/1K6/8/8/8/8/8 w - - 0 1",
-    // Déplacer la dame pour ne pas mater mais laisser le roi sans coup = stalemate
-    // Plus simple : objectif mate avec Qb7#
+    fen: "7k/5Q2/6K1/8/8/8/8/8 w - - 0 1",
     goal: { type: "mate" },
   },
 ];
