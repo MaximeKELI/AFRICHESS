@@ -360,15 +360,12 @@ export function Navbar() {
               </div>
             ) : (
               <div className="flex gap-1 sm:gap-2">
-                <Link href="/login" className="text-sm px-2 sm:px-3 py-1.5 rounded-lg hover:bg-white/10">
+                <Link href="/login" className="btn-ghost text-sm hidden sm:inline-flex">
                   {t("nav.login")}
                 </Link>
-                <Link
-                  href="/register"
-                  className="text-sm px-3 sm:px-4 py-1.5 rounded-lg african-gradient text-white font-medium"
-                >
+                <ButtonLink href="/register" variant="primary" size="sm">
                   {t("nav.signup")}
-                </Link>
+                </ButtonLink>
               </div>
             )}
 
