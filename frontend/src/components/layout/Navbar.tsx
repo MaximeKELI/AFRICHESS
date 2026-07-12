@@ -268,18 +268,33 @@ export function Navbar() {
           </Link>
 
           <div className="hidden lg:flex items-center gap-5 text-sm font-medium">
-            {PRIMARY_LINKS.map(({ href, key }) => (
-              <Link
-                key={href}
-                href={href}
-                className={clsx(
-                  "hover:text-africhess-gold transition-colors",
-                  pathname.startsWith(href) && "text-africhess-gold"
-                )}
-              >
-                {t(key)}
-              </Link>
-            ))}
+            {PRIMARY_LINKS.map(({ href, key }) => {
+              const active =
+                href === "/community"
+                  ? [
+                      "/community",
+                      "/forum",
+                      "/friends",
+                      "/players",
+                      "/teams",
+                      "/clubs",
+                      "/blog",
+                      "/streamers",
+                    ].some((p) => pathname.startsWith(p))
+                  : pathname.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={clsx(
+                    "hover:text-africhess-gold transition-colors",
+                    active && "text-africhess-gold"
+                  )}
+                >
+                  {t(key)}
+                </Link>
+              );
+            })}
             <NavDropdown label={t("nav.more")} groups={NAV_GROUPS} />
           </div>
 
