@@ -378,7 +378,10 @@ class GameService:
                 )
             )
         game.move_count += 1
-        game.pgn = (game.pgn or "") + f" {game.move_count}. {san}" if is_white_turn else f" {san}"
+        if is_white_turn:
+            game.pgn = f"{(game.pgn or '').rstrip()} {game.move_count}. {san}".strip()
+        else:
+            game.pgn = f"{(game.pgn or '').rstrip()} {san}".strip()
         bump_repetition_count(game)
         # Coup joue → annule offre de nulle / takeback (parité Lichess)
         game.draw_offered_by = None
