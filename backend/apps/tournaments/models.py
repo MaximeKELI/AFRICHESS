@@ -26,6 +26,10 @@ class Tournament(models.Model):
     max_players = models.PositiveIntegerField(default=64)
     country = models.CharField(max_length=2, blank=True)
     is_african_cup = models.BooleanField(default=False)
+    is_international_cup = models.BooleanField(
+        default=False,
+        help_text="Coupe / circuit international (hors Afrique)",
+    )
     prize_pool = models.CharField(max_length=200, blank=True)
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField(null=True, blank=True)
