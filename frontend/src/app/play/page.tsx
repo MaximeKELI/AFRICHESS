@@ -14,7 +14,7 @@ import { GameEndOverlay } from "@/components/play/GameEndOverlay";
 import { GamePendingActionsBanner } from "@/components/play/GamePendingActionsBanner";
 import { movesMissingComments, pollPendingMoveComments } from "@/lib/pollGameComments";
 import { useAuthStore } from "@/store/auth";
-import { unlockAiSpeech, speakComment, bindAiSpeechToUserGestures } from "@/lib/aiSpeech";
+import { unlockAiSpeech, speakComment, bindAiSpeechToUserGestures, stopAiSpeech } from "@/lib/aiSpeech";
 import { defaultAiEloForUser, normalizeToPreset, resolveAiPlayMode, type AiLevelElo } from "@/lib/aiStrength";
 import { AiStrengthPicker } from "@/components/chess/AiStrengthPicker";
 import { VariantPicker, type GameVariant } from "@/components/chess/VariantPicker";
