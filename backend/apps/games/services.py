@@ -279,6 +279,7 @@ class GameService:
         spent_ms: int | None = None,
         telemetry: dict | None = None,
     ) -> dict:
+        game = Game.objects.select_for_update().get(pk=game.pk)
         if game.status != Game.Status.ACTIVE:
             return {"error": "Game is not active"}
 
@@ -287,14 +288,20 @@ class GameService:
             return cheat
 
         is_white_turn = " w " in game.fen
-        if is_white_turn and game.white_player != user:
+        # Le siège humain au trait doit correspondre (y compris vs IA)
+        seat = game.white_player if is_white_turn else game.black_player
+        if seat_id := (seat.id if seat else None):
+            if seat_id != user.id:
+                return {"error": "Not your turn"}
+        elif game.is_vs_ai:
+            # Au trait de l'IA — le joueur humain ne peut pas jouer
             return {"error": "Not your turn"}
-        if not is_white_turn and game.black_player != user and not game.is_vs_ai:
+        else:
             return {"error": "Not your turn"}
 
         is_correspondence = game.mode == Game.Mode.CORRESPONDENCE
 
-        if not is_correspondence and game.is_timed and not game.is_vs_ai:
+        if not is_correspondence and game.is_timed:
             apply_server_clock_before_move(game)
             timed_out = check_timeout(game)
             if timed_out == "white":
@@ -304,20 +311,6 @@ class GameService:
                 return {"error": "Time out", "game_over": True}
             if timed_out == "black":
                 self._finalize_game_on_timeout(game, winner_white=True)
-                game.save()
-                self._after_human_game_finished(game)
-                return {"error": "Time out", "game_over": True}
-        elif not is_correspondence and game.is_timed and spent_ms is not None:
-            clock = game.white_time_ms if is_white_turn else game.black_time_ms
-            if clock <= 0:
-                return {"error": "Time out"}
-            if spent_ms > clock:
-                spent_ms = clock
-            self._apply_clock(game, is_white_turn, spent_ms)
-            if (is_white_turn and game.white_time_ms <= 0) or (
-                not is_white_turn and game.black_time_ms <= 0
-            ):
-                self._finalize_game_on_timeout(game, winner_white=not is_white_turn)
                 game.save()
                 self._after_human_game_finished(game)
                 return {"error": "Time out", "game_over": True}
