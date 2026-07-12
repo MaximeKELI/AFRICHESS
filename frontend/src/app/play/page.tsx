@@ -31,7 +31,6 @@ import { mergeApiMoves } from "@/lib/gameMerge";
 import { gamesApi, ratingsApi } from "@/lib/api";
 import { usePreferencesStore } from "@/store/preferences";
 import { formatTimeControlLabel, defaultPresetForMode, matchmakingTimeControl, playModeFromPreset, TIME_PRESETS, inferPresetFromMs, type TimePresetId } from "@/lib/timeControl";
-import { MODE_CLOCK_LABEL } from "@/lib/clock";
 import { turnFromFen } from "@/lib/gameDisplayFast";
 import { TimeControlPicker } from "@/components/chess/TimeControlPicker";
 import { playDrawWhistle, playGameVictory, playGameDefeat } from "@/lib/chessSounds";
@@ -1179,10 +1178,10 @@ function PlayContent() {
         ? t("play.status.searchTimed", { minutes: TIME_PRESETS[timePreset].statMinutes })
         : t("play.status.searchUnlimited")
     );
-    const mmTimeControl = matchmakingTimeControl(mode, useClock, isRated, timePreset);
+    const mmTimeControl = matchmakingTimeControl(useClock, timePreset);
     let httpJoined = false;
     try {
-      const { data, status } = await gamesApi.matchmaking(mode, {
+      const { data, status } = await gamesApi.matchmaking(searchMode, {
         is_timed: useClock,
         is_rated: isRated,
         time_control: mmTimeControl,
@@ -1218,17 +1217,19 @@ function PlayContent() {
               {isRated ? t("play.rated.on") : t("play.rated.off")}
             </button>
           </div>
-          {isRated && useClock ? (
-            <p className="text-xs opacity-60">
-              {t("play.rated.clock", { clock: ratedClockLabel, mode: modeLabelText })}
+          <TimeControlPicker
+            isTimed={useClock}
+            preset={timePreset}
+            onTimedChange={setUseClock}
+            onPresetChange={setTimePreset}
+          />
+          {useClock && (
+            <p className="text-xs opacity-60" data-testid="play-chosen-time">
+              {t("play.time.chosen", {
+                clock: timePreset,
+                mode: modeLabelText,
+              })}
             </p>
-          ) : (
-            <TimeControlPicker
-              isTimed={useClock}
-              preset={timePreset}
-              onTimedChange={setUseClock}
-              onPresetChange={setTimePreset}
-            />
           )}
         </div>
       </OptionSection>

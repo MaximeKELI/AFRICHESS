@@ -186,6 +186,7 @@ const fr: Record<string, string> = {
   "play.rated.on": "Classée",
   "play.rated.off": "Amicale",
   "play.rated.clock": "Cadence {mode} : {clock}",
+  "play.time.chosen": "Temps choisi : {clock} ({mode})",
   "puzzles.playerElo": "Elo puzzles : {elo}",
   "daily.pool": "Pool ouvert",
   "daily.poolHint": "Trouver un adversaire au hasard par niveau.",
