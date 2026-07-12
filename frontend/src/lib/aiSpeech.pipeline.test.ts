@@ -240,6 +240,7 @@ describe("speakComment pipeline (mocked window + fetch)", () => {
     const mod = await import("@/lib/aiSpeech");
     mod.__resetAiSpeechForTests();
     mod.unlockAiSpeech();
+    played.length = 0;
     await mod.speakComment("Secours premium.", { interrupt: true, forceUnlock: true });
     await mod.waitForSpeechIdle(5000);
 
