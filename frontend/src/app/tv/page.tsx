@@ -25,6 +25,8 @@ interface TvGame {
   black_player?: { username: string; display_name?: string };
   white_elo?: number;
   black_elo?: number;
+  is_tv_exhibition?: boolean;
+  move_count?: number;
 }
 
 const CHANNELS = ["best", "bullet", "blitz", "rapid", "classical"] as const;
