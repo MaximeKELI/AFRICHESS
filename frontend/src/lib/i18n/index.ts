@@ -69,7 +69,6 @@ const fr: Record<string, string> = {
   "nav.group.learn": "Apprendre",
   "nav.group.compete": "Compétition",
   "nav.group.community": "Communauté",
-  "nav.group.puzzles": "Problèmes",
   "admin.title": "Administration AFRICHESS",
   "admin.subtitle": "Statistiques plateforme, inscriptions et activité utilisateurs (clics inclus).",
   "admin.nav.overview": "Vue d'ensemble",
