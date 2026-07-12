@@ -412,7 +412,10 @@ def apply_review_decision(
 
     sanction = None
     if status == FairPlayReviewCase.Status.CONFIRMED and decision != FairPlayReviewCase.Decision.NONE:
-        sanction = _apply_sanction(case, staff_user, decision, suspend_days=suspend_days)
+        try:
+            sanction = _apply_sanction(case, staff_user, decision, suspend_days=suspend_days)
+        except ValueError as exc:
+            return {"error": str(exc)}
 
     log_fairplay_audit(
         action=FairPlayAuditLog.Action.DECIDE_CASE,
@@ -451,6 +454,13 @@ def _apply_sanction(
     sanction_type = decision
 
     FairPlaySanction.objects.filter(user=user, is_active=True).update(is_active=False)
+
+    # Interdire la désactivation d'un compte staff / superuser
+    if decision in (
+        FairPlayReviewCase.Decision.SUSPEND_TEMP,
+        FairPlayReviewCase.Decision.SUSPEND_PERM,
+    ) and (user.is_staff or user.is_superuser):
+        raise ValueError("Impossible de suspendre un compte staff")
 
     if decision == FairPlayReviewCase.Decision.WARN:
         Notification.objects.create(

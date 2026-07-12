@@ -166,6 +166,12 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Flair non autorisé.")
         return value
 
+    def validate_country(self, value):
+        code = (value or "").upper()
+        if code not in VALID_COUNTRY_CODES:
+            raise serializers.ValidationError("Code pays invalide.")
+        return code
+
     class Meta:
         model = User
         fields = [
@@ -251,7 +257,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             )
         if User.objects.filter(email__iexact=data["email"]).exists():
             raise serializers.ValidationError(
-                {"email": ["Un compte existe déjà avec cet e-mail."]}
+                {"email": ["Impossible de créer ce compte. Vérifiez vos informations."]}
             )
         return data
 
