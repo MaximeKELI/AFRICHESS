@@ -1223,6 +1223,7 @@ const fr: Record<string, string> = {
   "coaches.rate": "{rate} €/h",
   "coaches.book": "Réserver",
   "coaches.empty": "Aucun coach disponible pour l'instant.",
+  "coaches.emptyHint": "Les profils coach sont créés par l'équipe AFRICHESS (commande seed). Contrairement à Lichess, il n'y a pas encore de marketplace live auto-alimentée.",
   "classroom.title": "Salle de cours",
   "classroom.subtitle": "Plateau partagé pour enseigner (REST).",
   "classroom.code": "Code salle",

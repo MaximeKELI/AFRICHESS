@@ -99,33 +99,61 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"Done. Chapters: {total_chapters}"))
 
     def _seed_minimal(self, dry: bool):
-        """Fixture hors-ligne pour tests / CI."""
+        """Fixture hors-ligne : structure complète + quelques chapitres jouables."""
         if dry:
             self.stdout.write("dry-run seed-minimal")
             return
-        sec, _ = PracticeSection.objects.update_or_create(
-            slug="checkmates",
-            defaults={"name": "Checkmates", "order": 0},
+
+        # Nettoyer l'ancien démo hors catalogue
+        PracticeStudy.objects.filter(lichess_id="demo0001").delete()
+
+        demo_mates = [
+            ("Queen mate", "7k/5Q2/6K1/8/8/8/8/8 w - - 0 1", ["f7f8"]),
+            ("Back rank", "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1", ["a1a8"]),
+            ("Rook mate", "7k/8/8/8/8/8/4R3/4K3 w - - 0 1", ["e2e8"]),
+        ]
+        demo_tactics = [
+            ("Simple fork", "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", ["f3g5"]),
+        ]
+
+        for sec_def in PRACTICE_CATALOG:
+            section, _ = PracticeSection.objects.update_or_create(
+                slug=sec_def["slug"],
+                defaults={"name": sec_def["name"], "order": sec_def["order"]},
+            )
+            for i, st in enumerate(sec_def["studies"]):
+                study, _ = PracticeStudy.objects.update_or_create(
+                    lichess_id=st["lichess_id"],
+                    defaults={
+                        "section": section,
+                        "slug": st["slug"],
+                        "title": st["title"],
+                        "description": st.get("desc", ""),
+                        "order": i,
+                        "source": "seed",
+                    },
+                )
+                # Remplir seulement le 1er study de chaque section pour le démo offline
+                if i == 0 and not study.chapters.exists():
+                    pack = demo_mates if sec_def["slug"] == "checkmates" else demo_tactics
+                    if sec_def["slug"] not in ("checkmates", "fundamental-tactics"):
+                        pack = demo_mates[:1]
+                    for j, (title, fen, uci) in enumerate(pack):
+                        PracticeChapter.objects.create(
+                            study=study,
+                            title=title,
+                            order=j,
+                            fen=fen,
+                            pgn="",
+                            solution_uci=uci,
+                            goal=PracticeChapter.Goal.MATE
+                            if sec_def["slug"] == "checkmates"
+                            else PracticeChapter.Goal.GENERIC,
+                        )
+
+        total = PracticeChapter.objects.count()
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Minimal practice seed OK — {PracticeStudy.objects.count()} studies, {total} chapters"
+            )
         )
-        study, _ = PracticeStudy.objects.update_or_create(
-            lichess_id="demo0001",
-            defaults={
-                "section": sec,
-                "slug": "piece-checkmates-i",
-                "title": "Piece Checkmates I",
-                "description": "Demo",
-                "order": 0,
-                "source": "seed",
-            },
-        )
-        study.chapters.all().delete()
-        PracticeChapter.objects.create(
-            study=study,
-            title="Queen mate",
-            order=0,
-            fen="7k/5Q2/6K1/8/8/8/8/8 w - - 0 1",
-            pgn="1. Qf8#",
-            solution_uci=["f7f8"],
-            goal=PracticeChapter.Goal.MATE,
-        )
-        self.stdout.write(self.style.SUCCESS("Minimal practice seed OK"))
