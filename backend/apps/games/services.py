@@ -25,6 +25,18 @@ def _comment_spec(
     }
 
 
+def _finalize_live_comments(response: dict, pending_comment_specs: list[dict]) -> None:
+    """Génère les commentaires live tout de suite et les attache aux coups de la réponse."""
+    if not pending_comment_specs:
+        return
+    apply_live_move_comments(pending_comment_specs)
+    for key in ("move", "ai_move_record"):
+        move_obj = response.get(key)
+        if move_obj is not None and hasattr(move_obj, "refresh_from_db"):
+            move_obj.refresh_from_db()
+    response["comments_pending"] = False
+
+
 from django.conf import settings
 from django.db import models, transaction
 from django.utils import timezone
@@ -50,7 +62,7 @@ from .clock_service import (
     check_timeout,
     tick_turn_started,
 )
-from .commentary_async import schedule_move_comments
+from .commentary_async import apply_live_move_comments, schedule_move_comments
 from .elo_adapt import resolve_final_ai_elo
 from .elo_config import elo_to_difficulty_label
 from .stats_service import on_game_completed
