@@ -1,5 +1,6 @@
 """Vues simultanées et vote chess."""
 
+from django.db import transaction
 from django.utils import timezone
 from rest_framework import permissions, status
 from rest_framework.response import Response
@@ -51,36 +52,38 @@ class SimulJoinView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, session_id):
-        try:
-            session = SimulSession.objects.get(
-                pk=session_id,
-                status__in=[SimulSession.Status.OPEN, SimulSession.Status.ACTIVE],
-            )
-        except SimulSession.DoesNotExist:
-            return Response({"error": "Simultanée introuvable"}, status=404)
-        if session.host_id == request.user.id:
-            return Response({"error": "Vous êtes l'hôte"}, status=400)
-        if session.boards.count() >= session.max_boards:
-            return Response({"error": "Complet"}, status=400)
-        if SimulBoard.objects.filter(session=session, opponent=request.user).exists():
-            return Response({"error": "Déjà inscrit"}, status=400)
+        with transaction.atomic():
+            try:
+                session = SimulSession.objects.select_for_update().get(
+                    pk=session_id,
+                    status__in=[SimulSession.Status.OPEN, SimulSession.Status.ACTIVE],
+                )
+            except SimulSession.DoesNotExist:
+                return Response({"error": "Simultanée introuvable"}, status=404)
+            if session.host_id == request.user.id:
+                return Response({"error": "Vous êtes l'hôte"}, status=400)
+            if session.boards.count() >= session.max_boards:
+                return Response({"error": "Complet"}, status=400)
+            if SimulBoard.objects.filter(session=session, opponent=request.user).exists():
+                return Response({"error": "Déjà inscrit"}, status=400)
 
-        board_no = session.boards.count() + 1
-        game = GameService().create_friend_game(
-            white=session.host,
-            black=request.user,
-            mode="rapid",
-            is_rated=False,
-        )
-        SimulBoard.objects.create(
-            session=session,
-            game=game,
-            opponent=request.user,
-            board_number=board_no,
-        )
-        if session.boards.count() >= 1 and session.status == SimulSession.Status.OPEN:
-            session.status = SimulSession.Status.ACTIVE
-            session.save(update_fields=["status"])
+            board_no = session.boards.count() + 1
+            game = GameService().create_friend_game(
+                white=session.host,
+                black=request.user,
+                mode="rapid",
+                is_rated=False,
+            )
+            SimulBoard.objects.create(
+                session=session,
+                game=game,
+                opponent=request.user,
+                board_number=board_no,
+            )
+            if session.boards.count() >= 1 and session.status == SimulSession.Status.OPEN:
+                session.status = SimulSession.Status.ACTIVE
+                session.save(update_fields=["status"])
+
         from .ws_notify import notify_simul_room
 
         notify_simul_room(

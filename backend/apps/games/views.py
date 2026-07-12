@@ -652,13 +652,26 @@ class LiveTvView(APIView):
         from .serializers import LiveGameSerializer
 
         channel = request.query_params.get("channel", "best")
-        games = list(live_games_queryset()[:50])
-        payload = build_tv_payload(channel, games=games)
-        current_id = payload.get("current_game_id")
+        # Ne pas pré-tronquer le pool global : le filtre mode se fait en DB
+        payload = build_tv_payload(channel)
+        ids: list[str] = []
+        if payload.get("current_game_id"):
+            ids.append(payload["current_game_id"])
+        ids.extend(payload.get("queue_game_ids") or [])
+        # Conserver l'ordre
+        games = list(
+            Game.objects.filter(id__in=ids)
+            .select_related("white_player", "black_player")
+        )
         by_id = {str(g.id): g for g in games}
-        elo_ctx = {"elo_map": batch_player_elos(games)}
-        current = by_id.get(current_id) if current_id else None
-        queue = [by_id[g_id] for g_id in payload.get("queue_game_ids", []) if g_id in by_id]
+        ordered = [by_id[i] for i in ids if i in by_id]
+        elo_ctx = {"elo_map": batch_player_elos(ordered)}
+        current = by_id.get(payload.get("current_game_id") or "")
+        queue = [
+            by_id[g_id]
+            for g_id in (payload.get("queue_game_ids") or [])
+            if g_id in by_id
+        ]
         payload["channels"] = list(TV_CHANNELS)
         payload["current"] = (
             LiveGameSerializer(current, context=elo_ctx).data if current else None

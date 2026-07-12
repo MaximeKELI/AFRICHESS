@@ -110,17 +110,17 @@ class BroadcastSyncView(APIView):
 
         game_ids = request.data.get("game_ids") or []
         games = []
+        viewable = [Game.Status.ACTIVE, Game.Status.COMPLETED]
         if game_ids:
             games = list(
-                Game.objects.filter(id__in=game_ids).select_related(
-                    "white_player", "black_player"
-                )
+                Game.objects.filter(id__in=game_ids, status__in=viewable)
+                .select_related("white_player", "black_player")
             )
         elif b.tournament_id:
             games = list(
                 Game.objects.filter(
                     tournament=b.tournament,
-                    status__in=[Game.Status.ACTIVE, Game.Status.COMPLETED],
+                    status__in=viewable,
                 )
                 .select_related("white_player", "black_player")
                 .order_by("-created_at")[:64]
