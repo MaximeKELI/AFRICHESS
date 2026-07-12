@@ -4,16 +4,15 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.games.models import Game
 from apps.games.stats_service import on_game_completed
 from apps.ratings.league_service import get_or_create_standing, get_or_create_active_season
-from apps.ratings.models import LeagueStanding
 from apps.social.models import Club
-from apps.tournaments.models import Tournament, TournamentParticipant, TournamentRound
+from apps.tournaments.models import Tournament, TournamentParticipant
 from apps.tournaments.services import TournamentEngine
 from apps.tournaments.tasks import auto_start_due_tournaments, complete_expired_arenas
 
