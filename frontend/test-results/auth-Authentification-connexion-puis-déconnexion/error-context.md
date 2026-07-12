@@ -12,10 +12,18 @@
 # Error details
 
 ```
-TimeoutError: page.waitForURL: Timeout 30000ms exceeded.
-=========================== logs ===========================
-waiting for navigation until "load"
-============================================================
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByRole('link', { name: /connexion|login/i })
+Expected: visible
+Error: strict mode violation: getByRole('link', { name: /connexion|login/i }) resolved to 2 elements:
+    1) <a href="/login" class="text-sm px-2 sm:px-3 py-1.5 rounded-lg hover:bg-white/10">Connexion</a> aka getByRole('navigation').getByRole('link', { name: 'Connexion' })
+    2) <a href="/login" class="inline-block px-8 py-3 african-gradient text-white rounded-xl font-semibold">Connexion</a> aka locator('#main-content').getByRole('link', { name: 'Connexion' })
+
+Call log:
+  - Expect "toBeVisible" with timeout 15000ms
+  - waiting for getByRole('link', { name: /connexion|login/i })
+
 ```
 
 # Page snapshot
@@ -63,120 +71,44 @@ waiting for navigation until "load"
             - /url: /register
   - main [ref=e35]:
     - generic [ref=e36]:
-      - heading "Connexion" [level=1] [ref=e37]
-      - generic [ref=e38]:
-        - generic [ref=e39]:
-          - generic [ref=e40]: Nom d'utilisateur ou e-mail
-          - textbox "Nom d'utilisateur ou e-mail" [ref=e41]: e2e_player
-        - generic [ref=e42]:
-          - generic [ref=e43]: Mot de passe
-          - textbox "Mot de passe" [ref=e44]: E2eTestPass123!
-        - alert [ref=e45]: Trop de tentatives. Attendez quelques minutes puis réessayez.
-        - button "Se connecter" [ref=e46] [cursor=pointer]
-        - paragraph [ref=e47]: Nom d'utilisateur ou e-mail. Si votre e-mail est partagé entre plusieurs comptes, utilisez le nom d'utilisateur (ex. DKELI).
-        - paragraph [ref=e48]:
-          - text: Pas encore de compte ?
-          - link "S'inscrire" [ref=e49] [cursor=pointer]:
-            - /url: /register
-  - contentinfo [ref=e50]:
-    - generic [ref=e51]:
-      - generic [ref=e52]:
-        - paragraph [ref=e53]: AFRICHESS
-        - paragraph [ref=e54]: Élever le jeu d'échecs sur la scène mondiale.
-        - navigation [ref=e55]:
-          - link "Jouer" [ref=e56] [cursor=pointer]:
-            - /url: /play
-          - link "Problèmes" [ref=e57] [cursor=pointer]:
-            - /url: /puzzles
-          - link "Politique de confidentialité" [ref=e58] [cursor=pointer]:
-            - /url: /legal/privacy
-      - generic [ref=e59]:
-        - paragraph [ref=e60]: © 2026 AFRICHESS
-        - paragraph [ref=e61]: Développé par Maxime Dzidula KELI
-        - link "Contact WhatsApp" [ref=e62] [cursor=pointer]:
-          - /url: https://wa.me/33754830039
-  - alert [ref=e63]
+      - heading "Jouer — Blitz" [level=1] [ref=e37]
+      - paragraph [ref=e38]: Connectez-vous pour affronter des joueurs en direct ou l'IA.
+      - link "Connexion" [ref=e39] [cursor=pointer]:
+        - /url: /login
+      - paragraph [ref=e40]:
+        - text: Pas encore de compte ?
+        - link "Inscription" [ref=e41] [cursor=pointer]:
+          - /url: /register
+  - alert [ref=e42]
 ```
 
 # Test source
 
 ```ts
-  1  | import fs from "node:fs";
-  2  | import path from "node:path";
-  3  | import { expect } from "@playwright/test";
-  4  | 
-  5  | export type E2ECredentials = {
-  6  |   username: string;
-  7  |   password: string;
-  8  | };
+  1  | import { test, expect } from "@playwright/test";
+  2  | import { loadE2ECredentials, loginViaUi } from "./helpers/auth";
+  3  | 
+  4  | test.describe("Authentification", () => {
+  5  |   test("profil non connecté affiche le lien connexion", async ({ page }) => {
+  6  |     await page.goto("/profile");
+  7  |     await expect(page.getByRole("link", { name: /connexion|login/i })).toBeVisible();
+  8  |   });
   9  | 
-  10 | type E2EAuthFile = {
-  11 |   player?: E2ECredentials;
-  12 |   playerA?: E2ECredentials;
-  13 |   playerB?: E2ECredentials;
-  14 |   username?: string;
-  15 |   password?: string;
-  16 | };
-  17 | 
-  18 | function readAuthFile(): E2EAuthFile {
-  19 |   const file = path.join(__dirname, ".auth", "credentials.json");
-  20 |   if (!fs.existsSync(file)) {
-  21 |     return {};
-  22 |   }
-  23 |   return JSON.parse(fs.readFileSync(file, "utf8")) as E2EAuthFile;
-  24 | }
+  10 |   test("connexion puis déconnexion", async ({ page }) => {
+  11 |     await loginViaUi(page);
+  12 |     await page.getByRole("button", { name: "Déconnexion" }).click();
+  13 |     // Attendre la fin de la navigation de logout avant un nouveau goto.
+> 14 |     await expect(page.getByRole("link", { name: /connexion|login/i })).toBeVisible();
+     |                                                                        ^ Error: expect(locator).toBeVisible() failed
+  15 |     await page.goto("/profile", { waitUntil: "domcontentloaded" });
+  16 |     await expect(page.getByRole("link", { name: /connexion|login/i })).toBeVisible();
+  17 |   });
+  18 | 
+  19 |   test("identifiants e2e disponibles", () => {
+  20 |     const { username, password } = loadE2ECredentials();
+  21 |     expect(username.length).toBeGreaterThan(2);
+  22 |     expect(password.length).toBeGreaterThan(8);
+  23 |   });
+  24 | });
   25 | 
-  26 | export function loadE2ECredentials(): E2ECredentials {
-  27 |   const data = readAuthFile();
-  28 |   if (data.player) {
-  29 |     return data.player;
-  30 |   }
-  31 |   if (data.username && data.password) {
-  32 |     return { username: data.username, password: data.password };
-  33 |   }
-  34 |   return {
-  35 |     username: process.env.E2E_USERNAME || "e2e_player",
-  36 |     password: process.env.E2E_PASSWORD || "E2eTestPass123!",
-  37 |   };
-  38 | }
-  39 | 
-  40 | export function loadE2EPlayer(which: "playerA" | "playerB"): E2ECredentials {
-  41 |   const data = readAuthFile();
-  42 |   const creds = data[which];
-  43 |   if (creds) {
-  44 |     return creds;
-  45 |   }
-  46 |   const fallback = which === "playerA" ? "e2e_player_a" : "e2e_player_b";
-  47 |   return {
-  48 |     username: fallback,
-  49 |     password: process.env.E2E_PASSWORD || "E2eTestPass123!",
-  50 |   };
-  51 | }
-  52 | 
-  53 | export async function loginViaUi(
-  54 |   page: import("@playwright/test").Page,
-  55 |   creds: E2ECredentials = loadE2ECredentials(),
-  56 | ) {
-  57 |   await page.goto("/login");
-  58 |   await page.locator("#login-username").fill(creds.username);
-  59 |   await page.locator("#login-password").fill(creds.password);
-  60 |   await page.getByTestId("login-submit").click();
-> 61 |   await page.waitForURL(/\/play/, { timeout: 30_000 });
-     |              ^ TimeoutError: page.waitForURL: Timeout 30000ms exceeded.
-  62 | }
-  63 | 
-  64 | export async function setUnratedMode(page: import("@playwright/test").Page) {
-  65 |   // Desktop + mobile peuvent rendre le même switch (2 nœuds dans le DOM).
-  66 |   const ratedSwitch = page.getByTestId("play-rated-switch").first();
-  67 |   if ((await ratedSwitch.getAttribute("aria-checked")) === "true") {
-  68 |     await ratedSwitch.click();
-  69 |   }
-  70 |   await expectSwitchOff(ratedSwitch);
-  71 | }
-  72 | 
-  73 | async function expectSwitchOff(switchEl: import("@playwright/test").Locator) {
-  74 |   await switchEl.waitFor({ state: "visible" });
-  75 |   await expect(switchEl).toHaveAttribute("aria-checked", "false");
-  76 | }
-  77 | 
 ```
