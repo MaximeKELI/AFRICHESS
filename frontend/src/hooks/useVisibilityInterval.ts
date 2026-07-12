@@ -39,5 +39,5 @@ export function useVisibilityInterval(
       stop();
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [ms, enabled]);
+  }, [ms, enabled, callback]);
 }
