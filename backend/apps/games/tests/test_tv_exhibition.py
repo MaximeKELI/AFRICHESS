@@ -123,13 +123,51 @@ class TvExhibitionTests(TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertIsNone(res.data.get("current"))
 
-    def test_rematch_swaps_colors(self):
-        from apps.games.tv_exhibition import rematch_exhibition
+    def test_head_to_head_counts(self):
+        from apps.games.tv_exhibition import exhibition_head_to_head, ensure_tv_bot_users
 
-        game = create_exhibition_game()
-        rematch = rematch_exhibition(game)
-        self.assertEqual(rematch.white_player_id, game.black_player_id)
-        self.assertEqual(rematch.black_player_id, game.white_player_id)
+        a, b = ensure_tv_bot_users()[:2]
+        # a white wins
+        Game.objects.create(
+            white_player=a,
+            black_player=b,
+            mode="blitz",
+            status=Game.Status.COMPLETED,
+            result=Game.Result.WHITE_WIN,
+            winner=a,
+            is_tv_exhibition=True,
+            move_count=40,
+        )
+        # b wins as white
+        Game.objects.create(
+            white_player=b,
+            black_player=a,
+            mode="blitz",
+            status=Game.Status.COMPLETED,
+            result=Game.Result.WHITE_WIN,
+            winner=b,
+            is_tv_exhibition=True,
+            move_count=30,
+        )
+        # draw
+        Game.objects.create(
+            white_player=a,
+            black_player=b,
+            mode="blitz",
+            status=Game.Status.DRAW,
+            result=Game.Result.DRAW,
+            is_tv_exhibition=True,
+            move_count=80,
+        )
+        h2h = exhibition_head_to_head(a.id, b.id)
+        self.assertEqual(h2h["white_wins"], 1)  # a
+        self.assertEqual(h2h["black_wins"], 1)  # b
+        self.assertEqual(h2h["draws"], 1)
+        self.assertEqual(h2h["played"], 3)
+        # Couleurs inversées
+        swapped = exhibition_head_to_head(b.id, a.id)
+        self.assertEqual(swapped["white_wins"], 1)
+        self.assertEqual(swapped["black_wins"], 1)
 
     def test_rematch_after_length_limit(self):
         from apps.games.tv_exhibition import MAX_MOVES_BEFORE_RESTART

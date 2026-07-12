@@ -245,15 +245,7 @@ def exhibition_head_to_head(white_id: int | None, black_id: int | None) -> dict[
 
     a_wins = b_wins = draws = 0
     for g in finished.iterator():
-        is_draw = (
-            g.status == Game.Status.DRAW
-            or g.result == Game.Result.DRAW
-            or g.result in ("1/2-1/2", "*")
-        )
-        if is_draw and g.status != Game.Status.COMPLETED:
-            draws += 1
-            continue
-        if g.result == Game.Result.DRAW:
+        if g.status == Game.Status.DRAW or g.result == Game.Result.DRAW:
             draws += 1
             continue
         winner_id = g.winner_id
