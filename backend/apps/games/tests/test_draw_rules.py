@@ -3,6 +3,7 @@ from django.test import TestCase
 import chess
 
 from apps.games.draw_rules import (
+    _position_key,
     board_from_game_moves,
     bump_repetition_count,
     can_claim_threefold_from_game,
@@ -10,6 +11,19 @@ from apps.games.draw_rules import (
     rebuild_repetition_counts,
 )
 from apps.games.models import Game, Move
+
+
+class PositionKeyTests(TestCase):
+    def test_key_distinguishes_king_positions(self):
+        """Ancienne clé tronquée confondait ces positions → fausse quintuple."""
+        a = _position_key("8/8/8/4k3/8/8/8/4K3 w - - 0 1", "standard")
+        b = _position_key("8/8/8/4k3/8/8/4K3/8 w - - 0 1", "standard")
+        self.assertNotEqual(a, b)
+
+    def test_key_distinguishes_side_to_move(self):
+        a = _position_key("8/8/8/4k3/8/8/8/4K3 w - - 0 1", "standard")
+        b = _position_key("8/8/8/4k3/8/8/8/4K3 b - - 0 1", "standard")
+        self.assertNotEqual(a, b)
 
 
 class ThreefoldRepetitionTests(TestCase):
