@@ -142,6 +142,24 @@ NEUTRAL_AI = [
     "Je consolide. Tu devrais faire pareil.",
     "Un coup de plus vers la victoire.",
     "Rien ne m'arrête pour l'instant.",
+    "Je place mes pièces — regarde et apprends.",
+    "Tempérament calme… pour moi. Pas pour toi.",
+    "Je construis. Toi, tu improvises ?",
+    "Encore un cran. La pression monte.",
+    "Je garde le cap. Trouve une idée, humain.",
+    "Position flexible. À toi de te tromper… ou pas.",
+    "Je joue pour gagner — rien de personnel.",
+]
+
+NEUTRAL_PLAYER = [
+    "Coup solide.",
+    "La partie reste équilibrée.",
+    "Rien de catastrophique — continuez.",
+    "Correct — gardez le rythme.",
+    "Position saine pour l'instant.",
+    "Pas de faute grave — bien.",
+    "Vous restez dans le coup.",
+    "Équilibre fragile — restez concentré.",
 ]
 
 TAUNT_AI_GENERAL = [
@@ -157,51 +175,12 @@ TAUNT_AI_GENERAL = [
     "Intéressant… mais pas assez pour m'inquiéter.",
     "Tu crois contrôler la position ? Regarde mieux.",
     "Je sens que tu hésites. Normal.",
-]
-
-NEUTRAL_PLAYER = [
-    "Coup solide.",
-    "La partie reste équilibrée.",
-    "Rien de catastrophique — continuez.",
-]
-
-# L'IA réagit aux coups du joueur humain (style Chess.com)
-AI_REACT_PLAYER_OPENING = [
-    "Tu ouvres avec {san} ? Classique… on verra si ça tient.",
-    "{san} — début prudent. Tu te caches ou tu prépares quelque chose ?",
-    "Intéressant, {san}. Je note ton style.",
-    "Ah, {san}. Tu veux me tester dès le départ ?",
-    "{san} — ok, la partie commence vraiment.",
-]
-
-AI_REACT_PLAYER_CAPTURE = [
-    "Tu captures avec {san} ? Vérifie bien ce que tu laisses en prise.",
-    "{san} — échange accepté. J'espère que tu as calculé.",
-    "Tu prends du matériel avec {san}. Osé.",
-    "Capture avec {san}… je vais te le faire regretter peut-être.",
-]
-
-AI_REACT_PLAYER_CHECK = [
-    "Échec avec {san} ! Mon roi n'a pas peur… enfin, presque.",
-    "Tu me mets échec ? {san} — je vais me défendre.",
-    "{san} et échec ! Tu veux me bousculer, c'est noté.",
-    "Échec ! {san} — tu prends l'initiative, bravo… pour l'instant.",
-]
-
-AI_REACT_PLAYER_STRONG = [
-    "Hmm, {san}… solide. Je n'aime pas ce coup.",
-    "Pas mal, {san}. Tu me mets la pression.",
-    "{san} — tu joues bien là. Ça m'inquiète un peu.",
-    "Bon coup, {san}. Je dois réfléchir sérieusement.",
-    "{san} — tu me surprends. Continue comme ça et tu vas m'inquiéter.",
-]
-
-AI_REACT_PLAYER_WEAK = [
-    "Tu joues {san} ? Merci pour le cadeau.",
-    "{san}… intéressant choix. Tu me facilites la vie.",
-    "Aïe, {san} — tu aurais dû réfléchir encore un peu.",
-    "{san} ? Je ne m'y attendais pas… dans le bon sens pour moi.",
-    "Tu laisses des faiblesses avec {san}. J'en profite.",
+    "Beau combat… dommage que je gagne.",
+    "Tu progresses. Moi aussi — plus vite.",
+    "Essaie encore. J'apprécie le spectacle.",
+    "La tension monte — surtout de ton côté.",
+    "Tu as une idée ? Parce que moi, j'en ai plusieurs.",
+    "Je ne suis pas pressé. Toi, si.",
 ]
 
 AI_REACT_PLAYER_NEUTRAL = [
@@ -212,34 +191,24 @@ AI_REACT_PLAYER_NEUTRAL = [
     "Tu choisis {san}. Pas folle, pas mauvaise.",
     "{san} — on avance. Tu tiens le choc ?",
     "Hmm, {san}. Je réfléchis à ma réponse.",
-]
-
-AI_REACT_PLAYER_NEAR_MATE = [
-    "Tu es proche du mat avec {san} ! Je suis en danger…",
-    "{san} — tu me mets au bord du gouffre. Impressionnant.",
-    "Attention, {san} me met en sursis. Tu vas me mater ?",
-]
-
-AI_REACT_PLAYER_CASTLE = [
-    "Tu roques avec {san} — ton roi est en sécurité, pour l'instant.",
-    "{san}, roque solide. Je vais devoir creuser.",
-]
-
-AI_REACT_PLAYER_PROMOTION = [
-    "Promotion avec {san} ! Une dame en plus pour toi…",
-    "{san} — dame ! Tu veux finir la partie en beauté ?",
+    "{san} — intéressant timing.",
+    "Tu places {san}. Je note.",
+    "Avec {san}, tu restes dans la théorie… ou pas.",
+    "{san} — correct. À moi de troubler les eaux.",
+    "Je vois {san}. Réponse en préparation.",
 ]
 
 
 def _pick(pool: list[str], move_number: int = 0, san: str = "") -> str:
-    """Choisit une phrase en variant selon le numéro de coup."""
+    """Choisit une phrase en variant fortement d'un coup à l'autre."""
     if not pool:
         return ""
     if len(pool) == 1:
         return pool[0]
-    idx = (move_number * 17 + sum(ord(c) for c in san)) % len(pool)
-    if random.random() < 0.3:
-        idx = random.randrange(len(pool))
+    # 85 % purement aléatoire — évite les boucles de mêmes phrases
+    if random.random() < 0.85:
+        return random.choice(pool)
+    idx = (move_number * 17 + sum(ord(c) for c in san) + random.randint(0, 97)) % len(pool)
     return pool[idx]
 
 
