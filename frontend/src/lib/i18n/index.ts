@@ -1401,7 +1401,7 @@ const fr: Record<string, string> = {
   "chess.analysis.coach.mistakeDetail": "{side} — {base}",
   "chess.analysis.coach.blunderSevere": "{side} — perte d'environ {cp} pions d'évaluation.",
   "chess.analysis.coach.brilliant": "Coup brillant — ressource exceptionnelle !",
-  "chess.analysis.coach.brilliant2": "Trouvaillle rare — ce coup change la donne !",
+  "chess.analysis.coach.brilliant2": "Trouvaille rare — ce coup change la donne !",
   "chess.analysis.coach.brilliant3": "Éclat tactique — difficile à voir à ce niveau.",
   "chess.analysis.coach.great": "Excellent coup, difficile à trouver.",
   "chess.analysis.coach.great2": "Très fort — vous dominez le rythme.",
