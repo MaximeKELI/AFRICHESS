@@ -129,6 +129,7 @@ interface GameState {
   move_count?: number;
   takeback_requested_by?: number | null;
   draw_offered_by?: number | null;
+  threefold_available?: boolean;
   ai_target_elo?: number;
   variant?: GameVariant;
   analysis?: GameAnalysisData | null;
@@ -608,6 +609,12 @@ function PlayContent() {
         variant: (data.variant as GameVariant) ?? prev.variant ?? "standard",
         draw_offered_by:
           data.draw_offered_by !== undefined ? data.draw_offered_by : prev.draw_offered_by,
+        threefold_available:
+          data.threefold_available !== undefined
+            ? data.threefold_available
+            : data.status === "completed"
+              ? false
+              : prev.threefold_available,
         takeback_requested_by:
           data.takeback_requested_by !== undefined
             ? data.takeback_requested_by
@@ -764,6 +771,15 @@ function PlayContent() {
     Boolean(gameId) && (isLiveHuman || isVoteChess || isVsAi),
     handleWsUpdate,
     (payload) => {
+      applyGameResponse({
+        fen: payload.game.fen,
+        status: payload.game.status,
+        result: payload.game.result,
+        termination_reason: payload.game.termination_reason ?? payload.reason,
+        white_time_ms: payload.game.white_time_ms,
+        black_time_ms: payload.game.black_time_ms,
+        rating_changes: payload.game.rating_changes,
+      });
       setStatus(
         t("play.status.gameEnd", {
           result: payload.game.result || t("play.status.gameEndGeneric"),

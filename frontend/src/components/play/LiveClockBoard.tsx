@@ -17,6 +17,7 @@ interface LiveClockProviderProps {
   blackMs: number;
   turn: "w" | "b";
   running: boolean;
+  onFlag?: (side: "w" | "b") => void;
   children: ReactNode;
 }
 
@@ -26,9 +27,10 @@ export function LiveClockProvider({
   blackMs,
   turn,
   running,
+  onFlag,
   children,
 }: LiveClockProviderProps) {
-  const clock = useLiveClock(whiteMs, blackMs, turn, running);
+  const clock = useLiveClock(whiteMs, blackMs, turn, running, onFlag);
   return <LiveClockContext.Provider value={clock}>{children}</LiveClockContext.Provider>;
 }
 

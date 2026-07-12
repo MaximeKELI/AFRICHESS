@@ -283,6 +283,8 @@ export const gamesApi = {
   offerDraw: (id: string) => api.post(`/games/${id}/draw/`),
   respondDraw: (id: string, accept: boolean) =>
     api.post(`/games/${id}/draw/respond/`, { accept }),
+  claimDraw: (id: string) => api.post(`/games/${id}/draw/claim/`),
+  claimFlag: (id: string) => api.post(`/games/${id}/claim-flag/`),
   abort: (id: string) => api.post(`/games/${id}/abort/`),
   resign: (id: string) => api.post(`/games/${id}/resign/`),
   offerTakeback: (id: string) => api.post(`/games/${id}/takeback/`),

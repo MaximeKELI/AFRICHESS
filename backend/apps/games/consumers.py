@@ -116,6 +116,12 @@ class ChessConsumer(AsyncWebsocketConsumer):
         if result.get("error"):
             await self._send_event("error", result)
             return
+        if result.get("game_over") and result.get("reason") == "timeout":
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {"type": "broadcast_game_over", "payload": result},
+            )
+            return
         await self.channel_layer.group_send(
             self.room_group_name,
             {"type": "broadcast_move", "payload": result},
@@ -397,6 +403,15 @@ class ChessConsumer(AsyncWebsocketConsumer):
         if "error" in result:
             return result
         game.refresh_from_db()
+        if result.get("game_over") and result.get("reason") == "timeout":
+            return build_ws_payload(
+                game,
+                {
+                    "game_over": True,
+                    "reason": "timeout",
+                    "result": game.result,
+                },
+            )
         last_move = None
         player_move = result.get("move")
         ai_move = result.get("ai_move_record")
@@ -409,15 +424,14 @@ class ChessConsumer(AsyncWebsocketConsumer):
                 "to_square": m.to_square,
                 "played_by_white": m.played_by_white,
             }
-        return build_ws_move_payload(
-            game,
-            result,
-            {
-                "last_move": last_move,
-                "game_over": result.get("game_over")
-                or game.status == Game.Status.COMPLETED,
-            },
-        )
+        extra = {
+            "last_move": last_move,
+            "game_over": result.get("game_over")
+            or game.status == Game.Status.COMPLETED,
+        }
+        if result.get("threefold_available"):
+            extra["threefold_available"] = True
+        return build_ws_move_payload(game, result, extra)
 
     @database_sync_to_async
     def _resign_game(self):

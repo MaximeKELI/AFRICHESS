@@ -37,6 +37,7 @@ interface PlayBoardSectionProps {
   extraBottom?: number;
   captured?: CapturedState;
   blindMode?: boolean;
+  onFlag?: (side: "w" | "b") => void;
 }
 
 function PlayBoardSectionInner({
@@ -62,6 +63,7 @@ function PlayBoardSectionInner({
   extraBottom = 0,
   captured,
   blindMode = false,
+  onFlag,
 }: PlayBoardSectionProps) {
   const turn = turnFromFen(fen);
   const lastMove = useMemo(() => lastMoveFromMoves(moves), [moves]);
@@ -74,6 +76,7 @@ function PlayBoardSectionInner({
         blackMs={blackMs}
         turn={turn}
         running={clockActive}
+        onFlag={onFlag}
       >
         {topPlayer && (
           <ClockedPlayerStrip

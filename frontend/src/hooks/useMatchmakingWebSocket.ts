@@ -131,7 +131,8 @@ export function useMatchmakingWebSocket(
       closed = true;
       wsRef.current = null;
       if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-        if (ws.readyState === WebSocket.OPEN && !listenOnly) {
+        if (ws.readyState === WebSocket.OPEN) {
+          // Toujours quitter (y compris listenOnly) pour éviter les fantômes Redis/PG.
           ws.send(JSON.stringify({ event: "quitter_file" }));
         }
         ws.close();
