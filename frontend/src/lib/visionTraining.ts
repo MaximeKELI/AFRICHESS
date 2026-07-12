@@ -21,3 +21,6 @@ export function squareColor(square: string): "light" | "dark" {
 export function isValidSquare(square: string): boolean {
   return /^[a-h][1-8]$/.test(square);
 }
+
+/** Durée du mode chrono Lichess (secondes). */
+export const COORDINATE_TIMED_SECONDS = 30;
