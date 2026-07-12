@@ -372,6 +372,7 @@ def play_exhibition_move(game: Game) -> Optional[dict]:
         game.save(
             update_fields=["status", "result", "termination_reason", "ended_at"]
         )
+        invalidate_exhibition_h2h_cache(game.white_player_id, game.black_player_id)
         rematch = rematch_exhibition(game)
         return {
             "completed": True,

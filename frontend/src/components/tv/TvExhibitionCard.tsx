@@ -43,6 +43,12 @@ export interface TvAnalysis {
   }>;
   last_move?: TvMoveAnalysis | null;
   moves?: TvMoveAnalysis[];
+  head_to_head?: {
+    white_wins?: number;
+    black_wins?: number;
+    draws?: number;
+    played?: number;
+  };
 }
 
 export interface TvGame {
@@ -160,6 +166,40 @@ export function TvExhibitionCard({ game, featured = false, onSelect }: TvExhibit
 
       {/* Stats toujours visibles (contraste fort clair/sombre) */}
       <div className="mb-3 space-y-2 rounded-xl border border-black/10 dark:border-white/15 bg-white/80 dark:bg-black/40 p-3 shadow-sm">
+        {analysis?.head_to_head && (
+          <div className="rounded-lg border border-africhess-gold/25 bg-africhess-gold/5 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wider text-africhess-gold/90 mb-1">
+              {t("tv.h2hTitle")}
+            </p>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-medium">
+              <span className="truncate max-w-[35%]">
+                {game.white_player?.display_name || game.white_player?.username || "?"}
+              </span>
+              <span className="font-mono tabular-nums text-center shrink-0">
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  {analysis.head_to_head.white_wins ?? 0}
+                  {t("tv.h2hWinsShort")}
+                </span>
+                <span className="opacity-40 mx-1.5">·</span>
+                <span>
+                  {analysis.head_to_head.draws ?? 0}
+                  {t("tv.h2hDrawsShort")}
+                </span>
+                <span className="opacity-40 mx-1.5">·</span>
+                <span className="text-sky-700 dark:text-sky-300">
+                  {analysis.head_to_head.black_wins ?? 0}
+                  {t("tv.h2hWinsShort")}
+                </span>
+              </span>
+              <span className="truncate max-w-[35%] text-right">
+                {game.black_player?.display_name || game.black_player?.username || "?"}
+              </span>
+            </div>
+            <p className="text-[10px] opacity-50 mt-1 text-center">
+              {t("tv.h2hPlayed", { count: analysis.head_to_head.played ?? 0 })}
+            </p>
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
           <span className="opacity-70">{t("tv.winChance")}</span>
           <span className="font-mono tabular-nums text-sm">
