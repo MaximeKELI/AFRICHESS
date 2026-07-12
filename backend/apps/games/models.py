@@ -234,6 +234,11 @@ class Game(models.Model):
     )
     is_vote_chess = models.BooleanField(default=False)
     odds_preset = models.CharField(max_length=20, blank=True, default="")
+    is_tv_exhibition = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Partie exhibition IA vs IA pour AFRICHESS TV (vraie partie Stockfish)",
+    )
 
     class Meta:
         ordering = ["-created_at"]
