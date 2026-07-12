@@ -82,7 +82,17 @@ describe("speakComment pipeline (mocked window + fetch)", () => {
     vi.resetModules();
   });
 
-  it("calls /api/tts (WAV) when speaking a comment on Chromium", async () => {
+  it("calls /api/tts (neural MP3) when speaking a comment on Chromium", async () => {
+    const blobTypes: string[] = [];
+    vi.stubGlobal(
+      "Blob",
+      class {
+        constructor(_parts: unknown[], public opts?: { type?: string }) {
+          if (opts?.type) blobTypes.push(opts.type);
+        }
+      }
+    );
+
     const { speakComment, unlockAiSpeech, waitForSpeechIdle } = await import("@/lib/aiSpeech");
     unlockAiSpeech();
     await speakComment("Beau coup, continuez.", { interrupt: true, forceUnlock: true });
@@ -92,6 +102,7 @@ describe("speakComment pipeline (mocked window + fetch)", () => {
     expect(urls.some((u) => u === "/api/tts" || u.endsWith("/api/tts"))).toBe(true);
     expect(urls.some((u) => u.includes("/api/game/tts"))).toBe(false);
     expect(played.length).toBeGreaterThan(0);
+    expect(blobTypes.some((t) => t === "audio/mpeg" || t === "audio/wav")).toBe(true);
   });
 
   it("getTtsFetchUrls exposes plural games path", async () => {
