@@ -63,19 +63,30 @@ class Command(BaseCommand):
         self.stdout.write(f"Videos: {Video.objects.count()}")
 
         for spec in DEMO_COACHES:
+            parts = spec["display_name"].split(" ", 1)
+            first = parts[0]
+            last = parts[1] if len(parts) > 1 else ""
             user, created = User.objects.get_or_create(
                 username=spec["username"],
                 defaults={
                     "email": f"{spec['username']}@africhess.local",
-                    "display_name": spec["display_name"],
+                    "first_name": first,
+                    "last_name": last,
                 },
             )
             if created:
                 user.set_password("coachdemo123")
                 user.save()
-            elif not user.display_name:
-                user.display_name = spec["display_name"]
-                user.save(update_fields=["display_name"])
+            else:
+                updated = False
+                if not user.first_name:
+                    user.first_name = first
+                    updated = True
+                if not user.last_name and last:
+                    user.last_name = last
+                    updated = True
+                if updated:
+                    user.save(update_fields=["first_name", "last_name"])
 
             CoachProfile.objects.update_or_create(
                 user=user,
