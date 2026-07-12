@@ -59,6 +59,31 @@ class LobbySeekServiceTests(TestCase):
         self.assertEqual(seek.status, GameChallenge.Status.CANCELLED)
         self.assertEqual(list(list_open_seeks()), [])
 
+    def test_color_white_forces_challenger_white(self):
+        seek = create_lobby_seek(
+            self.a, mode="blitz", time_control="3+2", color="white"
+        )
+        self.assertTrue(seek.challenger_plays_white)
+        accepted = accept_lobby_seek(seek, self.b)
+        game = Game.objects.get(pk=accepted.game_id)
+        self.assertEqual(game.white_player_id, self.a.id)
+        self.assertEqual(game.black_player_id, self.b.id)
+
+    def test_color_black_forces_challenger_black(self):
+        seek = create_lobby_seek(
+            self.a, mode="blitz", time_control="3+2", color="black"
+        )
+        self.assertFalse(seek.challenger_plays_white)
+        accepted = accept_lobby_seek(seek, self.b)
+        game = Game.objects.get(pk=accepted.game_id)
+        self.assertEqual(game.white_player_id, self.b.id)
+        self.assertEqual(game.black_player_id, self.a.id)
+
+    def test_cannot_accept_cancelled_seek(self):
+        seek = create_lobby_seek(self.a, mode="blitz", time_control="3+2")
+        cancel_challenge(seek, self.a)
+        with self.assertRaises(ChallengeError):
+            accept_lobby_seek(seek, self.b)
 
 class LobbySeekApiTests(TestCase):
     def setUp(self):
@@ -94,6 +119,34 @@ class LobbySeekApiTests(TestCase):
         r2 = self.client.delete(f"/api/games/lobby/{seek_id}/")
         self.assertEqual(r2.status_code, 200, r2.content)
         self.assertEqual(r2.data["status"], "cancelled")
+
+    def test_http_list_open_seeks(self):
+        self.client.force_authenticate(self.a)
+        self.client.post(
+            "/api/games/lobby/",
+            {"mode": "blitz", "time_control": "3+2"},
+            format="json",
+        )
+        self.client.force_authenticate(self.b)
+        r = self.client.get("/api/games/lobby/")
+        self.assertEqual(r.status_code, 200)
+        self.assertGreaterEqual(len(r.data), 1)
+        self.assertTrue(all(row.get("opponent") is None for row in r.data))
+
+    def test_http_cannot_accept_own(self):
+        self.client.force_authenticate(self.a)
+        r = self.client.post(
+            "/api/games/lobby/",
+            {"mode": "blitz", "time_control": "5+0"},
+            format="json",
+        )
+        seek_id = r.data["id"]
+        r2 = self.client.post(f"/api/games/lobby/{seek_id}/accept/", format="json")
+        self.assertEqual(r2.status_code, 400)
+
+    def test_http_requires_auth(self):
+        r = self.client.get("/api/games/lobby/")
+        self.assertIn(r.status_code, (401, 403))
 
 
 class TournamentFormatFilterTests(TestCase):
@@ -133,6 +186,11 @@ class TournamentFormatFilterTests(TestCase):
         data = r.data if isinstance(r.data, list) else r.data.get("results", [])
         self.assertTrue(all(t["format"] == "swiss" for t in data))
         self.assertTrue(any(t["slug"] == "swiss-filter-test" for t in data))
+
+    def test_drf_format_param_is_not_tournament_filter(self):
+        """DRF réserve ?format= pour le renderer — utiliser tournament_format."""
+        r = self.client.get("/api/tournaments/?format=arena")
+        self.assertEqual(r.status_code, 404)
 
 
 class TournamentCupFilterTests(TestCase):
