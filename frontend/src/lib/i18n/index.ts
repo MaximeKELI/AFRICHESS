@@ -676,7 +676,7 @@ const fr: Record<string, string> = {
   "puzzles.battle.draw": "Match nul",
   "puzzles.battle.loginRequired": "Connectez-vous pour Puzzle Racer.",
   "puzzles.battle.error": "Puzzle Racer indisponible.",
-  "puzzles.streakLabel": "Série quotidienne",
+  "friends.title": "Amis & défis",
   "friends.loginRequired": "Connectez-vous pour gérer vos amis.",
   "clubs.title": "Clubs",
   "clubs.loginHint": "Connectez-vous pour rejoindre un club.",
