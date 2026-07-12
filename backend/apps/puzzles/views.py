@@ -462,3 +462,118 @@ class PuzzleStreakView(APIView):
                 stats.daily_puzzle_last_date == timezone.now().date()
             ),
         })
+
+
+class PuzzleDashboardView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        from apps.ratings.services import RatingService
+
+        user = request.user
+        stats = user.stats
+        puzzle_elo = RatingService().get_or_create_rating(user, "puzzle").elo
+        since = timezone.now() - timedelta(days=30)
+        agg = PuzzleAttempt.objects.filter(user=user, created_at__gte=since).aggregate(
+            solved=Count("id", filter=Q(solved=True)),
+            failed=Count("id", filter=Q(solved=False)),
+            total=Count("id"),
+        )
+        total_30 = agg["total"] or 0
+        solved_30 = agg["solved"] or 0
+        failed_30 = agg["failed"] or 0
+        accuracy = round(100.0 * solved_30 / total_30, 1) if total_30 else None
+        solved_count = PuzzleAttempt.objects.filter(user=user, solved=True).count()
+        recent_qs = (
+            PuzzleAttempt.objects.filter(user=user)
+            .select_related("puzzle")
+            .order_by("-created_at")[:20]
+        )
+        recent = [
+            {
+                "puzzle_id": a.puzzle_id,
+                "solved": a.solved,
+                "time_seconds": a.time_seconds,
+                "created_at": a.created_at.isoformat(),
+                "themes": a.puzzle.themes if isinstance(a.puzzle.themes, list) else [],
+                "difficulty": a.puzzle.difficulty,
+                "rating": a.puzzle.rating,
+            }
+            for a in recent_qs
+        ]
+        best_streak = (
+            PuzzleRushSession.objects.filter(
+                user=user,
+                mode=PuzzleRushSession.Mode.STREAK,
+                status=PuzzleRushSession.Status.COMPLETED,
+            )
+            .order_by("-score")
+            .values_list("score", flat=True)
+            .first()
+        )
+        return Response(
+            {
+                "puzzle_elo": puzzle_elo,
+                "daily_streak": stats.daily_puzzle_streak,
+                "solved_today": stats.daily_puzzle_last_date == timezone.now().date(),
+                "solved_count": solved_count,
+                "best_streak_run": best_streak or 0,
+                "last_30_days": {
+                    "solved": solved_30,
+                    "failed": failed_30,
+                    "total": total_30,
+                    "accuracy": accuracy,
+                },
+                "recent_attempts": recent,
+            }
+        )
+
+
+class PuzzleStreakRunStartView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        from .rush_battle import start_streak_session
+
+        session = start_streak_session(request.user)
+        first = Puzzle.objects.get(pk=session.puzzle_ids[0]) if session.puzzle_ids else None
+        return Response(
+            {
+                "session_id": session.id,
+                "puzzle": PuzzleSerializer(first).data if first else None,
+                "score": 0,
+                "skip_used": False,
+                "mode": "streak",
+            },
+            status=201,
+        )
+
+
+class PuzzleStreakRunSubmitView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, session_id):
+        from .rush_battle import streak_submit
+
+        try:
+            session = PuzzleRushSession.objects.get(
+                pk=session_id,
+                user=request.user,
+                mode=PuzzleRushSession.Mode.STREAK,
+            )
+        except PuzzleRushSession.DoesNotExist:
+            return Response({"error": "Introuvable"}, status=404)
+
+        skip = bool(request.data.get("skip"))
+        if skip:
+            result = streak_submit(session, [], skip=True)
+        else:
+            ser = SubmitPuzzleSerializer(data=request.data)
+            ser.is_valid(raise_exception=True)
+            result = streak_submit(session, ser.validated_data["moves"], skip=False)
+
+        if result.get("next_puzzle_id"):
+            result["next_puzzle"] = PuzzleSerializer(
+                Puzzle.objects.get(pk=result["next_puzzle_id"])
+            ).data
+        return Response(result)
