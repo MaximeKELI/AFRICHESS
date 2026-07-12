@@ -62,7 +62,8 @@ export async function loginViaUi(
 }
 
 export async function setUnratedMode(page: import("@playwright/test").Page) {
-  const ratedSwitch = page.getByTestId("play-rated-switch");
+  // Desktop + mobile peuvent rendre le même switch (2 nœuds dans le DOM).
+  const ratedSwitch = page.getByTestId("play-rated-switch").first();
   if ((await ratedSwitch.getAttribute("aria-checked")) === "true") {
     await ratedSwitch.click();
   }
