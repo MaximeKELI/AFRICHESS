@@ -24,11 +24,19 @@ import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { getPuzzleStreak, recordPuzzleSolved } from "@/lib/puzzleStreak";
 import {
+  canResumeTraining,
+  clearTrainingProgress,
+  loadTrainingProgress,
+  saveTrainingProgress,
+  type TrainingProgressSnapshot,
+} from "@/lib/puzzleTrainingProgress";
+import {
   evaluateNewBadges,
   loadUnlockedBadges,
   saveUnlockedBadges,
   type PuzzleBadgeId,
 } from "@/lib/puzzleBadges";
+
 import { PuzzleSessionTracker, type PuzzleSessionRecap } from "@/lib/puzzleSession";
 import { alignMovesToSolution, hintPlayerSolutionMove } from "@/lib/puzzleEngine";
 import {
@@ -134,6 +142,8 @@ export default function PuzzlesPage() {
   const [badgeQueue, setBadgeQueue] = useState<PuzzleBadgeId[]>([]);
   const [recapOpen, setRecapOpen] = useState(false);
   const [sessionRecap, setSessionRecap] = useState<PuzzleSessionRecap | null>(null);
+  const [trainingSection, setTrainingSection] = useState(1);
+  const [resumeOffer, setResumeOffer] = useState<TrainingProgressSnapshot | null>(null);
   const [weeklyRank, setWeeklyRank] = useState<number | null>(null);
   const [localPlayed, setLocalPlayed] = useState<string[]>([]);
   const trainingQueueRef = useRef(trainingQueue);
@@ -246,7 +256,56 @@ export default function PuzzlesPage() {
     setSessionRecap(recap);
     setRecapOpen(true);
     sessionRecapSnapshotRef.current = null;
-    sessionRef.current.reset();
+    // Marque la série comme terminée (pas de reprise au milieu).
+    setTrainingIndex(trainingQueueRef.current.length);
+  }, []);
+
+  const persistTrainingProgress = useCallback(() => {
+    if (tab !== "training" || trainingQueue.length === 0) return;
+    const exported = sessionRef.current.exportState();
+    saveTrainingProgress({
+      difficulty,
+      theme,
+      queue: trainingQueue.map((p) => ({
+        id: p.id,
+        fen: p.fen,
+        solution_moves: p.solution_moves ?? [],
+        themes: p.themes,
+        difficulty: p.difficulty,
+        rating: p.rating,
+      })),
+      index: trainingIndex,
+      section: trainingSection,
+      entries: exported.entries,
+      perfectStreak: exported.perfectStreak,
+    });
+  }, [tab, trainingQueue, trainingIndex, trainingSection, difficulty, theme]);
+
+  useEffect(() => {
+    persistTrainingProgress();
+  }, [persistTrainingProgress]);
+
+  /** Passe au puzzle suivant (entraînement) — pas d'effets de bord dans un setState. */
+  const advanceTraining = useCallback(() => {
+    const idx = trainingIndexRef.current;
+    const queue = trainingQueueRef.current;
+    const next = idx + 1;
+    if (next < queue.length) {
+      playPuzzleAdvance(puzzleSoundsActive(lowBandwidth));
+      setTrainingIndex(next);
+      setPuzzle(queue[next]);
+      resetPuzzleUiForNewPuzzle();
+      return true;
+    }
+    finishTrainingSession();
+    return false;
+  }, [finishTrainingSession, lowBandwidth, resetPuzzleUiForNewPuzzle]);
+
+  /** Après le daily : enchaîner sur une série d'entraînement (vrai « nouveau puzzle »). */
+  const continueAfterDaily = useCallback(() => {
+    setResult(null);
+    setPuzzleFailed(false);
+    setTab("training");
   }, []);
 
   const recordTrainingSolve = useCallback(
@@ -541,42 +600,117 @@ export default function PuzzlesPage() {
       });
   };
 
-  const loadTraining = () => {
-    setResult(null);
-    setPuzzleFailed(false);
-    setUciMoves([]);
-    setHintRevealed(false);
-    setHintAvailable(null);
-    setHintOffered(false);
-    setUsedHint(false);
-    setStartTime(Date.now());
-    setLoadError(null);
-    setRecapOpen(false);
-    sessionRecapSnapshotRef.current = null;
-    sessionRef.current.reset();
+  const fetchTrainingBatch = useCallback(async (): Promise<Puzzle[]> => {
     const req =
       difficulty === "adaptive"
         ? learningApi.adaptivePuzzles(10)
         : puzzlesApi.training(difficulty, 10, theme || undefined);
-    req
-      .then(({ data }) => {
-        const list: Puzzle[] = Array.isArray(data) ? data : data.results ?? [];
+    const { data } = await req;
+    return Array.isArray(data) ? data : data.results ?? [];
+  }, [difficulty, theme]);
+
+  const loadTraining = useCallback(
+    (opts?: { fresh?: boolean }) => {
+      if (opts?.fresh !== false) {
+        clearTrainingProgress();
+        setTrainingSection(1);
+        sessionRef.current.reset();
+      }
+      setResumeOffer(null);
+      setPuzzle(null);
+      setResult(null);
+      setPuzzleFailed(false);
+      setUciMoves([]);
+      setHintRevealed(false);
+      setHintAvailable(null);
+      setHintOffered(false);
+      setUsedHint(false);
+      setStartTime(Date.now());
+      setLoadError(null);
+      setRecapOpen(false);
+      sessionRecapSnapshotRef.current = null;
+      void fetchTrainingBatch()
+        .then((list) => {
+          setTrainingQueue(list);
+          setTrainingIndex(0);
+          setPuzzle(list[0] ?? null);
+          if (list.length === 0) {
+            setLoadError(t("puzzles.error.emptyPool"));
+          }
+        })
+        .catch((err) => {
+          setPuzzle(null);
+          setLoadError(formatApiError(err, t("puzzles.error.training")));
+        });
+    },
+    [fetchTrainingBatch, t]
+  );
+
+  const continueNextTrainingSection = useCallback(() => {
+    setRecapOpen(false);
+    sessionRef.current.reset();
+    sessionRecapSnapshotRef.current = null;
+    setPuzzle(null);
+    setLoadError(null);
+    void fetchTrainingBatch()
+      .then((list) => {
+        setTrainingSection((s) => s + 1);
         setTrainingQueue(list);
         setTrainingIndex(0);
         setPuzzle(list[0] ?? null);
+        resetPuzzleUiForNewPuzzle();
         if (list.length === 0) {
           setLoadError(t("puzzles.error.emptyPool"));
         }
       })
       .catch((err) => {
-        setPuzzle(null);
         setLoadError(formatApiError(err, t("puzzles.error.training")));
       });
-  };
+  }, [fetchTrainingBatch, resetPuzzleUiForNewPuzzle, t]);
+
+  const applyResumeOffer = useCallback(() => {
+    if (!resumeOffer) return;
+    const snap = resumeOffer;
+    setResumeOffer(null);
+    sessionRef.current.importState({
+      entries: snap.entries || [],
+      perfectStreak: snap.perfectStreak || 0,
+    });
+    setTrainingQueue(snap.queue as Puzzle[]);
+    setTrainingIndex(snap.index);
+    setTrainingSection(snap.section || 1);
+    setPuzzle((snap.queue[snap.index] as Puzzle) ?? null);
+    resetPuzzleUiForNewPuzzle();
+  }, [resumeOffer, resetPuzzleUiForNewPuzzle]);
+
+  const restartFromResumeOffer = useCallback(() => {
+    setResumeOffer(null);
+    loadTraining({ fresh: true });
+  }, [loadTraining]);
+
+  const closeTrainingRecap = useCallback(() => {
+    setRecapOpen(false);
+    sessionRef.current.reset();
+    sessionRecapSnapshotRef.current = null;
+    clearTrainingProgress();
+  }, []);
 
   useEffect(() => {
     if (tab === "daily") loadDaily();
-    else if (tab === "training") loadTraining();
+    else if (tab === "training") {
+      const saved = loadTrainingProgress();
+      if (
+        canResumeTraining(saved) &&
+        saved!.difficulty === difficulty &&
+        saved!.theme === theme
+      ) {
+        setResumeOffer(saved);
+        setPuzzle(null);
+        setTrainingQueue([]);
+        return;
+      }
+      loadTraining({ fresh: true });
+    }
     else if (tab === "rush") {
       loadRushLeaderboard("rush");
       loadRush();
@@ -849,20 +983,9 @@ export default function PuzzlesPage() {
           },
           () => {
             if (tab === "training") {
-              setTrainingIndex((idx) => {
-                const next = idx + 1;
-                const queue = trainingQueueRef.current;
-                if (next < queue.length) {
-                  playPuzzleAdvance(puzzleSoundsActive(lowBandwidth));
-                  setPuzzle(queue[next]);
-                  resetPuzzleUiForNewPuzzle();
-                  return next;
-                }
-                setRecapOpen(true);
-                sessionRecapSnapshotRef.current = null;
-                sessionRef.current.reset();
-                return idx;
-              });
+              advanceTraining();
+            } else if (tab === "daily") {
+              continueAfterDaily();
             }
           }
         );
@@ -1012,14 +1135,7 @@ export default function PuzzlesPage() {
   };
 
   const nextTraining = () => {
-    const next = trainingIndex + 1;
-    if (next < trainingQueue.length) {
-      setTrainingIndex(next);
-      setPuzzle(trainingQueue[next]);
-      reset();
-    } else {
-      finishTrainingSession();
-    }
+    advanceTraining();
   };
 
   return (
@@ -1212,7 +1328,14 @@ export default function PuzzlesPage() {
       {tab !== "leaderboard" && puzzle && puzzle.solution_moves?.length ? (
         <div key={`${puzzle.id}-${boardKey}`}>
           {tab === "training" && trainingQueue.length > 1 && (
-            <PuzzleProgressRail current={trainingIndex + 1} total={trainingQueue.length} />
+            <div className="mb-2 flex items-center gap-2 flex-wrap">
+              {trainingSection > 1 && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-africhess-gold/20 text-africhess-gold">
+                  {t("puzzles.section.label", { n: trainingSection })}
+                </span>
+              )}
+              <PuzzleProgressRail current={Math.min(trainingIndex + 1, trainingQueue.length)} total={trainingQueue.length} />
+            </div>
           )}
 
           <div className="flex flex-wrap gap-2 mb-4">
@@ -1242,7 +1365,7 @@ export default function PuzzlesPage() {
             <div className="w-full min-w-0 relative min-h-[360px]">
               {tab === "training" && trainingQueue.length > 1 && (
                 <PuzzleMiniStairs
-                  current={trainingIndex + 1}
+                  current={Math.min(trainingIndex + 1, trainingQueue.length)}
                   total={trainingQueue.length}
                   showError={showMiniError}
                   className="mb-2"
@@ -1327,9 +1450,13 @@ export default function PuzzlesPage() {
                 {t("puzzles.next")}
               </button>
             )}
-            {tab === "daily" && puzzleSolved && (
-              <button type="button" onClick={loadDaily} className="px-6 py-2 border rounded-lg">
-                {t("puzzles.daily.reload")}
+            {tab === "daily" && puzzleSolved && !celebration && (
+              <button
+                type="button"
+                onClick={continueAfterDaily}
+                className="px-6 py-2 border border-africhess-green text-africhess-green rounded-lg"
+              >
+                {t("puzzles.next")}
               </button>
             )}
             {(tab === "rush" || tab === "storm") && puzzle && (
@@ -1353,9 +1480,48 @@ export default function PuzzlesPage() {
       <PuzzleSessionRecapModal
         open={recapOpen}
         recap={sessionRecap}
-        onClose={() => setRecapOpen(false)}
+        section={trainingSection}
+        onClose={closeTrainingRecap}
+        onContinue={continueNextTrainingSection}
         onReviewPuzzle={reviewPuzzle}
       />
+
+      {resumeOffer && tab === "training" && (
+        <div
+          className="fixed inset-0 z-layer-modal flex items-center justify-center p-4 bg-black/70"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="glass-card max-w-sm w-full p-6 space-y-4">
+            <h2 className="font-display text-xl font-bold text-africhess-gold">
+              {t("puzzles.resume.title")}
+            </h2>
+            <p className="text-sm opacity-70">
+              {t("puzzles.resume.hint", {
+                current: resumeOffer.index + 1,
+                total: resumeOffer.queue.length,
+                section: resumeOffer.section || 1,
+              })}
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={applyResumeOffer}
+                className="w-full px-4 py-2.5 african-gradient text-white rounded-lg text-sm font-medium"
+              >
+                {t("puzzles.resume.continue")}
+              </button>
+              <button
+                type="button"
+                onClick={restartFromResumeOffer}
+                className="w-full px-4 py-2 border border-white/20 rounded-lg text-sm hover:bg-white/5"
+              >
+                {t("puzzles.resume.restart")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

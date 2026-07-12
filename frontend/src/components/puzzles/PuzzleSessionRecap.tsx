@@ -8,14 +8,18 @@ interface PuzzleSessionRecapModalProps {
   open: boolean;
   recap: PuzzleSessionRecap | null;
   onClose: () => void;
+  onContinue?: () => void;
   onReviewPuzzle?: (puzzleId: number) => void;
+  section?: number;
 }
 
 export function PuzzleSessionRecapModal({
   open,
   recap,
   onClose,
+  onContinue,
   onReviewPuzzle,
+  section = 1,
 }: PuzzleSessionRecapModalProps) {
   const { t } = useTranslation();
   if (!open || !recap) return null;
@@ -30,6 +34,9 @@ export function PuzzleSessionRecapModal({
         <h2 className="font-display text-xl font-bold text-africhess-gold">
           {t("puzzles.recap.title")}
         </h2>
+        {section > 1 && (
+          <p className="text-sm opacity-70">{t("puzzles.recap.sectionDone", { n: section })}</p>
+        )}
 
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="puzzle-recap-stat">
@@ -81,13 +88,28 @@ export function PuzzleSessionRecapModal({
           </div>
         )}
 
-        <div className="flex gap-3 justify-end pt-2">
-          <Link href="/stats" className="text-sm text-africhess-green hover:underline">
-            {t("puzzles.recap.stats")}
-          </Link>
-          <button type="button" onClick={onClose} className="px-4 py-2 african-gradient text-white rounded-lg text-sm font-medium">
-            {t("puzzles.recap.close")}
-          </button>
+        <div className="flex flex-col gap-2 pt-2">
+          {onContinue && (
+            <button
+              type="button"
+              onClick={onContinue}
+              className="w-full px-4 py-2.5 african-gradient text-white rounded-lg text-sm font-medium"
+            >
+              {t("puzzles.recap.continue", { n: section + 1 })}
+            </button>
+          )}
+          <div className="flex gap-3 justify-between items-center">
+            <Link href="/stats" className="text-sm text-africhess-green hover:underline">
+              {t("puzzles.recap.stats")}
+            </Link>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-white/20 rounded-lg text-sm font-medium hover:bg-white/5"
+            >
+              {t("puzzles.recap.close")}
+            </button>
+          </div>
         </div>
       </div>
     </div>

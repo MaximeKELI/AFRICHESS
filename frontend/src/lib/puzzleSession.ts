@@ -96,6 +96,22 @@ export class PuzzleSessionTracker {
     return this.entries.filter((e) => e.solved).length;
   }
 
+  /** Export pour reprise de session (localStorage). */
+  exportState(): { entries: PuzzleSessionEntry[]; perfectStreak: number } {
+    return {
+      entries: this.entries.map((e) => ({ ...e, themes: [...e.themes] })),
+      perfectStreak: this.perfectStreak,
+    };
+  }
+
+  /** Restaure une session sauvegardée. */
+  importState(state: { entries: PuzzleSessionEntry[]; perfectStreak: number }) {
+    this.entries = (state.entries || []).map((e) => ({ ...e, themes: [...(e.themes || [])] }));
+    this.wrongByPuzzle.clear();
+    this.perfectStreak = state.perfectStreak || 0;
+    this.lastPuzzleHadWrong = false;
+  }
+
   buildRecap(): PuzzleSessionRecap {
     const solvedEntries = this.entries.filter((e) => e.solved);
     const failed = this.entries.filter((e) => !e.solved);
