@@ -469,19 +469,20 @@ class PuzzleDashboardView(APIView):
 
     def get(self, request):
         from apps.ratings.services import RatingService
+        from apps.users.models import UserStats
 
         user = request.user
-        stats = user.stats
+        stats, _ = UserStats.objects.get_or_create(user=user)
         puzzle_elo = RatingService().get_or_create_rating(user, "puzzle").elo
         since = timezone.now() - timedelta(days=30)
         agg = PuzzleAttempt.objects.filter(user=user, created_at__gte=since).aggregate(
-            solved=Count("id", filter=Q(solved=True)),
-            failed=Count("id", filter=Q(solved=False)),
+            solved_n=Count("id", filter=Q(solved=True)),
+            failed_n=Count("id", filter=Q(solved=False)),
             total=Count("id"),
         )
         total_30 = agg["total"] or 0
-        solved_30 = agg["solved"] or 0
-        failed_30 = agg["failed"] or 0
+        solved_30 = agg["solved_n"] or 0
+        failed_30 = agg["failed_n"] or 0
         accuracy = round(100.0 * solved_30 / total_30, 1) if total_30 else None
         solved_count = PuzzleAttempt.objects.filter(user=user, solved=True).count()
         recent_qs = (

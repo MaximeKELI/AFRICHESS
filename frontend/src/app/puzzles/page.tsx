@@ -108,6 +108,7 @@ function PuzzlesPageContent() {
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>("daily");
   const deepLinkApplied = useRef(false);
+  const puzzleDeepLinkId = useRef<number | null>(null);
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [trainingQueue, setTrainingQueue] = useState<Puzzle[]>([]);
   const [trainingIndex, setTrainingIndex] = useState(0);
@@ -168,6 +169,7 @@ function PuzzlesPageContent() {
     if (deepLinkApplied.current) return;
     const mode = (searchParams.get("mode") || "").toLowerCase();
     const themeParam = searchParams.get("theme") || "";
+    const puzzleIdParam = searchParams.get("puzzle");
     const modeMap: Record<string, Tab> = {
       daily: "daily",
       training: "training",
@@ -187,7 +189,26 @@ function PuzzlesPageContent() {
       if (!mode || mode === "training") setTab("training");
       deepLinkApplied.current = true;
     }
-  }, [searchParams]);
+    if (puzzleIdParam) {
+      const id = Number(puzzleIdParam);
+      if (Number.isFinite(id) && id > 0) {
+        deepLinkApplied.current = true;
+        puzzleDeepLinkId.current = id;
+        setTab("training");
+        puzzlesApi
+          .get(id)
+          .then(({ data }) => {
+            setTrainingQueue([data]);
+            setTrainingIndex(0);
+            setPuzzle(data);
+            setUciMoves([]);
+            setResult(null);
+            setBoardKey((k) => k + 1);
+          })
+          .catch(() => setLoadError(t("puzzles.error.training")));
+      }
+    }
+  }, [searchParams, t]);
 
   const resetPuzzleUiForNewPuzzle = useCallback(() => {
     setUciMoves([]);
@@ -734,6 +755,10 @@ function PuzzlesPageContent() {
   useEffect(() => {
     if (tab === "daily") loadDaily();
     else if (tab === "training") {
+      if (puzzleDeepLinkId.current) {
+        puzzleDeepLinkId.current = null;
+        return;
+      }
       const saved = loadTrainingProgress();
       if (
         canResumeTraining(saved) &&
