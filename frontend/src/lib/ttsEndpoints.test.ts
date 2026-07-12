@@ -17,7 +17,8 @@ describe("ttsEndpoints", () => {
     );
   });
 
-  it("always prefers WAV over speechSynthesis for live comments", () => {
-    expect(shouldPreferWavTts()).toBe(true);
+  it("prefers WAV only when no human browser voice is available", () => {
+    expect(shouldPreferWavTts(false)).toBe(true);
+    expect(shouldPreferWavTts(true)).toBe(false);
   });
 });

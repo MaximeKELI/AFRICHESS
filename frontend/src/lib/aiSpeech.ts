@@ -1,6 +1,6 @@
 /**
  * Synthèse vocale — commentaires IA et coach.
- * WAV (/api/tts → /api/games/tts/) en priorité ; speechSynthesis en dernier recours.
+ * Voix humaine navigateur en priorité ; WAV espeak uniquement en secours.
  */
 
 import Cookies from "js-cookie";
@@ -298,25 +298,34 @@ function speakBrowserChunk(text: string, byAi: boolean, generation: number): Pro
 async function speakChunk(text: string, byAi: boolean, generation: number): Promise<boolean> {
   if (generation !== speechGeneration) return false;
 
-  // WAV d'abord (Chromium + Firefox Linux) — speechSynthesis est peu fiable
-  if (shouldPreferWavTts()) {
+  const human = hasHumanBrowserVoice();
+
+  // 1. Voix humaine navigateur uniquement (jamais espeak en parallèle)
+  if (human) {
+    clearStuckSpeechSynthesis();
+    const ok = await speakBrowserChunk(text, byAi, generation);
+    if (generation !== speechGeneration) return false;
+    if (ok) return true;
+    // Pas de repli WAV robotique si une voix humaine existe mais a échoué
+    return false;
+  }
+
+  // 2. Secours : WAV espeak seulement s'il n'y a aucune voix humaine
+  if (shouldPreferWavTts(false)) {
     const buf = await fetchTtsWav(text);
     if (generation !== speechGeneration) return false;
     if (buf) {
       const ok = await playWavBufferAndWait(buf);
+      if (generation !== speechGeneration) {
+        stopCurrentAudio();
+        return false;
+      }
       if (ok) return true;
     }
   }
 
-  if (typeof window !== "undefined" && window.speechSynthesis && hasHumanBrowserVoice()) {
-    const ok = await speakBrowserChunk(text, byAi, generation);
-    if (generation !== speechGeneration) return false;
-    if (ok) return true;
-  }
-
-  if (!isFirefox() && typeof window !== "undefined" && window.speechSynthesis) {
-    return speakBrowserChunk(text, byAi, generation);
-  }
+  // Pas de speechSynthesis robotique (espeak/festival) — une seule qualité vocale
+  if (isFirefox()) return false;
   return false;
 }
 
@@ -413,6 +422,7 @@ export function stopAiSpeech() {
 export function isSpeechActive(): boolean {
   if (pipelineRunning || pendingJobs.length > 0) return true;
   if (currentAudio && !currentAudio.paused && !currentAudio.ended) return true;
+  if (typeof window !== "undefined" && window.speechSynthesis?.speaking) return true;
   return false;
 }
 

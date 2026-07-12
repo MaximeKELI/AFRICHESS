@@ -14,9 +14,10 @@ export function buildTtsUrls(apiBaseUrl: string): { local: string; backend: stri
 }
 
 /**
- * Toujours préférer le WAV pour les commentaires live.
- * speechSynthesis (Chromium/Firefox Linux) est robotique et se bloque après cancel().
+ * WAV (espeak) = secours robotique seulement.
+ * Si une voix humaine navigateur est dispo, on ne doit PAS préférer le WAV
+ * (sinon l’utilisateur entend humain + robot en parallèle / en alternance).
  */
-export function shouldPreferWavTts(): boolean {
-  return true;
+export function shouldPreferWavTts(hasHumanBrowserVoice = false): boolean {
+  return !hasHumanBrowserVoice;
 }
