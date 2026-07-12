@@ -37,6 +37,7 @@ export function AiCommentaryPanel({
   const voiceSupported = isAiSpeechSupported();
   const spokenKeysRef = useRef<Set<string>>(new Set());
   const speakQueueRef = useRef(0);
+  const primedRef = useRef(false);
 
   const handleTestVoice = () => {
     unlockAiSpeech();
@@ -47,6 +48,8 @@ export function AiCommentaryPanel({
     unlockAiSpeech();
     if (latest) {
       spokenKeysRef.current.add(commentKey(latest));
+    }
+    if (latest) {
       void speakComment(latest.text, { byAi: latest.byAi, enabled: true, forceUnlock: true });
     }
   };
@@ -62,6 +65,7 @@ export function AiCommentaryPanel({
       stopAiSpeech();
       spokenKeysRef.current.clear();
       speakQueueRef.current = 0;
+      primedRef.current = false;
     }
   }, [enabled]);
 
@@ -71,22 +75,38 @@ export function AiCommentaryPanel({
     const fresh = comments.filter((c) => c.text.trim() && !spokenKeysRef.current.has(commentKey(c)));
     if (!fresh.length) return;
 
+    // Première hydratation (reprise de partie) : marquer sans lire le backlog
+    if (!primedRef.current) {
+      primedRef.current = true;
+      for (const c of fresh) {
+        spokenKeysRef.current.add(commentKey(c));
+      }
+      // Si un seul nouveau commentaire arrive juste après un coup, le lire
+      // (évite le silence au premier coup d'une partie neuve)
+      if (fresh.length <= 2 && comments.length <= 2) {
+        // fall through to speak
+      } else {
+        return;
+      }
+    }
+
     for (const c of fresh) {
       spokenKeysRef.current.add(commentKey(c));
     }
 
+    // Si on est en retard (plusieurs coups d'un coup), ne lire que le dernier
+    const toSpeak = fresh.length > 2 ? fresh.slice(-1) : fresh.slice(-2);
+
     const queueId = ++speakQueueRef.current;
     void (async () => {
-      // Le joueur vient de jouer : lever le blocage autoplay
       unlockAiSpeech();
-      for (let index = 0; index < fresh.length; index += 1) {
+      for (let index = 0; index < toSpeak.length; index += 1) {
         if (speakQueueRef.current !== queueId) return;
-        const comment = fresh[index];
+        const comment = toSpeak[index];
         await speakComment(comment.text, {
           byAi: comment.byAi,
           enabled: true,
           forceUnlock: true,
-          // Premier nouveau commentaire coupe l'intro ; les suivants s'enchaînent
           interrupt: index === 0,
         });
         await waitForSpeechIdle();

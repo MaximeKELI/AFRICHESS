@@ -61,12 +61,16 @@ export function commentsFromMoves(
 ): MoveComment[] {
   return moves
     .filter((m) => m.comment?.trim())
-    .map((m) => ({
-      san: m.san,
-      text: m.comment!.trim(),
-      byAi: vsAi ? true : m.played_by_white !== playerIsWhite,
-      moveNumber: m.move_number,
-    }));
+    .map((m) => {
+      // vs IA : coups adverses = voix IA ; coups joueur = coach
+      const byOpponent = m.played_by_white !== playerIsWhite;
+      return {
+        san: m.san,
+        text: m.comment!.trim(),
+        byAi: vsAi ? byOpponent : byOpponent,
+        moveNumber: m.move_number,
+      };
+    });
 }
 
 export interface GameDisplayState {
