@@ -19,13 +19,17 @@ User = get_user_model()
 
 
 def elo_range_for_wait(wait_seconds: float, base: int | None = None) -> int:
-    """+50 ELO de portée toutes les 3 s d'attente (max configurable)."""
+    """
+    Écart ELO max pour appairer deux chercheurs.
+
+    Règle produit : jamais plus de MATCHMAKING_ELO_RANGE (défaut 200).
+    L'attente n'élargit plus la fourchette — si |ΔELO| > 200, la recherche continue.
+    """
+    del wait_seconds  # conservé pour signature / appels existants
     base = base if base is not None else getattr(settings, "MATCHMAKING_ELO_RANGE", 200)
-    step = getattr(settings, "MATCHMAKING_POOL_EXPAND_STEP", 50)
-    interval = getattr(settings, "MATCHMAKING_POOL_EXPAND_SECONDS", 3)
-    max_range = getattr(settings, "MATCHMAKING_POOL_MAX_RANGE", 500)
-    bonus = int(max(0, wait_seconds) // interval) * step
-    return min(max_range, base + bonus)
+    max_range = getattr(settings, "MATCHMAKING_POOL_MAX_RANGE", base)
+    # Cap dur : on ne dépasse jamais le minimum entre base et max_range configuré.
+    return min(int(base), int(max_range))
 
 
 def _user_wait_seconds(client, user_id: int) -> float:
