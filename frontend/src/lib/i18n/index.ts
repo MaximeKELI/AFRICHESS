@@ -967,7 +967,7 @@ const fr: Record<string, string> = {
   "comments.toggle.hint": "IA + coach : commentaires oral et écrit",
   "comments.voice.listen": "Écouter le commentaire",
   "comments.voice.gameStart": "C'est parti, bonne partie !",
-  "comments.voice.hint": "Pendant la partie : l'IA commente chaque coup. Après la partie : activez la voix dans « Analyse de la partie ».",
+  "comments.voice.hint": "Pendant la partie : l'IA commente chaque coup. Après la partie : la revue vocale démarre automatiquement (vous pouvez l'arrêter).",
   "comments.voice.test": "Tester la voix",
   "comments.voice.testPhrase": "Bonjour, je suis votre coach AFRICHESS. La voix fonctionne correctement.",
   "auth.oauth.config": "Configurez GOOGLE_OAUTH_* / GITHUB_OAUTH_* sur le serveur",

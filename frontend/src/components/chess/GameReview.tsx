@@ -30,6 +30,7 @@ import {
   reviewBoardState,
   REVIEW_START_FEN,
 } from "@/lib/reviewDisplay";
+import { planReviewVoiceAutoStart } from "@/lib/reviewVoiceTour";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuthStore } from "@/store/auth";
 import {
@@ -149,10 +150,39 @@ export function GameReview({
   }, [analysis]);
 
   useEffect(() => {
-    if (!analysis?.best_moves_json.length || analysisTourStartedRef.current) return;
+    const moveCount = analysis?.best_moves_json.length ?? 0;
+    const plan = planReviewVoiceAutoStart({
+      moveCount,
+      alreadyStarted: analysisTourStartedRef.current,
+      hasSummary: Boolean(reviewSummary?.trim()),
+    });
+    if (!plan) return;
+
     analysisTourStartedRef.current = true;
-    // Revue : pas d'auto-lecture — l'utilisateur active la voix / le tour manuellement
-  }, [analysis]);
+    let cancelled = false;
+
+    void (async () => {
+      unlockAiSpeech();
+      setVoiceOn(plan.enableVoice);
+      if (plan.speakSummaryFirst && reviewSummary?.trim()) {
+        await speakComment(reviewSummary.trim(), {
+          byAi: false,
+          enabled: true,
+          forceUnlock: true,
+          interrupt: true,
+        });
+        await waitForSpeechIdle();
+      }
+      if (!cancelled && plan.enableAutoTour) {
+        setSelectedIdx(0);
+        setAutoTour(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [analysis, reviewSummary]);
 
   const moves = analysis?.best_moves_json ?? [];
   const selectedMove = moves[selectedIdx] ?? null;
