@@ -94,6 +94,7 @@ class ForumPostSerializer(serializers.ModelSerializer):
             "comments_count",
             "created_at",
         ]
+        read_only_fields = ["is_featured", "likes_count"]
 
     def get_comments_count(self, obj):
         return obj.comments.count()

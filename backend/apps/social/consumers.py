@@ -3,10 +3,12 @@ import json
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from apps.common.text_validation import CHAT_MESSAGE_MAX, validate_user_text
 from apps.common.ws_connect import accept_websocket
 from apps.common.ws_ratelimit import allow_ws_event
+from rest_framework.exceptions import ValidationError
 
-from .chat_access import user_can_access_chat_room
+from .chat_access import user_can_send_chat_message, user_can_view_chat_room
 from .models import ChatMessage
 
 
@@ -21,7 +23,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close(code=4001)
             return
 
-        allowed = await database_sync_to_async(user_can_access_chat_room)(
+        allowed = await database_sync_to_async(user_can_view_chat_room)(
             self.user, self.room_type, self.room_id
         )
         if not allowed:
@@ -37,12 +39,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         if not allow_ws_event(self.user.id, f"chat_{self.room_type}_{self.room_id}", limit=30):
             return
+        can_send = await database_sync_to_async(user_can_send_chat_message)(
+            self.user, self.room_type, self.room_id
+        )
+        if not can_send:
+            return
         try:
             data = json.loads(text_data)
         except json.JSONDecodeError:
             return
-        message = (data.get("message") or "").strip()[:500]
-        if not message:
+        try:
+            message = validate_user_text(
+                data.get("message") or "",
+                max_len=CHAT_MESSAGE_MAX,
+                field="message",
+            )
+        except ValidationError:
             return
         await self._save_message(message)
         await self.channel_layer.group_send(

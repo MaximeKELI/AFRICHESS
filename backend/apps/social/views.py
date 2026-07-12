@@ -257,11 +257,11 @@ class UserSearchView(APIView):
         if len(q) < 2:
             return Response([])
         country = (request.query_params.get("country") or "").strip().upper()
+        # Pas d'email : évite fuite PII (parité Lichess)
         qs = User.objects.filter(
             Q(username__icontains=q)
             | Q(first_name__icontains=q)
             | Q(last_name__icontains=q)
-            | Q(email__icontains=q)
         ).exclude(pk=request.user.pk)
         if country and len(country) == 2:
             qs = qs.filter(country=country)
@@ -287,7 +287,7 @@ class UserRelationshipView(APIView):
 
     def get(self, request, username):
         try:
-            target = User.objects.get(username=username)
+            target = _get_user_by_username(username)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
         data = relationship_payload(request.user, target)
@@ -300,7 +300,7 @@ class FollowUserView(APIView):
 
     def post(self, request, username):
         try:
-            target = User.objects.get(username=username)
+            target = _get_user_by_username(username)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
         if target == request.user:
@@ -316,7 +316,7 @@ class UnfollowUserView(APIView):
 
     def post(self, request, username):
         try:
-            target = User.objects.get(username=username)
+            target = _get_user_by_username(username)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
         UserFollow.objects.filter(follower=request.user, following=target).delete()
@@ -329,7 +329,7 @@ class FollowingListView(APIView):
     def get(self, request, username=None):
         if username and username != "me":
             try:
-                user = User.objects.get(username=username)
+                user = _get_user_by_username(username)
             except User.DoesNotExist:
                 return Response({"error": "User not found"}, status=404)
         else:
@@ -345,7 +345,7 @@ class FollowersListView(APIView):
 
     def get(self, request, username):
         try:
-            user = User.objects.get(username=username)
+            user = _get_user_by_username(username)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
         from apps.users.serializers import UserPublicSerializer
@@ -410,8 +410,56 @@ class JoinClubView(APIView):
                 return Response({"error": "Club privé"}, status=403)
         club.members.add(request.user)
         club.member_count = club.members.count()
-        club.save()
-        return Response(ClubSerializer(club).data)
+        club.save(update_fields=["member_count"])
+        return Response(ClubSerializer(club, context={"request": request}).data)
+
+
+class LeaveClubView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, slug):
+        try:
+            club = Club.objects.get(slug=slug)
+        except Club.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        if not club.members.filter(pk=request.user.pk).exists():
+            return Response({"error": "Non membre"}, status=400)
+        if club.owner_id == request.user.id:
+            return Response(
+                {"error": "Le propriétaire ne peut pas quitter le club"},
+                status=400,
+            )
+        club.members.remove(request.user)
+        club.member_count = club.members.count()
+        club.save(update_fields=["member_count"])
+        return Response(ClubSerializer(club, context={"request": request}).data)
+
+
+class KickClubMemberView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, slug):
+        try:
+            club = Club.objects.get(slug=slug)
+        except Club.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        if club.owner_id != request.user.id:
+            return Response({"error": "Réservé au propriétaire"}, status=403)
+        username = (request.data.get("username") or "").strip()
+        if not username:
+            return Response({"error": "username requis"}, status=400)
+        try:
+            member = _get_user_by_username(username)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+        if member.id == club.owner_id:
+            return Response({"error": "Impossible d'exclure le propriétaire"}, status=400)
+        if not club.members.filter(pk=member.pk).exists():
+            return Response({"error": "Non membre"}, status=400)
+        club.members.remove(member)
+        club.member_count = club.members.count()
+        club.save(update_fields=["member_count"])
+        return Response(ClubSerializer(club, context={"request": request}).data)
 
 
 class ChallengeFriendView(APIView):
@@ -421,7 +469,7 @@ class ChallengeFriendView(APIView):
         username = request.data.get("username")
         mode = request.data.get("mode", "blitz")
         try:
-            opponent = User.objects.get(username=username)
+            opponent = _get_user_by_username(username)
         except User.DoesNotExist:
             return Response({"error": "Joueur introuvable"}, status=404)
 
@@ -454,13 +502,19 @@ class ChallengeFriendView(APIView):
 
 class PostChatMessageView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [ChatThrottle]
 
     def post(self, request, room_type, room_id):
-        if not user_can_access_chat_room(request.user, room_type, room_id):
+        if not user_can_send_chat_message(request.user, room_type, room_id):
             return Response({"error": "Accès refusé"}, status=403)
-        content = (request.data.get("message") or "").strip()[:500]
-        if not content:
-            return Response({"error": "Message vide"}, status=400)
+        try:
+            content = validate_user_text(
+                request.data.get("message") or "",
+                max_len=CHAT_MESSAGE_MAX,
+                field="message",
+            )
+        except ValidationError as exc:
+            return Response({"error": exc.detail}, status=400)
         msg = ChatMessage.objects.create(
             sender=request.user,
             room_type=room_type,
@@ -477,10 +531,11 @@ def _dm_room_id(user_a_id: int, user_b_id: int) -> str:
 
 class DirectMessageListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [ChatThrottle]
 
     def get(self, request, username):
         try:
-            other = User.objects.get(username=username)
+            other = _get_user_by_username(username)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
         if is_blocked(request.user, other):
@@ -493,14 +548,19 @@ class DirectMessageListView(APIView):
 
     def post(self, request, username):
         try:
-            other = User.objects.get(username=username)
+            other = _get_user_by_username(username)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
         if is_blocked(request.user, other):
             return Response({"error": "Action non autorisée"}, status=403)
-        content = (request.data.get("message") or "").strip()[:500]
-        if not content:
-            return Response({"error": "Empty"}, status=400)
+        try:
+            content = validate_user_text(
+                request.data.get("message") or "",
+                max_len=CHAT_MESSAGE_MAX,
+                field="message",
+            )
+        except ValidationError as exc:
+            return Response({"error": exc.detail}, status=400)
         room_id = _dm_room_id(request.user.id, other.id)
         msg = ChatMessage.objects.create(
             sender=request.user,
@@ -537,7 +597,7 @@ class ForumPostListView(generics.ListCreateAPIView):
         return qs[:50]
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        serializer.save(author=self.request.user, is_featured=False)
 
 
 class ForumPostDetailView(generics.RetrieveAPIView):
@@ -577,9 +637,17 @@ class ForumLikeView(APIView):
             return Response({"error": "Not found"}, status=404)
         _, created = ForumPostLike.objects.get_or_create(user=request.user, post=post)
         if created:
-            post.likes_count += 1
-            post.save(update_fields=["likes_count"])
-        return Response({"likes_count": post.likes_count, "liked": True})
+            ForumPost.objects.filter(pk=post.pk).update(
+                likes_count=models.F("likes_count") + 1
+            )
+            post.refresh_from_db(fields=["likes_count"])
+            return Response({"likes_count": post.likes_count, "liked": True})
+        ForumPostLike.objects.filter(user=request.user, post=post).delete()
+        ForumPost.objects.filter(pk=post.pk, likes_count__gt=0).update(
+            likes_count=models.F("likes_count") - 1
+        )
+        post.refresh_from_db(fields=["likes_count"])
+        return Response({"likes_count": post.likes_count, "liked": False})
 
 
 class ChatHistoryView(generics.ListAPIView):
@@ -590,7 +658,7 @@ class ChatHistoryView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         room_type = self.kwargs["room_type"]
         room_id = self.kwargs["room_id"]
-        if not user_can_access_chat_room(request.user, room_type, room_id):
+        if not user_can_view_chat_room(request.user, room_type, room_id):
             return Response({"error": "Accès refusé"}, status=403)
         return super().list(request, *args, **kwargs)
 
