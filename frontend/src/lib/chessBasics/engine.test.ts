@@ -18,7 +18,8 @@ describe("chessBasics engine", () => {
 
   it("rejette un coup hors objectif", () => {
     const stage = BASICS_STAGES.find((s) => s.id === "rook")!;
-    const r = evaluateBasicsMove(stage.fen, "e4e5", stage.goal);
+    const r = evaluateBasicsMove(stage.fen, "e4c4", stage.goal);
+    expect(r.illegal).toBeFalsy();
     expect(r.done).toBe(false);
   });
 });
