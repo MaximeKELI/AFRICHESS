@@ -141,22 +141,22 @@ export function TvExhibitionCard({ game, featured = false }: TvExhibitionCardPro
         </Link>
       </div>
 
-      {/* Stats toujours visibles */}
-      <div className="mb-3 space-y-2 rounded-xl border border-white/10 bg-black/25 p-3">
+      {/* Stats toujours visibles (contraste fort clair/sombre) */}
+      <div className="mb-3 space-y-2 rounded-xl border border-black/10 dark:border-white/15 bg-white/80 dark:bg-black/40 p-3 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
           <span className="opacity-70">{t("tv.winChance")}</span>
           <span className="font-mono tabular-nums text-sm">
-            <span className="text-white font-semibold">{winW.toFixed(1)}%</span>
+            <span className="font-semibold">{winW.toFixed(1)}%</span>
             <span className="opacity-40 mx-1.5">/</span>
-            <span className="text-neutral-400">{winB.toFixed(1)}%</span>
+            <span className="opacity-70">{winB.toFixed(1)}%</span>
           </span>
         </div>
-        <div className="h-2.5 rounded-full overflow-hidden flex border border-white/10">
+        <div className="h-2.5 rounded-full overflow-hidden flex border border-black/10 dark:border-white/10">
           <div
-            className="h-full bg-white/90 transition-all duration-500"
+            className="h-full bg-neutral-900 dark:bg-white/90 transition-all duration-500"
             style={{ width: `${Math.max(2, Math.min(98, winW))}%` }}
           />
-          <div className="h-full bg-neutral-800 flex-1" />
+          <div className="h-full bg-neutral-300 dark:bg-neutral-800 flex-1" />
         </div>
         <LiveEvalBar evaluation={evalScore} turn={turn} />
         {lastMove?.san && lastMove.class ? (
@@ -180,13 +180,13 @@ export function TvExhibitionCard({ game, featured = false }: TvExhibitionCardPro
               <p className="font-medium truncate">
                 {lastMove.san} — {t(classLabelKey(lastMove.class))}
               </p>
-              <p className="text-xs opacity-50">
+              <p className="text-xs opacity-60">
                 {t("tv.evalNow")}: {formatEvalDisplay(evalScore)}
               </p>
             </div>
           </div>
         ) : (
-          <p className="text-xs opacity-50">{t("tv.statsPending")}</p>
+          <p className="text-xs opacity-60">{t("tv.statsPending")}</p>
         )}
       </div>
 
