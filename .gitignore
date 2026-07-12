@@ -47,6 +47,15 @@ anticheat-cpp/build/
 
 *.dump
 
+# Puzzle DB cache (download via: manage.py seed_puzzles --download)
+backend/data/*.zst
+backend/data/*.zst.part
+backend/data/*.csv
+backend/data/*.csv.zst
+
+# Celery beat local schedule
+backend/celerybeat-schedule
+
 # Build
 dist/
 build/

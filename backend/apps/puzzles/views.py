@@ -44,11 +44,14 @@ class PuzzleListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        qs = Puzzle.objects.all()
+        qs = Puzzle.objects.all().order_by("-rating", "id")
         difficulty = self.request.query_params.get("difficulty")
         if difficulty:
             qs = qs.filter(difficulty=difficulty)
-        return qs[:30]
+        theme = self.request.query_params.get("theme")
+        if theme:
+            qs = qs.filter(themes__contains=[theme])
+        return qs
 
 
 class PuzzleDetailView(generics.RetrieveAPIView):
