@@ -595,9 +595,6 @@ class GameService:
 
         return None
 
-    def _record_move_PLACEHOLDER_REMOVE(self):
-        pass
-
     def _record_move(
         self,
         game,

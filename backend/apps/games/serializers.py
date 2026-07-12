@@ -213,6 +213,8 @@ def serialize_game_move_delta(game: Game, result: dict) -> dict:
         payload["draw_claim"] = result["draw_claim"]
     if result.get("threefold_available"):
         payload["threefold_available"] = True
+    if result.get("fifty_available"):
+        payload["fifty_available"] = True
     if result.get("result"):
         payload["result"] = result["result"]
     if result.get("termination_reason"):

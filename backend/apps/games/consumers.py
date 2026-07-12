@@ -431,6 +431,8 @@ class ChessConsumer(AsyncWebsocketConsumer):
         }
         if result.get("threefold_available"):
             extra["threefold_available"] = True
+        if result.get("fifty_available"):
+            extra["fifty_available"] = True
         return build_ws_move_payload(game, result, extra)
 
     @database_sync_to_async

@@ -343,7 +343,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "flag-expired-clocks": {
         "task": "apps.games.tasks.flag_expired_clocks",
-        "schedule": 5.0,
+        "schedule": 2.0,
     },
     "auto-start-tournaments": {
         "task": "apps.tournaments.tasks.auto_start_due_tournaments",

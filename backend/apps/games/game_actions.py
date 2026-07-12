@@ -152,6 +152,7 @@ def claim_draw(game: Game, user) -> dict:
     from .draw_rules import (
         can_claim_fifty_moves_from_game,
         can_claim_threefold_from_game,
+        finalize_draw,
         finalize_repetition_draw,
     )
 
@@ -170,12 +171,7 @@ def claim_draw(game: Game, user) -> dict:
             "draw_claim": "threefold",
         }
     if can_claim_fifty_moves_from_game(game):
-        game.result = Game.Result.DRAW
-        game.status = Game.Status.COMPLETED
-        game.ended_at = timezone.now()
-        game.termination_reason = "fifty_move"
-        game.winner = None
-        _clear_pending_offers(game)
+        finalize_draw(game, "fifty_move")
         game.save()
         GameService()._after_human_game_finished(game)
         return {
