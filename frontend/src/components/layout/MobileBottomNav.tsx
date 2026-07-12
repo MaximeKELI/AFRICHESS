@@ -11,7 +11,13 @@ const TABS = [
   { href: "/play", key: "nav.play", icon: Play, match: (p: string) => p.startsWith("/play") },
   { href: "/puzzles", key: "nav.puzzles", icon: Puzzle, match: (p: string) => p.startsWith("/puzzles") },
   { href: "/learning", key: "nav.learn", icon: BookOpen, match: (p: string) => p.startsWith("/learning") || p.startsWith("/insights") || p.startsWith("/coaches") || p.startsWith("/classroom") },
-  { href: "/live", key: "nav.live", icon: Radio, match: (p: string) => p.startsWith("/live") },
+  { href: "/tv", key: "nav.watch", icon: Radio, match: (p: string) =>
+    p.startsWith("/tv") ||
+    p.startsWith("/live") ||
+    p.startsWith("/watch") ||
+    p.startsWith("/broadcasts") ||
+    p.startsWith("/streamers"),
+  },
 ] as const;
 
 interface MobileBottomNavProps {
