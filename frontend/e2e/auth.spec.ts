@@ -10,10 +10,10 @@ test.describe("Authentification", () => {
   test("connexion puis déconnexion", async ({ page }) => {
     await loginViaUi(page);
     await page.getByRole("button", { name: "Déconnexion" }).click();
-    // Attendre la fin de la navigation de logout avant un nouveau goto.
-    await expect(page.getByRole("link", { name: /connexion|login/i })).toBeVisible();
+    const loginLink = page.getByRole("navigation").getByRole("link", { name: /connexion|login/i });
+    await expect(loginLink).toBeVisible();
     await page.goto("/profile", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("link", { name: /connexion|login/i })).toBeVisible();
+    await expect(loginLink).toBeVisible();
   });
 
   test("identifiants e2e disponibles", () => {
