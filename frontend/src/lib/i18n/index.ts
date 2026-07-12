@@ -728,6 +728,7 @@ const fr: Record<string, string> = {
   "background.picker.category.classic": "Classique",
   "background.picker.category.abstract": "Abstrait",
   "background.picker.category.animals": "Animaux",
+  "background.picker.category.lichess": "Lichess",
   "comments.toggle": "Commentaires IA",
   "comments.toggle.hint": "IA + coach : commentaires oral et écrit",
   "comments.voice.listen": "Écouter le commentaire",
