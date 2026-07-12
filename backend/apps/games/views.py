@@ -26,6 +26,8 @@ from .game_actions import (
     abort_game,
     accept_draw,
     accept_takeback,
+    claim_draw,
+    claim_flag,
     clear_conditional_moves,
     create_rematch,
     decline_draw,
@@ -257,8 +259,16 @@ class MakeMoveView(APIView):
         if "error" in result:
             return Response(result, status=400)
         game.refresh_from_db()
-        from .ws_notify import notify_move_made
+        from .ws_notify import notify_game_room, notify_move_made
+        from .realtime_services import build_ws_payload
 
+        if result.get("game_over") and result.get("reason") == "timeout":
+            notify_game_room(
+                game.id,
+                "broadcast_game_over",
+                build_ws_payload(game, {"game_over": True, "reason": "timeout"}),
+            )
+            return Response(serialize_game_move_delta(game, result))
         notify_move_made(game, result)
         data = serialize_game_move_delta(game, result)
         return Response(data)
@@ -744,6 +754,66 @@ class DrawRespondView(APIView):
 
         notify_game_room(game.id, "broadcast_draw", {"declined": True})
         game.refresh_from_db()
+        return Response(GameSerializer(game).data)
+
+
+class ClaimDrawView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, game_id):
+        try:
+            game = Game.objects.get(id=game_id)
+        except Game.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        if not can_play_game(request.user, game):
+            return Response({"error": "Forbidden"}, status=403)
+        result = claim_draw(game, request.user)
+        if "error" in result:
+            return Response(result, status=400)
+        game.refresh_from_db()
+        from .realtime_services import build_ws_payload
+        from .ws_notify import notify_game_room
+
+        notify_game_room(
+            game.id,
+            "broadcast_game_over",
+            build_ws_payload(
+                game,
+                {
+                    "game_over": True,
+                    "reason": result.get("termination_reason", "repetition"),
+                },
+            ),
+        )
+        return Response(GameSerializer(game).data)
+
+
+class ClaimFlagView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, game_id):
+        from django.db import transaction
+
+        with transaction.atomic():
+            try:
+                game = Game.objects.select_for_update().get(id=game_id)
+            except Game.DoesNotExist:
+                return Response({"error": "Not found"}, status=404)
+            if not can_play_game(request.user, game):
+                return Response({"error": "Forbidden"}, status=403)
+            result = claim_flag(game, request.user)
+        if result.get("error") and not result.get("already_finished"):
+            return Response(result, status=400)
+        game.refresh_from_db()
+        if game.status == Game.Status.COMPLETED:
+            from .realtime_services import build_ws_payload
+            from .ws_notify import notify_game_room
+
+            notify_game_room(
+                game.id,
+                "broadcast_game_over",
+                build_ws_payload(game, {"game_over": True, "reason": "timeout"}),
+            )
         return Response(GameSerializer(game).data)
 
 

@@ -52,4 +52,8 @@ def apply_clock_tick_and_check(game: Game) -> str | None:
     if game.mode == Game.Mode.CORRESPONDENCE:
         return None
     apply_server_clock_before_move(game)
-    return check_timeout(game)
+    timed_out = check_timeout(game)
+    if not timed_out:
+        # Ancre le tick pour éviter une double déduction au prochain passage Celery.
+        game.turn_started_at = timezone.now()
+    return timed_out
