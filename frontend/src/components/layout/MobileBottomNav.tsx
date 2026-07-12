@@ -84,7 +84,7 @@ export function MobileBottomNav({ onMenuOpen }: MobileBottomNavProps) {
         <button
           type="button"
           onClick={onMenuOpen}
-          className="flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-[var(--text)]/60 hover:text-africhess-gold"
+          className="flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted hover:text-africhess-gold transition-colors duration-200"
           aria-label={t("nav.menu.open")}
         >
           <Menu size={20} />
