@@ -145,7 +145,7 @@ class LichessFivefoldTests(TestCase):
         self.assertEqual(game.status, Game.Status.COMPLETED)
         self.assertEqual(game.result, Game.Result.DRAW)
         self.assertEqual(result.get("draw_claim"), "fivefold")
-        self.assertTrue(is_fivefold_repetition_from_game(game) or True)
+        self.assertEqual(game.termination_reason, "repetition")
 
 
 class LichessFiftyMoveTests(TestCase):
