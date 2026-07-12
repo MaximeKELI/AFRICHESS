@@ -790,7 +790,7 @@ const fr: Record<string, string> = {
   "swiss.title": "Tournois Swiss",
   "swiss.subtitle": "Appariements suisses par ronde",
   "community.title": "Communauté",
-  "community.hub.subtitle": "Joueurs, amis, forums, blog, équipes et streamers — comme sur Lichess.",
+  "community.hub.subtitle": "Joueurs, amis, forums, blog, équipes et streamers.",
   "community.hub.playersDesc": "Joueurs du monde entier, classements et recherche.",
   "community.hub.friendsDesc": "Retrouvez vos amis et envoyez des défis.",
   "community.hub.forumsDesc": "Discussions par catégorie : général, Afrique, stratégie…",
