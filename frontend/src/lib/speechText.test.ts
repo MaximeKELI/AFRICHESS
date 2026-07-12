@@ -40,4 +40,10 @@ describe("sanToSpokenFrench", () => {
     expect(out).toMatch(/cavalier/i);
     expect(out).not.toMatch(/\bNf3\b/);
   });
+
+  it("turns dashes into spoken pauses", () => {
+    const out = normalizeSpeechText("Solide — continue comme ça.");
+    expect(out).toContain(",");
+    expect(out).not.toContain("—");
+  });
 });
