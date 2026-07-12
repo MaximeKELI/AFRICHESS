@@ -78,15 +78,12 @@ export function defaultPresetForMode(mode: string): TimePresetId {
   }
 }
 
-/** Cadence envoyée au serveur pour le matchmaking en ligne. */
+/** Cadence envoyée au serveur pour le matchmaking / défi en ligne. */
 export function matchmakingTimeControl(
-  mode: string,
   isTimed: boolean,
-  isRated: boolean,
   preset: TimePresetId
 ): string | undefined {
   if (!isTimed) return undefined;
-  if (isRated) return defaultPresetForMode(mode);
   return preset;
 }
 
@@ -108,10 +105,10 @@ export function formatTimeControlLabel(
   return presetLabel(DEFAULT_TIME_PRESET);
 }
 
-export function playModeFromPreset(preset: TimePresetId): "bullet" | "blitz" | "rapid" {
-  const category = TIME_PRESETS[preset].category;
-  if (category === "classical") return "rapid";
-  return category;
+export function playModeFromPreset(
+  preset: TimePresetId
+): "bullet" | "blitz" | "rapid" | "classical" {
+  return TIME_PRESETS[preset].category;
 }
 
 export function inferPresetFromMs(
