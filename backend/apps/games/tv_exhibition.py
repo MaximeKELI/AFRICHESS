@@ -153,7 +153,12 @@ def play_exhibition_move(game: Game) -> Optional[dict]:
             game.winner = game.white_player if played_by_white else game.black_player
             game.termination_reason = "checkmate"
             game.ended_at = timezone.now()
-        elif board.is_stalemate() or board.is_insufficient_material() or board.can_claim_fifty_moves():
+        elif (
+            board.is_stalemate()
+            or board.is_insufficient_material()
+            or board.is_seventyfive_moves()
+            or board.is_fivefold_repetition()
+        ):
             game.status = Game.Status.DRAW
             game.result = Game.Result.DRAW
             game.termination_reason = "draw"
@@ -165,6 +170,8 @@ def play_exhibition_move(game: Game) -> Optional[dict]:
             uci=best.uci,
             san=san,
             fen_after=new_fen,
+            from_square=best.uci[:2],
+            to_square=best.uci[2:4],
             played_by_white=played_by_white,
             move_number=move_number,
         )
@@ -173,7 +180,7 @@ def play_exhibition_move(game: Game) -> Optional[dict]:
         from .ws_notify import notify_game_room
         from .realtime_services import build_ws_payload
 
-        notify_game_room(str(game.id), build_ws_payload(game))
+        notify_game_room(str(game.id), "game_update", build_ws_payload(game))
     except Exception:
         logger.debug("TV exhibition WS notify skipped", exc_info=True)
 
