@@ -1,4 +1,4 @@
-"""Génération de commentaires de coups en arrière-plan (Celery ou thread)."""
+"""Génération de commentaires de coups (live rapide + option engine)."""
 from __future__ import annotations
 
 import logging
@@ -11,19 +11,32 @@ logger = logging.getLogger(__name__)
 
 CommentSpec = dict[str, Any]
 
+# Profondeur Stockfish — uniquement si use_engine=True (pas pour le live)
 COMMENTARY_DEPTH = 8
 
 
-def generate_move_comments_for_specs(specs: list[CommentSpec]) -> int:
-    """Analyse Stockfish + enregistre les commentaires pour chaque coup."""
+def generate_move_comments_for_specs(
+    specs: list[CommentSpec],
+    *,
+    use_engine: bool = False,
+) -> int:
+    """Enregistre les commentaires pour chaque coup.
+
+    Live (défaut) : heuristiques matérielles — instantané, sans Stockfish.
+    use_engine=True : analyse Stockfish (lourd, réservé aux jobs async optionnels).
+    """
     if not specs:
         return 0
 
     from apps.games.commentary import generate_move_comment
-    from apps.games.engine import ChessEngineService
     from apps.games.models import Move
 
-    engine = ChessEngineService()
+    engine = None
+    if use_engine:
+        from apps.games.engine import ChessEngineService
+
+        engine = ChessEngineService()
+
     updated = 0
 
     for spec in specs:
@@ -33,18 +46,22 @@ def generate_move_comments_for_specs(specs: list[CommentSpec]) -> int:
         try:
             move = Move.objects.get(pk=move_id)
         except Move.DoesNotExist:
-            logger.warning("Commentaire async : coup %s introuvable", move_id)
+            logger.warning("Commentaire : coup %s introuvable", move_id)
             continue
         if move.comment.strip():
             continue
 
         fen_before = spec["fen_before"]
         fen_after = spec["fen_after"]
-        eval_before = engine.analyze_position(fen_before, depth=COMMENTARY_DEPTH)
-        eval_after = engine.analyze_position(fen_after, depth=COMMENTARY_DEPTH)
+        eval_before = None
+        eval_after = None
         best_san = None
-        if not spec.get("played_by_ai"):
-            best_san = engine.best_move_san(fen_before, depth=COMMENTARY_DEPTH)
+
+        if engine is not None:
+            eval_before = engine.analyze_position(fen_before, depth=COMMENTARY_DEPTH)
+            eval_after = engine.analyze_position(fen_after, depth=COMMENTARY_DEPTH)
+            if not spec.get("played_by_ai"):
+                best_san = engine.best_move_san(fen_before, depth=COMMENTARY_DEPTH)
 
         text = generate_move_comment(
             fen_before,
@@ -63,7 +80,13 @@ def generate_move_comments_for_specs(specs: list[CommentSpec]) -> int:
     return updated
 
 
+def apply_live_move_comments(specs: list[CommentSpec]) -> int:
+    """Commentaires live immédiats (sans Stockfish) — à appeler avant la réponse HTTP."""
+    return generate_move_comments_for_specs(specs, use_engine=False)
+
+
 def _dispatch_comment_generation(game_id: str, specs: list[CommentSpec]) -> None:
+    """Repli async (ancien chemin Celery) — toujours sans engine pour rester rapide."""
     try:
         from apps.games.tasks import generate_move_comments_async
 
@@ -78,13 +101,14 @@ def _dispatch_comment_generation(game_id: str, specs: list[CommentSpec]) -> None
         threading.Thread(
             target=generate_move_comments_for_specs,
             args=(specs,),
+            kwargs={"use_engine": False},
             daemon=True,
             name=f"move-comments-{game_id[:8]}",
         ).start()
 
 
 def schedule_move_comments(game_id: str, specs: list[CommentSpec]) -> None:
-    """Planifie la génération après commit DB (réponse HTTP non bloquée)."""
+    """Repli : planifie après commit si la génération sync n'a pas été faite."""
     if not specs:
         return
     payload = [dict(spec) for spec in specs]
