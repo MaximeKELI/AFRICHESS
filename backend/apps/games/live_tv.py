@@ -12,7 +12,6 @@ from apps.ratings.batch import batch_player_ratings
 
 from .game_actions import live_games_queryset
 from .models import Game
-from .serializers import _game_rating_mode
 
 TV_CHANNELS = ("best", "bullet", "blitz", "rapid", "classical")
 ROTATION_SECONDS = getattr(settings, "LIVE_TV_ROTATION_SECONDS", 30)
@@ -60,7 +59,9 @@ def build_tv_payload(
 ) -> dict[str, Any]:
     channel = channel if channel in TV_CHANNELS else "best"
     cache_key = f"live_tv:meta:{channel}"
-    if games is None:
+    # Cache uniquement pour les requêtes DB filtrées (pas une liste pré-tronquée)
+    use_cache = games is None
+    if use_cache:
         cached = cache.get(cache_key)
         if cached is not None:
             return cached
@@ -75,6 +76,8 @@ def build_tv_payload(
             "rotation_seconds": ROTATION_SECONDS,
             "next_rotation_at": None,
             "queue": [],
+            "current_game_id": None,
+            "queue_game_ids": [],
         }
     else:
         slot = int(time.time()) // ROTATION_SECONDS
@@ -90,5 +93,6 @@ def build_tv_payload(
             "queue_game_ids": [str(g.id) for g in games[:12]],
         }
 
-    cache.set(cache_key, payload, ROTATION_SECONDS)
+    if use_cache:
+        cache.set(cache_key, payload, ROTATION_SECONDS)
     return payload
