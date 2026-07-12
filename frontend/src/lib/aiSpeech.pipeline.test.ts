@@ -190,11 +190,12 @@ describe("speakComment pipeline (mocked window + fetch)", () => {
     const mod = await import("@/lib/aiSpeech");
     mod.__resetAiSpeechForTests();
     mod.unlockAiSpeech();
-    played.length = 0; // ignorer le warmup Audio silencieux
+    played.length = 0;
     fetchMock.mockClear();
     await mod.speakComment("Uniquement la voix humaine.", {
       interrupt: true,
-      forceUnlock: true,
+      forceUnlock: false,
+      enabled: true,
     });
     await mod.waitForSpeechIdle(5000);
 
