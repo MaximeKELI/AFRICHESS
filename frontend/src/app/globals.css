@@ -38,9 +38,15 @@
 }
 
 .dark {
-  --bg: #0D1117;
+  --bg: #0A0E14;
   --text: #F5F0E8;
-  --card: #161B22;
+  --card: #121820;
+  --muted: color-mix(in srgb, var(--text) 52%, transparent);
+  --muted-strong: color-mix(in srgb, var(--text) 72%, transparent);
+  --border-subtle: color-mix(in srgb, var(--text) 11%, transparent);
+  --surface-elevated: color-mix(in srgb, var(--card) 92%, var(--gold) 8%);
+  --shadow-premium: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 12px 40px rgb(0 0 0 / 0.35);
+  --shadow-premium-lg: 0 1px 0 rgb(255 255 255 / 0.08) inset, 0 24px 64px rgb(0 0 0 / 0.45);
 }
 
 body {
