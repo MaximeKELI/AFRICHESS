@@ -298,35 +298,30 @@ function speakBrowserChunk(text: string, byAi: boolean, generation: number): Pro
 async function speakChunk(text: string, byAi: boolean, generation: number): Promise<boolean> {
   if (generation !== speechGeneration) return false;
 
-  const human = hasHumanBrowserVoice();
-
-  // 1. Voix humaine navigateur uniquement (jamais espeak en parallèle)
-  if (human) {
-    clearStuckSpeechSynthesis();
+  // 1. Voix humaine navigateur uniquement — jamais de WAV espeak en parallèle
+  if (hasHumanBrowserVoice()) {
+    stopCurrentAudio();
     const ok = await speakBrowserChunk(text, byAi, generation);
-    if (generation !== speechGeneration) return false;
-    if (ok) return true;
-    // Pas de repli WAV robotique si une voix humaine existe mais a échoué
+    if (generation !== speechGeneration) {
+      clearStuckSpeechSynthesis();
+      return false;
+    }
+    return ok;
+  }
+
+  // 2. Secours robotique (espeak WAV) seulement s'il n'existe aucune voix humaine
+  if (!shouldPreferWavTts(false)) return false;
+
+  const buf = await fetchTtsWav(text);
+  if (generation !== speechGeneration) return false;
+  if (!buf) return false;
+
+  const ok = await playWavBufferAndWait(buf);
+  if (generation !== speechGeneration) {
+    stopCurrentAudio();
     return false;
   }
-
-  // 2. Secours : WAV espeak seulement s'il n'y a aucune voix humaine
-  if (shouldPreferWavTts(false)) {
-    const buf = await fetchTtsWav(text);
-    if (generation !== speechGeneration) return false;
-    if (buf) {
-      const ok = await playWavBufferAndWait(buf);
-      if (generation !== speechGeneration) {
-        stopCurrentAudio();
-        return false;
-      }
-      if (ok) return true;
-    }
-  }
-
-  // Pas de speechSynthesis robotique (espeak/festival) — une seule qualité vocale
-  if (isFirefox()) return false;
-  return false;
+  return ok;
 }
 
 async function runSpeechPipeline(): Promise<void> {
