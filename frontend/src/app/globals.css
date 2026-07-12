@@ -142,9 +142,241 @@ html.has-site-background nav {
   background: linear-gradient(135deg, #1B7A3D 0%, #D4A017 50%, #C45C26 100%);
 }
 
-.glass-card {
-  @apply backdrop-blur-md border border-white/10 rounded-2xl shadow-xl;
-  background-color: color-mix(in srgb, var(--card) 80%, transparent);
+@layer components {
+  .text-muted {
+    color: var(--muted);
+  }
+
+  .text-muted-strong {
+    color: var(--muted-strong);
+  }
+
+  .premium-divider {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--gold) 45%, transparent) 50%,
+      transparent
+    );
+  }
+
+  .nav-premium {
+    border-bottom: 1px solid var(--border-subtle);
+    background: color-mix(in srgb, var(--card) 88%, transparent);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.04), 0 4px 24px rgb(0 0 0 / 0.06);
+  }
+
+  .dark .nav-premium {
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.03), 0 4px 32px rgb(0 0 0 / 0.25);
+  }
+
+  .nav-link {
+    position: relative;
+    color: var(--muted-strong);
+    transition: color 0.2s var(--ease-premium);
+  }
+
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.35rem;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--gold), var(--green));
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.25s var(--ease-premium);
+  }
+
+  .nav-link:hover {
+    color: var(--text);
+  }
+
+  .nav-link-active {
+    color: var(--gold);
+  }
+
+  .nav-link-active::after {
+    transform: scaleX(1);
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost,
+  .btn-hero {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold;
+    transition:
+      transform 0.2s var(--ease-premium),
+      box-shadow 0.2s var(--ease-premium),
+      background 0.2s var(--ease-premium),
+      border-color 0.2s var(--ease-premium),
+      color 0.2s var(--ease-premium);
+  }
+
+  .btn-primary:active,
+  .btn-secondary:active,
+  .btn-ghost:active,
+  .btn-hero:active {
+    transform: scale(0.98);
+  }
+
+  .btn-sm {
+    @apply px-4 py-2 text-sm;
+  }
+
+  .btn-lg {
+    @apply px-8 py-3.5 text-lg;
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 text-white;
+    background: linear-gradient(160deg, #248848 0%, #1B7A3D 48%, #145a2e 100%);
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / 0.18) inset,
+      0 8px 24px rgb(27 122 61 / 0.32);
+  }
+
+  .btn-primary:hover {
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / 0.22) inset,
+      0 12px 32px rgb(27 122 61 / 0.42);
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3;
+    color: var(--gold);
+    border: 1.5px solid color-mix(in srgb, var(--gold) 55%, transparent);
+    background: color-mix(in srgb, var(--gold) 6%, transparent);
+  }
+
+  .btn-secondary:hover {
+    background: color-mix(in srgb, var(--gold) 14%, transparent);
+    border-color: color-mix(in srgb, var(--gold) 75%, transparent);
+  }
+
+  .btn-ghost {
+    @apply px-4 py-2;
+    color: var(--muted-strong);
+  }
+
+  .btn-ghost:hover {
+    color: var(--text);
+    background: color-mix(in srgb, var(--text) 6%, transparent);
+  }
+
+  .btn-hero {
+    @apply px-8 py-3.5 text-lg text-white;
+    background: linear-gradient(135deg, #1B7A3D 0%, #248848 35%, #D4A017 100%);
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / 0.2) inset,
+      0 12px 36px rgb(27 122 61 / 0.35),
+      0 4px 16px rgb(212 160 23 / 0.2);
+  }
+
+  .btn-hero:hover {
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / 0.25) inset,
+      0 16px 44px rgb(27 122 61 / 0.45),
+      0 6px 20px rgb(212 160 23 / 0.28);
+  }
+
+  .glass-card {
+    @apply rounded-2xl;
+    border: 1px solid var(--border-subtle);
+    background: color-mix(in srgb, var(--card) 88%, transparent);
+    box-shadow: var(--shadow-premium);
+    backdrop-filter: blur(12px);
+  }
+
+  .glass-card-hover {
+    transition:
+      transform 0.25s var(--ease-premium),
+      box-shadow 0.25s var(--ease-premium),
+      border-color 0.25s var(--ease-premium);
+  }
+
+  .glass-card-hover:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--gold) 28%, transparent);
+    box-shadow: var(--shadow-premium-lg);
+  }
+
+  .feature-card {
+    @apply glass-card glass-card-hover p-5 md:p-6;
+  }
+
+  .feature-card-icon {
+    @apply flex items-center justify-center w-11 h-11 rounded-xl mb-4;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--green) 18%, transparent), color-mix(in srgb, var(--gold) 12%, transparent));
+    border: 1px solid color-mix(in srgb, var(--gold) 22%, transparent);
+    color: var(--gold);
+  }
+
+  .hero-glow {
+    position: absolute;
+    left: 50%;
+    top: 28%;
+    width: min(520px, 90vw);
+    height: min(520px, 90vw);
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--gold) 22%, transparent) 0%,
+      color-mix(in srgb, var(--green) 8%, transparent) 45%,
+      transparent 70%
+    );
+    pointer-events: none;
+    animation: hero-glow-pulse 8s ease-in-out infinite;
+  }
+
+  @keyframes hero-glow-pulse {
+    0%, 100% { opacity: 0.75; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
+  }
+
+  .page-enter {
+    animation: pageEnter 0.45s var(--ease-premium) both;
+  }
+
+  @keyframes pageEnter {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .footer-premium {
+    border-top: 1px solid var(--border-subtle);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--card) 96%, var(--gold) 4%), var(--card));
+    position: relative;
+  }
+
+  .footer-premium::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0.45;
+  }
+
+  .heading-display {
+    @apply font-display font-bold tracking-tight;
+    letter-spacing: -0.02em;
+  }
+
+  .heading-gradient {
+    @apply heading-display bg-gradient-to-br from-africhess-gold via-africhess-terracotta to-africhess-green bg-clip-text text-transparent;
+  }
+}
+
+.low-bandwidth .hero-glow {
+  animation: none !important;
+  opacity: 0.5;
 }
 
 .chess-board-light {

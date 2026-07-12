@@ -17,8 +17,15 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ["Georgia", "Cambria", "Times New Roman", "serif"],
-        body: ["system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        display: ["var(--font-display)", "Georgia", "Cambria", "serif"],
+        body: ["var(--font-body)", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+      },
+      boxShadow: {
+        premium: "var(--shadow-premium)",
+        "premium-lg": "var(--shadow-premium-lg)",
+      },
+      transitionTimingFunction: {
+        premium: "cubic-bezier(0.22, 1, 0.36, 1)",
       },
       backgroundImage: {
         "african-pattern": "url('/images/pattern-bg.png')",
