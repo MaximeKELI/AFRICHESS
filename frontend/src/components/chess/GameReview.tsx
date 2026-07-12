@@ -150,6 +150,10 @@ export function GameReview({
   }, [analysis]);
 
   useEffect(() => {
+    // Revue page (profil / lien direct) : l'utilisateur lance manuellement.
+    // Modal post-partie : démarrage auto résumé + parcours vocal.
+    if (layout !== "modal") return;
+
     const moveCount = analysis?.best_moves_json.length ?? 0;
     const plan = planReviewVoiceAutoStart({
       moveCount,
@@ -158,7 +162,6 @@ export function GameReview({
     });
     if (!plan) return;
 
-    analysisTourStartedRef.current = true;
     let cancelled = false;
 
     void (async () => {
@@ -173,16 +176,16 @@ export function GameReview({
         });
         await waitForSpeechIdle();
       }
-      if (!cancelled && plan.enableAutoTour) {
-        setSelectedIdx(0);
-        setAutoTour(true);
-      }
+      if (cancelled) return;
+      analysisTourStartedRef.current = true;
+      setSelectedIdx(0);
+      if (plan.enableAutoTour) setAutoTour(true);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [analysis, reviewSummary]);
+  }, [analysis, reviewSummary, layout]);
 
   const moves = analysis?.best_moves_json ?? [];
   const selectedMove = moves[selectedIdx] ?? null;
