@@ -281,6 +281,9 @@ REST_AUTH = {
     "JWT_AUTH_SAMESITE": "Lax",
     "JWT_AUTH_SECURE": not DEBUG,
     "LOGIN_SERIALIZER": "apps.users.auth_serializers.AfrichessLoginSerializer",
+    "USER_DETAILS_SERIALIZER": "apps.users.auth_serializers.AfrichessUserDetailsSerializer",
+    "OLD_PASSWORD_FIELD_ENABLED": True,
+    "LOGOUT_ON_PASSWORD_CHANGE": True,
 }
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]

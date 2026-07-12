@@ -1,7 +1,7 @@
 """Connexion / inscription sécurisées — pas d'énumération."""
 
 from django.contrib.auth import get_user_model
-from dj_rest_auth.serializers import LoginSerializer
+from dj_rest_auth.serializers import LoginSerializer, UserDetailsSerializer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -10,10 +10,17 @@ from .totp_service import verify_totp
 User = get_user_model()
 _GENERIC_LOGIN_ERROR = "Identifiants invalides."
 _DUPLICATE_EMAIL_ERROR = (
-    "Plusieurs comptes utilisent cet e-mail. Connectez-vous avec votre nom d'utilisateur "
-    "(ex. DKELI), pas avec l'e-mail."
+    "Plusieurs comptes utilisent cet e-mail. Connectez-vous avec votre nom d'utilisateur, "
+    "pas avec l'e-mail."
 )
 _TOTP_REQUIRED = "TOTP_REQUIRED"
+
+
+class AfrichessUserDetailsSerializer(UserDetailsSerializer):
+    """Profil auth : email / username en lecture seule (évite changement non contrôlé)."""
+
+    class Meta(UserDetailsSerializer.Meta):
+        read_only_fields = ("email", "username")
 
 
 class AfrichessLoginSerializer(LoginSerializer):
@@ -25,10 +32,8 @@ class AfrichessLoginSerializer(LoginSerializer):
             matches = User.objects.filter(email__iexact=login)
             count = matches.count()
             if count > 1:
-                names = ", ".join(sorted(matches.values_list("username", flat=True)[:5]))
-                raise ValidationError(
-                    {"non_field_errors": [f"{_DUPLICATE_EMAIL_ERROR} Comptes : {names}."]}
-                )
+                # Ne pas divulguer les noms d'utilisateur
+                raise ValidationError({"non_field_errors": [_DUPLICATE_EMAIL_ERROR]})
             if count == 1:
                 attrs["username"] = matches.first().username
                 attrs["email"] = ""
