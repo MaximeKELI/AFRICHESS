@@ -10,6 +10,10 @@ import {
   stopAiSpeech,
   unlockAiSpeech,
   testAiSpeech,
+  liveSpokenCommentKeys,
+  liveSpeechPrimed,
+  setLiveSpeechPrimed,
+  resetLiveSpeechTracking,
 } from "@/lib/aiSpeech";
 import { selectLiveCommentsToSpeak } from "@/lib/liveCommentarySpeech";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -18,7 +22,6 @@ interface AiCommentaryPanelProps {
   comments: MoveComment[];
   enabled: boolean;
   compact?: boolean;
-  /** Lit automatiquement chaque nouveau commentaire (partie vs IA). */
   autoSpeak?: boolean;
 }
 
@@ -35,9 +38,7 @@ export function AiCommentaryPanel({
   const { t } = useTranslation();
   const latest = comments.at(-1);
   const voiceSupported = isAiSpeechSupported();
-  const spokenKeysRef = useRef<Set<string>>(new Set());
   const speakQueueRef = useRef(0);
-  const primedRef = useRef(false);
 
   const handleTestVoice = () => {
     unlockAiSpeech();
@@ -47,7 +48,7 @@ export function AiCommentaryPanel({
   const handleListenLatest = () => {
     unlockAiSpeech();
     if (latest) {
-      spokenKeysRef.current.add(commentKey(latest));
+      liveSpokenCommentKeys.add(commentKey(latest));
       void speakComment(latest.text, { byAi: latest.byAi, enabled: true, forceUnlock: true });
     }
   };
@@ -55,29 +56,36 @@ export function AiCommentaryPanel({
   useEffect(() => {
     initAiSpeech();
     unlockAiSpeech();
-    // Ne pas stopAiSpeech au démontage : Strict Mode / remount coupait toute la voix
   }, []);
 
   useEffect(() => {
     if (!enabled) {
       stopAiSpeech();
-      spokenKeysRef.current.clear();
+      resetLiveSpeechTracking();
       speakQueueRef.current = 0;
-      primedRef.current = false;
     }
   }, [enabled]);
+
+  // Nouvelle partie (plus de commentaires) → réinitialiser le suivi
+  useEffect(() => {
+    if (comments.length === 0) {
+      resetLiveSpeechTracking();
+    }
+  }, [comments.length]);
 
   useEffect(() => {
     if (!enabled || !autoSpeak || comments.length === 0) return;
 
-    const fresh = comments.filter((c) => c.text.trim() && !spokenKeysRef.current.has(commentKey(c)));
+    const fresh = comments.filter(
+      (c) => c.text.trim() && !liveSpokenCommentKeys.has(commentKey(c))
+    );
     if (!fresh.length) return;
 
-    const decision = selectLiveCommentsToSpeak(fresh, comments.length, primedRef.current);
-    primedRef.current = decision.primed;
+    const decision = selectLiveCommentsToSpeak(fresh, comments.length, liveSpeechPrimed);
+    setLiveSpeechPrimed(decision.primed);
 
     for (const c of fresh) {
-      spokenKeysRef.current.add(commentKey(c));
+      liveSpokenCommentKeys.add(commentKey(c));
     }
 
     if (decision.skipSpeech || !decision.toSpeak.length) return;
@@ -89,7 +97,6 @@ export function AiCommentaryPanel({
       for (let index = 0; index < toSpeak.length; index += 1) {
         if (speakQueueRef.current !== queueId) return;
         const comment = toSpeak[index];
-        // Enfiler sans couper entre coach + IA (interrupt seulement le 1er)
         await speakComment(comment.text, {
           byAi: comment.byAi,
           enabled: true,
