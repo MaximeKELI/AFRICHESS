@@ -1268,9 +1268,6 @@ export default function PuzzlesPage() {
             {hintRevealed && hintAvailable === true && !puzzleSolved && tab !== "rush" && tab !== "storm" && tab !== "survival" && (
               <span className="text-sm text-africhess-gold/80">{t("puzzles.hint.shown")}</span>
             )}
-            {hintRevealed && hintAvailable === false && !puzzleSolved && tab !== "rush" && tab !== "storm" && tab !== "survival" && (
-              <span className="text-sm text-africhess-terracotta/90">{t("puzzles.hint.unavailable")}</span>
-            )}
             {puzzleFailed && tab !== "rush" && tab !== "storm" && tab !== "survival" && (
               <button
                 type="button"
