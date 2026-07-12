@@ -37,6 +37,7 @@ from .draw_rules import (
     can_claim_threefold_from_game,
     finalize_repetition_draw,
     init_repetition_counts,
+    is_fivefold_repetition_from_game,
     rebuild_repetition_counts,
 )
 from .time_control import normalize_matchmaking_time_control, resolve_time_fields
@@ -423,7 +424,7 @@ class GameService:
                     response["result"] = game.result
                 is_over = auto.get("game_over", is_over)
 
-        if can_claim_threefold_from_game(game):
+        if is_fivefold_repetition_from_game(game):
             finalize_repetition_draw(game)
             game.save()
             self._after_human_game_finished(game)
@@ -435,9 +436,13 @@ class GameService:
                 "game_over": True,
                 "result": game.result,
                 "termination_reason": "repetition",
-                "draw_claim": "threefold",
+                "draw_claim": "fivefold",
                 "comments_pending": bool(pending_comment_specs),
             }
+
+        if can_claim_threefold_from_game(game):
+            # Triple répétition : claim joueur requis (pas de nulle auto).
+            response["threefold_available"] = True
 
         if game.is_vs_ai and not is_over:
             ai_move = self.engine.get_best_move(
@@ -481,15 +486,17 @@ class GameService:
                     response["game_over"] = ai_over
                     is_over = ai_over
 
-                    if can_claim_threefold_from_game(game):
+                    if is_fivefold_repetition_from_game(game):
                         finalize_repetition_draw(game)
                         game.save()
                         self._after_human_game_finished(game)
                         response["game_over"] = True
                         response["result"] = game.result
                         response["termination_reason"] = "repetition"
-                        response["draw_claim"] = "threefold"
+                        response["draw_claim"] = "fivefold"
                         is_over = True
+                    elif can_claim_threefold_from_game(game):
+                        response["threefold_available"] = True
 
         if is_over:
             self._finalize_game(game)
@@ -588,7 +595,7 @@ class GameService:
         from .variant_utils import board_from_fen
 
         board = board_from_fen(game.fen, game.variant)
-        outcome = board.outcome(claim_draw=True)
+        outcome = board.outcome(claim_draw=False)
         if outcome:
             if outcome.winner is True:
                 game.result = Game.Result.WHITE_WIN

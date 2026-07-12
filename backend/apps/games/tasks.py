@@ -51,39 +51,51 @@ def forfeit_disconnected_games():
 @shared_task(queue="realtime")
 def flag_expired_clocks():
     """Flag proactif des parties chrono (PvP + IA) dont le temps est écoulé."""
+    from django.db import transaction
+
     from .clock_service import apply_clock_tick_and_check
     from .ws_notify import notify_game_room
     from .realtime_services import build_ws_payload
 
-    qs = (
+    ids = list(
         Game.objects.filter(
             status=Game.Status.ACTIVE,
             is_timed=True,
         )
         .exclude(mode=Game.Mode.CORRESPONDENCE)
-        .filter(turn_started_at__isnull=False)[:80]
+        .filter(turn_started_at__isnull=False)
+        .order_by("turn_started_at")
+        .values_list("id", flat=True)[:80]
     )
     flagged = 0
     svc = GameService()
-    for game in qs:
-        timed_out = apply_clock_tick_and_check(game)
-        if not timed_out:
-            # Persister le temps déduit même sans flag
-            game.save(update_fields=["white_time_ms", "black_time_ms"])
-            continue
-        winner_white = timed_out == "black"
-        svc._finalize_game_on_timeout(game, winner_white=winner_white)
-        game.save()
-        svc._after_human_game_finished(game)
-        try:
-            notify_game_room(
-                game.id,
-                "broadcast_game_over",
-                build_ws_payload(game, {"game_over": True, "reason": "timeout"}),
-            )
-        except Exception:
-            pass
-        flagged += 1
+    for game_id in ids:
+        with transaction.atomic():
+            try:
+                game = Game.objects.select_for_update().get(pk=game_id)
+            except Game.DoesNotExist:
+                continue
+            if game.status != Game.Status.ACTIVE:
+                continue
+            timed_out = apply_clock_tick_and_check(game)
+            if not timed_out:
+                game.save(
+                    update_fields=["white_time_ms", "black_time_ms", "turn_started_at"]
+                )
+                continue
+            winner_white = timed_out == "black"
+            svc._finalize_game_on_timeout(game, winner_white=winner_white)
+            game.save()
+            svc._after_human_game_finished(game)
+            try:
+                notify_game_room(
+                    game.id,
+                    "broadcast_game_over",
+                    build_ws_payload(game, {"game_over": True, "reason": "timeout"}),
+                )
+            except Exception:
+                pass
+            flagged += 1
     return flagged
 
 

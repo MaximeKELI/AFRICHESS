@@ -147,6 +147,82 @@ def decline_draw(game: Game, user) -> dict:
     return {"ok": True}
 
 
+def claim_draw(game: Game, user) -> dict:
+    """Réclame une nulle par triple répétition ou règle des 50 coups."""
+    from .draw_rules import (
+        can_claim_fifty_moves_from_game,
+        can_claim_threefold_from_game,
+        finalize_repetition_draw,
+    )
+
+    if game.status != Game.Status.ACTIVE:
+        return {"error": "Partie terminée"}
+    if not _participant(game, user):
+        return {"error": "Non participant"}
+    if can_claim_threefold_from_game(game):
+        finalize_repetition_draw(game)
+        game.save()
+        GameService()._after_human_game_finished(game)
+        return {
+            "ok": True,
+            "result": game.result,
+            "termination_reason": "repetition",
+            "draw_claim": "threefold",
+        }
+    if can_claim_fifty_moves_from_game(game):
+        game.result = Game.Result.DRAW
+        game.status = Game.Status.COMPLETED
+        game.ended_at = timezone.now()
+        game.termination_reason = "fifty_move"
+        game.winner = None
+        _clear_pending_offers(game)
+        game.save()
+        GameService()._after_human_game_finished(game)
+        return {
+            "ok": True,
+            "result": game.result,
+            "termination_reason": "fifty_move",
+            "draw_claim": "fifty_move",
+        }
+    return {"error": "Aucune nulle à réclamer"}
+
+
+def claim_flag(game: Game, user) -> dict:
+    """Déclare le flag (temps écoulé) côté serveur — appelable par n'importe quel participant."""
+    from .clock_service import apply_server_clock_before_move, check_timeout
+
+    if game.status != Game.Status.ACTIVE:
+        return {
+            "ok": True,
+            "result": game.result,
+            "termination_reason": game.termination_reason,
+            "already_finished": True,
+        }
+    if not _participant(game, user):
+        return {"error": "Non participant"}
+    if not game.is_timed or game.mode == Game.Mode.CORRESPONDENCE:
+        return {"error": "Partie sans horloge"}
+
+    apply_server_clock_before_move(game)
+    timed_out = check_timeout(game)
+    if not timed_out:
+        game.save(update_fields=["white_time_ms", "black_time_ms"])
+        return {"error": "Temps encore disponible", "game_over": False}
+
+    winner_white = timed_out == "black"
+    svc = GameService()
+    svc._finalize_game_on_timeout(game, winner_white=winner_white)
+    game.save()
+    svc._after_human_game_finished(game)
+    return {
+        "ok": True,
+        "result": game.result,
+        "termination_reason": game.termination_reason or "timeout",
+        "game_over": True,
+        "reason": "timeout",
+    }
+
+
 def resign_game(game: Game, user) -> dict:
     if game.status != Game.Status.ACTIVE:
         # Idempotent : abandon après fin (horloge / mat) → pas d'erreur front.
