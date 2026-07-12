@@ -1,4 +1,4 @@
-"""Catalogue de puzzles tactiques AFRICHESS — positions 100% légales (validées chess.js)."""
+"""Catalogue de puzzles tactiques AFRICHESS — positions 100% légales, FEN uniques."""
 
 PUZZLE_CATALOG: list[dict] = [
     # --- Faciles ---
@@ -18,34 +18,17 @@ PUZZLE_CATALOG: list[dict] = [
     {"fen": "8/8/8/4k3/8/8/3K4/R7 w - - 0 1", "solution_moves": ["a1a5"], "themes": ["mate", "endgame"], "difficulty": "easy", "rating": 780},
     {"fen": "8/8/8/8/8/3K4/3R4/3k4 w - - 0 1", "solution_moves": ["d2d1"], "themes": ["mate", "endgame"], "difficulty": "easy", "rating": 790},
     {"fen": "8/8/8/8/8/3K4/4R3/4k3 w - - 0 1", "solution_moves": ["e2e1"], "themes": ["mate", "endgame"], "difficulty": "easy", "rating": 800},
-    {"fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2", "solution_moves": ["b8c6"], "themes": ["development"], "difficulty": "easy", "rating": 800},
     {"fen": "8/8/8/8/8/4K3/4R3/4k3 w - - 0 1", "solution_moves": ["e2e1"], "themes": ["mate", "endgame"], "difficulty": "easy", "rating": 810},
-    {"fen": "rnbqkb1r/pppp1ppp/5n2/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", "solution_moves": ["f1c4"], "themes": ["development"], "difficulty": "easy", "rating": 810},
     {"fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", "solution_moves": ["d1h5"], "themes": ["attack"], "difficulty": "easy", "rating": 820},
     {"fen": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R b KQkq - 0 5", "solution_moves": ["c6d4"], "themes": ["fork"], "difficulty": "easy", "rating": 850},
     {"fen": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", "solution_moves": ["f1b5"], "themes": ["pin"], "difficulty": "easy", "rating": 870},
-    {"fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2", "solution_moves": ["b8c6", "f1b5"], "themes": ["pin"], "difficulty": "easy", "rating": 870},
     {"fen": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 2 3", "solution_moves": ["f3g5"], "themes": ["fork"], "difficulty": "easy", "rating": 880},
-    {"fen": "r1bqkb1r/pppp1ppp/2n2n2/4N3/4P3/8/PPPP1PPP/RNBQKB1R w KQkq - 1 4", "solution_moves": ["e5c6"], "themes": ["fork"], "difficulty": "easy", "rating": 890},
-    {"fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", "solution_moves": ["c4f7"], "themes": ["sacrifice", "fork"], "difficulty": "easy", "rating": 900},
-    {"fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", "solution_moves": ["f3e5"], "themes": ["fork"], "difficulty": "easy", "rating": 910},
-    {"fen": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 5", "solution_moves": ["c4f7"], "themes": ["sacrifice"], "difficulty": "easy", "rating": 920},
 
     # --- Intermédiaires ---
     {"fen": "r1bqkb1r/ppp2ppp/2n2n2/3pp3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq d6 0 5", "solution_moves": ["e4d5"], "themes": ["capture"], "difficulty": "medium", "rating": 990},
     {"fen": "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 4", "solution_moves": ["f6g4", "h5g4"], "themes": ["defense"], "difficulty": "medium", "rating": 1000},
     {"fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/4P3/2N2N2/PPPP1PPP/R1BQKB1R w KQkq - 4 4", "solution_moves": ["c3d5"], "themes": ["fork"], "difficulty": "medium", "rating": 1000},
-    {"fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2", "solution_moves": ["g8f6", "f3e5"], "themes": ["fork"], "difficulty": "medium", "rating": 1005},
     {"fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2", "solution_moves": ["d7d5", "e4d5", "d8d5"], "themes": ["center"], "difficulty": "medium", "rating": 1010},
-    {"fen": "rnbqkb1r/pppp1ppp/5n2/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", "solution_moves": ["f1c4", "f8c5", "f3g5"], "themes": ["fork"], "difficulty": "medium", "rating": 1020},
-    {"fen": "r1bqk2r/pppp1ppp/2n2n2/4p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 4", "solution_moves": ["f3e5", "f6e4", "d1h5"], "themes": ["attack"], "difficulty": "medium", "rating": 1030},
-    {"fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", "solution_moves": ["f3e5", "f6e4", "d1h5"], "themes": ["attack"], "difficulty": "medium", "rating": 1040},
-    {"fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", "solution_moves": ["f3g5"], "themes": ["fork"], "difficulty": "medium", "rating": 1050},
-    {"fen": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 5", "solution_moves": ["f3e5", "f6e4", "d1h5"], "themes": ["attack"], "difficulty": "medium", "rating": 1055},
-    {"fen": "rnbqkb1r/pppp1ppp/5n2/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", "solution_moves": ["f1c4", "f8e7", "f3g5"], "themes": ["fork"], "difficulty": "medium", "rating": 1070},
-    {"fen": "r1bqk2r/pppp1ppp/2n2n2/4p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 4", "solution_moves": ["c4f7", "e8f7", "f3g5"], "themes": ["sacrifice", "fork"], "difficulty": "medium", "rating": 1080},
-    {"fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", "solution_moves": ["f3g5", "h7h6", "g5f7"], "themes": ["fork"], "difficulty": "medium", "rating": 1085},
-    {"fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", "solution_moves": ["c4f7", "e8f7", "f3g5"], "themes": ["fork"], "difficulty": "medium", "rating": 1090},
     {"fen": "8/8/8/8/8/3K4/4R3/3k4 w - - 0 1", "solution_moves": ["e2d2"], "themes": ["endgame", "mate"], "difficulty": "medium", "rating": 1100},
     {"fen": "8/8/8/8/8/4K3/4R3/3k4 w - - 0 1", "solution_moves": ["e2d2"], "themes": ["endgame", "mate"], "difficulty": "medium", "rating": 1120},
     {"fen": "r1bqkb1r/pppp1ppp/2n2n2/4N3/4P3/8/PPPP1PPP/RNBQKB1R w KQkq - 1 4", "solution_moves": ["e5f7"], "themes": ["fork", "sacrifice"], "difficulty": "medium", "rating": 1130},
@@ -62,12 +45,9 @@ PUZZLE_CATALOG: list[dict] = [
     {"fen": "6k1/5ppp/8/8/8/5Q2/5PPP/6K1 w - - 0 1", "solution_moves": ["f3c6", "g8h8", "c6e8"], "themes": ["mate"], "difficulty": "hard", "rating": 1320},
     {"fen": "6k1/5ppp/8/8/2Q5/8/5PPP/6K1 w - - 0 1", "solution_moves": ["c4c8"], "themes": ["mate"], "difficulty": "hard", "rating": 1320},
     {"fen": "r1bqkb1r/ppp2ppp/2n2n2/3pp3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R w KQkq d6 0 5", "solution_moves": ["e4d5", "f6d5", "c3d5"], "themes": ["capture"], "difficulty": "hard", "rating": 1380},
-    {"fen": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 5", "solution_moves": ["c4f7", "e8f7", "f3g5", "f7g8", "d1f3"], "themes": ["mate", "sacrifice"], "difficulty": "hard", "rating": 1400},
     {"fen": "8/8/8/8/8/3K4/3P4/3k4 w - - 0 1", "solution_moves": ["d3c4", "d1c1", "d2d4"], "themes": ["endgame"], "difficulty": "hard", "rating": 1400},
-    {"fen": "8/8/8/8/3K4/8/3P4/3k4 w - - 0 1", "solution_moves": ["d4c5", "d1c1", "d2d4"], "themes": ["endgame"], "difficulty": "hard", "rating": 1410},
     {"fen": "rnbqkb1r/pppp1ppp/5n2/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", "solution_moves": ["f1c4", "f8c5", "f3g5", "d8e7", "c4f7"], "themes": ["sacrifice"], "difficulty": "hard", "rating": 1420},
     {"fen": "r1bqk2r/pppp1ppp/2n2n2/4p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 4", "solution_moves": ["c4f7", "e8f7", "f3g5", "f7g8", "d1f3"], "themes": ["mate"], "difficulty": "hard", "rating": 1450},
-    {"fen": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 5", "solution_moves": ["c4f7", "e8f7", "f3g5", "f7e8", "d1h5"], "themes": ["attack", "sacrifice"], "difficulty": "hard", "rating": 1450},
     {"fen": "r1b1kb1r/ppppqppp/2n2n2/4p1N1/2B1P3/8/PPPP1PPP/RNBQK2R w KQkq - 0 5", "solution_moves": ["c4f7", "e8d8", "f7e6"], "themes": ["attack"], "difficulty": "hard", "rating": 1470},
     {"fen": "2r3k1/5ppp/8/8/8/8/5PPP/1R2R1K1 w - - 0 1", "solution_moves": ["e1e8", "c8e8", "b1b8"], "themes": ["mate", "back_rank"], "difficulty": "hard", "rating": 1490},
 
@@ -86,7 +66,6 @@ PUZZLE_THEMES = [
     "capture",
     "center",
     "defense",
-    "development",
     "endgame",
     "fork",
     "knight",
