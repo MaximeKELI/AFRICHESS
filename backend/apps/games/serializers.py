@@ -134,6 +134,7 @@ class GameSerializer(serializers.ModelSerializer):
     white_elo_provisional = serializers.SerializerMethodField()
     black_elo_provisional = serializers.SerializerMethodField()
     rating_changes = serializers.SerializerMethodField()
+    tv_analysis = serializers.SerializerMethodField()
 
     def get_white_elo(self, obj: Game):
         if obj.white_player_id:
@@ -162,6 +163,13 @@ class GameSerializer(serializers.ModelSerializer):
     def get_rating_changes(self, obj: Game):
         return rating_changes_for_game(obj)
 
+    def get_tv_analysis(self, obj: Game):
+        if not getattr(obj, "is_tv_exhibition", False):
+            return None
+        from .tv_exhibition import tv_analysis_payload
+
+        return tv_analysis_payload(obj)
+
     class Meta:
         model = Game
         fields = [
@@ -171,6 +179,7 @@ class GameSerializer(serializers.ModelSerializer):
             "increment_ms",
             "is_timed", "time_control_minutes", "is_rated",
             "is_vs_ai", "ai_difficulty", "ai_target_elo",
+            "is_tv_exhibition", "tv_analysis",
             "white_elo", "black_elo",
             "white_elo_provisional", "black_elo_provisional",
             "rating_changes",
