@@ -96,7 +96,11 @@ export default function OpeningExplorerPage() {
       <p className="opacity-70 text-sm">{t("openings.subtitle")}</p>
       {explorerStats && (
         <p className="text-xs opacity-50">
-          Lichess DB — {explorerStats.white}W / {explorerStats.draws}D / {explorerStats.black}B
+          {t("openings.explorerStats", {
+            w: explorerStats.white,
+            d: explorerStats.draws,
+            b: explorerStats.black,
+          })}
         </p>
       )}
 

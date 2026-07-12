@@ -96,8 +96,8 @@ const LICHESS_GALLERY_BACKGROUNDS: BoardBackground[] = Array.from({ length: 28 }
   const n = String(i + 1).padStart(2, "0");
   return {
     id: `lichess-${n}` as BoardBackgroundId,
-    labelFr: `Lichess ${n}`,
-    labelEn: `Lichess ${n}`,
+    labelFr: `Galerie ${n}`,
+    labelEn: `Gallery ${n}`,
     category: "lichess",
     src: `/images/backgrounds/lichess/bg${n}.webp`,
   };

@@ -52,7 +52,7 @@ export default function StudiesPage() {
         </button>
       </div>
       <p className="opacity-70 text-sm">
-        {t("studies.subtitle") || "Chapitres PGN partagés — parité Lichess Studies v1."}
+        {t("studies.subtitle")}
       </p>
       {loading ? (
         <p className="opacity-60">{t("common.loading") || "Chargement…"}</p>
