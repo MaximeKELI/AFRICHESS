@@ -685,6 +685,9 @@ function PlayContent() {
           rating_changes: g.rating_changes,
           draw_offered_by: g.draw_offered_by,
           takeback_requested_by: g.takeback_requested_by,
+          threefold_available:
+            (p as WsGamePayload & { threefold_available?: boolean }).threefold_available ??
+            (g as { threefold_available?: boolean }).threefold_available,
         });
       });
     },
@@ -720,6 +723,44 @@ function PlayContent() {
       .respondTakeback(gameId, true)
       .then(({ data }) => applyGameResponse(data))
       .catch((err) => setStatus(formatApiError(err, t("play.error.takeback"))));
+  }, [gameId, applyGameResponse, t]);
+
+  const flagClaimInFlight = useRef(false);
+  const handleClockFlag = useCallback(
+    (_side: "w" | "b") => {
+      if (!gameId || gameCompleted || flagClaimInFlight.current) return;
+      if (!gameIsTimed) return;
+      flagClaimInFlight.current = true;
+      gamesApi
+        .claimFlag(gameId)
+        .then(({ data }) => {
+          applyGameResponse(data);
+          if (data.result) {
+            setStatus(t("play.status.gameEnd", { result: data.result }));
+          }
+        })
+        .catch(() => {
+          gamesApi
+            .get(gameId)
+            .then(({ data }) => applyGameResponse(data))
+            .catch(() => {});
+        })
+        .finally(() => {
+          flagClaimInFlight.current = false;
+        });
+    },
+    [gameId, gameCompleted, gameIsTimed, applyGameResponse, t]
+  );
+
+  const claimThreefoldDraw = useCallback(() => {
+    if (!gameId) return;
+    gamesApi
+      .claimDraw(gameId)
+      .then(({ data }) => {
+        applyGameResponse(data);
+        setStatus(t("play.status.drawRepetition"));
+      })
+      .catch((err) => setStatus(formatApiError(err, t("play.error.drawClaim"))));
   }, [gameId, applyGameResponse, t]);
 
   const declineTakebackRequest = useCallback(() => {
