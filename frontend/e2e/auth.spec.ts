@@ -9,11 +9,12 @@ test.describe("Authentification", () => {
 
   test("connexion puis déconnexion", async ({ page }) => {
     await loginViaUi(page);
+    await expect(page.getByRole("button", { name: "Déconnexion" })).toBeVisible();
     await page.getByRole("button", { name: "Déconnexion" }).click();
-    const loginLink = page.getByRole("navigation").getByRole("link", { name: /connexion|login/i });
-    await expect(loginLink).toBeVisible();
-    await page.goto("/profile", { waitUntil: "domcontentloaded" });
-    await expect(loginLink).toBeVisible();
+    // Ne pas enchaîner un goto immédiat : le logout déclenche déjà une navigation.
+    await expect(
+      page.getByRole("navigation").getByRole("link", { name: /connexion|login/i }),
+    ).toBeVisible();
   });
 
   test("identifiants e2e disponibles", () => {

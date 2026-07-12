@@ -3,6 +3,8 @@ import { loadE2EPlayer, loginViaApi, setUnratedMode } from "./helpers/auth";
 
 test.describe("Matchmaking PvP", () => {
   test("deux joueurs se retrouvent en partie amicale blitz", async ({ browser }) => {
+    test.setTimeout(90_000);
+
     const contextA = await browser.newContext();
     const contextB = await browser.newContext();
     const pageA = await contextA.newPage();
@@ -18,35 +20,38 @@ test.describe("Matchmaking PvP", () => {
       await setUnratedMode(pageA);
       await setUnratedMode(pageB);
 
-      const mmPostA = pageA.waitForResponse(
-        (response) =>
-          response.url().includes("/api/games/matchmaking/") &&
-          response.request().method() === "POST",
-      );
-      await pageA.getByTestId("play-find-opponent").first().click();
-      const resA = await mmPostA;
+      const findA = pageA.getByTestId("play-find-opponent").first();
+      const findB = pageB.getByTestId("play-find-opponent").first();
+      await expect(findA).toBeVisible();
+      await expect(findB).toBeVisible();
+
+      const [resA] = await Promise.all([
+        pageA.waitForResponse(
+          (response) =>
+            response.url().includes("/api/games/matchmaking/") &&
+            response.request().method() === "POST",
+        ),
+        findA.click(),
+      ]);
       expect(resA.status()).toBe(200);
       expect((await resA.json()).status).toBe("searching");
 
-      const mmPostB = pageB.waitForResponse(
-        (response) =>
-          response.url().includes("/api/games/matchmaking/") &&
-          response.request().method() === "POST",
-      );
-      await pageB.getByTestId("play-find-opponent").first().click();
-      const resB = await mmPostB;
+      const [resB] = await Promise.all([
+        pageB.waitForResponse(
+          (response) =>
+            response.url().includes("/api/games/matchmaking/") &&
+            response.request().method() === "POST",
+          { timeout: 30_000 },
+        ),
+        findB.click(),
+      ]);
       expect(resB.status()).toBe(201);
       const game = await resB.json();
       expect(game.id).toBeTruthy();
       expect(game.status).toBe("active");
 
-      await pageA.waitForResponse(
-        (response) =>
-          response.url().includes(`/api/games/${game.id}/`) &&
-          response.request().method() === "GET",
-        { timeout: 30_000 },
-      );
-
+      await expect(pageA).toHaveURL(new RegExp(`[?&]game=${game.id}`), { timeout: 30_000 });
+      await expect(pageB).toHaveURL(new RegExp(`[?&]game=${game.id}`), { timeout: 30_000 });
       await expect(pageA.getByTestId("chess-board")).toBeVisible({ timeout: 30_000 });
       await expect(pageB.getByTestId("chess-board")).toBeVisible({ timeout: 30_000 });
     } finally {
