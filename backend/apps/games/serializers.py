@@ -267,9 +267,13 @@ class LiveGameSerializer(serializers.ModelSerializer):
         return 1200
 
     def get_white_elo(self, obj: Game):
+        if obj.is_tv_exhibition:
+            return 3200
         return self._elo_for(obj, obj.white_player_id, obj.white_player)
 
     def get_black_elo(self, obj: Game):
+        if obj.is_tv_exhibition:
+            return 3200
         return self._elo_for(obj, obj.black_player_id, obj.black_player)
 
     def get_tv_analysis(self, obj: Game):
