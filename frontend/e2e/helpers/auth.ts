@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { expect } from "@playwright/test";
+import { expect, request } from "@playwright/test";
 
 export type E2ECredentials = {
   username: string;
@@ -14,6 +14,9 @@ type E2EAuthFile = {
   username?: string;
   password?: string;
 };
+
+const API = (process.env.PLAYWRIGHT_API_URL || "http://127.0.0.1:8000/api").replace(/\/$/, "");
+const BASE = (process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000").replace(/\/$/, "");
 
 function readAuthFile(): E2EAuthFile {
   const file = path.join(__dirname, ".auth", "credentials.json");
@@ -50,6 +53,7 @@ export function loadE2EPlayer(which: "playerA" | "playerB"): E2ECredentials {
   };
 }
 
+/** Connexion UI (teste le formulaire) — sensible au rate-limit login_burst. */
 export async function loginViaUi(
   page: import("@playwright/test").Page,
   creds: E2ECredentials = loadE2ECredentials(),
@@ -61,16 +65,62 @@ export async function loginViaUi(
   await page.waitForURL(/\/play/, { timeout: 30_000 });
 }
 
-export async function setUnratedMode(page: import("@playwright/test").Page) {
-  // Desktop + mobile peuvent rendre le même switch (2 nœuds dans le DOM).
-  const ratedSwitch = page.getByTestId("play-rated-switch").first();
-  if ((await ratedSwitch.getAttribute("aria-checked")) === "true") {
-    await ratedSwitch.click();
+/** Connexion via API + cookies — évite le throttle UI pour les parcours métier. */
+export async function loginViaApi(
+  page: import("@playwright/test").Page,
+  creds: E2ECredentials = loadE2ECredentials(),
+) {
+  const ctx = await request.newContext();
+  const login = await ctx.post(`${API}/auth/login/`, {
+    data: { username: creds.username, password: creds.password },
+  });
+  if (!login.ok()) {
+    throw new Error(`E2E API login failed for ${creds.username}: ${login.status()} ${await login.text()}`);
   }
-  await expectSwitchOff(ratedSwitch);
+  const body = (await login.json()) as { access?: string; refresh?: string };
+  await ctx.dispose();
+  if (!body.access) {
+    throw new Error(`E2E API login missing access token for ${creds.username}`);
+  }
+
+  const url = new URL(BASE);
+  const cookies = [
+    {
+      name: "access_token",
+      value: body.access,
+      domain: url.hostname,
+      path: "/",
+      httpOnly: false,
+      secure: url.protocol === "https:",
+      sameSite: "Strict" as const,
+    },
+  ];
+  if (body.refresh) {
+    cookies.push({
+      name: "refresh_token",
+      value: body.refresh,
+      domain: url.hostname,
+      path: "/",
+      httpOnly: false,
+      secure: url.protocol === "https:",
+      sameSite: "Strict" as const,
+    });
+  }
+  await page.context().addCookies(cookies);
+  await page.goto("/play");
+  await expect(page.getByRole("button", { name: "Déconnexion" })).toBeVisible({ timeout: 30_000 });
 }
 
-async function expectSwitchOff(switchEl: import("@playwright/test").Locator) {
-  await switchEl.waitFor({ state: "visible" });
-  await expect(switchEl).toHaveAttribute("aria-checked", "false");
+export async function setUnratedMode(page: import("@playwright/test").Page) {
+  // Desktop + mobile rendent chacun un switch (même testid).
+  const switches = page.getByTestId("play-rated-switch");
+  const count = await switches.count();
+  for (let i = 0; i < count; i += 1) {
+    const sw = switches.nth(i);
+    if (!(await sw.isVisible())) continue;
+    if ((await sw.getAttribute("aria-checked")) === "true") {
+      await sw.click();
+    }
+    await expect(sw).toHaveAttribute("aria-checked", "false");
+  }
 }

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { loadE2EPlayer, loginViaUi, setUnratedMode } from "./helpers/auth";
+import { loadE2EPlayer, loginViaApi, setUnratedMode } from "./helpers/auth";
 
 test.describe("Matchmaking PvP", () => {
   test("deux joueurs se retrouvent en partie amicale blitz", async ({ browser }) => {
@@ -9,8 +9,8 @@ test.describe("Matchmaking PvP", () => {
     const pageB = await contextB.newPage();
 
     try {
-      await loginViaUi(pageA, loadE2EPlayer("playerA"));
-      await loginViaUi(pageB, loadE2EPlayer("playerB"));
+      await loginViaApi(pageA, loadE2EPlayer("playerA"));
+      await loginViaApi(pageB, loadE2EPlayer("playerB"));
 
       await pageA.goto("/play?mode=blitz");
       await pageB.goto("/play?mode=blitz");
@@ -23,7 +23,7 @@ test.describe("Matchmaking PvP", () => {
           response.url().includes("/api/games/matchmaking/") &&
           response.request().method() === "POST",
       );
-      await pageA.getByTestId("play-find-opponent-quick").click();
+      await pageA.getByTestId("play-find-opponent").first().click();
       const resA = await mmPostA;
       expect(resA.status()).toBe(200);
       expect((await resA.json()).status).toBe("searching");
@@ -33,7 +33,7 @@ test.describe("Matchmaking PvP", () => {
           response.url().includes("/api/games/matchmaking/") &&
           response.request().method() === "POST",
       );
-      await pageB.getByTestId("play-find-opponent-quick").click();
+      await pageB.getByTestId("play-find-opponent").first().click();
       const resB = await mmPostB;
       expect(resB.status()).toBe(201);
       const game = await resB.json();

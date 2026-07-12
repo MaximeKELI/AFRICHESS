@@ -1,9 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { loginViaUi } from "./helpers/auth";
+import { loginViaApi } from "./helpers/auth";
 
 test.describe("Parcours joueur", () => {
   test("connexion puis lancement partie IA", async ({ page }) => {
-    await loginViaUi(page);
+    await loginViaApi(page);
 
     const aiGame = page.waitForResponse(
       (response) =>
