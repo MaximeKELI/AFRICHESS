@@ -1,18 +1,24 @@
 """Actions de partie : nulle, rematch, takeback, abort, liste live."""
 
+from django.db import transaction
 from django.utils import timezone
 
 from .models import Game
 from .room_utils import ensure_game_room
 from .services import GameService
 from .time_control import resolve_time_fields
-from .variant_utils import board_from_fen
+from .variant_utils import board_from_fen, starting_position_for_variant
 
 ABORT_WINDOW_SECONDS = 60
 
 
 def _participant(game: Game, user) -> bool:
     return user.id in (game.white_player_id, game.black_player_id)
+
+
+def _clear_pending_offers(game: Game) -> None:
+    game.draw_offered_by = None
+    game.takeback_requested_by = None
 
 
 def can_abort_game(game: Game) -> bool:
@@ -35,8 +41,7 @@ def abort_game(game: Game, user) -> dict:
     game.result = Game.Result.ABORTED
     game.ended_at = timezone.now()
     game.termination_reason = "aborted_by_agreement"
-    game.draw_offered_by = None
-    game.takeback_requested_by = None
+    _clear_pending_offers(game)
     game.save()
     return {"ok": True, "status": "aborted"}
 
@@ -53,6 +58,19 @@ def offer_takeback(game: Game, user) -> dict:
     return {"ok": True, "requested_by": user.id}
 
 
+def _rebuild_fen_from_moves(game: Game) -> str:
+    if game.chess960_position_id is not None:
+        import chess
+
+        start_fen = chess.Board.from_chess960_pos(game.chess960_position_id).fen()
+    else:
+        start_fen, _ = starting_position_for_variant(game.variant)
+    board = board_from_fen(start_fen, game.variant)
+    for m in game.moves.order_by("move_number"):
+        board.push_uci(m.uci)
+    return board.fen()
+
+
 def accept_takeback(game: Game, user) -> dict:
     if not game.takeback_requested_by_id or game.takeback_requested_by_id == user.id:
         return {"error": "Aucune demande adverse"}
@@ -66,16 +84,13 @@ def accept_takeback(game: Game, user) -> dict:
         game.save(update_fields=["takeback_requested_by"])
         return {"error": "Aucun coup à reprendre"}
     last.delete()
-    board = board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", game.variant)
-    for m in game.moves.order_by("move_number"):
-        board.push_uci(m.uci)
-    game.fen = board.fen()
+    game.fen = _rebuild_fen_from_moves(game)
     game.move_count = game.moves.count()
-    game.takeback_requested_by = None
-    game.draw_offered_by = None
+    _clear_pending_offers(game)
     from .draw_rules import rebuild_repetition_counts
 
     game.repetition_counts = rebuild_repetition_counts(game)
+    game.turn_started_at = timezone.now() if game.is_timed else game.turn_started_at
     game.save(
         update_fields=[
             "fen",
@@ -83,12 +98,15 @@ def accept_takeback(game: Game, user) -> dict:
             "takeback_requested_by",
             "draw_offered_by",
             "repetition_counts",
+            "turn_started_at",
         ]
     )
     return {"ok": True, "undone": 1}
 
 
 def decline_takeback(game: Game, user) -> dict:
+    if not _participant(game, user):
+        return {"error": "Non participant"}
     game.takeback_requested_by = None
     game.save(update_fields=["takeback_requested_by"])
     return {"ok": True}
@@ -105,6 +123,8 @@ def offer_draw(game: Game, user) -> dict:
 
 
 def accept_draw(game: Game, user) -> dict:
+    if game.status != Game.Status.ACTIVE:
+        return {"error": "Partie terminée"}
     if not game.draw_offered_by_id or game.draw_offered_by_id == user.id:
         return {"error": "Aucune proposition adverse"}
     if not _participant(game, user):
@@ -113,13 +133,15 @@ def accept_draw(game: Game, user) -> dict:
     game.status = Game.Status.COMPLETED
     game.ended_at = timezone.now()
     game.termination_reason = "draw_agreement"
-    game.draw_offered_by = None
+    _clear_pending_offers(game)
     game.save()
     GameService()._after_human_game_finished(game)
     return {"ok": True, "result": "1/2-1/2"}
 
 
 def decline_draw(game: Game, user) -> dict:
+    if not _participant(game, user):
+        return {"error": "Non participant"}
     game.draw_offered_by = None
     game.save(update_fields=["draw_offered_by"])
     return {"ok": True}
@@ -130,10 +152,16 @@ def resign_game(game: Game, user) -> dict:
         return {"error": "Partie terminée"}
     if not _participant(game, user):
         return {"error": "Non participant"}
-    if game.is_vs_ai:
-        return {"error": "Abandon IA via l'API de coup"}
 
-    if game.white_player_id == user.id:
+    if game.is_vs_ai:
+        # Humain abandonne vs IA
+        if game.white_player_id == user.id:
+            game.result = Game.Result.BLACK_WIN
+            game.winner = None
+        else:
+            game.result = Game.Result.WHITE_WIN
+            game.winner = None
+    elif game.white_player_id == user.id:
         game.result = Game.Result.BLACK_WIN
         game.winner = game.black_player
     else:
@@ -142,8 +170,7 @@ def resign_game(game: Game, user) -> dict:
     game.status = Game.Status.COMPLETED
     game.ended_at = timezone.now()
     game.termination_reason = "resignation"
-    game.draw_offered_by = None
-    game.takeback_requested_by = None
+    _clear_pending_offers(game)
     game.save()
     GameService()._after_human_game_finished(game)
     return {"ok": True, "result": game.result}
@@ -202,19 +229,77 @@ def try_apply_conditional_response(game: Game, last_move_uci: str) -> dict | Non
     return None
 
 
+def offer_rematch(game: Game, user) -> dict:
+    """Propose une revanche (parité Lichess — n'ouvre pas encore la partie)."""
+    if not _participant(game, user):
+        return {"error": "Non participant"}
+    if game.status != Game.Status.COMPLETED:
+        return {"error": "Partie non terminée"}
+    if game.is_vs_ai or not game.white_player_id or not game.black_player_id:
+        return {"error": "Rematch impossible"}
+    existing = Game.objects.filter(rematch_of=game).first()
+    if existing:
+        return {"ok": True, "game_id": str(existing.id), "status": "already_created"}
+    game.rematch_offered_by = user
+    game.save(update_fields=["rematch_offered_by"])
+    try:
+        from .ws_notify import notify_game_room
+
+        notify_game_room(
+            game.id,
+            "rematch_offer",
+            {"offered_by": user.id, "username": user.username},
+        )
+    except Exception:
+        pass
+    return {"ok": True, "status": "offered", "offered_by": user.id}
+
+
+@transaction.atomic
 def create_rematch(game: Game, user) -> Game | None:
+    """
+    Accepte / crée la revanche.
+    - Si aucune offre : enregistre l'offre (1er clic).
+    - Si offre adverse : crée UNE partie (couleurs inversées).
+    - Si déjà créée : renvoie l'existante.
+    """
     if not _participant(game, user):
         return None
     if game.status != Game.Status.COMPLETED:
         return None
     if game.is_vs_ai or not game.white_player_id or not game.black_player_id:
         return None
+
+    game = Game.objects.select_for_update().get(pk=game.pk)
+    existing = Game.objects.filter(rematch_of=game).first()
+    if existing:
+        return existing
+
+    # Premier clic = offre ; second clic (adversaire) = création
+    if not game.rematch_offered_by_id:
+        game.rematch_offered_by = user
+        game.save(update_fields=["rematch_offered_by"])
+        try:
+            from .ws_notify import notify_game_room
+
+            notify_game_room(
+                game.id,
+                "rematch_offer",
+                {"offered_by": user.id, "username": user.username},
+            )
+        except Exception:
+            pass
+        return None
+
+    if game.rematch_offered_by_id == user.id:
+        # Même joueur reclique — offre déjà posée
+        return None
+
     timed, white_ms, black_ms, inc_ms, tcm = resolve_time_fields(
         game.is_timed,
         game.time_control_minutes,
     )
     from .draw_rules import init_repetition_counts
-    from .variant_utils import starting_position_for_variant
 
     fen, chess960_pos = starting_position_for_variant(game.variant)
     new_game = Game.objects.create(
@@ -236,6 +321,8 @@ def create_rematch(game: Game, user) -> Game | None:
         turn_started_at=timezone.now() if timed else None,
         rematch_of=game,
     )
+    game.rematch_offered_by = None
+    game.save(update_fields=["rematch_offered_by"])
     ensure_game_room(new_game)
     from apps.notifications.services import create_match_found_notifications
 
