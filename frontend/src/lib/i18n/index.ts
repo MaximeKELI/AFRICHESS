@@ -2554,7 +2554,7 @@ const en: Record<string, string> = {
   "puzzles.battle.error": "Puzzle Racer unavailable.",
   "friends.title": "Friends & challenges",
   "friends.loginRequired": "Sign in to manage friends.",
-  "clubs.title": "Clubs",
+  "clubs.title": "Teams",
   "clubs.loginHint": "Sign in to join a club.",
   "clubs.empty": "No public clubs yet.",
   "clubs.join": "Join club",
