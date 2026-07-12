@@ -3561,7 +3561,7 @@ const en: Record<string, string> = {
   "studies.title": "Studies",
   "studies.create": "New study",
   "studies.newTitle": "Study title",
-  "studies.subtitle": "Shared PGN chapters — Lichess Studies parity.",
+  "studies.subtitle": "Shared PGN chapters to study together.",
   "studies.empty": "No studies yet.",
   "studies.back": "Back to studies",
   "studies.save": "Save PGN",
