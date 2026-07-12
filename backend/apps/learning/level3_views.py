@@ -299,6 +299,8 @@ def _classroom_payload(room: ClassroomSession) -> dict:
 def _uci_from_pgn(pgn: str) -> list[str]:
     import io
 
+    import chess.pgn
+
     game = chess.pgn.read_game(io.StringIO(pgn))
     if not game:
         return []
