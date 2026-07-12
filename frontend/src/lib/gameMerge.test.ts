@@ -14,11 +14,8 @@ describe("mergeApiMoves", () => {
     expect(merged).toHaveLength(2);
   });
 
-  it("updates comment on existing move", () => {
+  it("preserves existing comment when incoming move has empty comment", () => {
     const existing: ApiMove[] = [
-      { move_number: 1, san: "e4", uci: "e2e4", played_by_white: true },
-    ];
-    const incoming: ApiMove[] = [
       {
         move_number: 1,
         san: "e4",
@@ -27,8 +24,10 @@ describe("mergeApiMoves", () => {
         comment: "Solide.",
       },
     ];
+    const incoming: ApiMove[] = [
+      { move_number: 1, san: "e4", uci: "e2e4", played_by_white: true, comment: "" },
+    ];
     const merged = mergeApiMoves(existing, incoming);
-    expect(merged).toHaveLength(1);
     expect(merged[0].comment).toBe("Solide.");
   });
 });

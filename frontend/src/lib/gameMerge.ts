@@ -25,7 +25,14 @@ function moveKey(move: ApiMove): string {
 export function mergeApiMoves(existing: ApiMove[], incoming: ApiMove[]): ApiMove[] {
   const map = new Map(existing.map((move) => [moveKey(move), move]));
   for (const move of incoming) {
-    map.set(moveKey(move), move);
+    const prev = map.get(moveKey(move));
+    const comment =
+      move.comment?.trim() || prev?.comment?.trim()
+        ? move.comment?.trim()
+          ? move.comment
+          : prev?.comment
+        : move.comment ?? prev?.comment ?? "";
+    map.set(moveKey(move), { ...prev, ...move, comment });
   }
   return Array.from(map.values()).sort(
     (a, b) => a.move_number - b.move_number || Number(a.played_by_white) - Number(b.played_by_white)

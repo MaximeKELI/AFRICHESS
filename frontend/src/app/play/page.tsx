@@ -15,6 +15,7 @@ import { GamePendingActionsBanner } from "@/components/play/GamePendingActionsBa
 import { movesMissingComments, pollPendingMoveComments } from "@/lib/pollGameComments";
 import { useAuthStore } from "@/store/auth";
 import { unlockAiSpeech, speakComment, bindAiSpeechToUserGestures, stopAiSpeech } from "@/lib/aiSpeech";
+import { speakLiveMoveComments, resetLiveMoveSpeech } from "@/lib/speakLiveMoveComments";
 import { defaultAiEloForUser, normalizeToPreset, resolveAiPlayMode, type AiLevelElo } from "@/lib/aiStrength";
 import { AiStrengthPicker } from "@/components/chess/AiStrengthPicker";
 import { VariantPicker, type GameVariant } from "@/components/chess/VariantPicker";
@@ -478,6 +479,12 @@ function PlayContent() {
     return commentsFromMoves(gameData.moves, playerIsWhite, isVsAi);
   }, [gameData.moves, playerIsWhite, isVsAi]);
 
+  // Voix live : dès que les commentaires apparaissent dans l'état (HTTP sync ou poll).
+  useEffect(() => {
+    if (!gameId || !isVsAi || !aiCommentsEnabled) return;
+    speakLiveMoveComments(moveComments, true);
+  }, [gameId, isVsAi, aiCommentsEnabled, moveComments]);
+
   const latestAiComment = useMemo(
     () => moveComments.filter((comment) => comment.byAi).at(-1),
     [moveComments]
@@ -584,7 +591,8 @@ function PlayContent() {
       if (data.delta && data.new_moves?.length) {
         mergedMoves = mergeApiMoves(mergedMoves, data.new_moves);
       } else if (data.moves !== undefined) {
-        mergedMoves = data.moves;
+        // Préserver les commentaires déjà reçus (WS / GET sans comment)
+        mergedMoves = mergeApiMoves(prev.moves ?? [], data.moves);
       }
 
       return {
@@ -663,9 +671,18 @@ function PlayContent() {
   }, [t, showGameEndOverlayIfNeeded]);
 
   const refreshPendingComments = useCallback(
-    (data: Partial<GameState> & { comments_pending?: boolean }, id: string | null) => {
-      if (!id || !aiCommentsEnabled || !data.is_vs_ai) return;
-      const missing = movesMissingComments(data.moves as ApiMove[] | undefined);
+    (
+      data: Partial<GameState> & {
+        comments_pending?: boolean;
+        new_moves?: ApiMove[];
+      },
+      id: string | null
+    ) => {
+      if (!id || !aiCommentsEnabled || !(data.is_vs_ai ?? isVsAi)) return;
+      const probeMoves =
+        (data.moves as ApiMove[] | undefined) ??
+        (data.new_moves as ApiMove[] | undefined);
+      const missing = movesMissingComments(probeMoves);
       if (!data.comments_pending && missing === 0) return;
       void pollPendingMoveComments(
         id,
@@ -675,7 +692,7 @@ function PlayContent() {
         { intervalMs: 400, maxAttempts: 40 }
       );
     },
-    [aiCommentsEnabled, applyGameResponse]
+    [aiCommentsEnabled, applyGameResponse, isVsAi]
   );
 
   const wsPendingRef = useRef<WsGamePayload | null>(null);
@@ -1008,6 +1025,7 @@ function PlayContent() {
   const startAI = useCallback(async () => {
     if (aiStarting || gameId) return;
     unlockAiSpeech();
+    resetLiveMoveSpeech();
     if (aiCommentsEnabled) {
       speakComment(t("comments.voice.gameStart"), { byAi: true, enabled: true, forceUnlock: true });
     }
@@ -1135,6 +1153,18 @@ function PlayContent() {
           telemetry,
         });
         applyGameResponse(data);
+        if (isVsAi && aiCommentsEnabled) {
+          const payload = data as {
+            new_moves?: ApiMove[];
+            moves?: ApiMove[];
+            delta?: boolean;
+          };
+          speakLiveMoveComments(
+            payload.new_moves ?? payload.moves?.slice(-2),
+            playerIsWhite,
+            true
+          );
+        }
         refreshPendingComments(data, gameId);
         if (data.status === "completed" && data.termination_reason !== "repetition") {
           setStatus(
@@ -1702,7 +1732,7 @@ function PlayContent() {
                 comments={moveComments}
                 enabled={aiCommentsEnabled}
                 compact={mobileTab === "board"}
-                autoSpeak={!reviewOpen}
+                autoSpeak={false}
               />
             </div>
           )}
