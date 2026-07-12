@@ -84,10 +84,11 @@ function playerLabel(g: TvGame): string {
 interface TvExhibitionCardProps {
   game: TvGame;
   featured?: boolean;
+  onSelect?: () => void;
 }
 
 /** Carte TV : échiquier + % gain + barre eval + courbe + nature des coups. */
-export function TvExhibitionCard({ game, featured = false }: TvExhibitionCardProps) {
+export function TvExhibitionCard({ game, featured = false, onSelect }: TvExhibitionCardProps) {
   const { t } = useTranslation();
   const [selectedCurveIdx, setSelectedCurveIdx] = useState<number | null>(null);
 
@@ -114,7 +115,22 @@ export function TvExhibitionCard({ game, featured = false }: TvExhibitionCardPro
 
   return (
     <article
-      className={`glass-card p-4 ${featured ? "ring-1 ring-africhess-gold/35" : ""}`}
+      className={`glass-card p-4 ${featured ? "ring-1 ring-africhess-gold/35" : ""} ${
+        onSelect ? "cursor-pointer hover:ring-1 hover:ring-africhess-gold/25 transition" : ""
+      }`}
+      onClick={onSelect}
+      onKeyDown={
+        onSelect
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelect();
+              }
+            }
+          : undefined
+      }
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
     >
       <div className="flex flex-wrap justify-between items-start gap-2 mb-3">
         <div className="min-w-0">

@@ -38,7 +38,8 @@ EXHIBITION_TARGET_ELO = 4800
 EXHIBITION_MOVE_TIME_HINT = 20
 EXHIBITION_ANALYSIS_DEPTH = 14
 MAX_ACTIVE_EXHIBITIONS = 5
-MAX_MOVES_BEFORE_RESTART = 120
+# Filet de sécurité seulement (parties vraiment interminables) — pas une coupure « mid-game »
+MAX_MOVES_BEFORE_RESTART = 400
 
 
 def win_chance_from_eval(eval_pawns: float) -> tuple[float, float]:
@@ -326,14 +327,21 @@ def play_exhibition_move(game: Game) -> Optional[dict]:
         elif (
             board.is_stalemate()
             or board.is_insufficient_material()
+            # Uniquement les nulles automatiques FIDE — pas les « claims »
+            # (threefold / 50 coups) qui coupaient les exhibitions trop tôt
             or board.is_seventyfive_moves()
             or board.is_fivefold_repetition()
-            or board.can_claim_fifty_moves()
-            or board.can_claim_threefold_repetition()
         ):
             game.status = Game.Status.DRAW
             game.result = Game.Result.DRAW
-            game.termination_reason = "draw"
+            if board.is_stalemate():
+                game.termination_reason = "stalemate"
+            elif board.is_insufficient_material():
+                game.termination_reason = "insufficient"
+            elif board.is_seventyfive_moves():
+                game.termination_reason = "seventyfive"
+            else:
+                game.termination_reason = "fivefold"
             game.ended_at = timezone.now()
 
         game.save()

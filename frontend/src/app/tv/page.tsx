@@ -27,20 +27,27 @@ export default function TvPage() {
   const [channel, setChannel] = useState<(typeof CHANNELS)[number]>("best");
   const [current, setCurrent] = useState<TvGame | null>(null);
   const [queue, setQueue] = useState<TvGame[]>([]);
-  const [rotationSeconds, setRotationSeconds] = useState(30);
-  const [nextAt, setNextAt] = useState<number | null>(null);
-  const [nowTs, setNowTs] = useState(() => Math.floor(Date.now() / 1000));
   const [error, setError] = useState<string | null>(null);
+  /** Reste collé à une partie jusqu'à sa fin (mat / nulle) — pas de rotation mid-game */
+  const [pinnedId, setPinnedId] = useState<string | null>(null);
 
   const load = useCallback(() => {
     gamesApi
       .liveTv(channel)
       .then(({ data }) => {
-        setCurrent((data.current as TvGame) ?? null);
-        setQueue((data.queue as TvGame[]) ?? []);
-        setRotationSeconds(data.rotation_seconds ?? 30);
-        setNextAt(data.next_rotation_at ?? null);
+        const nextCurrent = (data.current as unknown as TvGame) ?? null;
+        const nextQueue = (data.queue as unknown as TvGame[]) ?? [];
+        setCurrent(nextCurrent);
+        setQueue(nextQueue);
         setError(null);
+
+        const ids = new Set(
+          [nextCurrent, ...nextQueue].filter(Boolean).map((g) => (g as TvGame).id)
+        );
+        setPinnedId((prev) => {
+          if (prev && ids.has(prev)) return prev;
+          return nextCurrent?.id ?? nextQueue[0]?.id ?? null;
+        });
       })
       .catch((err) => setError(formatApiError(err, t("tv.error.load"))));
   }, [channel, t]);
@@ -48,15 +55,11 @@ export default function TvPage() {
   useVisibilityInterval(load, 3000);
 
   useEffect(() => {
-    const id = setInterval(() => setNowTs(Math.floor(Date.now() / 1000)), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const secondsLeft = nextAt != null ? Math.max(0, nextAt - nowTs) : null;
+    setPinnedId(null);
+  }, [channel]);
 
   const allGames = useMemo(() => {
     const merged = dedupeGames([...(current ? [current] : []), ...queue]);
-    // Exhibitions d'abord (stats riches), puis humains
     return merged.sort((a, b) => {
       const ae = a.is_tv_exhibition ? 0 : 1;
       const be = b.is_tv_exhibition ? 0 : 1;
@@ -65,8 +68,10 @@ export default function TvPage() {
     });
   }, [current, queue]);
 
-  const featuredId = current?.id ?? allGames[0]?.id;
-  const featured = allGames.find((g) => g.id === featuredId) ?? null;
+  const featured =
+    (pinnedId ? allGames.find((g) => g.id === pinnedId) : null) ??
+    allGames[0] ??
+    null;
   const others = allGames.filter((g) => g.id !== featured?.id);
 
   return (
@@ -106,10 +111,8 @@ export default function TvPage() {
             </button>
           ))}
         </div>
-        {secondsLeft != null && featured && (
-          <span className="text-xs text-africhess-gold ml-auto">
-            {t("tv.nextIn", { seconds: secondsLeft, total: rotationSeconds })}
-          </span>
+        {featured && (
+          <span className="text-xs opacity-60 ml-auto">{t("tv.followUntilEnd")}</span>
         )}
       </div>
 
@@ -139,7 +142,11 @@ export default function TvPage() {
               </h2>
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {others.map((g) => (
-                  <TvExhibitionCard key={g.id} game={g} />
+                  <TvExhibitionCard
+                    key={g.id}
+                    game={g}
+                    onSelect={() => setPinnedId(g.id)}
+                  />
                 ))}
               </div>
             </section>
