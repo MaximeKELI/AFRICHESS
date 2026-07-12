@@ -10,6 +10,11 @@ import {
   type BoardBackgroundId,
 } from "@/lib/boardBackgrounds";
 import {
+  DEFAULT_SOUND_THEME,
+  isSoundThemeId,
+  type SoundThemeId,
+} from "@/lib/soundThemes";
+import {
   preferenceStorageKey,
   setPreferenceScopeUserId,
 } from "@/store/preferenceScope";
@@ -18,6 +23,7 @@ const BOARD_THEME_KEY = "board_theme";
 const BOARD_BACKGROUND_KEY = "board_background";
 const AI_COMMENTS_KEY = "ai_comments";
 const PIECE_SET_KEY = "piece_set";
+const SOUND_THEME_KEY = "sound_theme";
 const ZEN_KEY = "zen_mode";
 const BLIND_KEY = "blind_mode";
 
@@ -61,6 +67,12 @@ function readBlindMode(): boolean {
   return localStorage.getItem(preferenceStorageKey(BLIND_KEY)) === "1";
 }
 
+function readSoundTheme(): SoundThemeId {
+  if (typeof window === "undefined") return DEFAULT_SOUND_THEME;
+  const stored = localStorage.getItem(preferenceStorageKey(SOUND_THEME_KEY));
+  return isSoundThemeId(stored) ? stored : DEFAULT_SOUND_THEME;
+}
+
 /** Recharge thème, arrière-plan, etc. après connexion / déconnexion. */
 export function syncPreferencesForUser(userId: number | null) {
   setPreferenceScopeUserId(userId);
@@ -72,6 +84,7 @@ export function syncPreferencesForUser(userId: number | null) {
     boardTheme: readBoardTheme(),
     boardBackground: readBoardBackground(),
     pieceSet: readPieceSet(),
+    soundTheme: readSoundTheme(),
     aiCommentsEnabled: readAiComments(),
     zenMode,
     blindMode: readBlindMode(),
@@ -82,12 +95,14 @@ interface PreferencesState {
   boardTheme: BoardThemeId;
   boardBackground: BoardBackgroundId;
   pieceSet: PieceSetId;
+  soundTheme: SoundThemeId;
   aiCommentsEnabled: boolean;
   zenMode: boolean;
   blindMode: boolean;
   setBoardTheme: (id: BoardThemeId) => void;
   setBoardBackground: (id: BoardBackgroundId) => void;
   setPieceSet: (id: PieceSetId) => void;
+  setSoundTheme: (id: SoundThemeId) => void;
   setAiCommentsEnabled: (enabled: boolean) => void;
   setZenMode: (enabled: boolean) => void;
   setBlindMode: (enabled: boolean) => void;
@@ -97,6 +112,7 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
   boardTheme: readBoardTheme(),
   boardBackground: readBoardBackground(),
   pieceSet: readPieceSet(),
+  soundTheme: readSoundTheme(),
   aiCommentsEnabled: readAiComments(),
   zenMode: readZenMode(),
   blindMode: readBlindMode(),
@@ -111,6 +127,10 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
   setPieceSet: (id) => {
     localStorage.setItem(preferenceStorageKey(PIECE_SET_KEY), id);
     set({ pieceSet: id });
+  },
+  setSoundTheme: (id) => {
+    localStorage.setItem(preferenceStorageKey(SOUND_THEME_KEY), id);
+    set({ soundTheme: id });
   },
   setAiCommentsEnabled: (enabled) => {
     localStorage.setItem(preferenceStorageKey(AI_COMMENTS_KEY), enabled ? "1" : "0");
