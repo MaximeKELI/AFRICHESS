@@ -2599,7 +2599,7 @@ const en: Record<string, string> = {
   "swiss.title": "Swiss tournaments",
   "swiss.subtitle": "Round-based Swiss pairings",
   "community.title": "Community",
-  "community.hub.subtitle": "Players, friends, forums, blog, teams, and streamers — Lichess-style.",
+  "community.hub.subtitle": "Players, friends, forums, blog, teams, and streamers.",
   "community.hub.playersDesc": "Players worldwide — search, rankings, and profiles.",
   "community.hub.friendsDesc": "Find friends and send challenges.",
   "community.hub.forumsDesc": "Discussions by category: general, Africa, strategy…",
