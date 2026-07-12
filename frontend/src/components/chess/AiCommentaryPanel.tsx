@@ -66,7 +66,6 @@ export function AiCommentaryPanel({
     }
   }, [enabled]);
 
-  // Nouvelle partie (plus de commentaires) → réinitialiser le suivi
   useEffect(() => {
     if (comments.length === 0) {
       resetLiveSpeechTracking();
@@ -84,25 +83,33 @@ export function AiCommentaryPanel({
     const decision = selectLiveCommentsToSpeak(fresh, comments.length, liveSpeechPrimed);
     setLiveSpeechPrimed(decision.primed);
 
-    for (const c of fresh) {
-      liveSpokenCommentKeys.add(commentKey(c));
+    // Marquer seulement le backlog volontairement ignoré — pas les phrases à lire
+    if (decision.skipSpeech) {
+      for (const c of fresh) liveSpokenCommentKeys.add(commentKey(c));
+      return;
     }
 
-    if (decision.skipSpeech || !decision.toSpeak.length) return;
+    const dropped = fresh.slice(0, Math.max(0, fresh.length - decision.toSpeak.length));
+    for (const c of dropped) liveSpokenCommentKeys.add(commentKey(c));
 
     const toSpeak = decision.toSpeak;
+    if (!toSpeak.length) return;
+
     const queueId = ++speakQueueRef.current;
     void (async () => {
       unlockAiSpeech();
       for (let index = 0; index < toSpeak.length; index += 1) {
         if (speakQueueRef.current !== queueId) return;
         const comment = toSpeak[index];
+        // Enfiler sans couper entre coach + IA ; interrupt seulement si on remplace une lecture
         await speakComment(comment.text, {
           byAi: comment.byAi,
           enabled: true,
           forceUnlock: true,
-          interrupt: index === 0,
+          interrupt: index === 0 && decision.toSpeak.length === fresh.length,
         });
+        if (speakQueueRef.current !== queueId) return;
+        liveSpokenCommentKeys.add(commentKey(comment));
       }
     })();
   }, [comments, enabled, autoSpeak]);

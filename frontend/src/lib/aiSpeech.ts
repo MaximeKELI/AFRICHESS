@@ -119,10 +119,14 @@ function stopKeepAlive() {
 
 function stopCurrentAudio() {
   if (!currentAudio) return;
-  currentAudio.pause();
-  currentAudio.onended = null;
-  currentAudio.onerror = null;
+  const audio = currentAudio;
+  const abort = (audio as HTMLAudioElement & { __africhessAbort?: () => void }).__africhessAbort;
   currentAudio = null;
+  audio.pause();
+  audio.onended = null;
+  audio.onerror = null;
+  // Résoudre la promesse playWavBufferAndWait — sinon pipelineRunning reste true
+  abort?.();
 }
 
 function clearStuckSpeechSynthesis() {
@@ -142,16 +146,21 @@ function playWavBufferAndWait(buf: ArrayBuffer): Promise<boolean> {
     stopCurrentAudio();
     const blob = new Blob([buf], { type: "audio/wav" });
     const objectUrl = URL.createObjectURL(blob);
-    const audio = new Audio(objectUrl);
+    const audio = new Audio(objectUrl) as HTMLAudioElement & { __africhessAbort?: () => void };
     currentAudio = audio;
     audio.volume = 1;
 
+    let settled = false;
     const finish = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      delete audio.__africhessAbort;
       URL.revokeObjectURL(objectUrl);
       if (currentAudio === audio) currentAudio = null;
       resolve(ok);
     };
 
+    audio.__africhessAbort = () => finish(false);
     audio.onended = () => finish(true);
     audio.onerror = () => finish(false);
 
@@ -343,6 +352,7 @@ function enqueueSpeech(text: string, byAi: boolean, interrupt: boolean): void {
     clearStuckSpeechSynthesis();
   }
   pendingJobs.push({ text, byAi, generation: speechGeneration });
+  // Toujours relancer : un await précédent peut venir de se débloquer
   void runSpeechPipeline();
 }
 
