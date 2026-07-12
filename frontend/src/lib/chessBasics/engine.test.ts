@@ -5,10 +5,9 @@ import { BASICS_STAGES } from "./stages";
 describe("chessBasics engine", () => {
   it("valide un coup de tour vers une case cible", () => {
     const stage = BASICS_STAGES.find((s) => s.id === "rook")!;
-    const r = evaluateBasicsMove(stage.fen, "e4e8", stage.goal);
+    const r = evaluateBasicsMove(stage.fen, "e4a4", stage.goal);
     expect(r.illegal).toBeFalsy();
-    // e8 captures black king? Wait - black king is on e8, so e4e8 would capture king - illegal
-    // Use e4a4 instead
+    expect(r.done).toBe(true);
   });
 
   it("détecte le mat en un", () => {
