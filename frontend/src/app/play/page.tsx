@@ -363,7 +363,6 @@ function PlayContent() {
     }),
     [useClock, timePreset, isRated, variant]
   );
-  const ratedClockLabel = MODE_CLOCK_LABEL[mode] ?? "10+0";
 
   useEffect(() => {
     if (!setupFromUrl) return;
@@ -861,8 +860,8 @@ function PlayContent() {
       setGameId(id);
       setIsVsAi(false);
       setSearching(false);
-      syncGameInUrl(id);
       gamesApi.get(id).then(({ data }) => {
+        syncGameInUrl(id, data.mode);
         if (data.white_player?.id === user?.id) setOrientation("white");
         else if (data.black_player?.id === user?.id) setOrientation("black");
         applyGameResponse(data);
@@ -873,9 +872,9 @@ function PlayContent() {
   );
 
   rejoinMatchmakingRef.current = () => {
-    const mmTimeControl = matchmakingTimeControl(mode, useClock, isRated, timePreset);
+    const mmTimeControl = matchmakingTimeControl(useClock, timePreset);
     gamesApi
-      .matchmaking(mode, {
+      .matchmaking(searchMode, {
         is_timed: useClock,
         is_rated: isRated,
         time_control: mmTimeControl,
@@ -890,7 +889,7 @@ function PlayContent() {
   };
 
   const { searching: wsSearching, mmError, search: wsSearch, cancel: wsCancel } =
-    useMatchmakingWebSocket(Boolean(user), mode, handleMatchFound, timeOpts);
+    useMatchmakingWebSocket(Boolean(user), searchMode, handleMatchFound, timeOpts);
 
   const chessCtorRef = useRef<ChessCtor | null>(null);
 
