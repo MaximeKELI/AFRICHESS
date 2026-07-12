@@ -287,6 +287,7 @@ class LiveGameSerializer(serializers.ModelSerializer):
             "white_time_ms",
             "black_time_ms",
             "is_timed",
+            "is_tv_exhibition",
         ]
 
 
