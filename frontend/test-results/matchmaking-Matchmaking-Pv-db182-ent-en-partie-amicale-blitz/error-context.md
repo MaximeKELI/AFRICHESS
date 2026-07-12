@@ -1,0 +1,211 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: matchmaking.spec.ts >> Matchmaking PvP >> deux joueurs se retrouvent en partie amicale blitz
+- Location: e2e/matchmaking.spec.ts:5:7
+
+# Error details
+
+```
+Test timeout of 60000ms exceeded.
+```
+
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "Aller au contenu principal" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - navigation [ref=e3]:
+    - generic [ref=e4]:
+      - link "AFRICHESS AFRICHESS" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img "AFRICHESS" [ref=e6]
+        - generic [ref=e7]: AFRICHESS
+      - generic [ref=e8]:
+        - link "Jouer" [ref=e9] [cursor=pointer]:
+          - /url: /play
+        - link "Problèmes" [ref=e10] [cursor=pointer]:
+          - /url: /puzzles
+        - link "Apprendre" [ref=e11] [cursor=pointer]:
+          - /url: /learning
+        - link "En direct" [ref=e12] [cursor=pointer]:
+          - /url: /live
+        - button "Plus" [ref=e14] [cursor=pointer]:
+          - text: Plus
+          - img [ref=e15]
+      - generic [ref=e17]:
+        - generic [ref=e20]:
+          - img
+          - searchbox "Nom d'utilisateur…" [ref=e21]
+        - generic [ref=e22]:
+          - combobox "Langue" [ref=e23]:
+            - option "EN"
+            - option "FR" [selected]
+            - option "AR"
+            - option "PT"
+            - option "SW"
+          - button "Thème" [ref=e24] [cursor=pointer]:
+            - img [ref=e25]
+          - button "Mode Zen" [ref=e27] [cursor=pointer]:
+            - img [ref=e28]
+          - button "Mode fluide" [ref=e31] [cursor=pointer]:
+            - img [ref=e32]
+        - generic [ref=e36]:
+          - button "Notifications" [ref=e38] [cursor=pointer]:
+            - img [ref=e39]
+          - link "Messages privés" [ref=e42] [cursor=pointer]:
+            - /url: /messages
+            - img [ref=e43]
+          - link "e2e_player_a e2e_player_a" [ref=e45] [cursor=pointer]:
+            - /url: /profile
+            - img "e2e_player_a" [ref=e47]
+            - generic [ref=e48]: e2e_player_a
+          - button "Déconnexion" [ref=e49] [cursor=pointer]
+  - main [ref=e50]:
+    - generic [ref=e51]:
+      - generic [ref=e52]:
+        - heading "Jouer — Blitz" [level=1] [ref=e53]
+        - generic [ref=e54]:
+          - img "Kwame" [ref=e56]
+          - generic [ref=e57]:
+            - generic [ref=e58]: IA
+            - text: Kwame
+      - generic [ref=e59]: Classement provisoire 1200? en Blitz — encore 5 partie(s) en ligne classée(s) pour l'établir.
+      - generic [ref=e60]:
+        - button "Trouver un adversaire" [ref=e61] [cursor=pointer]
+        - button "Lancer la partie" [ref=e62] [cursor=pointer]
+      - generic [ref=e63]:
+        - application "Échiquier d'échecs — flèches pour naviguer, Entrée pour sélectionner" [ref=e68]:
+          - generic [ref=e72]:
+            - generic [ref=e73]:
+              - generic [ref=e74]:
+                - generic [ref=e76]:
+                  - img [ref=e78]:
+                    - img [ref=e80]
+                  - generic [ref=e88]: "8"
+                - img [ref=e92]:
+                  - img [ref=e94]
+                - img [ref=e104]:
+                  - img [ref=e106]
+                - img [ref=e116]:
+                  - img [ref=e118]
+                - img [ref=e137]:
+                  - img [ref=e139]
+                - img [ref=e148]:
+                  - img [ref=e150]
+                - img [ref=e160]:
+                  - img [ref=e162]
+                - img [ref=e172]:
+                  - img [ref=e174]
+              - generic [ref=e182]:
+                - generic [ref=e184]:
+                  - img [ref=e186]:
+                    - img [ref=e188]
+                  - generic [ref=e190]: "7"
+                - img [ref=e194]:
+                  - img [ref=e196]
+                - img [ref=e201]:
+                  - img [ref=e203]
+                - img [ref=e208]:
+                  - img [ref=e210]
+                - img [ref=e215]:
+                  - img [ref=e217]
+                - img [ref=e222]:
+                  - img [ref=e224]
+                - img [ref=e229]:
+                  - img [ref=e231]
+                - img [ref=e236]:
+                  - img [ref=e238]
+              - generic [ref=e243]: "6"
+              - generic [ref=e261]: "5"
+              - generic [ref=e279]: "4"
+              - generic [ref=e297]: "3"
+              - generic [ref=e312]:
+                - generic [ref=e314]:
+                  - img [ref=e316]:
+                    - img [ref=e318]
+                  - generic [ref=e320]: "2"
+                - img [ref=e324]:
+                  - img [ref=e326]
+                - img [ref=e331]:
+                  - img [ref=e333]
+                - img [ref=e338]:
+                  - img [ref=e340]
+                - img [ref=e345]:
+                  - img [ref=e347]
+                - img [ref=e352]:
+                  - img [ref=e354]
+                - img [ref=e359]:
+                  - img [ref=e361]
+                - img [ref=e366]:
+                  - img [ref=e368]
+              - generic [ref=e370]:
+                - generic [ref=e372]:
+                  - img [ref=e374]:
+                    - img [ref=e376]
+                  - generic [ref=e384]: "1"
+                  - generic [ref=e385]: a
+                - generic [ref=e387]:
+                  - img [ref=e389]:
+                    - img [ref=e391]
+                  - generic [ref=e397]: b
+                - generic [ref=e399]:
+                  - img [ref=e401]:
+                    - img [ref=e403]
+                  - generic [ref=e410]: c
+                - generic [ref=e412]:
+                  - img [ref=e414]:
+                    - img [ref=e416]
+                  - generic [ref=e427]: d
+                - generic [ref=e429]:
+                  - img [ref=e431]:
+                    - img [ref=e433]
+                  - generic [ref=e440]: e
+                - generic [ref=e442]:
+                  - img [ref=e444]:
+                    - img [ref=e446]
+                  - generic [ref=e453]: f
+                - generic [ref=e455]:
+                  - img [ref=e457]:
+                    - img [ref=e459]
+                  - generic [ref=e465]: g
+                - generic [ref=e467]:
+                  - img [ref=e469]:
+                    - img [ref=e471]
+                  - generic [ref=e479]: h
+            - img
+          - paragraph [ref=e480]: "Focus : e4"
+        - generic [ref=e482]:
+          - generic [ref=e484]:
+            - paragraph [ref=e485]: 📖 Position initiale
+            - generic [ref=e486]:
+              - heading "Coups joués" [level=3] [ref=e487]
+              - paragraph [ref=e489]: Aucun coup pour l'instant
+          - generic [ref=e490]:
+            - separator [ref=e491]
+            - generic [ref=e492]:
+              - tablist "Catégories d'options" [ref=e493]:
+                - tab "Partie" [selected] [ref=e494] [cursor=pointer]
+                - tab "Jouer vs l'ordinateur" [ref=e495] [cursor=pointer]
+                - tab "Joueur en ligne" [ref=e496] [cursor=pointer]
+                - tab "Style" [ref=e497] [cursor=pointer]
+              - region "Partie" [ref=e498]:
+                - generic [ref=e499]:
+                  - heading "Partie" [level=3] [ref=e500]
+                  - paragraph [ref=e501]: Partie classée
+                - generic [ref=e503]:
+                  - generic [ref=e504]:
+                    - generic [ref=e505]: Partie classée
+                    - switch "Classée" [checked] [ref=e506] [cursor=pointer]
+                  - paragraph [ref=e507]: "Cadence Blitz : 3+2"
+              - generic [ref=e508]:
+                - heading "Parties précédentes" [level=2] [ref=e509]
+                - paragraph [ref=e510]: Aucune partie enregistrée pour l'instant.
+  - alert [ref=e511]
+```
