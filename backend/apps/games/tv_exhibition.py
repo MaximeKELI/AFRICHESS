@@ -204,31 +204,127 @@ def append_move_analysis(
     return row
 
 
+def exhibition_head_to_head(white_id: int | None, black_id: int | None) -> dict[str, int]:
+    """
+    Bilan historique entre les deux bots (toutes couleurs confondues).
+    Retourne les victoires du camp Blancs actuel, Noirs actuel, et nuls.
+    """
+    empty = {"white_wins": 0, "black_wins": 0, "draws": 0, "played": 0}
+    if not white_id or not black_id or white_id == black_id:
+        return empty
+
+    from django.core.cache import cache
+    from django.db.models import Q
+
+    lo, hi = sorted((white_id, black_id))
+    cache_key = f"tv_h2h:{lo}:{hi}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        # Réorienter selon qui est Blanc dans la partie courante
+        if cached["a_id"] == white_id:
+            return {
+                "white_wins": cached["a_wins"],
+                "black_wins": cached["b_wins"],
+                "draws": cached["draws"],
+                "played": cached["played"],
+            }
+        return {
+            "white_wins": cached["b_wins"],
+            "black_wins": cached["a_wins"],
+            "draws": cached["draws"],
+            "played": cached["played"],
+        }
+
+    finished = Game.objects.filter(
+        is_tv_exhibition=True,
+        status__in=(Game.Status.COMPLETED, Game.Status.DRAW),
+    ).filter(
+        Q(white_player_id=lo, black_player_id=hi)
+        | Q(white_player_id=hi, black_player_id=lo)
+    ).only("white_player_id", "black_player_id", "result", "winner_id", "status")
+
+    a_wins = b_wins = draws = 0
+    for g in finished.iterator():
+        is_draw = (
+            g.status == Game.Status.DRAW
+            or g.result == Game.Result.DRAW
+            or g.result in ("1/2-1/2", "*")
+        )
+        if is_draw and g.status != Game.Status.COMPLETED:
+            draws += 1
+            continue
+        if g.result == Game.Result.DRAW:
+            draws += 1
+            continue
+        winner_id = g.winner_id
+        if not winner_id:
+            if g.result == Game.Result.WHITE_WIN:
+                winner_id = g.white_player_id
+            elif g.result == Game.Result.BLACK_WIN:
+                winner_id = g.black_player_id
+        if winner_id == lo:
+            a_wins += 1
+        elif winner_id == hi:
+            b_wins += 1
+        else:
+            draws += 1
+
+    played = a_wins + b_wins + draws
+    payload = {
+        "a_id": lo,
+        "b_id": hi,
+        "a_wins": a_wins,
+        "b_wins": b_wins,
+        "draws": draws,
+        "played": played,
+    }
+    cache.set(cache_key, payload, 30)
+    if lo == white_id:
+        return {
+            "white_wins": a_wins,
+            "black_wins": b_wins,
+            "draws": draws,
+            "played": played,
+        }
+    return {
+        "white_wins": b_wins,
+        "black_wins": a_wins,
+        "draws": draws,
+        "played": played,
+    }
+
+
+def invalidate_exhibition_h2h_cache(white_id: int | None, black_id: int | None) -> None:
+    if not white_id or not black_id:
+        return
+    from django.core.cache import cache
+
+    lo, hi = sorted((white_id, black_id))
+    cache.delete(f"tv_h2h:{lo}:{hi}")
+
+
 def tv_analysis_payload(game: Game) -> dict[str, Any] | None:
     """Payload analyse live pour le serializer TV."""
     if not game.is_tv_exhibition:
         return None
+
+    h2h = exhibition_head_to_head(game.white_player_id, game.black_player_id)
+    base = {
+        "eval": 0.0,
+        "win_chance_white": 50.0,
+        "win_chance_black": 50.0,
+        "curve": [],
+        "last_move": None,
+        "moves": [],
+        "head_to_head": h2h,
+    }
     try:
         analysis = game.analysis
     except GameAnalysis.DoesNotExist:
-        return {
-            "eval": 0.0,
-            "win_chance_white": 50.0,
-            "win_chance_black": 50.0,
-            "curve": [],
-            "last_move": None,
-            "moves": [],
-        }
+        return base
     moves = list(analysis.best_moves_json or [])
     if not moves:
-        return {
-            "eval": 0.0,
-            "win_chance_white": 50.0,
-            "win_chance_black": 50.0,
-            "curve": [],
-            "last_move": None,
-            "moves": [],
-        }
+        return base
     last = moves[-1]
     eval_after = float(last.get("eval") or 0.0)
     wc_w = last.get("win_chance_white")
@@ -259,6 +355,7 @@ def tv_analysis_payload(game: Game) -> dict[str, Any] | None:
             "cp_loss": last.get("cp_loss"),
         },
         "moves": moves[-40:],
+        "head_to_head": h2h,
     }
 
 
@@ -389,6 +486,7 @@ def play_exhibition_move(game: Game) -> Optional[dict]:
     completed = game.status != Game.Status.ACTIVE
     rematch_id = None
     if completed:
+        invalidate_exhibition_h2h_cache(game.white_player_id, game.black_player_id)
         rematch = rematch_exhibition(game)
         rematch_id = str(rematch.id)
 
