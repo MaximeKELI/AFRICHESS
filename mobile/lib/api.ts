@@ -302,6 +302,7 @@ export interface TournamentSummary {
   participant_count: number;
   starts_at?: string;
   is_african_cup?: boolean;
+  is_international_cup?: boolean;
 }
 
 export const learningApi = {

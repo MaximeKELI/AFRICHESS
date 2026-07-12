@@ -58,6 +58,9 @@ export default function TournamentsScreen() {
             {item.is_african_cup ? (
               <Text style={styles.badge}>African Cup</Text>
             ) : null}
+            {item.is_international_cup ? (
+              <Text style={styles.badge}>International Cup</Text>
+            ) : null}
             {item.description ? (
               <Text style={styles.cardDesc} numberOfLines={2}>
                 {item.description}
