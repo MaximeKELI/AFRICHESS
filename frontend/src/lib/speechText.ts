@@ -108,8 +108,6 @@ export function normalizeSpeechText(text: string, maxTotal = 1200): string {
     .replace(/\s*\?+\s*/g, "? ")
     .replace(/\s{2,}/g, " ")
     .trim();
-  // Phrases un peu plus « parlées » : virgules → micro-pauses
-  cleaned = cleaned.replace(/([.!?])\s+/g, "$1 ");
   return cleaned.slice(0, maxTotal);
 }
 

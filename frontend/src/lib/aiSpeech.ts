@@ -81,13 +81,7 @@ function attachVoicesListener() {
   refreshVoices();
 }
 
-/** Toute voix FR navigateur vaut mieux qu'espeak robotique. */
-function hasBrowserFrenchVoice(): boolean {
-  if (typeof window === "undefined" || !window.speechSynthesis) return false;
-  refreshVoices();
-  return window.speechSynthesis.getVoices().some(isFrenchVoice);
-}
-
+/** Toute voix navigateur vaut mieux qu'espeak robotique. */
 function hasAnyBrowserVoice(): boolean {
   if (typeof window === "undefined" || !window.speechSynthesis) return false;
   refreshVoices();
