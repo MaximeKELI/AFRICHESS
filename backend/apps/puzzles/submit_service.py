@@ -11,6 +11,7 @@ from apps.ratings.services import RatingService
 from apps.users.models import UserStats
 
 from .models import Puzzle, PuzzleAttempt
+from .uci import moves_match_solution
 
 
 def _ensure_user_stats(user):
@@ -36,7 +37,7 @@ def _update_daily_streak(user, puzzle: Puzzle, solved: bool) -> int:
 
 def process_puzzle_submission(user, puzzle: Puzzle, moves: list[str], time_seconds: int) -> dict:
     """Enregistre une tentative et applique Elo, streak, stats globales et XP learning."""
-    solved = moves == puzzle.solution_moves
+    solved = moves_match_solution(moves, puzzle.solution_moves)
 
     PuzzleAttempt.objects.create(
         user=user,
@@ -45,7 +46,14 @@ def process_puzzle_submission(user, puzzle: Puzzle, moves: list[str], time_secon
         moves_played=moves,
         time_seconds=time_seconds,
     )
-    puzzle.plays_count += 1
+    old_plays = puzzle.plays_count
+    puzzle.plays_count = old_plays + 1
+    # Moyenne glissante du taux de réussite
+    puzzle.success_rate = (
+        (puzzle.success_rate * old_plays + (1.0 if solved else 0.0)) / puzzle.plays_count
+        if puzzle.plays_count
+        else 0.0
+    )
 
     streak = 0
     puzzle_elo = None
@@ -63,13 +71,14 @@ def process_puzzle_submission(user, puzzle: Puzzle, moves: list[str], time_secon
     puzzle_elo = after_rating.elo
     puzzle_elo_change = puzzle_elo - before
 
-    puzzle.save(update_fields=["plays_count"])
+    puzzle.save(update_fields=["plays_count", "success_rate"])
 
     record_puzzle_result(user, solved)
 
     return {
         "solved": solved,
-        "correct_moves": puzzle.solution_moves if solved else None,
+        # Toujours renvoyer la solution après tentative (parité Lichess)
+        "correct_moves": puzzle.solution_moves,
         "daily_streak": streak,
         "puzzle_elo": puzzle_elo,
         "puzzle_elo_change": puzzle_elo_change,
