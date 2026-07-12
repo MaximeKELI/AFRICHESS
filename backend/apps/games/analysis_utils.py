@@ -8,6 +8,7 @@ ACCURACY_WEIGHTS: dict[str, int] = {
     "brilliant": 100,
     "great": 100,
     "best": 100,
+    "book": 100,
     "good": 90,
     "inaccuracy": 75,
     "mistake": 50,

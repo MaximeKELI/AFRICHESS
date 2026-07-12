@@ -299,6 +299,9 @@ class ChessEngineService:
                         limit = self._limit_for_weak_elo(elo)
                     elif strength_mode == "skill":
                         limit = self._limit_for_weak_elo(elo)
+                    elif elo is not None and elo > STOCKFISH_UCI_MAX_ELO:
+                        # Au-delà du plafond UCI : profondeur/temps max (GM / monstre)
+                        limit = self._limit_for_elo(elo, diff_key)
                     elif elo is not None:
                         limit = self._limit_for_weak_elo(elo)
                     else:
@@ -462,7 +465,18 @@ class ChessEngineService:
         return score.score() or 0
 
     @staticmethod
-    def _classify_move(cp_loss: int, eval_gain: int = 0, is_best: bool = False) -> str:
+    def _classify_move(
+        cp_loss: int,
+        eval_gain: int = 0,
+        is_best: bool = False,
+        *,
+        ply: int | None = None,
+    ) -> str:
+        # Ouverture : coup théorique (livre) si proche du meilleur
+        if ply is not None and ply < 16 and cp_loss <= 20 and (
+            is_best or cp_loss <= 10
+        ):
+            return "book"
         if cp_loss <= 3 and eval_gain >= 120:
             return "brilliant"
         if cp_loss <= 5 and is_best and eval_gain >= 40:
@@ -476,6 +490,61 @@ class ChessEngineService:
         if cp_loss <= 100:
             return "mistake"
         return "blunder"
+
+    def evaluate_played_move(
+        self,
+        fen_before: str,
+        uci: str,
+        played_by_white: bool,
+        *,
+        ply: int = 0,
+        depth: int = 14,
+    ) -> MoveEvaluation | None:
+        """Classifie un coup joué (eval avant/après + nature du coup)."""
+        board = chess.Board(fen_before)
+        try:
+            move = chess.Move.from_uci(uci)
+        except ValueError:
+            return None
+        if move not in board.legal_moves:
+            return None
+        limit = chess.engine.Limit(depth=depth)
+        try:
+            with self._use_engine() as engine:
+                info = engine.analyse(board, limit)
+                eval_before = self._score_to_cp(info["score"].white())
+                pv = info.get("pv") or []
+                best_move = pv[0] if pv else None
+                best_san = board.san(best_move) if best_move else None
+                best_uci = best_move.uci() if best_move else None
+                pv_san = self._pv_to_san(board, pv)
+                san = board.san(move)
+                is_best = best_move is not None and move == best_move
+                board.push(move)
+                info_after = engine.analyse(board, limit)
+                eval_after = self._score_to_cp(info_after["score"].white())
+            if played_by_white:
+                cp_loss = max(0, eval_before - eval_after)
+                eval_gain = eval_after - eval_before
+            else:
+                cp_loss = max(0, eval_after - eval_before)
+                eval_gain = eval_before - eval_after
+            return MoveEvaluation(
+                uci=move.uci(),
+                san=san,
+                eval_before=eval_before / 100,
+                eval_after=eval_after / 100,
+                centipawn_loss=cp_loss,
+                classification=self._classify_move(
+                    cp_loss, eval_gain, is_best, ply=ply
+                ),
+                best_uci=best_uci,
+                best_san=best_san,
+                pv_san=pv_san,
+            )
+        except Exception as e:
+            logger.error("evaluate_played_move error: %s", e)
+            return None
 
     def is_legal_move(self, fen: str, uci: str, variant: str = "standard") -> bool:
         board = board_from_fen(fen, variant)
