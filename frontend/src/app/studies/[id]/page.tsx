@@ -23,6 +23,7 @@ interface StudyDetail {
   description: string;
   owner: string;
   chapters: Chapter[];
+  collaborators?: { username: string; role: string }[];
 }
 
 function fenFromPgn(pgn: string, fallback: string): string {
@@ -59,6 +60,7 @@ export default function StudyDetailPage({ params }: { params: { id: string } }) 
   const [pgnDraft, setPgnDraft] = useState("");
   const [importPgn, setImportPgn] = useState("");
   const [newChapterTitle, setNewChapterTitle] = useState("");
+  const [collabUser, setCollabUser] = useState("");
   const [ioStatus, setIoStatus] = useState("");
 
   const load = useCallback(() => {
@@ -113,6 +115,37 @@ export default function StudyDetailPage({ params }: { params: { id: string } }) 
       load();
     } catch (err) {
       setError(formatApiError(err, t("studies.error.chapter")));
+    }
+  };
+
+  const deleteChapter = async () => {
+    if (!study || !activeChapter) return;
+    if (study.chapters.length <= 1) {
+      setError(t("studies.error.lastChapter"));
+      return;
+    }
+    if (!window.confirm(t("studies.deleteChapterConfirm"))) return;
+    try {
+      await api.delete(`/learning/studies/${study.id}/chapters/${activeChapter.id}/`);
+      setIoStatus(t("studies.chapterDeleted"));
+      load();
+    } catch (err) {
+      setError(formatApiError(err, t("studies.error.chapter")));
+    }
+  };
+
+  const inviteCollaborator = async () => {
+    if (!study || !collabUser.trim()) return;
+    try {
+      await api.post(`/learning/studies/${study.id}/collaborators/`, {
+        username: collabUser.trim(),
+        role: "editor",
+      });
+      setCollabUser("");
+      setIoStatus(t("studies.collabAdded"));
+      load();
+    } catch (err) {
+      setError(formatApiError(err, t("studies.error.collab")));
     }
   };
 
@@ -233,6 +266,24 @@ export default function StudyDetailPage({ params }: { params: { id: string } }) 
             </button>
           </div>
 
+          <div className="flex gap-2">
+            <input
+              value={collabUser}
+              onChange={(e) => setCollabUser(e.target.value)}
+              placeholder={t("studies.collabUsername")}
+              className="flex-1 px-3 py-2 rounded-lg border bg-transparent text-sm"
+            />
+            <button type="button" onClick={inviteCollaborator} className="px-3 py-2 rounded-lg border text-sm">
+              {t("studies.inviteCollab")}
+            </button>
+          </div>
+          {(study.collaborators?.length ?? 0) > 0 && (
+            <p className="text-xs opacity-60">
+              {t("studies.collabs")}:{" "}
+              {study.collaborators!.map((c) => `${c.username} (${c.role})`).join(", ")}
+            </p>
+          )}
+
           {activeChapter && (
             <div className="glass-card p-4 space-y-3">
               <p className="text-sm font-medium">{activeChapter.title}</p>
@@ -242,9 +293,18 @@ export default function StudyDetailPage({ params }: { params: { id: string } }) 
                 onChange={(e) => setPgnDraft(e.target.value)}
                 spellCheck={false}
               />
-              <button type="button" onClick={savePgn} className="african-gradient px-4 py-2 rounded-lg text-sm">
-                {t("studies.save")}
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={savePgn} className="african-gradient px-4 py-2 rounded-lg text-sm">
+                  {t("studies.save")}
+                </button>
+                <button
+                  type="button"
+                  onClick={deleteChapter}
+                  className="px-4 py-2 rounded-lg text-sm border border-white/20"
+                >
+                  {t("studies.deleteChapter")}
+                </button>
+              </div>
             </div>
           )}
         </div>
