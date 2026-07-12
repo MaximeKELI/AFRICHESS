@@ -547,7 +547,7 @@ const fr: Record<string, string> = {
   "profile.ratings.empty": "Jouez votre première partie pour gagner un classement !",
   "profile.ratings.provisional": "Provisoire",
   "profile.ratings.gamesUntil": "{count} partie(s) en ligne restante(s) pour établir votre classement {mode}.",
-  "profile.ratings.provisionalNote": "Classement de départ selon votre niveau. Jouez 5 parties en ligne classées pour un ELO établi (comme sur Chess.com).",
+  "profile.ratings.provisionalNote": "Classement de départ selon votre niveau. Jouez 5 parties en ligne classées pour un ELO établi.",
   "profile.level.question": "Quel est votre niveau aux échecs ?",
   "profile.avatar.title": "Votre photo de profil",
   "profile.avatar.choose": "Choisir une photo",
