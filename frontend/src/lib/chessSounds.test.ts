@@ -34,12 +34,21 @@ describe("inferSoundFromFenChange — parties live (FEN sans historique)", () =>
   });
 
   it("échec", () => {
+    const before = new Chess("4k3/8/8/8/8/8/8/R3K3 w Q - 0 1");
+    const after = new Chess(before.fen());
+    after.move("Ra8");
+    expect(
+      inferSoundFromFenChange(before.fen(), after.fen(), { from: "a1", to: "a8" })
+    ).toBe("check");
+  });
+
+  it("mat", () => {
     const before = new Chess("rnbqkbnr/ppppp2p/5p2/6p1/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 3");
     const after = new Chess(before.fen());
     after.move("Qh5");
     expect(
       inferSoundFromFenChange(before.fen(), after.fen(), { from: "d1", to: "h5" })
-    ).toBe("check");
+    ).toBe("checkmate");
   });
 
   it("roque petit", () => {
