@@ -419,8 +419,13 @@ export const puzzlesApi = {
   battleGet: (id: number) => api.get(`/puzzles/battle/${id}/`),
   battleSubmit: (id: number, moves: string[], time_seconds: number) =>
     api.post(`/puzzles/battle/${id}/`, { moves, time_seconds }),
-  createCustom: (data: { fen: string; solution_moves: string[]; themes?: string[]; is_public?: boolean }) =>
-    api.post("/puzzles/custom/", data),
+  createCustom: (data: {
+    fen: string;
+    solution_moves: string[];
+    themes?: string[];
+    is_public?: boolean;
+    difficulty?: string;
+  }) => api.post("/puzzles/custom/", data),
   customMine: () => api.get("/puzzles/custom/"),
   survivalStart: () => api.post("/puzzles/survival/start/"),
   survivalSubmit: (sessionId: number, moves: string[], time_seconds: number) =>
@@ -432,14 +437,6 @@ export const puzzlesApi = {
     sessionId: number,
     payload: { moves?: string[]; time_seconds?: number; skip?: boolean }
   ) => api.post(`/puzzles/streak-run/${sessionId}/submit/`, payload),
-  createCustom: (data: {
-    fen: string;
-    solution_moves: string[];
-    themes?: string[];
-    is_public?: boolean;
-    difficulty?: string;
-  }) => api.post("/puzzles/custom/", data),
-  customMine: () => api.get("/puzzles/custom/"),
 };
 
 export interface UserRelationship {
