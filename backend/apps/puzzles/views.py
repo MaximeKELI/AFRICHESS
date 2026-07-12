@@ -270,20 +270,24 @@ class PuzzleBattleDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, battle_id):
+        from .rush_battle import battle_puzzle_for_user
+
         try:
             battle = PuzzleBattle.objects.get(pk=battle_id)
         except PuzzleBattle.DoesNotExist:
             return Response({"error": "Introuvable"}, status=404)
         if request.user.id not in (battle.player1_id, battle.player2_id):
             return Response({"error": "Accès refusé"}, status=403)
-        puzzle = None
-        if battle.status == PuzzleBattle.Status.ACTIVE and battle.current_index < len(battle.puzzle_ids):
-            puzzle = PuzzleSerializer(Puzzle.objects.get(pk=battle.puzzle_ids[battle.current_index])).data
+        puzzle_obj = battle_puzzle_for_user(battle, request.user)
+        puzzle = PuzzleSerializer(puzzle_obj).data if puzzle_obj else None
         opponent = None
         if request.user.id == battle.player1_id and battle.player2_id:
             opponent = battle.player2.username
         elif request.user.id == battle.player2_id:
             opponent = battle.player1.username
+        your_index = (
+            battle.index1 if request.user.id == battle.player1_id else battle.index2
+        )
         return Response({
             "id": battle.id,
             "status": battle.status,
@@ -294,6 +298,8 @@ class PuzzleBattleDetailView(APIView):
             "opponent": opponent,
             "puzzle": puzzle,
             "winner_id": battle.winner_id,
+            "your_index": your_index,
+            "total_puzzles": len(battle.puzzle_ids or []),
         })
 
     def post(self, request, battle_id):
@@ -305,7 +311,12 @@ class PuzzleBattleDetailView(APIView):
             return Response({"error": "Introuvable"}, status=404)
         ser = SubmitPuzzleSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
-        return Response(battle_submit(battle, request.user, ser.validated_data["moves"]))
+        result = battle_submit(battle, request.user, ser.validated_data["moves"])
+        if result.get("next_puzzle_id"):
+            result["next_puzzle"] = PuzzleSerializer(
+                Puzzle.objects.get(pk=result["next_puzzle_id"])
+            ).data
+        return Response(result)
 
 
 class CustomPuzzleCreateView(APIView):
@@ -386,8 +397,16 @@ class PuzzleRushLeaderboardView(APIView):
     def get(self, request):
         from django.db.models import Max
 
+        mode = (request.query_params.get("mode") or "rush").lower()
+        allowed = {c.value for c in PuzzleRushSession.Mode}
+        if mode not in allowed:
+            mode = PuzzleRushSession.Mode.RUSH
+
         rows = (
-            PuzzleRushSession.objects.filter(status=PuzzleRushSession.Status.COMPLETED)
+            PuzzleRushSession.objects.filter(
+                status=PuzzleRushSession.Status.COMPLETED,
+                mode=mode,
+            )
             .values("user_id")
             .annotate(best_score=Max("score"))
             .order_by("-best_score")[:20]
@@ -399,6 +418,7 @@ class PuzzleRushLeaderboardView(APIView):
                 "username": u.username,
                 "display_name": u.display_name or u.username,
                 "score": r["best_score"],
+                "mode": mode,
             }
             for r in rows
             if (u := users.get(r["user_id"]))
