@@ -104,7 +104,7 @@ export default function PlayersPage() {
                 : "border border-white/20 hover:bg-white/10"
             )}
           >
-            {t(`play.mode.${m}`)}
+            {t(`modes.${m}`)}
           </button>
         ))}
         <Link
