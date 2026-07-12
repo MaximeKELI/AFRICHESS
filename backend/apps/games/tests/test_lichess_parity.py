@@ -149,12 +149,14 @@ class LichessFivefoldTests(TestCase):
 
 
 class LichessFiftyMoveTests(TestCase):
-    """50 coups : claim requis + signal fifty_available."""
+    """50 coups : claim requis + signal fifty_available (matériel suffisant)."""
+
+    FEN_99 = "4k3/8/8/8/8/8/8/R3K3 w Q - 99 50"
 
     def test_fifty_signals_but_does_not_auto_end(self):
-        fen = "8/8/8/4k3/8/8/8/4K3 w - - 99 50"
+        fen = self.FEN_99
         game = _pvp(fen=fen, repetition_counts=init_repetition_counts(fen, "standard"))
-        result = GameService().make_move(game, game.white_player, "e1e2")
+        result = GameService().make_move(game, game.white_player, "a1a2")
         self.assertNotIn("error", result)
         game.refresh_from_db()
         self.assertEqual(game.status, Game.Status.ACTIVE)
@@ -162,9 +164,9 @@ class LichessFiftyMoveTests(TestCase):
         self.assertTrue(can_claim_fifty_moves_from_game(game))
 
     def test_fifty_can_be_claimed(self):
-        fen = "8/8/8/4k3/8/8/8/4K3 w - - 99 50"
+        fen = self.FEN_99
         game = _pvp(fen=fen, repetition_counts=init_repetition_counts(fen, "standard"))
-        GameService().make_move(game, game.white_player, "e1e2")
+        GameService().make_move(game, game.white_player, "a1a2")
         game.refresh_from_db()
         claimed = claim_draw(game, game.black_player)
         self.assertTrue(claimed.get("ok"))
@@ -174,12 +176,12 @@ class LichessFiftyMoveTests(TestCase):
 
 
 class LichessSeventyfiveMoveTests(TestCase):
-    """75 coups : nulle automatique (comme Lichess / FIDE)."""
+    """75 coups : nulle automatique — 150 demi-coups (matériel suffisant)."""
 
     def test_seventyfive_auto_draw(self):
-        fen = "8/8/8/4k3/8/8/8/4K3 w - - 74 60"
+        fen = "4k3/8/8/8/8/8/8/R3K3 w Q - 149 80"
         game = _pvp(fen=fen, repetition_counts=init_repetition_counts(fen, "standard"))
-        result = GameService().make_move(game, game.white_player, "e1e2")
+        result = GameService().make_move(game, game.white_player, "a1a2")
         self.assertNotIn("error", result)
         game.refresh_from_db()
         self.assertEqual(game.status, Game.Status.COMPLETED)
@@ -216,42 +218,23 @@ class LichessStalemateTests(TestCase):
     """Pat / matériel insuffisant : nulle automatique."""
 
     def test_stalemate_auto_draw(self):
-        # Roi noir pat (a8), blanc au trait joue Ka7… mieux : position déjà pat après le coup.
-        # FEN classique : roi noir en a8, blanc a6+b7, trait aux noirs = pat si trait noir.
-        # On joue le coup qui crée le pat.
-        fen = "k7/8/1K6/8/8/8/8/1Q6 w - - 0 1"
+        fen = "7k/8/5K2/6Q1/8/8/8/8 w - - 0 1"
         game = _pvp(fen=fen, repetition_counts=init_repetition_counts(fen, "standard"))
-        # Qb7# would be mate; Qa7 or Qb8… Qc7 stalemate? Ka7+ wait
-        # Position: white Qc7 mates or… Use known stalemate delivery:
-        # White: Kb6, Qa5; Black Ka8; white plays Qa6? Actually Qa7# is mate.
-        # Classic: 7k/5Q2/6K1/8/8/8/8/8 w - - 0 1 → Qf8? Let's use engine-known:
-        fen = "7k/5Q2/6K1/8/8/8/8/8 w - - 0 1"
-        game.fen = fen
-        game.repetition_counts = init_repetition_counts(fen, "standard")
-        game.save()
-        # Qf8 is mate. Qg7+? Qf6? Actually Qg8+ Kg? No. Move Qe8 is stalemate? Qe7?
-        # From 7k/5Q2/6K1 — Qg8# mate. Qf8 mate. Qh5? 
-        # Known: Ka1, pawn a2, black king a3? Simpler insufficient material:
-        result = GameService().make_move(game, game.white_player, "f7c7")
-        # If illegal try another path — use insufficient material end:
-        if "error" in result:
-            fen2 = "8/8/8/4k3/8/8/8/4K3 w - - 0 1"
-            game2 = _pvp(
-                fen=fen2,
-                repetition_counts=init_repetition_counts(fen2, "standard"),
-            )
-            # King vs king is already dead — but is_game_over only after a move.
-            # python-chess: starting K vs K is already game over (insufficient).
-            # make_move on active game with dead position: play Ke2.
-            r2 = GameService().make_move(game2, game2.white_player, "e1e2")
-            self.assertNotIn("error", r2)
-            game2.refresh_from_db()
-            # After Ke2 still K vs K — is_game_over True via insufficient material
-            self.assertEqual(game2.status, Game.Status.COMPLETED)
-            self.assertEqual(game2.result, Game.Result.DRAW)
-            return
+        result = GameService().make_move(game, game.white_player, "g5g6")
+        self.assertNotIn("error", result)
         game.refresh_from_db()
         self.assertEqual(game.status, Game.Status.COMPLETED)
+        self.assertEqual(game.result, Game.Result.DRAW)
+        self.assertEqual(game.termination_reason, "stalemate")
+
+    def test_insufficient_material_auto_draw(self):
+        fen = "8/8/8/4k3/8/8/8/4K3 w - - 0 1"
+        game = _pvp(fen=fen, repetition_counts=init_repetition_counts(fen, "standard"))
+        result = GameService().make_move(game, game.white_player, "e1e2")
+        self.assertNotIn("error", result)
+        game.refresh_from_db()
+        self.assertEqual(game.status, Game.Status.COMPLETED)
+        self.assertEqual(game.result, Game.Result.DRAW)
 
 
 # ---------------------------------------------------------------------------
@@ -360,10 +343,12 @@ class LichessMatchmakingTests(TestCase):
         self.svc.join_queue(self.a, "blitz", 1200, is_rated=False, time_control="3+2")
         self.svc.join_queue(self.b, "blitz", 1250, is_rated=False, time_control="3+2")
         with patch.object(MatchmakingService, "pair_all_waiting") as pair_mock:
-            view = MatchmakingStatusView()
+            from django.contrib.auth.models import AnonymousUser
             from rest_framework.test import APIRequestFactory
 
+            view = MatchmakingStatusView()
             req = APIRequestFactory().get("/api/games/matchmaking/status/")
+            req.user = AnonymousUser()
             view.get(req)
             pair_mock.assert_not_called()
 
