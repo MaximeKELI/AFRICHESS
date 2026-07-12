@@ -513,13 +513,15 @@ class GameService:
         )
 
     def _finalize_game_on_timeout(self, game: Game, winner_white: bool) -> None:
-        """Timeout : victoire sauf matériel insuffisant pour mater (parité FIDE/Lichess)."""
+        """Timeout : victoire sauf si le gagnant n'a pas de matériel pour mater (FIDE/Lichess)."""
+        import chess
+
         from .variant_utils import board_from_fen
 
         try:
             board = board_from_fen(game.fen, game.variant)
-            # Si le camp qui gagne n'a pas assez pour mater → nulle
-            if board.has_insufficient_material():
+            winner_color = chess.WHITE if winner_white else chess.BLACK
+            if board.has_insufficient_material(winner_color):
                 game.result = Game.Result.DRAW
                 game.winner = None
                 game.status = Game.Status.COMPLETED

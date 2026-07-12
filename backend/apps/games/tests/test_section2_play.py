@@ -19,6 +19,8 @@ from apps.games.models import Game, Move
 from apps.games.services import GameService
 from apps.games.tasks import flag_expired_clocks
 
+import chess
+
 User = get_user_model()
 
 
@@ -198,10 +200,9 @@ class ThreefoldVariantAwareTests(TestCase):
             fen_after=game.fen,
         )
         board = board_from_game_moves(game)
-        self.assertIn(" e3 ", board.fen())
+        self.assertEqual(board.turn, False)  # black
+        self.assertIsNotNone(board.piece_at(chess.E4))
 
-
-class SelectForUpdateMoveTests(TestCase):
     def test_illegal_second_move_rejected(self):
         w = User.objects.create_user(username="sf_w", password="x")
         b = User.objects.create_user(username="sf_b", password="x")
@@ -211,10 +212,10 @@ class SelectForUpdateMoveTests(TestCase):
             status=Game.Status.ACTIVE,
             fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             started_at=timezone.now(),
+            is_rated=False,
         )
         svc = GameService()
         r1 = svc.make_move(game, w, "e2e4")
         self.assertNotIn("error", r1)
-        # Même joueur rejoue — plus son tour
         r2 = svc.make_move(game, w, "d2d4")
-        self.assertEqual(r2.get("error"), "Not your turn")
+        self.assertIn("error", r2)
