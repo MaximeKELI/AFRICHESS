@@ -153,7 +153,8 @@ class OnlineLifecycleExhaustiveTests(TestCase):
         )
         self.assertIsNotNone(game)
         self.assertEqual(game.mode, "rapid")
-        self.assertIn("10", (game.time_control_minutes and str(game.time_control_minutes)) or "10")
+        self.assertEqual(game.white_time_ms, 600_000)
+        self.assertEqual(game.time_control_minutes, 10)
 
     def test_05_rated_requires_fairplay_consent(self):
         with self.assertRaises(ValueError):

@@ -1379,7 +1379,7 @@ function PlayContent() {
   if (!user) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
-        <h1 className="font-display text-2xl font-bold mb-3">{t("play.title", { mode: t("modes.blitz") })}</h1>
+        <h1 className="font-display text-2xl font-bold mb-3">{t("play.title", { mode: modeLabelText })}</h1>
         <p className="mb-6 opacity-70 text-sm">{t("play.guest.benefit")}</p>
         <Link
           href="/login"
