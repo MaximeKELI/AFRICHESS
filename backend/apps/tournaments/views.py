@@ -17,8 +17,17 @@ class TournamentListView(generics.ListAPIView):
 
     def get_queryset(self):
         qs = tournament_list_queryset()
+        # Legacy: ?african=1 → coupes africaines
         if self.request.query_params.get("african"):
             qs = qs.filter(is_african_cup=True)
+        # ?cup=african|international|cups — filtres coupe
+        cup = (self.request.query_params.get("cup") or "").strip().lower()
+        if cup == "african":
+            qs = qs.filter(is_african_cup=True)
+        elif cup == "international":
+            qs = qs.filter(is_international_cup=True)
+        elif cup in ("cups", "all_cups"):
+            qs = qs.filter(models.Q(is_african_cup=True) | models.Q(is_international_cup=True))
         fmt = (self.request.query_params.get("tournament_format") or "").strip().lower()
         if fmt:
             allowed = {c.value for c in Tournament.Format}

@@ -558,13 +558,15 @@ export const notificationsApi = {
 };
 
 export const tournamentsApi = {
-  list: (opts?: boolean | { african?: boolean; format?: string }) => {
+  list: (opts?: boolean | { african?: boolean; format?: string; cup?: string }) => {
     const african = typeof opts === "boolean" ? opts : opts?.african;
     const format = typeof opts === "object" ? opts?.format : undefined;
+    const cup = typeof opts === "object" ? opts?.cup : undefined;
     return api.get("/tournaments/", {
       params: {
         african: african ? "1" : undefined,
         tournament_format: format || undefined,
+        cup: cup || undefined,
       },
     });
   },

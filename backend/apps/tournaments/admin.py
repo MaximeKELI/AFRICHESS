@@ -5,8 +5,8 @@ from .models import Tournament, TournamentRound
 
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
-    list_display = ["name", "format", "status", "is_african_cup", "starts_at"]
-    list_filter = ["status", "is_african_cup", "format"]
+    list_display = ["name", "format", "status", "is_african_cup", "is_international_cup", "starts_at"]
+    list_filter = ["status", "is_african_cup", "is_international_cup", "format"]
 
 
 @admin.register(TournamentRound)

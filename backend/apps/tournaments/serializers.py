@@ -46,6 +46,7 @@ class TournamentSerializer(serializers.ModelSerializer):
             "max_players",
             "country",
             "is_african_cup",
+            "is_international_cup",
             "is_rated",
             "prize_pool",
             "starts_at",

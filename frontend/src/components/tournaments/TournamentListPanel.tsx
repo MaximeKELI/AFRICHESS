@@ -26,6 +26,7 @@ export interface TournamentItem {
   max_players: number;
   participant_count: number;
   is_african_cup: boolean;
+  is_international_cup?: boolean;
   prize_pool: string;
   starts_at: string;
   country: string;
@@ -62,17 +63,22 @@ export function TournamentListPanel({
   const { user } = useAuthStore();
   const { t } = useTranslation();
   const [list, setList] = useState<TournamentItem[]>([]);
-  const [africanOnly, setAfricanOnly] = useState(false);
+  const [cupFilter, setCupFilter] = useState<"all" | "african" | "international" | "cups">("all");
   const [status, setStatus] = useState("");
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const [standings, setStandings] = useState<StandingRow[]>([]);
   const [teamScores, setTeamScores] = useState<TeamScoreRow[]>([]);
 
   const load = useCallback(() => {
-    tournamentsApi.list({ african: africanOnly, format }).then(({ data }) => {
-      setList(Array.isArray(data) ? data : data.results ?? []);
-    });
-  }, [africanOnly, format]);
+    tournamentsApi
+      .list({
+        format,
+        cup: cupFilter === "all" ? undefined : cupFilter,
+      })
+      .then(({ data }) => {
+        setList(Array.isArray(data) ? data : data.results ?? []);
+      });
+  }, [cupFilter, format]);
 
   useEffect(() => {
     load();
@@ -162,14 +168,29 @@ export function TournamentListPanel({
       <p className="opacity-70 mb-6">{t(subtitleKey)}</p>
 
       {showAfricanFilter && (
-        <label className="flex items-center gap-2 mb-6 text-sm">
-          <input
-            type="checkbox"
-            checked={africanOnly}
-            onChange={(e) => setAfricanOnly(e.target.checked)}
-          />
-          {t("tournaments.africanOnly")}
-        </label>
+        <div className="flex flex-wrap gap-2 mb-6 text-sm">
+          {(
+            [
+              ["all", "tournaments.cupFilter.all"],
+              ["cups", "tournaments.cupFilter.cups"],
+              ["african", "tournaments.cupFilter.african"],
+              ["international", "tournaments.cupFilter.international"],
+            ] as const
+          ).map(([id, key]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setCupFilter(id)}
+              className={
+                cupFilter === id
+                  ? "px-3 py-1.5 rounded-lg border border-africhess-gold bg-africhess-gold/15"
+                  : "px-3 py-1.5 rounded-lg border border-white/15 hover:border-white/30"
+              }
+            >
+              {t(key)}
+            </button>
+          ))}
+        </div>
       )}
 
       {status && <p className="text-africhess-gold mb-4">{status}</p>}
@@ -182,6 +203,11 @@ export function TournamentListPanel({
               {tournament.is_african_cup && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-africhess-gold/20">
                   {t("tournaments.africanCup")}
+                </span>
+              )}
+              {tournament.is_international_cup && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-200">
+                  {t("tournaments.internationalCup")}
                 </span>
               )}
             </div>

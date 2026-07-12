@@ -133,3 +133,54 @@ class TournamentFormatFilterTests(TestCase):
         data = r.data if isinstance(r.data, list) else r.data.get("results", [])
         self.assertTrue(all(t["format"] == "swiss" for t in data))
         self.assertTrue(any(t["slug"] == "swiss-filter-test" for t in data))
+
+
+class TournamentCupFilterTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.owner = User.objects.create_user(username="cup_owner", password="x")
+        now = timezone.now()
+        Tournament.objects.create(
+            name="Africa Cup",
+            slug="africa-cup-filter",
+            format=Tournament.Format.ARENA,
+            status=Tournament.Status.REGISTRATION,
+            mode="blitz",
+            starts_at=now + timedelta(hours=1),
+            created_by=self.owner,
+            is_african_cup=True,
+            is_international_cup=False,
+        )
+        Tournament.objects.create(
+            name="World Cup",
+            slug="world-cup-filter",
+            format=Tournament.Format.SWISS,
+            status=Tournament.Status.REGISTRATION,
+            mode="rapid",
+            starts_at=now + timedelta(hours=2),
+            created_by=self.owner,
+            is_african_cup=False,
+            is_international_cup=True,
+        )
+
+    def test_cup_international(self):
+        r = self.client.get("/api/tournaments/?cup=international")
+        self.assertEqual(r.status_code, 200)
+        data = r.data if isinstance(r.data, list) else r.data.get("results", [])
+        self.assertTrue(all(t.get("is_international_cup") for t in data))
+        self.assertTrue(any(t["slug"] == "world-cup-filter" for t in data))
+
+    def test_cup_african(self):
+        r = self.client.get("/api/tournaments/?cup=african")
+        self.assertEqual(r.status_code, 200)
+        data = r.data if isinstance(r.data, list) else r.data.get("results", [])
+        self.assertTrue(all(t.get("is_african_cup") for t in data))
+        self.assertTrue(any(t["slug"] == "africa-cup-filter" for t in data))
+
+    def test_cup_all_cups(self):
+        r = self.client.get("/api/tournaments/?cup=cups")
+        self.assertEqual(r.status_code, 200)
+        data = r.data if isinstance(r.data, list) else r.data.get("results", [])
+        slugs = {t["slug"] for t in data}
+        self.assertIn("africa-cup-filter", slugs)
+        self.assertIn("world-cup-filter", slugs)
