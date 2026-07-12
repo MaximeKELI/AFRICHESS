@@ -29,7 +29,15 @@ def run_analyze_game_job(game_id: str, job_id: int) -> None:
     try:
         game = Game.objects.get(id=game_id)
         limit = max_analysis_moves(job.user)
-        analysis = build_and_save_game_analysis(game, depth=job.depth, move_limit=limit)
+        from django.conf import settings
+
+        movetime_ms = getattr(settings, "SYNC_ANALYSIS_MOVETIME_MS", 120)
+        analysis = build_and_save_game_analysis(
+            game,
+            depth=job.depth,
+            move_limit=limit,
+            movetime_ms=movetime_ms,
+        )
         if not analysis:
             raise RuntimeError("No moves to analyze")
         job.status = AnalysisJob.Status.COMPLETED

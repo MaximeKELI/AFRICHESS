@@ -13,17 +13,17 @@ interface UseGameAnalysisOptions {
   enabled: boolean;
   initialAnalysis?: GameAnalysisData | null;
   autoRun?: boolean;
-  /** Attendre l'analyse auto (cache/WS) avant de relancer Stockfish */
+  /** Attendre l'analyse auto (cache/WS) avant de relancer le moteur */
   cacheFirst?: boolean;
   /** Nombre de coups de la partie — détecte les anciennes analyses tronquées */
   moveCount?: number;
 }
 
-const SYNC_TIMEOUT_MS = 45000;
-const ASYNC_POLL_MS = 2500;
-const ASYNC_MAX_MS = 120000;
-const AUTO_CACHE_INITIAL_MS = 600;
-const AUTO_CACHE_MAX_MS = 180000;
+const SYNC_TIMEOUT_MS = 18000;
+const ASYNC_POLL_MS = 1200;
+const ASYNC_MAX_MS = 90000;
+const AUTO_CACHE_INITIAL_MS = 400;
+const AUTO_CACHE_MAX_MS = 12000;
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -63,7 +63,7 @@ async function pollCachedGameAnalysis(
       return payload;
     }
     await sleep(delay);
-    delay = Math.min(Math.round(delay * 1.3), 2500);
+    delay = Math.min(Math.round(delay * 1.25), 1500);
   }
   return null;
 }
@@ -98,6 +98,9 @@ export function useGameAnalysis({
     setLoading(true);
     setError(null);
     try {
+      // Lancer l'async en parallèle : si le sync dépasse le délai, on a déjà un job prêt
+      void gamesApi.analyzeAsync(gameId).catch(() => undefined);
+
       const syncPromise = gamesApi.analyze(gameId);
       const timeoutPromise = new Promise<never>((_, reject) => {
         const id = setTimeout(() => reject(new Error("SYNC_TIMEOUT")), SYNC_TIMEOUT_MS);
@@ -115,15 +118,11 @@ export function useGameAnalysis({
           return;
         }
         setError(t("chess.analysis.incomplete"));
-      } catch (syncErr) {
+      } catch {
         if (controller.signal.aborted) return;
-        await gamesApi.analyzeAsync(gameId);
         const payload = await pollAsyncAnalysis(gameId, controller.signal);
         if (payload) applyAnalysis(payload);
         else setError(t("chess.analysis.incomplete"));
-        if (syncErr instanceof Error && syncErr.message !== "SYNC_TIMEOUT") {
-          /* async succeeded */
-        }
       }
     } catch (err: unknown) {
       if (!controller.signal.aborted) {
