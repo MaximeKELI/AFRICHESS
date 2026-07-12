@@ -122,3 +122,53 @@ class TvExhibitionTests(TestCase):
         res = client.get("/api/games/live/tv/?channel=best")
         self.assertEqual(res.status_code, 200)
         self.assertIsNone(res.data.get("current"))
+
+    def test_rematch_swaps_colors(self):
+        from apps.games.tv_exhibition import rematch_exhibition
+
+        game = create_exhibition_game()
+        rematch = rematch_exhibition(game)
+        self.assertEqual(rematch.white_player_id, game.black_player_id)
+        self.assertEqual(rematch.black_player_id, game.white_player_id)
+
+    def test_rematch_after_length_limit(self):
+        from apps.games.tv_exhibition import MAX_MOVES_BEFORE_RESTART
+
+        game = create_exhibition_game()
+        white, black = game.white_player, game.black_player
+        game.move_count = MAX_MOVES_BEFORE_RESTART
+        game.save(update_fields=["move_count"])
+        result = play_exhibition_move(game)
+        self.assertTrue(result["completed"])
+        self.assertEqual(result["reason"], "length")
+        game.refresh_from_db()
+        self.assertNotEqual(game.status, Game.Status.ACTIVE)
+        rematch = Game.objects.get(id=result["rematch_id"])
+        self.assertEqual(rematch.status, Game.Status.ACTIVE)
+        self.assertTrue(rematch.is_tv_exhibition)
+        self.assertEqual(rematch.white_player_id, black.id)
+        self.assertEqual(rematch.black_player_id, white.id)
+
+    @patch("apps.games.tv_exhibition.play_exhibition_move")
+    def test_tick_keeps_five_after_completion(self, play_move):
+        from apps.games.tv_exhibition import tick_tv_exhibitions
+
+        games = ensure_tv_exhibitions(5)
+        finished = games[0]
+        finished.status = Game.Status.COMPLETED
+        finished.termination_reason = "checkmate"
+        finished.save(update_fields=["status", "termination_reason"])
+        # Rematch déjà créé (comme le ferait play_exhibition_move)
+        create_exhibition_game(
+            white=finished.black_player, black=finished.white_player
+        )
+
+        play_move.return_value = {"completed": False, "game_id": "x"}
+        out = tick_tv_exhibitions()
+        self.assertEqual(out["active"], 5)
+        self.assertEqual(
+            Game.objects.filter(
+                status=Game.Status.ACTIVE, is_tv_exhibition=True
+            ).count(),
+            5,
+        )

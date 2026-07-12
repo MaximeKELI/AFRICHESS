@@ -129,6 +129,15 @@ def ensure_tv_exhibitions(count: int = MAX_ACTIVE_EXHIBITIONS) -> list[Game]:
     return active
 
 
+def rematch_exhibition(finished: Game) -> Game:
+    """Relance immédiatement la même paire (couleurs inversées) pour une TV sans trou."""
+    white = finished.black_player
+    black = finished.white_player
+    if white is None or black is None:
+        return create_exhibition_game()
+    return create_exhibition_game(white=white, black=black)
+
+
 def _side_to_move_is_white(fen: str) -> bool:
     return " w " in fen or fen.endswith(" w")
 
@@ -265,7 +274,13 @@ def play_exhibition_move(game: Game) -> Optional[dict]:
         game.save(
             update_fields=["status", "result", "termination_reason", "ended_at"]
         )
-        return {"completed": True, "reason": "length"}
+        rematch = rematch_exhibition(game)
+        return {
+            "completed": True,
+            "reason": "length",
+            "game_id": str(game.id),
+            "rematch_id": str(rematch.id),
+        }
 
     engine = ChessEngineService()
     best = engine.get_best_move(
@@ -313,6 +328,8 @@ def play_exhibition_move(game: Game) -> Optional[dict]:
             or board.is_insufficient_material()
             or board.is_seventyfive_moves()
             or board.is_fivefold_repetition()
+            or board.can_claim_fifty_moves()
+            or board.can_claim_threefold_repetition()
         ):
             game.status = Game.Status.DRAW
             game.result = Game.Result.DRAW
@@ -361,26 +378,40 @@ def play_exhibition_move(game: Game) -> Optional[dict]:
     except Exception:
         logger.debug("TV exhibition WS notify skipped", exc_info=True)
 
+    completed = game.status != Game.Status.ACTIVE
+    rematch_id = None
+    if completed:
+        rematch = rematch_exhibition(game)
+        rematch_id = str(rematch.id)
+
     return {
         "game_id": str(game.id),
         "uci": best.uci,
         "san": san,
         "class": (analysis_row or {}).get("class"),
-        "completed": game.status != Game.Status.ACTIVE,
+        "completed": completed,
+        "rematch_id": rematch_id,
     }
 
 
 def tick_tv_exhibitions() -> dict:
-    """Assure 5 exhibitions actives et joue un coup sur chacune."""
+    """Assure 5 exhibitions actives en permanence et joue un coup sur chacune."""
     games = ensure_tv_exhibitions()
     results = []
     for g in games:
         try:
+            g.refresh_from_db()
+            if g.status != Game.Status.ACTIVE:
+                continue
             r = play_exhibition_move(g)
             if r:
                 results.append(r)
-                if r.get("completed"):
-                    ensure_tv_exhibitions()
         except Exception:
             logger.exception("TV exhibition tick failed for %s", g.id)
-    return {"played": len(results), "results": results}
+    # Toujours reboucher les trous (victoire / nulle / crash / course)
+    active = ensure_tv_exhibitions()
+    return {
+        "played": len(results),
+        "active": len(active),
+        "results": results,
+    }
