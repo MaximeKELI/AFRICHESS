@@ -77,9 +77,17 @@ export default function TvPage() {
           <h1 className="font-display text-3xl font-bold">{t("tv.title")}</h1>
           <p className="text-sm opacity-60 mt-1">{t("tv.subtitle")}</p>
         </div>
-        <Link href="/live" className="text-sm text-africhess-gold hover:underline">
-          {t("tv.allLive")} →
-        </Link>
+        <div className="flex flex-wrap gap-3 text-sm">
+          <Link href="/live" className="text-africhess-gold hover:underline">
+            {t("tv.allLive")} →
+          </Link>
+          <Link href="/streamers" className="text-africhess-gold hover:underline">
+            {t("nav.streamers")} →
+          </Link>
+          <Link href="/broadcasts" className="text-africhess-gold hover:underline">
+            {t("nav.broadcasts")} →
+          </Link>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-6">
