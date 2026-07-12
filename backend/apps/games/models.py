@@ -196,6 +196,14 @@ class Game(models.Model):
         blank=True,
         related_name="rematches",
     )
+    rematch_offered_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rematch_offers_made",
+        help_text="Joueur ayant proposé une revanche (partie terminée)",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     started_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
