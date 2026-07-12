@@ -401,8 +401,8 @@ export const BOARD_BACKGROUNDS: BoardBackground[] = [
   },
   {
     id: "lichess-landscape",
-    labelFr: "Lichess — paysage",
-    labelEn: "Lichess — landscape",
+    labelFr: "Paysage",
+    labelEn: "Landscape",
     category: "lichess",
     src: "/images/backgrounds/lichess/landscape.jpg",
   },
