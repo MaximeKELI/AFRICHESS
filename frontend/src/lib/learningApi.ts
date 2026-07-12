@@ -49,6 +49,11 @@ export const learningApi = {
   progress: () => api.get("/learning/progress/"),
   endgameDrills: (theme?: string) =>
     api.get("/learning/endgames/", { params: theme ? { theme } : {} }),
+  practice: () => api.get("/learning/practice/"),
+  practiceStudy: (slug: string) => api.get(`/learning/practice/studies/${slug}/`),
+  practiceChapter: (id: number) => api.get(`/learning/practice/chapters/${id}/`),
+  practiceComplete: (id: number, nb_moves = 0) =>
+    api.post(`/learning/practice/chapters/${id}/complete/`, { nb_moves }),
 };
 
 export const marketplaceApi = {

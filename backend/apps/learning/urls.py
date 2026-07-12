@@ -1,12 +1,28 @@
 from django.urls import path
 
-from . import level3_views, shared_studies_views, views
+from . import level3_views, practice_views, shared_studies_views, views
 
 urlpatterns = [
     path("dashboard/", views.DashboardView.as_view(), name="learning-dashboard"),
     path("profile/", views.LearningProfileView.as_view(), name="learning-profile"),
     path("coach/", views.CoachTipsView.as_view(), name="learning-coach"),
     path("analyze/", views.AnalyzePgnView.as_view(), name="learning-analyze-pgn"),
+    path("practice/", practice_views.PracticeStructureView.as_view(), name="learning-practice"),
+    path(
+        "practice/studies/<slug:slug>/",
+        practice_views.PracticeStudyDetailView.as_view(),
+        name="learning-practice-study",
+    ),
+    path(
+        "practice/chapters/<int:chapter_id>/",
+        practice_views.PracticeChapterDetailView.as_view(),
+        name="learning-practice-chapter",
+    ),
+    path(
+        "practice/chapters/<int:chapter_id>/complete/",
+        practice_views.PracticeChapterCompleteView.as_view(),
+        name="learning-practice-complete",
+    ),
     path("courses/", views.CourseListView.as_view(), name="learning-courses"),
     path("courses/<slug:slug>/", views.CourseDetailView.as_view(), name="learning-course-detail"),
     path(

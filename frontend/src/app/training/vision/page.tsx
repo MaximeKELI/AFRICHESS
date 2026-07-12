@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Chessboard } from "react-chessboard";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -8,21 +8,29 @@ import { randomCoordinate, squareColor } from "@/lib/visionTraining";
 import { getBoardTheme, getThemedSquareStyles } from "@/lib/boardThemes";
 import { usePreferencesStore } from "@/store/preferences";
 
-type Drill = "coordinate" | "color";
+type Drill = "coordinate" | "color" | "timed";
 
-/** Entraînement vision : coordonnées et couleur des cases */
+const TIMED_SECONDS = 30;
+
+/** Entraînement vision : coordonnées, couleur, chrono 30 s (parité Lichess). */
 export default function VisionTrainingPage() {
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const boardThemeId = usePreferencesStore((s) => s.boardTheme);
   const theme = getBoardTheme(boardThemeId);
   const squareBase = useMemo(() => getThemedSquareStyles(theme), [theme]);
 
   const [drill, setDrill] = useState<Drill>("coordinate");
+  const [orientation, setOrientation] = useState<"white" | "black">("white");
   const [target, setTarget] = useState(() => randomCoordinate());
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<Record<string, React.CSSProperties>>({});
+  const [timedLeft, setTimedLeft] = useState<number | null>(null);
+  const [timedActive, setTimedActive] = useState(false);
+  const [timedFinal, setTimedFinal] = useState<number | null>(null);
+  const scoreRef = useRef(0);
+  scoreRef.current = score;
 
   const nextQuestion = useCallback(() => {
     setTarget(randomCoordinate());
@@ -30,17 +38,46 @@ export default function VisionTrainingPage() {
     setFeedback(null);
   }, []);
 
+  useEffect(() => {
+    if (!timedActive || timedLeft === null) return;
+    if (timedLeft <= 0) {
+      setTimedActive(false);
+      setTimedFinal(scoreRef.current);
+      setFeedback(t("vision.timedOver", { score: scoreRef.current }));
+      return;
+    }
+    const id = window.setTimeout(() => setTimedLeft((s) => (s == null ? null : s - 1)), 1000);
+    return () => window.clearTimeout(id);
+  }, [timedActive, timedLeft, t]);
+
+  const startTimed = () => {
+    setDrill("timed");
+    setScore(0);
+    setStreak(0);
+    setTimedFinal(null);
+    setTimedLeft(TIMED_SECONDS);
+    setTimedActive(true);
+    setFeedback(null);
+    nextQuestion();
+  };
+
   const onSquareClick = (square: string) => {
-    if (drill === "coordinate") {
+    if (drill === "timed" && !timedActive) return;
+
+    if (drill === "coordinate" || drill === "timed") {
       const ok = square === target;
       setFeedback(ok ? t("vision.correct") : t("vision.wrong", { answer: target }));
       if (ok) {
         setScore((s) => s + 1);
         setStreak((s) => s + 1);
-        setTimeout(nextQuestion, 600);
+        window.setTimeout(nextQuestion, drill === "timed" ? 200 : 600);
       } else {
         setStreak(0);
-        setHighlight({ [target]: { backgroundColor: "rgba(34, 197, 94, 0.5)" } });
+        if (drill !== "timed") {
+          setHighlight({ [target]: { backgroundColor: "rgba(34, 197, 94, 0.5)" } });
+        } else {
+          window.setTimeout(nextQuestion, 200);
+        }
       }
       return;
     }
@@ -59,7 +96,7 @@ export default function VisionTrainingPage() {
     if (ok) {
       setScore((s) => s + 1);
       setStreak((s) => s + 1);
-      setTimeout(nextQuestion, 700);
+      window.setTimeout(nextQuestion, 700);
     } else {
       setStreak(0);
     }
@@ -78,36 +115,78 @@ export default function VisionTrainingPage() {
         <p className="text-sm opacity-60 mt-1">{t("vision.subtitle")}</p>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => { setDrill("coordinate"); nextQuestion(); }}
+          onClick={() => {
+            setDrill("coordinate");
+            setTimedActive(false);
+            setTimedLeft(null);
+            nextQuestion();
+          }}
           className={`px-3 py-1.5 rounded-lg text-sm ${drill === "coordinate" ? "african-gradient text-white" : "border border-white/20"}`}
         >
           {t("vision.drill.coordinate")}
         </button>
         <button
           type="button"
-          onClick={() => { setDrill("color"); nextQuestion(); }}
+          onClick={() => {
+            setDrill("color");
+            setTimedActive(false);
+            setTimedLeft(null);
+            nextQuestion();
+          }}
           className={`px-3 py-1.5 rounded-lg text-sm ${drill === "color" ? "african-gradient text-white" : "border border-white/20"}`}
         >
           {t("vision.drill.color")}
         </button>
+        <button
+          type="button"
+          onClick={startTimed}
+          className={`px-3 py-1.5 rounded-lg text-sm ${drill === "timed" ? "african-gradient text-white" : "border border-white/20"}`}
+        >
+          {t("vision.timed")}
+        </button>
       </div>
 
-      <div className="flex justify-between text-sm">
+      <div className="flex flex-wrap gap-3 items-center text-sm">
+        <label className="flex items-center gap-2 opacity-80">
+          {t("vision.orientation")}
+          <select
+            value={orientation}
+            onChange={(e) => setOrientation(e.target.value as "white" | "black")}
+            className="px-2 py-1 rounded border border-white/20 bg-transparent"
+          >
+            <option value="white">White</option>
+            <option value="black">Black</option>
+          </select>
+        </label>
         <span>{t("vision.score", { score })}</span>
         <span>{t("vision.streak", { streak })}</span>
+        {timedActive && timedLeft != null && (
+          <span className="text-africhess-gold font-mono">{timedLeft}s</span>
+        )}
       </div>
 
+      {drill === "timed" && !timedActive && timedFinal == null && (
+        <button
+          type="button"
+          onClick={startTimed}
+          className="w-full py-2 african-gradient text-white rounded-lg text-sm"
+        >
+          {t("vision.timedStart")}
+        </button>
+      )}
+
       <p className="text-center text-lg font-semibold text-africhess-gold">
-        {drill === "coordinate"
-          ? t("vision.promptCoordinate", { square: target.toUpperCase() })
-          : t("vision.promptColor", { square: target.toUpperCase(), color: colorPrompt })}
+        {drill === "color"
+          ? t("vision.promptColor", { square: target.toUpperCase(), color: colorPrompt })
+          : t("vision.promptCoordinate", { square: target.toUpperCase() })}
       </p>
 
       <div className="aspect-square max-w-md mx-auto rounded-xl overflow-hidden border border-white/20">
         <Chessboard
+          boardOrientation={orientation}
           boardWidth={360}
           arePiecesDraggable={false}
           onSquareClick={onSquareClick}
@@ -123,13 +202,15 @@ export default function VisionTrainingPage() {
         </p>
       )}
 
-      <button
-        type="button"
-        onClick={nextQuestion}
-        className="w-full py-2 border rounded-lg text-sm hover:bg-white/5"
-      >
-        {t("vision.skip")}
-      </button>
+      {drill !== "timed" && (
+        <button
+          type="button"
+          onClick={nextQuestion}
+          className="w-full py-2 border rounded-lg text-sm hover:bg-white/5"
+        >
+          {t("vision.skip")}
+        </button>
+      )}
     </div>
   );
 }

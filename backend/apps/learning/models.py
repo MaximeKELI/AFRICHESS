@@ -328,3 +328,73 @@ class StudyCollaborator(models.Model):
 
     class Meta:
         unique_together = ["study", "user"]
+
+
+class PracticeSection(models.Model):
+    """Section Practice (Checkmates, Tactics, Endgames…)."""
+
+    slug = models.SlugField(unique=True, max_length=64)
+    name = models.CharField(max_length=120)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "slug"]
+
+    def __str__(self):
+        return self.name
+
+
+class PracticeStudy(models.Model):
+    section = models.ForeignKey(PracticeSection, on_delete=models.CASCADE, related_name="studies")
+    slug = models.SlugField(max_length=120)
+    lichess_id = models.CharField(max_length=16, unique=True)
+    title = models.CharField(max_length=200)
+    description = models.CharField(max_length=300, blank=True)
+    source = models.CharField(max_length=20, default="lichess")
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "title"]
+        unique_together = ["section", "slug"]
+
+    def __str__(self):
+        return self.title
+
+
+class PracticeChapter(models.Model):
+    class Goal(models.TextChoices):
+        MATE = "mate", "Mate"
+        MATE_IN = "mateIn", "Mate in N"
+        DRAW_IN = "drawIn", "Draw in N"
+        EVAL_IN = "evalIn", "Eval"
+        GENERIC = "generic", "Generic"
+
+    study = models.ForeignKey(PracticeStudy, on_delete=models.CASCADE, related_name="chapters")
+    title = models.CharField(max_length=200)
+    order = models.PositiveSmallIntegerField(default=0)
+    fen = models.CharField(max_length=120)
+    pgn = models.TextField(blank=True)
+    solution_uci = models.JSONField(default=list, help_text="Main-line UCI moves")
+    goal = models.CharField(max_length=20, choices=Goal.choices, default=Goal.GENERIC)
+    goal_moves = models.PositiveSmallIntegerField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return f"{self.study.title} — {self.title}"
+
+
+class PracticeProgress(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="practice_progress"
+    )
+    chapter = models.ForeignKey(
+        PracticeChapter, on_delete=models.CASCADE, related_name="progress_entries"
+    )
+    nb_moves = models.PositiveSmallIntegerField(default=0)
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ["user", "chapter"]
+        indexes = [models.Index(fields=["user", "-completed_at"])]
