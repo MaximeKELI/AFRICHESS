@@ -109,31 +109,28 @@ export default function HomePage() {
 
   useEffect(() => {
     if (logoPhase !== "slam") return;
+    // Chemin autoplay : son à l’impact. Chemin geste : déjà joué dans onPointerDown (Safari).
+    if (needsGestureRef.current) return;
 
     const land = window.setTimeout(() => {
-      if (needsGestureRef.current) {
-        // Activation encore valide ~quelques secondes après le clic
-        playLogoLandSoundFromGesture();
-      } else {
-        playLogoLandSound();
-      }
+      playLogoLandSound();
     }, SLAM_LAND_MS);
 
     return () => window.clearTimeout(land);
   }, [logoPhase]);
 
   const onHomePointerDown = () => {
-    if (hasPlayedLogoLandSound() && slamStartedRef.current) return;
-
     if (needsGestureRef.current && !slamStartedRef.current) {
-      // 1er geste : slam + son à l’impact (dans la fenêtre d’activation)
+      // Safari / Chrome strict : play() DOIT être dans le handler de geste
+      playLogoLandSoundFromGesture();
       slamStartedRef.current = true;
       setLogoPhase("slam");
       return;
     }
 
-    // Slam déjà vu / autoplay a échoué après coup : jouer le son au clic
-    playLogoLandSoundFromGesture();
+    if (!hasPlayedLogoLandSound()) {
+      playLogoLandSoundFromGesture();
+    }
   };
 
   return (
