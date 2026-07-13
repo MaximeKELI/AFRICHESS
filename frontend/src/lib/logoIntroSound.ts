@@ -1,9 +1,10 @@
 /**
- * Son d’atterrissage du logo — pièce en bois posée sur l’échiquier.
- * Fichier standard + repli Web Audio (thud) si autoplay / fichier indisponible.
+ * Son d’atterrissage du logo sur la page d’accueil uniquement.
+ * Rejoué à chaque chargement / refresh de `/`.
  */
 
 let sharedCtx: AudioContext | null = null;
+let preloaded: HTMLAudioElement | null = null;
 
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -18,14 +19,24 @@ function getCtx(): AudioContext | null {
   return sharedCtx;
 }
 
-/** Bruit filtré + claquement grave = pion posé sur bois. */
+/** Précharge le fichier dès l’arrivée sur l’accueil (avant l’impact). */
+export function preloadLogoLandSound(): void {
+  if (typeof window === "undefined") return;
+  if (!preloaded) {
+    preloaded = new Audio("/sounds/themes/standard/move.mp3");
+    preloaded.preload = "auto";
+    preloaded.volume = 1;
+    preloaded.load();
+  } else {
+    preloaded.currentTime = 0;
+  }
+}
+
 function playWoodThudSynthetic() {
   const ctx = getCtx();
   if (!ctx) return;
 
   const t0 = ctx.currentTime;
-
-  // Corps du thud (basse)
   const osc = ctx.createOscillator();
   const oscGain = ctx.createGain();
   osc.type = "sine";
@@ -38,7 +49,6 @@ function playWoodThudSynthetic() {
   osc.start(t0);
   osc.stop(t0 + 0.2);
 
-  // Attaque « bois » (bruit court)
   const bufferSize = Math.floor(ctx.sampleRate * 0.06);
   const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
   const data = buffer.getChannelData(0);
@@ -63,27 +73,26 @@ function playWoodThudSynthetic() {
 
 function playFileMove(): Promise<boolean> {
   return new Promise((resolve) => {
-    const audio = new Audio("/sounds/themes/standard/move.mp3");
+    preloadLogoLandSound();
+    const audio = (preloaded?.cloneNode(true) as HTMLAudioElement | null) ?? new Audio("/sounds/themes/standard/move.mp3");
     audio.volume = 1;
-    audio.preload = "auto";
-    const onOk = () => resolve(true);
-    const onFail = () => resolve(false);
-    audio.addEventListener("playing", onOk, { once: true });
-    audio.addEventListener("error", onFail, { once: true });
-    void audio.play().then(onOk).catch(onFail);
+    audio.currentTime = 0;
+    void audio
+      .play()
+      .then(() => resolve(true))
+      .catch(() => resolve(false));
   });
 }
 
+/** Joué à chaque refresh / chargement de la page d’accueil, au moment où le logo pose. */
 export async function playLogoLandSound(): Promise<void> {
   if (typeof window === "undefined") return;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-  // Toujours tenter le thud synthétique (fiable dès que le contexte audio est autorisé)
   playWoodThudSynthetic();
-
   const fileOk = await playFileMove();
+
   if (!fileOk) {
-    // Autoplay bloqué : rejouer au premier geste
     const unlock = () => {
       playWoodThudSynthetic();
       void playFileMove();

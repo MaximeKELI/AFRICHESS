@@ -8,7 +8,7 @@ import clsx from "clsx";
 import { useTranslation } from "@/hooks/useTranslation";
 import { ButtonLink } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
-import { playLogoLandSound } from "@/lib/logoIntroSound";
+import { playLogoLandSound, preloadLogoLandSound } from "@/lib/logoIntroSound";
 
 /** Sync avec ~68% de 0.72s (impact au sol) */
 const SLAM_LAND_MS = 490;
@@ -54,18 +54,16 @@ export default function HomePage() {
   const soundPlayed = useRef(false);
 
   useLayoutEffect(() => {
-    // Toujours rejouer la chute à chaque visite de l’accueil
-    // (sauf accessibilité reduced-motion)
+    // Accueil uniquement : à chaque refresh / chargement de `/`
     const reduce =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setLogoPhase(reduce ? "idle" : "slam");
-    // Nettoyer l’ancien flag qui bloquait l’intro
-    try {
-      sessionStorage.removeItem("africhess_logo_slam_done");
-    } catch {
-      /* ignore */
+    if (reduce) {
+      setLogoPhase("idle");
+      return;
     }
+    preloadLogoLandSound();
+    setLogoPhase("slam");
   }, []);
 
   useEffect(() => {
