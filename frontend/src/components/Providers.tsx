@@ -83,10 +83,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("pointerdown", warm);
   }, []);
 
-  /** Débloque l’audio + joue le son d’accueil manqué (autoplay bloqué). */
+  /** Débloque l’audio + son d’accueil manqué (pas sur le logo : géré par replay). */
   useEffect(() => {
-    const onGesture = () => {
+    const onGesture = (event: Event) => {
       unlockLogoLandAudio();
+      const target = event.target;
+      if (target instanceof Element && target.closest("[data-logo-land-sound]")) {
+        return;
+      }
       flushPendingLogoLandSound();
     };
     window.addEventListener("pointerdown", onGesture, { capture: true, passive: true });

@@ -131,6 +131,7 @@ export default function HomePage() {
         <div className="text-center">
           <button
             type="button"
+            data-logo-land-sound
             onClick={() => replayLogoLandSound()}
             aria-label="Réécouter le son du pion"
             title="Réécouter le son du pion"

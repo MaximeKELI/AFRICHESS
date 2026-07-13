@@ -8,8 +8,9 @@ const MOVE_OGG = "/sounds/themes/standard/move.ogg";
 let audioCtx: AudioContext | null = null;
 let moveBuffer: AudioBuffer | null = null;
 let loadingBuffer: Promise<AudioBuffer | null> | null = null;
-/** Atterrissage auto bloqué → jouer au prochain geste (fenêtre d’activation). */
+/** Atterrissage auto bloqué → jouer au prochain geste (hors clic logo). */
 let pendingLandSound = false;
+let lastPlayAt = 0;
 
 function pickSrc(): string {
   if (typeof window === "undefined") return MOVE_MP3;
@@ -139,6 +140,10 @@ function playFreshHtml(): Promise<boolean> {
 }
 
 async function playAudible(): Promise<boolean> {
+  const now = Date.now();
+  if (now - lastPlayAt < 160) return true;
+  lastPlayAt = now;
+
   if (playBufferIfRunning()) return true;
   if (await playFreshHtml()) return true;
   const ctx = getCtx();
