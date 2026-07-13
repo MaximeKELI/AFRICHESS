@@ -1,11 +1,18 @@
 "use client";
 
+import { useEffect, useLayoutEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Swords, Puzzle, Trophy, Users, Globe2, ArrowRight } from "lucide-react";
+import clsx from "clsx";
 import { useTranslation } from "@/hooks/useTranslation";
 import { ButtonLink } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
+import { playLogoLandSound } from "@/lib/logoIntroSound";
+
+const LOGO_SLAM_KEY = "africhess_logo_slam_done";
+/** ~62% de 0.58s — synchro avec le keyframe d’impact */
+const SLAM_LAND_MS = 360;
 
 const featureLinks = [
   {
@@ -40,8 +47,43 @@ const featureLinks = [
   },
 ] as const;
 
+type LogoPhase = "pending" | "slam" | "idle";
+
+function shouldSkipSlam(): boolean {
+  if (typeof window === "undefined") return true;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
+  if (document.documentElement.classList.contains("low-bandwidth")) return true;
+  try {
+    return sessionStorage.getItem(LOGO_SLAM_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export default function HomePage() {
   const { t } = useTranslation();
+  const [logoPhase, setLogoPhase] = useState<LogoPhase>("pending");
+
+  useLayoutEffect(() => {
+    setLogoPhase(shouldSkipSlam() ? "idle" : "slam");
+  }, []);
+
+  useEffect(() => {
+    if (logoPhase !== "slam") return;
+    const landTimer = window.setTimeout(() => {
+      playLogoLandSound();
+    }, SLAM_LAND_MS);
+    return () => window.clearTimeout(landTimer);
+  }, [logoPhase]);
+
+  const onSlamEnd = () => {
+    try {
+      sessionStorage.setItem(LOGO_SLAM_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setLogoPhase("idle");
+  };
 
   return (
     <div className="relative overflow-hidden">
@@ -56,8 +98,21 @@ export default function HomePage() {
 
       <section className="relative min-h-[min(100dvh,760px)] flex flex-col justify-center max-w-7xl mx-auto px-4 py-16 md:py-24">
         <div className="text-center">
-          <div className="relative inline-block mb-8 hero-logo">
+          <div
+            className={clsx(
+              "relative inline-block mb-8",
+              logoPhase === "slam" && "hero-logo-slam",
+              logoPhase === "idle" && "hero-logo",
+              logoPhase === "pending" && "hero-logo-static opacity-0"
+            )}
+            onAnimationEnd={(e) => {
+              if (logoPhase === "slam" && e.animationName === "hero-logo-slam") {
+                onSlamEnd();
+              }
+            }}
+          >
             <div className="hero-logo-ring" aria-hidden />
+            <div className="hero-logo-impact" aria-hidden />
             <div
               className="absolute -inset-3 rounded-3xl opacity-40 blur-xl"
               style={{
