@@ -479,6 +479,11 @@ html.has-site-background nav {
       hero-logo-float 4.8s ease-in-out 0.9s infinite;
   }
 
+  /* Après la chute d’entrée : uniquement le flottement (pas de 2ᵉ intro) */
+  .hero-logo-idle {
+    animation: hero-logo-float 4.8s ease-in-out infinite;
+  }
+
   .hero-logo-static {
     /* Visible sans animation (SSR / post-slam wait) */
   }

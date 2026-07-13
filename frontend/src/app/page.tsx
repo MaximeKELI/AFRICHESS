@@ -102,7 +102,7 @@ export default function HomePage() {
             className={clsx(
               "relative inline-block mb-8",
               logoPhase === "slam" && "hero-logo-slam",
-              logoPhase === "idle" && "hero-logo",
+              logoPhase === "idle" && "hero-logo-idle",
               logoPhase === "pending" && "hero-logo-static opacity-0"
             )}
             onAnimationEnd={(e) => {
