@@ -115,16 +115,23 @@ function playFreshHtml(): Promise<boolean> {
     audio.volume = 1;
     audio.muted = false;
     audio.preload = "auto";
+    let settled = false;
+
+    const finish = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      resolve(ok);
+    };
 
     const attempt = () => {
       const p = audio.play();
       if (p !== undefined && typeof p.then === "function") {
         void p.then(
-          () => resolve(true),
-          () => resolve(false)
+          () => finish(true),
+          () => finish(false)
         );
       } else {
-        resolve(true);
+        finish(true);
       }
     };
 
@@ -133,8 +140,7 @@ function playFreshHtml(): Promise<boolean> {
     } else {
       audio.addEventListener("canplaythrough", attempt, { once: true });
       audio.load();
-      // Filet si canplaythrough ne vient pas
-      window.setTimeout(attempt, 300);
+      window.setTimeout(attempt, 280);
     }
   });
 }
