@@ -57,6 +57,7 @@ export default function HomePage() {
   const { t } = useTranslation();
   const [logoPhase, setLogoPhase] = useState<LogoPhase>("pending");
   const landSoundSent = useRef(false);
+  const landAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useLayoutEffect(() => {
     resetLogoLandSoundForNewPageLoad();
@@ -72,13 +73,47 @@ export default function HomePage() {
   useEffect(() => {
     if (logoPhase !== "slam") return;
 
-    const land = window.setTimeout(() => {
+    const playLand = () => {
       if (landSoundSent.current) return;
       landSoundSent.current = true;
-      playLogoLandSound();
-    }, SLAM_LAND_MS);
 
-    return () => window.clearTimeout(land);
+      const el = landAudioRef.current;
+      if (el) {
+        el.volume = 1;
+        el.muted = false;
+        try {
+          el.currentTime = 0;
+        } catch {
+          /* ignore */
+        }
+        void el.play().then(
+          () => undefined,
+          () => {
+            // Autoplay refusé sur l’élément DOM → repli module
+            landSoundSent.current = false;
+            playLogoLandSound();
+            landSoundSent.current = true;
+          }
+        );
+        return;
+      }
+      playLogoLandSound();
+    };
+
+    const land = window.setTimeout(playLand, SLAM_LAND_MS);
+    // Filet : 2e tentative un peu après (fichier pas encore ready)
+    const retry = window.setTimeout(() => {
+      if (!landAudioRef.current) return;
+      const el = landAudioRef.current;
+      if (!el.paused && el.currentTime > 0) return;
+      landSoundSent.current = false;
+      playLand();
+    }, SLAM_LAND_MS + 120);
+
+    return () => {
+      window.clearTimeout(land);
+      window.clearTimeout(retry);
+    };
   }, [logoPhase]);
 
   return (
@@ -92,7 +127,14 @@ export default function HomePage() {
       <div className="hero-orb hero-orb-b" aria-hidden />
       <div className="hero-orb hero-orb-c" aria-hidden />
 
-      <audio src="/sounds/themes/standard/move.mp3" preload="auto" playsInline aria-hidden className="hidden" />
+      <audio
+        ref={landAudioRef}
+        src="/sounds/themes/standard/move.mp3"
+        preload="auto"
+        playsInline
+        aria-hidden
+        className="hidden"
+      />
 
       <section className="relative min-h-[min(100dvh,760px)] flex flex-col justify-center max-w-7xl mx-auto px-4 py-16 md:py-24">
         <div className="text-center">
