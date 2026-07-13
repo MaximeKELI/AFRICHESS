@@ -125,7 +125,8 @@ export default function HomePage() {
     unlockLogoLandAudio();
 
     if (needsGestureRef.current && !slamStartedRef.current) {
-      // Débloque l’audio dans le geste ; le son part à l’impact (timer)
+      // play() dans le geste = seul chemin 100% fiable (Safari / autoplay off)
+      playLogoLandSoundFromGesture();
       slamStartedRef.current = true;
       setLogoPhase("slam");
       return;
