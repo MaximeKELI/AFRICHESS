@@ -85,7 +85,10 @@ class _ChessBoardViewState extends State<ChessBoardView> {
 
   void _onTap(String square) {
     if (!widget.interactive || widget.onMove == null) return;
-    if (widget.playerColor != null && _game.turn != widget.playerColor) return;
+    final myTurn = widget.playerColor == null ||
+        (widget.playerColor == 'w' && _game.turn == ch.Color.WHITE) ||
+        (widget.playerColor == 'b' && _game.turn == ch.Color.BLACK);
+    if (!myTurn) return;
 
     if (_selected == null) {
       final piece = _game.get(square);
@@ -103,9 +106,12 @@ class _ChessBoardViewState extends State<ChessBoardView> {
     }
 
     final from = _selected!;
-    final legal = _game.moves({'square': from, 'verbose': true}) as List;
-    final match = legal.cast<Map>().where((m) => m['to'] == square).toList();
-    if (match.isEmpty) {
+    final legal = _game.moves({'square': from, 'verbose': true});
+    final destinations = <String>{};
+    for (final m in legal) {
+      if (m is Map && m['to'] is String) destinations.add(m['to'] as String);
+    }
+    if (!destinations.contains(square)) {
       final piece = _game.get(square);
       if (piece != null) {
         setState(() => _selected = square);
@@ -115,9 +121,15 @@ class _ChessBoardViewState extends State<ChessBoardView> {
       return;
     }
 
+    final rank = square[1];
+    final piece = _game.get(from);
     String? promo;
-    final needsPromo = match.any((m) => m['flags']?.toString().contains('p') == true);
-    if (needsPromo) promo = 'q';
+    if (piece != null &&
+        piece.type == ch.Chess.PAWN &&
+        ((piece.color == ch.Color.WHITE && rank == '8') ||
+            (piece.color == ch.Color.BLACK && rank == '1'))) {
+      promo = 'q';
+    }
 
     widget.onMove!(from, square, promotion: promo);
     setState(() => _selected = null);
