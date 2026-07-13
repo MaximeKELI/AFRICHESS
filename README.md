@@ -637,9 +637,9 @@ Le dossier `mobile/` contient une app **Flutter** (Android + iOS) branchée sur 
 
 | Élément | Détail |
 |---------|--------|
-| Stack | Expo · React Native |
+| Stack | Flutter · Dart |
 | Auth | JWT + deep link OAuth `africhess://auth/callback` |
-| Docs | [`mobile/README.md`](mobile/README.md) |
+| Docs | [`mobile/README.md`](mobile/README.md) · [`mobile/PARITY.md`](mobile/PARITY.md) |
 
 ```mermaid
 %%{init: {
@@ -657,8 +657,8 @@ Le dossier `mobile/` contient une app **Flutter** (Android + iOS) branchée sur 
   }
 }}%%
 flowchart TB
-  EXPO[Expo App] --> API[Django API]
-  EXPO --> WS[Channels WSS]
+  FLUTTER[Flutter App] --> API[Django API]
+  FLUTTER --> WS[Channels WSS]
   API --> PG[(PostgreSQL)]
   WS --> RD[(Redis)]
 ```
@@ -671,6 +671,7 @@ flowchart TB
 |--------|-------|------------------|
 | Frontend unit | Vitest | `cd frontend && npm test` |
 | Frontend e2e | Playwright | `npm run test:e2e` |
+| Mobile | Flutter test | `make mobile-test` |
 | Backend | Django test | `python manage.py test` |
 | Types | `tsc` | `npm run typecheck` |
 | Lint | ESLint / Next | `npm run lint` |
@@ -761,7 +762,8 @@ flowchart TB
 AFRICHESS/
 ├── frontend/          # Next.js 14 — UI premium
 ├── backend/           # Django 5 — API + Channels + Celery
-├── mobile/            # Expo
+├── mobile/            # Flutter (Android + iOS)
+├── mobile_expo_legacy/ # Ancien client Expo (référence)
 ├── anticheat-cpp/     # Fair-play natif
 ├── infra/             # K8s, ECS, Grafana, Prometheus
 ├── docs/              # Documentation produit & technique
