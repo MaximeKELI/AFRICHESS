@@ -215,19 +215,53 @@ html.has-site-background nav {
   .btn-ghost,
   .btn-hero {
     @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
     transition:
-      transform 0.2s var(--ease-premium),
-      box-shadow 0.2s var(--ease-premium),
-      background 0.2s var(--ease-premium),
-      border-color 0.2s var(--ease-premium),
-      color 0.2s var(--ease-premium);
+      transform 0.25s var(--ease-premium),
+      box-shadow 0.25s var(--ease-premium),
+      background 0.25s var(--ease-premium),
+      border-color 0.25s var(--ease-premium),
+      color 0.25s var(--ease-premium);
+  }
+
+  .btn-primary::after,
+  .btn-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 40%,
+      rgb(255 255 255 / 0.22) 50%,
+      transparent 60%
+    );
+    transform: translateX(-120%);
+    transition: transform 0.55s var(--ease-premium);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .btn-primary:hover::after,
+  .btn-hero:hover::after {
+    transform: translateX(120%);
+  }
+
+  .btn-primary:hover,
+  .btn-hero:hover {
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary:hover {
+    transform: translateY(-1px);
   }
 
   .btn-primary:active,
   .btn-secondary:active,
   .btn-ghost:active,
   .btn-hero:active {
-    transform: scale(0.98);
+    transform: scale(0.98) translateY(0);
   }
 
   .btn-sm {
