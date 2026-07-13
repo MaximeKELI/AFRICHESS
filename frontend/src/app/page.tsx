@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Swords, Puzzle, Trophy, Users, Globe2, ArrowRight } from "lucide-react";
@@ -10,9 +10,8 @@ import { ButtonLink } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import { playLogoLandSound } from "@/lib/logoIntroSound";
 
-const LOGO_SLAM_KEY = "africhess_logo_slam_done";
-/** ~62% de 0.58s — synchro avec le keyframe d’impact */
-const SLAM_LAND_MS = 360;
+/** Sync avec ~68% de 0.72s (impact au sol) */
+const SLAM_LAND_MS = 490;
 
 const featureLinks = [
   {
@@ -49,41 +48,36 @@ const featureLinks = [
 
 type LogoPhase = "pending" | "slam" | "idle";
 
-function shouldSkipSlam(): boolean {
-  if (typeof window === "undefined") return true;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
-  if (document.documentElement.classList.contains("low-bandwidth")) return true;
-  try {
-    return sessionStorage.getItem(LOGO_SLAM_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
 export default function HomePage() {
   const { t } = useTranslation();
   const [logoPhase, setLogoPhase] = useState<LogoPhase>("pending");
+  const soundPlayed = useRef(false);
 
   useLayoutEffect(() => {
-    setLogoPhase(shouldSkipSlam() ? "idle" : "slam");
+    // Toujours rejouer la chute à chaque visite de l’accueil
+    // (sauf accessibilité reduced-motion)
+    const reduce =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setLogoPhase(reduce ? "idle" : "slam");
+    // Nettoyer l’ancien flag qui bloquait l’intro
+    try {
+      sessionStorage.removeItem("africhess_logo_slam_done");
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   useEffect(() => {
     if (logoPhase !== "slam") return;
+    soundPlayed.current = false;
     const landTimer = window.setTimeout(() => {
-      playLogoLandSound();
+      if (soundPlayed.current) return;
+      soundPlayed.current = true;
+      void playLogoLandSound();
     }, SLAM_LAND_MS);
     return () => window.clearTimeout(landTimer);
   }, [logoPhase]);
-
-  const onSlamEnd = () => {
-    try {
-      sessionStorage.setItem(LOGO_SLAM_KEY, "1");
-    } catch {
-      /* ignore */
-    }
-    setLogoPhase("idle");
-  };
 
   return (
     <div className="relative overflow-hidden">
@@ -103,11 +97,12 @@ export default function HomePage() {
               "relative inline-block mb-8",
               logoPhase === "slam" && "hero-logo-slam",
               logoPhase === "idle" && "hero-logo-idle",
-              logoPhase === "pending" && "hero-logo-static opacity-0"
+              logoPhase === "pending" && "opacity-0"
             )}
             onAnimationEnd={(e) => {
-              if (logoPhase === "slam" && e.animationName === "hero-logo-slam") {
-                onSlamEnd();
+              if (e.target !== e.currentTarget) return;
+              if (logoPhase === "slam" && e.animationName.includes("hero-logo-slam")) {
+                setLogoPhase("idle");
               }
             }}
           >
