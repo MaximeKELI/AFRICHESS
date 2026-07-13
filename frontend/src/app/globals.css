@@ -730,6 +730,7 @@ html.has-site-background nav {
 
 .low-bandwidth .hero-glow,
 .low-bandwidth .hero-logo,
+.low-bandwidth .hero-logo-idle,
 .low-bandwidth .hero-logo-slam,
 .low-bandwidth .hero-orb,
 .low-bandwidth .home-default-pattern,
@@ -773,6 +774,7 @@ html.has-site-background nav {
 @media (prefers-reduced-motion: reduce) {
   .hero-glow,
   .hero-logo,
+  .hero-logo-idle,
   .hero-logo-slam,
   .hero-logo-ring,
   .hero-orb,
