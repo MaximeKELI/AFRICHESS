@@ -8,7 +8,13 @@ import clsx from "clsx";
 import { useTranslation } from "@/hooks/useTranslation";
 import { ButtonLink } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
-import { playLogoLandSound, preloadLogoLandSound, resetLogoLandSoundForNewPageLoad } from "@/lib/logoIntroSound";
+import {
+  ensureLogoLandSoundUnlock,
+  playLogoLandSound,
+  playLogoLandSoundFromGesture,
+  preloadLogoLandSound,
+  resetLogoLandSoundForNewPageLoad,
+} from "@/lib/logoIntroSound";
 
 /** Sync avec ~68% de 0.72s (impact au sol) */
 const SLAM_LAND_MS = 490;
@@ -51,11 +57,12 @@ type LogoPhase = "pending" | "slam" | "idle";
 export default function HomePage() {
   const { t } = useTranslation();
   const [logoPhase, setLogoPhase] = useState<LogoPhase>("pending");
-  const soundPlayed = useRef(false);
+  const armedRef = useRef(false);
 
   useLayoutEffect(() => {
     // Accueil uniquement — chaque refresh remonte ce composant
     resetLogoLandSoundForNewPageLoad();
+    armedRef.current = false;
     const reduce =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -69,23 +76,28 @@ export default function HomePage() {
 
   useEffect(() => {
     if (logoPhase !== "slam") return;
-    soundPlayed.current = false;
 
-    // Première tentative tôt (certains navigateurs acceptent mieux)
-    const early = window.setTimeout(() => {
-      void playLogoLandSound();
+    const land = window.setTimeout(() => {
+      playLogoLandSound();
+      // Si autoplay bloqué, le prochain clic/touche joue le son
+      window.setTimeout(() => ensureLogoLandSoundUnlock(), 80);
     }, SLAM_LAND_MS);
 
-    return () => window.clearTimeout(early);
+    return () => window.clearTimeout(land);
   }, [logoPhase]);
 
-  // Si autoplay a été bloqué, le premier geste rejoue le son (voir logoIntroSound)
   useEffect(() => {
     preloadLogoLandSound();
+    ensureLogoLandSoundUnlock();
   }, []);
 
+  const onHomePointerDown = () => {
+    // Geste utilisateur : seule façon fiable de débloquer l’audio au refresh
+    playLogoLandSoundFromGesture();
+  };
+
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative overflow-hidden" onPointerDown={onHomePointerDown}>
       <div
         className="absolute inset-0 opacity-[0.14] dark:opacity-[0.08] bg-cover bg-center pointer-events-none home-default-pattern"
         style={{ backgroundImage: "url('/images/pattern-bg.png')" }}

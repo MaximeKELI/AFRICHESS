@@ -2,24 +2,23 @@
  * Son « pion posé » — page d’accueil uniquement.
  *
  * Les navigateurs bloquent l’autoplay avec son sans geste utilisateur.
- * Stratégie : tenter à l’impact du logo ; si refusé, jouer au premier
- * pointerdown/keydown (appel synchrone à play() pour conserver l’activation).
+ * On tente à l’impact du logo ; si refusé, le premier clic/touche joue le son
+ * (play() dans la pile du geste = activation conservée).
  */
 
-const MOVE_SRC = "/sounds/themes/standard/Move.ogg";
-const MOVE_SRC_FALLBACK = "/sounds/themes/standard/move.mp3";
+const MOVE_OGG = "/sounds/themes/standard/move.ogg";
+const MOVE_MP3 = "/sounds/themes/standard/move.mp3";
 
 let playedThisLoad = false;
 let unlockArmed = false;
-let cached: HTMLAudioElement | null = null;
 
 function pickSrc(): string {
-  if (typeof window === "undefined") return MOVE_SRC_FALLBACK;
+  if (typeof window === "undefined") return MOVE_MP3;
   const probe = document.createElement("audio");
   const oggOk =
     typeof probe.canPlayType === "function" &&
     probe.canPlayType('audio/ogg; codecs="vorbis"') !== "";
-  return oggOk ? MOVE_SRC : MOVE_SRC_FALLBACK;
+  return oggOk ? MOVE_OGG : MOVE_MP3;
 }
 
 function createAudio(): HTMLAudioElement {
@@ -30,27 +29,14 @@ function createAudio(): HTMLAudioElement {
   return audio;
 }
 
-function getCached(): HTMLAudioElement {
-  if (!cached) cached = createAudio();
-  return cached;
-}
-
 export function resetLogoLandSoundForNewPageLoad(): void {
   playedThisLoad = false;
   unlockArmed = false;
-  if (cached) {
-    try {
-      cached.pause();
-      cached.currentTime = 0;
-    } catch {
-      /* ignore */
-    }
-  }
 }
 
 export function preloadLogoLandSound(): void {
   if (typeof window === "undefined") return;
-  getCached().load();
+  createAudio().load();
 }
 
 function playThudFallback(): void {
@@ -59,10 +45,8 @@ function playThudFallback(): void {
       window.AudioContext ||
       (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new Ctx();
-    const resume = ctx.state === "suspended" ? ctx.resume() : Promise.resolve();
-    void resume.then(() => {
+    const kick = () => {
       const t0 = ctx.currentTime;
-      // Impact bois court (repli si le fichier MP3/OGG échoue)
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "triangle";
@@ -75,74 +59,14 @@ function playThudFallback(): void {
       gain.connect(ctx.destination);
       osc.start(t0);
       osc.stop(t0 + 0.15);
-    });
+    };
+    if (ctx.state === "suspended") {
+      void ctx.resume().then(kick).catch(() => {});
+    } else {
+      kick();
+    }
   } catch {
     /* ignore */
-  }
-}
-
-/**
- * Joue le son immédiatement. À appeler aussi depuis un handler de geste
- * (onPointerDown) pour contourner l’autoplay.
- */
-export function playLogoLandSound(): boolean {
-  if (typeof window === "undefined") return false;
-  if (playedThisLoad) return true;
-
-  // Nouveau nœud à chaque lecture (évite les états « coincés » d’un seul Audio)
-  const audio = createAudio();
-  cached = audio;
-  audio.volume = 1;
-  audio.muted = false;
-
-  try {
-    audio.currentTime = 0;
-  } catch {
-    /* ignore */
-  }
-
-  const result = audio.play();
-  if (result !== undefined && typeof result.then === "function") {
-    void result.then(
-      () => {
-        playedThisLoad = true;
-      },
-      () => {
-        // Autoplay / fichier : repli synthétique (marche surtout après geste)
-        playThudFallback();
-        playedThisLoad = true;
-        armGestureUnlock();
-      }
-    );
-  } else {
-    playedThisLoad = true;
-  }
-
-  // Marque « tenté » pour ne pas spammer ; si play() a échoué en sync, arm unlock
-  return true;
-}
-
-/** À brancher sur onPointerDown / onKeyDown de la home — activation utilisateur. */
-export function playLogoLandSoundFromGesture(): void {
-  if (playedThisLoad) return;
-  playedThisLoad = false; // force une vraie lecture dans le geste
-  const audio = createAudio();
-  cached = audio;
-  audio.volume = 1;
-  audio.muted = false;
-  try {
-    audio.currentTime = 0;
-  } catch {
-    /* ignore */
-  }
-  const p = audio.play();
-  playedThisLoad = true;
-  if (p !== undefined && typeof p.then === "function") {
-    void p.catch(() => {
-      playThudFallback();
-    });
-  } else {
-    playThudFallback();
   }
 }
 
@@ -155,7 +79,7 @@ function armGestureUnlock(): void {
     window.removeEventListener("keydown", onGesture, true);
     window.removeEventListener("touchstart", onGesture, true);
     unlockArmed = false;
-    if (!playedThisLoad) playLogoLandSoundFromGesture();
+    playLogoLandSoundFromGesture();
   };
 
   window.addEventListener("pointerdown", onGesture, { capture: true });
@@ -163,8 +87,63 @@ function armGestureUnlock(): void {
   window.addEventListener("touchstart", onGesture, { capture: true });
 }
 
-/** Après une tentative autoplay : si rien n’a joué, armer le geste. */
+/** Tentative autoplay (souvent bloquée). Si échec → arme le 1er geste. */
+export function playLogoLandSound(): void {
+  if (typeof window === "undefined" || playedThisLoad) return;
+
+  const audio = createAudio();
+  audio.volume = 1;
+  audio.muted = false;
+  try {
+    audio.currentTime = 0;
+  } catch {
+    /* ignore */
+  }
+
+  const p = audio.play();
+  if (p !== undefined && typeof p.then === "function") {
+    void p.then(
+      () => {
+        playedThisLoad = true;
+      },
+      () => {
+        // Ne pas marquer played — le geste doit pouvoir rejouer
+        armGestureUnlock();
+      }
+    );
+  } else {
+    playedThisLoad = true;
+  }
+}
+
+/** Lecture dans un geste utilisateur (fiable). */
+export function playLogoLandSoundFromGesture(): void {
+  if (typeof window === "undefined" || playedThisLoad) return;
+
+  const audio = createAudio();
+  audio.volume = 1;
+  audio.muted = false;
+  try {
+    audio.currentTime = 0;
+  } catch {
+    /* ignore */
+  }
+
+  const p = audio.play();
+  // Marquer après l’appel synchrone à play() (conserve l’activation)
+  playedThisLoad = true;
+
+  if (p !== undefined && typeof p.then === "function") {
+    void p.catch(() => {
+      playThudFallback();
+    });
+  }
+}
+
 export function ensureLogoLandSoundUnlock(): void {
-  if (playedThisLoad) return;
-  armGestureUnlock();
+  if (!playedThisLoad) armGestureUnlock();
+}
+
+export function hasPlayedLogoLandSound(): boolean {
+  return playedThisLoad;
 }
