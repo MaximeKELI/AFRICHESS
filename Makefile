@@ -1,7 +1,8 @@
-.PHONY: all bootstrap up up-all down logs migrate superuser demo frontend hybrid mobile mobile-android mobile-chrome mobile-test mobile-emulator
+.PHONY: all bootstrap dev up up-all down logs migrate superuser demo frontend hybrid mobile mobile-android mobile-chrome mobile-test mobile-emulator
 
 # Install deps + Docker stack + frontend (commande unique)
-all bootstrap:
+# Usage quotidien : make dev  (ou make bootstrap)
+all bootstrap dev:
 	./scripts/dev-all.sh
 
 up:

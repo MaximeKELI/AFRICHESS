@@ -484,15 +484,30 @@ flowchart LR
 - Docker & Docker Compose **(recommandé)**
 - Ou : Python 3.12+ · Node 20+ · PostgreSQL 16 · Redis 7 · Stockfish
 
-### Une commande
+### Une commande — frontend + backend ensemble
 
 ```bash
-cd AFRICHESS
-cp .env.example .env
-make bootstrap   # ou ./scripts/dev-all.sh
+make dev
 ```
 
-### Docker Compose (services)
+Alias équivalents : `make bootstrap` · `./scripts/dev-all.sh`  
+→ démarre **db + redis + backend + celery** (Docker) puis le **frontend** Next.js sur [:3000](http://localhost:3000).  
+API / Swagger : [:8000/api/docs/](http://localhost:8000/api/docs/)
+
+Première fois seulement (si `.env` absent) :
+
+```bash
+cp .env.example .env
+make dev
+```
+
+| Variante | Commande | Quand |
+|----------|----------|--------|
+| **Recommandée** | `make dev` | FE + BE en une fois |
+| Hybride (BE local) | `make hybrid` | hot-reload Django hors Docker |
+| Tout Docker détaché | `make up-all` | stack complète en arrière-plan |
+
+### Docker Compose (services séparés)
 
 ```bash
 docker compose up --build
@@ -556,7 +571,7 @@ daphne -b 0.0.0.0 -p 8000 config.asgi:application
 flowchart TD
   A[Cloner le dépôt] --> B[cp .env.example .env]
   B --> C{Mode ?}
-  C -->|Docker| D[make bootstrap / compose up]
+  C -->|Docker| D[make dev / compose up]
   C -->|Hybrid| E[make hybrid]
   D --> F[Backend :8000]
   D --> G[Frontend :3000]
