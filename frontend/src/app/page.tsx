@@ -9,13 +9,10 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { ButtonLink } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import {
-  canAutoplayLogoSound,
-  hasPlayedLogoLandSound,
   playLogoLandSound,
-  playLogoLandSoundFromGesture,
   preloadLogoLandSound,
+  replayLogoLandSound,
   resetLogoLandSoundForNewPageLoad,
-  unlockLogoLandAudio,
 } from "@/lib/logoIntroSound";
 
 /** Sync avec ~68% de 0.72s (impact au sol) */
@@ -59,86 +56,33 @@ type LogoPhase = "pending" | "slam" | "idle";
 export default function HomePage() {
   const { t } = useTranslation();
   const [logoPhase, setLogoPhase] = useState<LogoPhase>("pending");
-  /** Autoplay refusé → on attend un geste pour slam + son ensemble */
-  const needsGestureRef = useRef(false);
-  const slamStartedRef = useRef(false);
+  const landSoundSent = useRef(false);
 
   useLayoutEffect(() => {
     resetLogoLandSoundForNewPageLoad();
-    needsGestureRef.current = false;
-    slamStartedRef.current = false;
+    landSoundSent.current = false;
+    preloadLogoLandSound();
 
     const reduce =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) {
-      setLogoPhase("idle");
-      return;
-    }
-
-    preloadLogoLandSound();
-
-    let cancelled = false;
-    const startSlam = () => {
-      if (cancelled || slamStartedRef.current) return;
-      slamStartedRef.current = true;
-      setLogoPhase("slam");
-    };
-
-    void canAutoplayLogoSound().then((ok) => {
-      if (cancelled) return;
-      if (ok) {
-        needsGestureRef.current = false;
-        startSlam();
-      } else {
-        // Pas de son sans geste → logo visible ; 1er clic = slam + son
-        needsGestureRef.current = true;
-        setLogoPhase("idle");
-      }
-    });
-
-    const fallback = window.setTimeout(() => {
-      if (!slamStartedRef.current) setLogoPhase((p) => (p === "pending" ? "idle" : p));
-    }, 1200);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(fallback);
-    };
+    setLogoPhase(reduce ? "idle" : "slam");
   }, []);
 
   useEffect(() => {
     if (logoPhase !== "slam") return;
 
     const land = window.setTimeout(() => {
-      // Après geste : contexte déjà débloqué → buffer à l’impact
+      if (landSoundSent.current) return;
+      landSoundSent.current = true;
       playLogoLandSound();
-      if (!hasPlayedLogoLandSound()) {
-        playLogoLandSoundFromGesture();
-      }
     }, SLAM_LAND_MS);
 
     return () => window.clearTimeout(land);
   }, [logoPhase]);
 
-  const onHomePointerDown = () => {
-    unlockLogoLandAudio();
-
-    if (needsGestureRef.current && !slamStartedRef.current) {
-      // play() dans le geste = seul chemin 100% fiable (Safari / autoplay off)
-      playLogoLandSoundFromGesture();
-      slamStartedRef.current = true;
-      setLogoPhase("slam");
-      return;
-    }
-
-    if (!hasPlayedLogoLandSound()) {
-      playLogoLandSoundFromGesture();
-    }
-  };
-
   return (
-    <div className="relative overflow-hidden" onPointerDown={onHomePointerDown}>
+    <div className="relative overflow-hidden">
       <div
         className="absolute inset-0 opacity-[0.14] dark:opacity-[0.08] bg-cover bg-center pointer-events-none home-default-pattern"
         style={{ backgroundImage: "url('/images/pattern-bg.png')" }}
@@ -148,14 +92,18 @@ export default function HomePage() {
       <div className="hero-orb hero-orb-b" aria-hidden />
       <div className="hero-orb hero-orb-c" aria-hidden />
 
-      {/* Précharge le fichier dans le DOM (certains navigateurs sont plus permissifs) */}
       <audio src="/sounds/themes/standard/move.mp3" preload="auto" playsInline aria-hidden className="hidden" />
 
       <section className="relative min-h-[min(100dvh,760px)] flex flex-col justify-center max-w-7xl mx-auto px-4 py-16 md:py-24">
         <div className="text-center">
-          <div
+          <button
+            type="button"
+            onClick={() => replayLogoLandSound()}
+            aria-label={t("home.logo.replaySound") !== "home.logo.replaySound" ? t("home.logo.replaySound") : "Réécouter le son du pion"}
+            title="Réécouter le son du pion"
             className={clsx(
-              "relative inline-block mb-8",
+              "relative inline-block mb-8 cursor-pointer rounded-2xl border-0 bg-transparent p-0",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--gold)]",
               logoPhase === "slam" && "hero-logo-slam",
               logoPhase === "idle" && "hero-logo-idle",
               logoPhase === "pending" && "opacity-0"
@@ -170,7 +118,7 @@ export default function HomePage() {
             <div className="hero-logo-ring" aria-hidden />
             <div className="hero-logo-impact" aria-hidden />
             <div
-              className="absolute -inset-3 rounded-3xl opacity-40 blur-xl"
+              className="absolute -inset-3 rounded-3xl opacity-40 blur-xl pointer-events-none"
               style={{
                 background:
                   "radial-gradient(circle, color-mix(in srgb, var(--gold) 35%, transparent), transparent 70%)",
@@ -183,9 +131,9 @@ export default function HomePage() {
               width={112}
               height={112}
               priority
-              className="relative mx-auto drop-shadow-lg rounded-2xl"
+              className="relative mx-auto drop-shadow-lg rounded-2xl pointer-events-none"
             />
-          </div>
+          </button>
 
           <p className="text-xs md:text-sm uppercase tracking-[0.28em] text-muted font-medium mb-4 hero-eyebrow">
             {t("home.tagline")}
