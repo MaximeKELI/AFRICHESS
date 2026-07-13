@@ -1,5 +1,8 @@
 /**
- * Son « pion posé » — page d’accueil (impact du logo + rejeu au clic).
+ * Son « pion posé » — impact auto du logo + rejeu au clic.
+ *
+ * Important : ne jamais appeler buffer.start() sur un AudioContext encore
+ * « suspended » (ça « réussit » sans son). L’autoplay passe par HTMLAudio.
  */
 
 const MOVE_MP3 = "/sounds/themes/standard/move.mp3";
@@ -8,6 +11,7 @@ const MOVE_OGG = "/sounds/themes/standard/move.ogg";
 let audioCtx: AudioContext | null = null;
 let moveBuffer: AudioBuffer | null = null;
 let loadingBuffer: Promise<AudioBuffer | null> | null = null;
+let htmlAudio: HTMLAudioElement | null = null;
 
 function pickSrc(): string {
   if (typeof window === "undefined") return MOVE_MP3;
@@ -16,6 +20,16 @@ function pickSrc(): string {
     typeof probe.canPlayType === "function" &&
     probe.canPlayType('audio/ogg; codecs="vorbis"') !== "";
   return oggOk ? MOVE_OGG : MOVE_MP3;
+}
+
+function getHtmlAudio(): HTMLAudioElement {
+  if (!htmlAudio) {
+    htmlAudio = new Audio(pickSrc());
+    htmlAudio.preload = "auto";
+    htmlAudio.volume = 1;
+    htmlAudio.setAttribute("playsinline", "true");
+  }
+  return htmlAudio;
 }
 
 function getCtx(): AudioContext | null {
@@ -53,15 +67,20 @@ async function loadMoveBuffer(): Promise<AudioBuffer | null> {
 }
 
 export function resetLogoLandSoundForNewPageLoad(): void {
-  /* no-op de session — le rejeu est libre via replayLogoLandSound */
+  if (htmlAudio) {
+    try {
+      htmlAudio.pause();
+      htmlAudio.currentTime = 0;
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 export function preloadLogoLandSound(): void {
   if (typeof window === "undefined") return;
+  getHtmlAudio().load();
   void loadMoveBuffer();
-  const a = new Audio(pickSrc());
-  a.preload = "auto";
-  a.load();
 }
 
 export function unlockLogoLandAudio(): void {
@@ -71,11 +90,11 @@ export function unlockLogoLandAudio(): void {
   }
 }
 
-function playBuffer(): boolean {
+/** Web Audio uniquement si le contexte est déjà running (sinon silence trompeur). */
+function playBufferIfRunning(): boolean {
   const ctx = getCtx();
-  if (!ctx || !moveBuffer) return false;
+  if (!ctx || !moveBuffer || ctx.state !== "running") return false;
   try {
-    if (ctx.state === "suspended") void ctx.resume();
     const src = ctx.createBufferSource();
     const gain = ctx.createGain();
     gain.gain.value = 1;
@@ -91,34 +110,34 @@ function playBuffer(): boolean {
 
 function playThud(): void {
   const ctx = getCtx();
-  if (!ctx) return;
-  const kick = () => {
-    const t0 = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(180, t0);
-    osc.frequency.exponentialRampToValueAtTime(55, t0 + 0.08);
-    gain.gain.setValueAtTime(0.0001, t0);
-    gain.gain.exponentialRampToValueAtTime(0.55, t0 + 0.008);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(t0);
-    osc.stop(t0 + 0.15);
-  };
-  if (ctx.state === "suspended") {
-    void ctx.resume().then(kick).catch(() => {});
-  } else {
-    kick();
-  }
+  if (!ctx || ctx.state !== "running") return;
+  const t0 = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "triangle";
+  osc.frequency.setValueAtTime(180, t0);
+  osc.frequency.exponentialRampToValueAtTime(55, t0 + 0.08);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(0.55, t0 + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + 0.15);
 }
 
-function playHtmlAudio(): Promise<boolean> {
-  const audio = new Audio(pickSrc());
+function playViaHtmlElement(): Promise<boolean> {
+  const audio = getHtmlAudio();
   audio.volume = 1;
   audio.muted = false;
-  const p = audio.play();
+  try {
+    audio.currentTime = 0;
+  } catch {
+    /* ignore */
+  }
+  const fresh = audio.cloneNode(true) as HTMLAudioElement;
+  fresh.volume = 1;
+  const p = fresh.play();
   if (p !== undefined && typeof p.then === "function") {
     return p.then(
       () => true,
@@ -128,24 +147,35 @@ function playHtmlAudio(): Promise<boolean> {
   return Promise.resolve(true);
 }
 
-/** Impact du logo (autoplay si le navigateur l’autorise). */
+/**
+ * Impact auto à l’atterrissage.
+ * Priorité HTMLAudio (autoplay MEI) — pas de Web Audio suspendu.
+ */
 export function playLogoLandSound(): void {
   if (typeof window === "undefined") return;
-  if (playBuffer()) return;
-  void playHtmlAudio().then((ok) => {
-    if (!ok) playThud();
+  void playViaHtmlElement().then((ok) => {
+    if (ok) return;
+    if (playBufferIfRunning()) return;
+    playThud();
   });
 }
 
-/**
- * Rejeu au clic sur le logo — toujours autorisé (geste utilisateur).
- * Peut aussi débloquer l’audio pour les prochains impacts autoplay.
- */
+/** Rejeu au clic sur le logo (geste → débloque le contexte). */
 export function replayLogoLandSound(): void {
   if (typeof window === "undefined") return;
   unlockLogoLandAudio();
-  if (playBuffer()) return;
-  void playHtmlAudio().then((ok) => {
-    if (!ok) playThud();
-  });
+
+  const ctx = getCtx();
+  const afterUnlock = () => {
+    if (playBufferIfRunning()) return;
+    void playViaHtmlElement().then((ok) => {
+      if (!ok) playThud();
+    });
+  };
+
+  if (ctx?.state === "suspended") {
+    void ctx.resume().then(afterUnlock).catch(afterUnlock);
+  } else {
+    afterUnlock();
+  }
 }
