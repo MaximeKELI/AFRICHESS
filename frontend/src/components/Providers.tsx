@@ -12,7 +12,7 @@ import { hydrateClientStoresFromStorage } from "@/lib/clientHydration";
 import { refreshAuthTokens } from "@/lib/api";
 import { JWT_REFRESH_HTTPONLY } from "@/lib/authConfig";
 import { setChessSoundTheme } from "@/lib/chessSounds";
-import { flushPendingLogoLandSound, unlockLogoLandAudio } from "@/lib/logoIntroSound";
+import { unlockLogoLandAudio } from "@/lib/logoIntroSound";
 import { usePreferencesStore } from "@/store/preferences";
 import Cookies from "js-cookie";
 
@@ -83,16 +83,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("pointerdown", warm);
   }, []);
 
-  /** Débloque l’audio + son d’accueil manqué (pas sur le logo : géré par replay). */
+  /** Garde l’AudioContext prêt après le 1er geste (sons accueil / plateau). */
   useEffect(() => {
-    const onGesture = (event: Event) => {
-      unlockLogoLandAudio();
-      const target = event.target;
-      if (target instanceof Element && target.closest("[data-logo-land-sound]")) {
-        return;
-      }
-      flushPendingLogoLandSound();
-    };
+    const onGesture = () => unlockLogoLandAudio();
     window.addEventListener("pointerdown", onGesture, { capture: true, passive: true });
     window.addEventListener("keydown", onGesture, { capture: true });
     return () => {

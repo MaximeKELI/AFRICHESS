@@ -117,7 +117,7 @@ export default function HomePage() {
     };
   }, []);
 
-  // 1er geste site : si on attendait, lance la chute (son programmé à l’impact)
+  // 1er geste : débloque Web Audio PUIS lance la chute → son buffer à l’impact
   useEffect(() => {
     const onGesture = () => {
       if (!awaitGestureRef.current || slamStartedRef.current) return;
@@ -136,6 +136,9 @@ export default function HomePage() {
     if (logoPhase !== "slam") return;
 
     const land = window.setTimeout(() => {
+      // Après geste : AudioContext « running » → buffer audible.
+      // Après autoplay OK : HTMLAudio via MEI.
+      playLogoLandSound();
       const el = landAudioRef.current;
       if (el) {
         el.volume = 1;
@@ -145,14 +148,7 @@ export default function HomePage() {
         } catch {
           /* ignore */
         }
-        void el.play().then(
-          () => undefined,
-          () => {
-            playLogoLandSound();
-          }
-        );
-      } else {
-        playLogoLandSound();
+        void el.play().catch(() => undefined);
       }
     }, SLAM_LAND_MS);
 
