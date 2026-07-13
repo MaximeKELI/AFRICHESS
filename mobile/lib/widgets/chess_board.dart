@@ -125,7 +125,7 @@ class _ChessBoardViewState extends State<ChessBoardView> {
     final piece = _game.get(from);
     String? promo;
     if (piece != null &&
-        piece.type == ch.Chess.PAWN &&
+        piece.type == ch.PieceType.PAWN &&
         ((piece.color == ch.Color.WHITE && rank == '8') ||
             (piece.color == ch.Color.BLACK && rank == '1'))) {
       promo = 'q';
