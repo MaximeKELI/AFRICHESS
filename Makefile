@@ -20,9 +20,17 @@ hybrid:
 frontend:
 	cd frontend && npm run dev
 
-# Flutter mobile (Android emulator defaults to 10.0.2.2)
+# Flutter mobile — Linux desktop by default (no phone required)
 mobile:
-	cd mobile && flutter pub get && flutter run
+	cd mobile && flutter pub get && flutter run -d linux
+
+mobile-android:
+	cd mobile && flutter run -d android \
+		--dart-define=API_URL=http://10.0.2.2:8000/api \
+		--dart-define=WS_URL=ws://10.0.2.2:8000
+
+mobile-chrome:
+	cd mobile && flutter run -d chrome
 
 mobile-test:
 	cd mobile && flutter test

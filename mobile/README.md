@@ -30,12 +30,23 @@ flutter run --dart-define=API_URL=http://192.168.1.20:8000/api \
 
 ## Lancer
 
+Depuis la racine du projet Flutter (`mobile/`, pas `lib/`) :
+
 ```bash
-cd mobile
-flutter pub get
-flutter run
+cd ~/AFRICHESS/mobile
+flutter run -d linux          # bureau Ubuntu
+# ou
+flutter run -d chrome         # navigateur
 # ou
 make mobile
+```
+
+Android émulateur :
+
+```bash
+flutter run -d android \
+  --dart-define=API_URL=http://10.0.2.2:8000/api \
+  --dart-define=WS_URL=ws://10.0.2.2:8000
 ```
 
 ## Auth
