@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../api/apis.dart';
-import '../../core/storage.dart';
+import '../../core/api_client.dart';
 import '../../core/ws.dart';
 import '../../features/auth/auth_provider.dart';
 import '../../widgets/chess_board.dart';
