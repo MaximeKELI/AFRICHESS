@@ -13,6 +13,7 @@ import {
   preloadLogoLandSound,
   replayLogoLandSound,
   resetLogoLandSoundForNewPageLoad,
+  unlockLogoLandAudio,
 } from "@/lib/logoIntroSound";
 
 /** Sync avec ~68% de 0.72s (impact au sol) */
@@ -56,24 +57,85 @@ type LogoPhase = "pending" | "slam" | "idle";
 export default function HomePage() {
   const { t } = useTranslation();
   const [logoPhase, setLogoPhase] = useState<LogoPhase>("pending");
-  const landSoundSent = useRef(false);
+  /** Autoplay refusé : la chute + son partent au 1er geste (activation navigateur). */
+  const awaitGestureRef = useRef(false);
+  const slamStartedRef = useRef(false);
   const landAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const beginSlam = () => {
+    if (slamStartedRef.current) return;
+    slamStartedRef.current = true;
+    awaitGestureRef.current = false;
+    setLogoPhase("slam");
+  };
 
   useLayoutEffect(() => {
     resetLogoLandSoundForNewPageLoad();
-    landSoundSent.current = false;
+    awaitGestureRef.current = false;
+    slamStartedRef.current = false;
     preloadLogoLandSound();
 
     const reduce =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setLogoPhase(reduce ? "idle" : "slam");
+    if (reduce) {
+      setLogoPhase("idle");
+      return;
+    }
+
+    let cancelled = false;
+
+    // Sonde autoplay : si OK → chute immédiate ; sinon on attend un geste
+    // pour que play() à l’impact reste dans la fenêtre d’activation.
+    const probe = new Audio("/sounds/themes/standard/move.mp3");
+    probe.volume = 0.01;
+    void probe
+      .play()
+      .then(() => {
+        if (cancelled) return;
+        probe.pause();
+        try {
+          probe.currentTime = 0;
+        } catch {
+          /* ignore */
+        }
+        beginSlam();
+      })
+      .catch(() => {
+        if (cancelled) return;
+        awaitGestureRef.current = true;
+        setLogoPhase("idle");
+      });
+
+    const fallback = window.setTimeout(() => {
+      if (!slamStartedRef.current) setLogoPhase((p) => (p === "pending" ? "idle" : p));
+    }, 1500);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(fallback);
+    };
+  }, []);
+
+  // 1er geste site : si on attendait, lance la chute (son programmé à l’impact)
+  useEffect(() => {
+    const onGesture = () => {
+      if (!awaitGestureRef.current || slamStartedRef.current) return;
+      unlockLogoLandAudio();
+      beginSlam();
+    };
+    window.addEventListener("pointerdown", onGesture, { capture: true, passive: true });
+    window.addEventListener("keydown", onGesture, { capture: true });
+    return () => {
+      window.removeEventListener("pointerdown", onGesture, true);
+      window.removeEventListener("keydown", onGesture, true);
+    };
   }, []);
 
   useEffect(() => {
     if (logoPhase !== "slam") return;
 
-    const playLand = () => {
+    const land = window.setTimeout(() => {
       const el = landAudioRef.current;
       if (el) {
         el.volume = 1;
@@ -84,28 +146,27 @@ export default function HomePage() {
           /* ignore */
         }
         void el.play().then(
+          () => undefined,
           () => {
-            landSoundSent.current = true;
-          },
-          () => {
-            // Politique autoplay : repli (HTML frais / buffer si running)
             playLogoLandSound();
-            landSoundSent.current = true;
           }
         );
-        return;
+      } else {
+        playLogoLandSound();
       }
-      playLogoLandSound();
-      landSoundSent.current = true;
-    };
-
-    const land = window.setTimeout(() => {
-      if (landSoundSent.current) return;
-      playLand();
     }, SLAM_LAND_MS);
 
     return () => window.clearTimeout(land);
   }, [logoPhase]);
+
+  const onLogoClick = () => {
+    if (awaitGestureRef.current && !slamStartedRef.current) {
+      unlockLogoLandAudio();
+      beginSlam();
+      return;
+    }
+    replayLogoLandSound();
+  };
 
   return (
     <div className="relative overflow-hidden">
@@ -132,7 +193,7 @@ export default function HomePage() {
           <button
             type="button"
             data-logo-land-sound
-            onClick={() => replayLogoLandSound()}
+            onClick={onLogoClick}
             aria-label="Réécouter le son du pion"
             title="Réécouter le son du pion"
             className={clsx(
