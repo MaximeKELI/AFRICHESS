@@ -1,17 +1,65 @@
-# africhess_mobile
+# AFRICHESS Mobile (Flutter)
 
-A new Flutter project.
+Application mobile native **Flutter** (Android + iOS) qui consomme les **mêmes API / WebSockets** que le frontend web Django.
 
-## Getting Started
+> L’ancien client Expo/React Native est archivé dans [`mobile_expo_legacy/`](../mobile_expo_legacy/) (référence des flux).
 
-This project is a starting point for a Flutter application.
+## Prérequis
 
-A few resources to get you started if this is your first Flutter project:
+- Flutter 3.22+ (`flutter doctor`)
+- Backend Django joignable (`make up` ou hybride)
+- Émulateur Android / simulateur iOS / device physique
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Configuration
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Variables `--dart-define` :
+
+| Clé | Défaut (émulateur Android) | Notes |
+|-----|----------------------------|--------|
+| `API_URL` | `http://10.0.2.2:8000/api` | iOS sim → `http://127.0.0.1:8000/api` |
+| `WS_URL` | `ws://10.0.2.2:8000` | idem |
+| `MEDIA_ORIGIN` | `http://10.0.2.2:8000` | avatars / médias |
+| `WEB_URL` | `http://10.0.2.2:3000` | checkout Stripe / liens |
+
+Exemple device LAN :
+
+```bash
+flutter run --dart-define=API_URL=http://192.168.1.20:8000/api \
+  --dart-define=WS_URL=ws://192.168.1.20:8000
+```
+
+## Lancer
+
+```bash
+cd mobile
+flutter pub get
+flutter run
+# ou
+make mobile
+```
+
+## Auth
+
+- Login / register / refresh JWT (`flutter_secure_storage`)
+- 2FA (champ TOTP optionnel)
+- OAuth Google / GitHub → navigateur → deep link `africhess://auth/callback`
+
+## Parcours couverts (parité web)
+
+Voir [`PARITY.md`](PARITY.md) pour la checklist écran par écran.
+
+**Cœur :** home, play (matchmaking + IA + bots), partie live WS, review, watch, puzzles (daily/training/rush/survival/streak/battle/themes), social (amis, DM, clubs), tournois, learning, stats, TV/simul/broadcasts, forum/blog, premium, admin/fairplay.
+
+## Stack
+
+- `go_router` + bottom nav
+- `flutter_riverpod`
+- `dio` + refresh JWT
+- `web_socket_channel` (`bearer` + token)
+- `chess` + plateau custom
+
+## Tests
+
+```bash
+cd mobile && flutter test
+```

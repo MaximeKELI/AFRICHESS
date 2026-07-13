@@ -21,7 +21,7 @@
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
 [![Celery](https://img.shields.io/badge/Celery-Async-37814A?style=for-the-badge)](https://docs.celeryq.dev/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](docker-compose.yml)
-[![Expo](https://img.shields.io/badge/Mobile-Expo-000020?style=for-the-badge&logo=expo&logoColor=white)](mobile/README.md)
+[![Flutter](https://img.shields.io/badge/Mobile-Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](mobile/README.md)
 [![CI](https://img.shields.io/badge/CI-GitHub_Actions-D4A017?style=for-the-badge&logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
 
 <br/>
@@ -114,7 +114,7 @@ mindmap
 | Couche | Technologies | Rôle |
 |--------|--------------|------|
 | **Frontend web** | Next.js 14 · React 18 · TypeScript · Tailwind · Zustand · chess.js · react-chessboard | UI, plateau, état client, i18n |
-| **Mobile** | Expo · React Native | Parité fonctionnalités clés hors navigateur |
+| **Mobile** | Flutter (Android + iOS) | Parité API web — voir `mobile/PARITY.md` |
 | **API** | Django 5 · DRF · SimpleJWT · dj-rest-auth · allauth | REST, auth, OAuth, abonnements |
 | **Temps réel** | Django Channels · Daphne · channels-redis | Parties, matchmaking, notifs |
 | **Jobs** | Celery · django-celery-beat | Forfaits, analyses async, tâches planifiées |
@@ -145,7 +145,7 @@ mindmap
 flowchart LR
   subgraph Clients
     WEB[Next.js Web]
-    MOB[Expo Mobile]
+    MOB[Flutter Mobile]
   end
   subgraph Edge
     API[Django REST]
@@ -186,7 +186,7 @@ Le monorepo sépare clairement :
 |---------|---------|
 | `frontend/` | App Next.js (App Router), design system, plateau, pages produit |
 | `backend/` | Django apps métier (`games`, `users`, `puzzles`, `learning`, `social`…) |
-| `mobile/` | Client Expo |
+| `mobile/` | Client Flutter |
 | `anticheat-cpp/` | Binaire fair-play (télémétrie / heuristiques) |
 | `infra/` | Compose prod, K8s, ECS, Grafana, Prometheus |
 | `docs/` | Setup, API, WebSocket, déploiement, learning |
@@ -633,7 +633,7 @@ flowchart LR
 
 ## Application mobile
 
-Le dossier `mobile/` contient une app **Expo** branchée sur la même API.
+Le dossier `mobile/` contient une app **Flutter** (Android + iOS) branchée sur la même API. L’ancien client Expo est archivé dans `mobile_expo_legacy/`.
 
 | Élément | Détail |
 |---------|--------|

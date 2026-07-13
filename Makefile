@@ -1,4 +1,4 @@
-.PHONY: all bootstrap up up-all down logs migrate superuser demo frontend hybrid
+.PHONY: all bootstrap up up-all down logs migrate superuser demo frontend hybrid mobile mobile-test
 
 # Install deps + Docker stack + frontend (commande unique)
 all bootstrap:
@@ -19,6 +19,13 @@ hybrid:
 
 frontend:
 	cd frontend && npm run dev
+
+# Flutter mobile (Android emulator defaults to 10.0.2.2)
+mobile:
+	cd mobile && flutter pub get && flutter run
+
+mobile-test:
+	cd mobile && flutter test
 
 down:
 	docker compose down
