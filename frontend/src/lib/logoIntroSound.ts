@@ -1,105 +1,122 @@
 /**
- * Son d’atterrissage du logo sur la page d’accueil uniquement.
- * Rejoué à chaque chargement / refresh de `/`.
+ * Son « pion posé » pour l’intro du logo (page d’accueil uniquement).
+ *
+ * Les navigateurs bloquent souvent l’autoplay au refresh. On :
+ * 1. précharge le fichier dès l’arrivée ;
+ * 2. tente la lecture à l’atterrissage ;
+ * 3. si bloqué, joue au premier geste (clic / touche / touch).
  */
 
-let sharedCtx: AudioContext | null = null;
-let preloaded: HTMLAudioElement | null = null;
+const MOVE_SRC = "/sounds/themes/standard/move.mp3";
 
-function getCtx(): AudioContext | null {
-  if (typeof window === "undefined") return null;
-  const AC =
-    window.AudioContext ||
-    (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-  if (!AC) return null;
-  if (!sharedCtx) sharedCtx = new AC();
-  if (sharedCtx.state === "suspended") {
-    void sharedCtx.resume().catch(() => undefined);
-  }
-  return sharedCtx;
+let primedAudio: HTMLAudioElement | null = null;
+let unlockInstalled = false;
+let playWhenUnlocked = false;
+let alreadyPlayedThisLoad = false;
+
+function makeAudio(): HTMLAudioElement {
+  const a = new Audio(MOVE_SRC);
+  a.preload = "auto";
+  a.volume = 1;
+  a.setAttribute("playsinline", "true");
+  return a;
 }
 
-/** Précharge le fichier dès l’arrivée sur l’accueil (avant l’impact). */
 export function preloadLogoLandSound(): void {
   if (typeof window === "undefined") return;
-  if (!preloaded) {
-    preloaded = new Audio("/sounds/themes/standard/move.mp3");
-    preloaded.preload = "auto";
-    preloaded.volume = 1;
-    preloaded.load();
-  } else {
-    preloaded.currentTime = 0;
+  if (!primedAudio) {
+    primedAudio = makeAudio();
+    primedAudio.load();
   }
+  installUnlockListeners();
 }
 
-function playWoodThudSynthetic() {
-  const ctx = getCtx();
-  if (!ctx) return;
+function installUnlockListeners(): void {
+  if (typeof window === "undefined" || unlockInstalled) return;
+  unlockInstalled = true;
 
-  const t0 = ctx.currentTime;
-  const osc = ctx.createOscillator();
-  const oscGain = ctx.createGain();
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(140, t0);
-  osc.frequency.exponentialRampToValueAtTime(55, t0 + 0.12);
-  oscGain.gain.setValueAtTime(0.55, t0);
-  oscGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.18);
-  osc.connect(oscGain);
-  oscGain.connect(ctx.destination);
-  osc.start(t0);
-  osc.stop(t0 + 0.2);
-
-  const bufferSize = Math.floor(ctx.sampleRate * 0.06);
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) {
-    data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
-  }
-  const noise = ctx.createBufferSource();
-  noise.buffer = buffer;
-  const filter = ctx.createBiquadFilter();
-  filter.type = "bandpass";
-  filter.frequency.value = 1200;
-  filter.Q.value = 0.8;
-  const noiseGain = ctx.createGain();
-  noiseGain.gain.setValueAtTime(0.45, t0);
-  noiseGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.07);
-  noise.connect(filter);
-  filter.connect(noiseGain);
-  noiseGain.connect(ctx.destination);
-  noise.start(t0);
-  noise.stop(t0 + 0.08);
-}
-
-function playFileMove(): Promise<boolean> {
-  return new Promise((resolve) => {
-    preloadLogoLandSound();
-    const audio = (preloaded?.cloneNode(true) as HTMLAudioElement | null) ?? new Audio("/sounds/themes/standard/move.mp3");
-    audio.volume = 1;
-    audio.currentTime = 0;
-    void audio
+  const unlock = () => {
+    // Débloque le contexte média de l’origine
+    const a = primedAudio ?? makeAudio();
+    primedAudio = a;
+    a.muted = true;
+    void a
       .play()
-      .then(() => resolve(true))
-      .catch(() => resolve(false));
-  });
+      .then(() => {
+        a.pause();
+        a.muted = false;
+        a.currentTime = 0;
+      })
+      .catch(() => undefined);
+
+    if (playWhenUnlocked && !alreadyPlayedThisLoad) {
+      playWhenUnlocked = false;
+      void playLogoLandSound(true);
+    }
+  };
+
+  // Capture : le premier geste sur la page débloque + rejoue si besoin
+  window.addEventListener("pointerdown", unlock, { capture: true });
+  window.addEventListener("keydown", unlock, { capture: true });
+  window.addEventListener("touchstart", unlock, { capture: true });
 }
 
-/** Joué à chaque refresh / chargement de la page d’accueil, au moment où le logo pose. */
-export async function playLogoLandSound(): Promise<void> {
-  if (typeof window === "undefined") return;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+async function playOnce(): Promise<boolean> {
+  preloadLogoLandSound();
+  const base = primedAudio ?? makeAudio();
+  primedAudio = base;
 
-  playWoodThudSynthetic();
-  const fileOk = await playFileMove();
+  // Clone pour pouvoir rejouer même si l’instance est busy
+  const node = base.cloneNode(true) as HTMLAudioElement;
+  node.volume = 1;
+  node.muted = false;
+  node.currentTime = 0;
 
-  if (!fileOk) {
-    const unlock = () => {
-      playWoodThudSynthetic();
-      void playFileMove();
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("keydown", unlock);
-    };
-    window.addEventListener("pointerdown", unlock, { once: true });
-    window.addEventListener("keydown", unlock, { once: true });
+  try {
+    await node.play();
+    return true;
+  } catch {
+    // Tentative muted → unmute (certains navigateurs)
+    try {
+      node.muted = true;
+      await node.play();
+      node.muted = false;
+      node.currentTime = 0;
+      await node.play();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+/**
+ * @param fromGesture true si appelé depuis un geste utilisateur (autoplay OK)
+ */
+export async function playLogoLandSound(fromGesture = false): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
+  if (alreadyPlayedThisLoad && !fromGesture) return alreadyPlayedThisLoad;
+
+  const ok = await playOnce();
+  if (ok) {
+    alreadyPlayedThisLoad = true;
+    playWhenUnlocked = false;
+    return true;
+  }
+
+  // Autoplay bloqué (typique au F5) → jouer au prochain geste
+  playWhenUnlocked = true;
+  installUnlockListeners();
+  return false;
+}
+
+/** Remise à zéro à chaque montage de la page d’accueil (chaque refresh). */
+export function resetLogoLandSoundForNewPageLoad(): void {
+  alreadyPlayedThisLoad = false;
+  playWhenUnlocked = false;
+  if (primedAudio) {
+    primedAudio.pause();
+    primedAudio.currentTime = 0;
   }
 }

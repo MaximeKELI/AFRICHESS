@@ -8,7 +8,7 @@ import clsx from "clsx";
 import { useTranslation } from "@/hooks/useTranslation";
 import { ButtonLink } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
-import { playLogoLandSound, preloadLogoLandSound } from "@/lib/logoIntroSound";
+import { playLogoLandSound, preloadLogoLandSound, resetLogoLandSoundForNewPageLoad } from "@/lib/logoIntroSound";
 
 /** Sync avec ~68% de 0.72s (impact au sol) */
 const SLAM_LAND_MS = 490;
