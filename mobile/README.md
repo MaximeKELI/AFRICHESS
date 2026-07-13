@@ -30,24 +30,30 @@ flutter run --dart-define=API_URL=http://192.168.1.20:8000/api \
 
 ## Lancer
 
-Depuis la racine du projet Flutter (`mobile/`, pas `lib/`) :
+Depuis `mobile/` (pas `lib/`) :
 
 ```bash
 cd ~/AFRICHESS/mobile
-flutter run -d linux          # bureau Ubuntu
-# ou
-flutter run -d chrome         # navigateur
-# ou
-make mobile
-```
 
-Android émulateur :
+# Bureau Linux
+flutter run -d linux
 
-```bash
+# Chrome
+flutter run -d chrome
+
+# Téléphone Android virtuel (AVD Medium_Phone)
+make mobile-emulator
+# ou :
+export ANDROID_HOME=$HOME/Android/Sdk
+export PATH=$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
+$ANDROID_HOME/emulator/emulator -avd Medium_Phone &
+adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
 flutter run -d android \
   --dart-define=API_URL=http://10.0.2.2:8000/api \
   --dart-define=WS_URL=ws://10.0.2.2:8000
 ```
+
+AVD disponibles : `Medium_Phone`, `Pixel_10_Pro_XL`, `Medium_Tablet` (`emulator -list-avds`).
 
 ## Auth
 

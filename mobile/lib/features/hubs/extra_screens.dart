@@ -446,14 +446,14 @@ class LiveTvAliasScreen extends ConsumerWidget {
   }
 }
 
-class StormRacerScreen extends ConsumerWidget {
+class StormRacerScreen extends StatelessWidget {
   const StormRacerScreen({super.key, required this.mode});
   final String mode; // storm | racer
 
   @override
   Widget build(BuildContext context) {
     // Storm/Racer web = variantes du rush — on réutilise le mode rush API
-    return PuzzlePlayScreen(mode: 'rush');
+    return const PuzzlePlayScreen(mode: 'rush');
   }
 }
 
@@ -501,7 +501,7 @@ class RepertoiresScreen extends ConsumerWidget {
   }
 }
 
-class StudySrsScreen extends ConsumerWidget {
+class StudySrsScreen extends StatelessWidget {
   const StudySrsScreen({super.key});
 
   @override

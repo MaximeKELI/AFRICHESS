@@ -1,4 +1,4 @@
-.PHONY: all bootstrap up up-all down logs migrate superuser demo frontend hybrid mobile mobile-android mobile-chrome mobile-test
+.PHONY: all bootstrap up up-all down logs migrate superuser demo frontend hybrid mobile mobile-android mobile-chrome mobile-test mobile-emulator
 
 # Install deps + Docker stack + frontend (commande unique)
 all bootstrap:
@@ -20,11 +20,18 @@ hybrid:
 frontend:
 	cd frontend && npm run dev
 
-# Flutter mobile — Linux desktop by default (no phone required)
+# Flutter — Linux desktop
 mobile:
 	cd mobile && flutter pub get && flutter run -d linux
 
+# Flutter — démarre AVD Medium_Phone + run (hôte = 10.0.2.2 depuis l’émulateur)
+mobile-emulator:
+	chmod +x scripts/run-android-emulator.sh
+	./scripts/run-android-emulator.sh Medium_Phone
+
 mobile-android:
+	export ANDROID_HOME=$${ANDROID_HOME:-$$HOME/Android/Sdk}; \
+	export PATH="$$ANDROID_HOME/emulator:$$ANDROID_HOME/platform-tools:$$PATH"; \
 	cd mobile && flutter run -d android \
 		--dart-define=API_URL=http://10.0.2.2:8000/api \
 		--dart-define=WS_URL=ws://10.0.2.2:8000

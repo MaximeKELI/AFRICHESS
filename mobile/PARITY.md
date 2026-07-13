@@ -1,46 +1,74 @@
 # Parité web ↔ mobile Flutter
 
-Checklist des surfaces web ([`frontend/src/app`](../frontend/src/app)) et équivalent Flutter (`mobile/lib`).
+Checklist des surfaces web (`frontend/src/app`) et équivalent Flutter (`mobile/lib`).
 
-Légende : OK = écran + API branchés · PARTIEL = liste/détail basique · TODO = à enrichir UI
+Légende :
+- **OK** = écran + navigation + API branchés
+- **PARTIEL** = flux utilisable mais UI plus simple que le web
+- **TODO** = non couvert
 
 | Domaine web | Route Flutter | Statut |
 |-------------|---------------|--------|
 | Accueil | `/` | OK |
-| Login / Register / OAuth | `/login` `/register` `/auth/callback` | OK |
-| Play / matchmaking / IA | `/play` `/game/:id` | OK |
+| Login / Register / OAuth / 2FA | `/login` `/register` `/auth/callback` | OK |
+| Play / matchmaking / IA | `/play` `/game/:id` | PARTIEL (horloges/Crazyhouse à peaufiner) |
 | Bots | `/bots` | OK |
-| Watch / Review | `/watch/:id` `/review/:id` | OK |
-| Lobby | `/lobby` | OK |
-| Daily / correspondence | `/daily` | OK |
-| Puzzles hub + modes | `/puzzles/*` | OK |
-| Friends / DM / challenges | `/friends` `/messages/:u` | OK |
-| Clubs | `/clubs` `/clubs/:slug` | OK |
+| Watch / Review / games review | `/watch/:id` `/review/:id` `/games/:id/review` | OK |
+| Lobby / daily / vote | `/lobby` `/daily` `/play/daily` `/play/vote` | OK / PARTIEL |
+| Puzzles (tous modes) | `/puzzles/*` + storm/racer | OK |
+| Friends / DM / challenges | `/friends` `/messages` `/messages/:u` | OK |
+| Clubs / teams | `/clubs` `/teams` | OK |
 | Leaderboard / leagues | `/leaderboard` `/leagues` | OK |
-| Tournaments | `/tournaments` | OK |
-| Learning / courses / videos | `/learning/*` | OK |
-| Studies / practice | `/studies` `/practice` | OK |
-| Analysis / editor / coords | `/analysis` `/editor` `/learning/coordinates` | PARTIEL |
-| Stats | `/stats` | OK |
-| TV / simul / broadcasts | `/tv` `/simul` `/broadcasts` | OK |
-| Forum / blog / events | `/forum` `/blog` `/events` | OK |
-| Coaches / streamers / teams | `/coaches` `/streamers` `/teams` | OK |
-| Premium / settings / profile | `/premium` `/settings` `/profile` | OK |
-| Notifications | `/notifications` | OK |
-| Admin / fairplay | `/admin` `/admin/fairplay` | OK |
-| Classroom / vote / arena UI fine | — | PARTIEL (API tournois/games) |
-| Push FCM wiring | devices API ready | PARTIEL |
+| Tournaments / arena / swiss | `/tournaments` `/arena` `/swiss` | OK |
+| Learning / learn / courses | `/learning` `/learn` `/learning/*` | OK / PARTIEL |
+| Studies / practice / SRS | `/studies` `/practice` `/learning/study` | PARTIEL |
+| Analysis / editor / paste / opening / clock / tools | `/analysis` `/editor` `/paste` `/opening` `/clock` `/tools` | OK / PARTIEL |
+| Training solo/vision/endgames | `/training/*` | PARTIEL |
+| Stats / insights | `/stats` `/insights` | OK |
+| TV / live / simul / broadcasts | `/tv` `/live` `/simul` `/broadcasts` | OK |
+| Forum / blog / community / events | `/forum` `/blog` `/community` `/events` | OK |
+| Coaches / streamers / players | `/coaches` `/streamers` `/players` | OK |
+| Classroom | `/classroom` | PARTIEL |
+| Premium / settings / profile | `/premium` `/settings` `/profile` `/profile/:u` | OK |
+| Notifications | `/notifications` | PARTIEL (WS live à brancher) |
+| Legal | `/legal/privacy` | OK |
+| Admin / fairplay | `/admin` `/admin/*` | OK |
+| Push FCM | devices API | PARTIEL |
+
+## Tester sur téléphone Android virtuel
+
+AVD déjà présents : `Medium_Phone`, `Pixel_10_Pro_XL`, …
+
+```bash
+# 1) Backend local
+make up   # ou hybrid
+
+# 2) Émulateur + app (script)
+make mobile-emulator
+
+# ou à la main :
+export ANDROID_HOME=$HOME/Android/Sdk
+export PATH=$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
+$ANDROID_HOME/emulator/emulator -avd Medium_Phone &
+adb wait-for-device
+cd mobile
+flutter run -d android \
+  --dart-define=API_URL=http://10.0.2.2:8000/api \
+  --dart-define=WS_URL=ws://10.0.2.2:8000
+```
+
+`10.0.2.2` = localhost de ta machine vu depuis l’émulateur.
 
 ## WebSockets
 
-| Canal | Utilisation mobile |
-|-------|--------------------|
+| Canal | Mobile |
+|-------|--------|
 | `/ws/game/{id}/` | `GameScreen` |
 | `/ws/matchmaking/` | `PlayHubScreen` |
-| `/ws/notifications/` | prêt (`ws.dart`) — brancher inbox live |
+| `/ws/notifications/` | prêt (`ws.dart`) — brancher inbox |
 | `/ws/simul/{id}/` | prêt |
 | `/ws/chat/...` | prêt |
 
-## Référence legacy Expo
+## Honnêteté produit
 
-[`mobile_expo_legacy/`](../mobile_expo_legacy/) — logique play/puzzles/auth à réutiliser pour peaufiner.
+La **couverture des routes** vise la parité web. Plusieurs écrans restent **PARTIEL** (listes API + plateau) par rapport au polish web. Le travail suivant = approfondir play (horloges, flag, rematch, Crazyhouse), notifications live, classroom collaboratif, et UI études.
