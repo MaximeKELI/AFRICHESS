@@ -1,14 +1,10 @@
 /**
- * Son « pion posé » — page d’accueil uniquement.
- *
- * Autoplay avec son est souvent bloqué. Après un geste, on reprend un
- * AudioContext et on joue un buffer (fiable sur Safari/Chrome).
+ * Son « pion posé » — page d’accueil (impact du logo + rejeu au clic).
  */
 
 const MOVE_MP3 = "/sounds/themes/standard/move.mp3";
 const MOVE_OGG = "/sounds/themes/standard/move.ogg";
 
-let playedThisLoad = false;
 let audioCtx: AudioContext | null = null;
 let moveBuffer: AudioBuffer | null = null;
 let loadingBuffer: Promise<AudioBuffer | null> | null = null;
@@ -57,19 +53,17 @@ async function loadMoveBuffer(): Promise<AudioBuffer | null> {
 }
 
 export function resetLogoLandSoundForNewPageLoad(): void {
-  playedThisLoad = false;
+  /* no-op de session — le rejeu est libre via replayLogoLandSound */
 }
 
 export function preloadLogoLandSound(): void {
   if (typeof window === "undefined") return;
   void loadMoveBuffer();
-  // Précharge aussi via HTMLAudio (cache HTTP)
   const a = new Audio(pickSrc());
   a.preload = "auto";
   a.load();
 }
 
-/** Débloque AudioContext (à appeler dans un geste utilisateur). */
 export function unlockLogoLandAudio(): void {
   const ctx = getCtx();
   if (ctx?.state === "suspended") {
@@ -89,29 +83,9 @@ function playBuffer(): boolean {
     src.connect(gain);
     gain.connect(ctx.destination);
     src.start(0);
-    playedThisLoad = true;
     return true;
   } catch {
     return false;
-  }
-}
-
-function playHtmlAudio(): void {
-  const audio = new Audio(pickSrc());
-  audio.volume = 1;
-  audio.muted = false;
-  const p = audio.play();
-  if (p !== undefined && typeof p.then === "function") {
-    void p.then(
-      () => {
-        playedThisLoad = true;
-      },
-      () => {
-        /* ignore — le geste reprendra */
-      }
-    );
-  } else {
-    playedThisLoad = true;
   }
 }
 
@@ -132,7 +106,6 @@ function playThud(): void {
     gain.connect(ctx.destination);
     osc.start(t0);
     osc.stop(t0 + 0.15);
-    playedThisLoad = true;
   };
   if (ctx.state === "suspended") {
     void ctx.resume().then(kick).catch(() => {});
@@ -141,50 +114,38 @@ function playThud(): void {
   }
 }
 
-/** Autoplay (souvent bloqué). */
+function playHtmlAudio(): Promise<boolean> {
+  const audio = new Audio(pickSrc());
+  audio.volume = 1;
+  audio.muted = false;
+  const p = audio.play();
+  if (p !== undefined && typeof p.then === "function") {
+    return p.then(
+      () => true,
+      () => false
+    );
+  }
+  return Promise.resolve(true);
+}
+
+/** Impact du logo (autoplay si le navigateur l’autorise). */
 export function playLogoLandSound(): void {
-  if (typeof window === "undefined" || playedThisLoad) return;
+  if (typeof window === "undefined") return;
   if (playBuffer()) return;
-  playHtmlAudio();
+  void playHtmlAudio().then((ok) => {
+    if (!ok) playThud();
+  });
 }
 
 /**
- * Lecture depuis un geste (pointerdown). Débloque le contexte puis joue.
- * Fiable sur Safari iOS / Chrome.
+ * Rejeu au clic sur le logo — toujours autorisé (geste utilisateur).
+ * Peut aussi débloquer l’audio pour les prochains impacts autoplay.
  */
-export function playLogoLandSoundFromGesture(): void {
-  if (typeof window === "undefined" || playedThisLoad) return;
+export function replayLogoLandSound(): void {
+  if (typeof window === "undefined") return;
   unlockLogoLandAudio();
-
   if (playBuffer()) return;
-
-  const audio = new Audio(pickSrc());
-  audio.volume = 1;
-  const p = audio.play();
-  playedThisLoad = true;
-  if (p !== undefined && typeof p.then === "function") {
-    void p.catch(() => {
-      playedThisLoad = false;
-      playThud();
-    });
-  }
-}
-
-export function hasPlayedLogoLandSound(): boolean {
-  return playedThisLoad;
-}
-
-/** Sonde : le navigateur autorise-t-il l’autoplay avec son ? */
-export async function canAutoplayLogoSound(): Promise<boolean> {
-  if (typeof window === "undefined") return false;
-  const probe = new Audio(MOVE_MP3);
-  probe.volume = 0.01;
-  try {
-    await probe.play();
-    probe.pause();
-    probe.currentTime = 0;
-    return true;
-  } catch {
-    return false;
-  }
+  void playHtmlAudio().then((ok) => {
+    if (!ok) playThud();
+  });
 }
