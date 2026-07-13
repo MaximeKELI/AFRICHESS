@@ -25,19 +25,12 @@ nvm install 22 >/dev/null
 nvm use 22 >/dev/null
 echo "✓ Node $(node -v) / npm $(npm -v)"
 
-# ── 2. Frontend + mobile npm ───────────────────────────────
+# ── 2. Frontend npm (mobile = Flutter : make mobile) ───────
 if [ ! -d frontend/node_modules ]; then
   echo "→ npm install frontend…"
   (cd frontend && npm install)
 else
   echo "✓ frontend/node_modules déjà présent"
-fi
-
-if [ ! -d mobile/node_modules ]; then
-  echo "→ npm install mobile…"
-  (cd mobile && npm install)
-else
-  echo "✓ mobile/node_modules déjà présent"
 fi
 
 # ── 3. Backend Python (uv + 3.12) ───────────────────────────
