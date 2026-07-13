@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../api/apis.dart';
 import '../../features/common/screens.dart';
+import '../../features/hubs/hub_screens.dart';
 import '../../widgets/chess_board.dart';
 
 /// Écrans manquants vs web — branchés sur les mêmes API.
@@ -24,8 +25,8 @@ class ArenaSwissHub extends StatelessWidget {
         return all.where((t) {
           final m = Map<String, dynamic>.from(t as Map);
           final fmt = '${m['format'] ?? m['type'] ?? ''}'.toLowerCase();
-          return fmt.contains(kind) || kind == 'arena' && fmt.contains('arena') ||
-              kind == 'swiss' && fmt.contains('swiss');
+          if (kind == 'arena') return fmt.contains('arena');
+          return fmt.contains('swiss');
         }).toList();
       },
       itemBuilder: (c, t) => ListTile(
