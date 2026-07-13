@@ -12,6 +12,7 @@ import { hydrateClientStoresFromStorage } from "@/lib/clientHydration";
 import { refreshAuthTokens } from "@/lib/api";
 import { JWT_REFRESH_HTTPONLY } from "@/lib/authConfig";
 import { setChessSoundTheme } from "@/lib/chessSounds";
+import { flushPendingLogoLandSound, unlockLogoLandAudio } from "@/lib/logoIntroSound";
 import { usePreferencesStore } from "@/store/preferences";
 import Cookies from "js-cookie";
 
@@ -80,6 +81,20 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const warm = () => initAiSpeech();
     window.addEventListener("pointerdown", warm, { once: true, passive: true });
     return () => window.removeEventListener("pointerdown", warm);
+  }, []);
+
+  /** Débloque l’audio + joue le son d’accueil manqué (autoplay bloqué). */
+  useEffect(() => {
+    const onGesture = () => {
+      unlockLogoLandAudio();
+      flushPendingLogoLandSound();
+    };
+    window.addEventListener("pointerdown", onGesture, { capture: true, passive: true });
+    window.addEventListener("keydown", onGesture, { capture: true });
+    return () => {
+      window.removeEventListener("pointerdown", onGesture, true);
+      window.removeEventListener("keydown", onGesture, true);
+    };
   }, []);
 
   return (

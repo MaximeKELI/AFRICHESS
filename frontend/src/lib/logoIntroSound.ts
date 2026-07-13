@@ -1,8 +1,5 @@
 /**
- * Son « pion posé » — impact auto du logo + rejeu au clic.
- *
- * Important : ne jamais appeler buffer.start() sur un AudioContext encore
- * « suspended » (ça « réussit » sans son). L’autoplay passe par HTMLAudio.
+ * Son « pion posé » — impact auto du logo + rejeu au clic sur le logo.
  */
 
 const MOVE_MP3 = "/sounds/themes/standard/move.mp3";
@@ -11,7 +8,8 @@ const MOVE_OGG = "/sounds/themes/standard/move.ogg";
 let audioCtx: AudioContext | null = null;
 let moveBuffer: AudioBuffer | null = null;
 let loadingBuffer: Promise<AudioBuffer | null> | null = null;
-let htmlAudio: HTMLAudioElement | null = null;
+/** Atterrissage auto bloqué → jouer au prochain geste (fenêtre d’activation). */
+let pendingLandSound = false;
 
 function pickSrc(): string {
   if (typeof window === "undefined") return MOVE_MP3;
@@ -20,16 +18,6 @@ function pickSrc(): string {
     typeof probe.canPlayType === "function" &&
     probe.canPlayType('audio/ogg; codecs="vorbis"') !== "";
   return oggOk ? MOVE_OGG : MOVE_MP3;
-}
-
-function getHtmlAudio(): HTMLAudioElement {
-  if (!htmlAudio) {
-    htmlAudio = new Audio(pickSrc());
-    htmlAudio.preload = "auto";
-    htmlAudio.volume = 1;
-    htmlAudio.setAttribute("playsinline", "true");
-  }
-  return htmlAudio;
 }
 
 function getCtx(): AudioContext | null {
@@ -67,19 +55,14 @@ async function loadMoveBuffer(): Promise<AudioBuffer | null> {
 }
 
 export function resetLogoLandSoundForNewPageLoad(): void {
-  if (htmlAudio) {
-    try {
-      htmlAudio.pause();
-      htmlAudio.currentTime = 0;
-    } catch {
-      /* ignore */
-    }
-  }
+  pendingLandSound = false;
 }
 
 export function preloadLogoLandSound(): void {
   if (typeof window === "undefined") return;
-  getHtmlAudio().load();
+  const warm = new Audio(pickSrc());
+  warm.preload = "auto";
+  warm.load();
   void loadMoveBuffer();
 }
 
@@ -90,7 +73,6 @@ export function unlockLogoLandAudio(): void {
   }
 }
 
-/** Web Audio uniquement si le contexte est déjà running (sinon silence trompeur). */
 function playBufferIfRunning(): boolean {
   const ctx = getCtx();
   if (!ctx || !moveBuffer || ctx.state !== "running") return false;
@@ -126,56 +108,94 @@ function playThud(): void {
   osc.stop(t0 + 0.15);
 }
 
-function playViaHtmlElement(): Promise<boolean> {
-  const audio = getHtmlAudio();
-  audio.volume = 1;
-  audio.muted = false;
-  try {
-    audio.currentTime = 0;
-  } catch {
-    /* ignore */
-  }
-  const fresh = audio.cloneNode(true) as HTMLAudioElement;
-  fresh.volume = 1;
-  const p = fresh.play();
-  if (p !== undefined && typeof p.then === "function") {
-    return p.then(
-      () => true,
-      () => false
-    );
-  }
-  return Promise.resolve(true);
-}
+function playFreshHtml(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const audio = new Audio(pickSrc());
+    audio.volume = 1;
+    audio.muted = false;
+    audio.preload = "auto";
 
-/**
- * Impact auto à l’atterrissage.
- * Priorité HTMLAudio (autoplay MEI) — pas de Web Audio suspendu.
- */
-export function playLogoLandSound(): void {
-  if (typeof window === "undefined") return;
-  void playViaHtmlElement().then((ok) => {
-    if (ok) return;
-    if (playBufferIfRunning()) return;
-    playThud();
+    const attempt = () => {
+      const p = audio.play();
+      if (p !== undefined && typeof p.then === "function") {
+        void p.then(
+          () => resolve(true),
+          () => resolve(false)
+        );
+      } else {
+        resolve(true);
+      }
+    };
+
+    if (audio.readyState >= 2) {
+      attempt();
+    } else {
+      audio.addEventListener("canplaythrough", attempt, { once: true });
+      audio.load();
+      // Filet si canplaythrough ne vient pas
+      window.setTimeout(attempt, 300);
+    }
   });
 }
 
-/** Rejeu au clic sur le logo (geste → débloque le contexte). */
+async function playAudible(): Promise<boolean> {
+  if (playBufferIfRunning()) return true;
+  if (await playFreshHtml()) return true;
+  const ctx = getCtx();
+  if (ctx?.state === "suspended") {
+    try {
+      await ctx.resume();
+    } catch {
+      /* ignore */
+    }
+  }
+  if (playBufferIfRunning()) return true;
+  playThud();
+  return ctx?.state === "running";
+}
+
+/**
+ * Impact à l’atterrissage (autoplay).
+ * Si le navigateur bloque : marque un son en attente pour le prochain geste.
+ */
+export function playLogoLandSound(): void {
+  if (typeof window === "undefined") return;
+  void playAudible().then((ok) => {
+    if (!ok) pendingLandSound = true;
+  });
+}
+
+/** Rejeu libre au clic sur le logo. */
 export function replayLogoLandSound(): void {
   if (typeof window === "undefined") return;
+  pendingLandSound = false;
   unlockLogoLandAudio();
-
   const ctx = getCtx();
-  const afterUnlock = () => {
-    if (playBufferIfRunning()) return;
-    void playViaHtmlElement().then((ok) => {
-      if (!ok) playThud();
-    });
+  const go = () => {
+    void playAudible();
   };
-
   if (ctx?.state === "suspended") {
-    void ctx.resume().then(afterUnlock).catch(afterUnlock);
+    void ctx.resume().then(go).catch(go);
   } else {
-    afterUnlock();
+    go();
+  }
+}
+
+/**
+ * À brancher sur le 1er pointerdown du document :
+ * joue le son d’atterrissage si l’autoplay l’avait manqué.
+ */
+export function flushPendingLogoLandSound(): void {
+  if (!pendingLandSound) return;
+  pendingLandSound = false;
+  unlockLogoLandAudio();
+  const ctx = getCtx();
+  const go = () => {
+    void playAudible();
+  };
+  if (ctx?.state === "suspended") {
+    void ctx.resume().then(go).catch(go);
+  } else {
+    go();
   }
 }
