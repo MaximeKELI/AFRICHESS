@@ -54,7 +54,8 @@ export default function HomePage() {
   const soundPlayed = useRef(false);
 
   useLayoutEffect(() => {
-    // Accueil uniquement : à chaque refresh / chargement de `/`
+    // Accueil uniquement — chaque refresh remonte ce composant
+    resetLogoLandSoundForNewPageLoad();
     const reduce =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -69,13 +70,19 @@ export default function HomePage() {
   useEffect(() => {
     if (logoPhase !== "slam") return;
     soundPlayed.current = false;
-    const landTimer = window.setTimeout(() => {
-      if (soundPlayed.current) return;
-      soundPlayed.current = true;
+
+    // Première tentative tôt (certains navigateurs acceptent mieux)
+    const early = window.setTimeout(() => {
       void playLogoLandSound();
     }, SLAM_LAND_MS);
-    return () => window.clearTimeout(landTimer);
+
+    return () => window.clearTimeout(early);
   }, [logoPhase]);
+
+  // Si autoplay a été bloqué, le premier geste rejoue le son (voir logoIntroSound)
+  useEffect(() => {
+    preloadLogoLandSound();
+  }, []);
 
   return (
     <div className="relative overflow-hidden">
