@@ -125,7 +125,8 @@ function NavDropdown({
   onNavigate?: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { t } = useTranslation();
 
@@ -139,8 +140,11 @@ function NavDropdown({
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    // Panel is portaled to document.body — must not treat its clicks as "outside".
     const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) close();
+      const target = e.target as Node;
+      if (triggerRef.current?.contains(target) || panelRef.current?.contains(target)) return;
+      close();
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
@@ -155,7 +159,7 @@ function NavDropdown({
   }, [open, close]);
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={triggerRef} className="relative">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -164,6 +168,7 @@ function NavDropdown({
           open ? "text-africhess-gold" : "hover:text-africhess-gold"
         )}
         aria-expanded={open}
+        aria-haspopup="dialog"
       >
         {label}
         <ChevronDown size={14} className={clsx("transition-transform", open && "rotate-180")} />
@@ -174,11 +179,12 @@ function NavDropdown({
           <>
             <button
               type="button"
-              className="fixed inset-0 top-14 md:top-16 z-layer-popover bg-black/65 backdrop-blur-[2px]"
+              className="fixed inset-0 top-14 md:top-16 z-layer-nav-overlay bg-black/65 backdrop-blur-[2px]"
               aria-label={t("nav.menu.close")}
               onClick={close}
             />
             <div
+              ref={panelRef}
               className="fixed left-0 right-0 top-14 md:top-16 z-layer-popover border-b border-white/15 bg-[var(--card)] shadow-2xl max-h-[min(78vh,42rem)] overflow-y-auto overscroll-contain"
               role="dialog"
               aria-label={label}
