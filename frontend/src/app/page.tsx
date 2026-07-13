@@ -9,11 +9,13 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { ButtonLink } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import {
+  canAutoplayLogoSound,
   hasPlayedLogoLandSound,
   playLogoLandSound,
   playLogoLandSoundFromGesture,
   preloadLogoLandSound,
   resetLogoLandSoundForNewPageLoad,
+  unlockLogoLandAudio,
 } from "@/lib/logoIntroSound";
 
 /** Sync avec ~68% de 0.72s (impact au sol) */
@@ -76,53 +78,54 @@ export default function HomePage() {
 
     preloadLogoLandSound();
 
-    // Sonde autoplay : si OK, slam immédiat ; sinon attendre un geste
-    const probe = new Audio("/sounds/themes/standard/move.mp3");
-    probe.volume = 0.01;
+    let cancelled = false;
     const startSlam = () => {
-      if (slamStartedRef.current) return;
+      if (cancelled || slamStartedRef.current) return;
       slamStartedRef.current = true;
       setLogoPhase("slam");
     };
 
-    void probe
-      .play()
-      .then(() => {
-        probe.pause();
-        probe.currentTime = 0;
+    void canAutoplayLogoSound().then((ok) => {
+      if (cancelled) return;
+      if (ok) {
         needsGestureRef.current = false;
         startSlam();
-      })
-      .catch(() => {
-        // Politique navigateur : pas de son sans geste → logo visible, slam au 1er clic
+      } else {
+        // Pas de son sans geste → logo visible ; 1er clic = slam + son
         needsGestureRef.current = true;
         setLogoPhase("idle");
-      });
+      }
+    });
 
-    // Filet : si la sonde reste pendante, afficher le logo
     const fallback = window.setTimeout(() => {
       if (!slamStartedRef.current) setLogoPhase((p) => (p === "pending" ? "idle" : p));
     }, 1200);
 
-    return () => window.clearTimeout(fallback);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(fallback);
+    };
   }, []);
 
   useEffect(() => {
     if (logoPhase !== "slam") return;
-    // Chemin autoplay : son à l’impact. Chemin geste : déjà joué dans onPointerDown (Safari).
-    if (needsGestureRef.current) return;
 
     const land = window.setTimeout(() => {
+      // Après geste : contexte déjà débloqué → buffer à l’impact
       playLogoLandSound();
+      if (!hasPlayedLogoLandSound()) {
+        playLogoLandSoundFromGesture();
+      }
     }, SLAM_LAND_MS);
 
     return () => window.clearTimeout(land);
   }, [logoPhase]);
 
   const onHomePointerDown = () => {
+    unlockLogoLandAudio();
+
     if (needsGestureRef.current && !slamStartedRef.current) {
-      // Safari / Chrome strict : play() DOIT être dans le handler de geste
-      playLogoLandSoundFromGesture();
+      // Débloque l’audio dans le geste ; le son part à l’impact (timer)
       slamStartedRef.current = true;
       setLogoPhase("slam");
       return;
