@@ -121,7 +121,7 @@ export default function HomePage() {
                   </span>
                   <ArrowRight
                     size={18}
-                    className="shrink-0 mt-1 opacity-0 -translate-x-2 group-hover:opacity-80 group-hover:translate-x-0 transition-all duration-350 ease-premium text-africhess-gold"
+                    className="shrink-0 mt-1 opacity-0 -translate-x-2 group-hover:opacity-80 group-hover:translate-x-0 transition-all duration-300 ease-premium text-africhess-gold"
                   />
                 </span>
               </Link>

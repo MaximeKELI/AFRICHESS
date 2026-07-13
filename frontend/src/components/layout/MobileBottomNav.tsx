@@ -74,9 +74,16 @@ export function MobileBottomNav({ onMenuOpen }: MobileBottomNavProps) {
               )}
             >
               {active && (
-                <span className="absolute top-1 w-1 h-1 rounded-full bg-africhess-gold" aria-hidden />
+                <span
+                  className="absolute top-1 w-1.5 h-1.5 rounded-full bg-africhess-gold animate-pulse"
+                  aria-hidden
+                />
               )}
-              <Icon size={20} strokeWidth={active ? 2.5 : 2} />
+              <Icon
+                size={20}
+                strokeWidth={active ? 2.5 : 2}
+                className={clsx("transition-transform duration-200", active && "scale-110")}
+              />
               <span className="truncate max-w-full px-0.5">{t(key)}</span>
             </Link>
           );
