@@ -50,10 +50,14 @@ export default function HomePage() {
         style={{ backgroundImage: "url('/images/pattern-bg.png')" }}
       />
       <div className="hero-glow" aria-hidden />
+      <div className="hero-orb hero-orb-a" aria-hidden />
+      <div className="hero-orb hero-orb-b" aria-hidden />
+      <div className="hero-orb hero-orb-c" aria-hidden />
 
       <section className="relative min-h-[min(100dvh,760px)] flex flex-col justify-center max-w-7xl mx-auto px-4 py-16 md:py-24">
         <div className="text-center">
           <div className="relative inline-block mb-8 hero-logo">
+            <div className="hero-logo-ring" aria-hidden />
             <div
               className="absolute -inset-3 rounded-3xl opacity-40 blur-xl"
               style={{
@@ -72,18 +76,18 @@ export default function HomePage() {
             />
           </div>
 
-          <p className="text-xs md:text-sm uppercase tracking-[0.28em] text-muted font-medium mb-4 animate-fade-in animation-delay-100">
+          <p className="text-xs md:text-sm uppercase tracking-[0.28em] text-muted font-medium mb-4 hero-eyebrow">
             Global Chess Platform
           </p>
-          <h1 className="heading-gradient text-5xl md:text-7xl lg:text-8xl mb-5 hero-title-in animation-delay-150">
+          <h1 className="heading-gradient text-5xl md:text-7xl lg:text-8xl mb-5 hero-title-in">
             AFRICHESS
           </h1>
-          <p className="text-base md:text-lg text-muted max-w-xl mx-auto mb-10 leading-relaxed animate-fade-in animation-delay-200">
+          <p className="text-base md:text-lg text-muted max-w-xl mx-auto mb-10 leading-relaxed hero-subtitle-in">
             {t("hero.subtitle")}
           </p>
 
-          <div className="flex flex-wrap justify-center gap-3 sm:gap-4 animate-slide-up-sm animation-delay-300">
-            <ButtonLink href="/play?mode=blitz" variant="hero">
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-4 hero-cta-in">
+            <ButtonLink href="/play?mode=blitz" variant="hero" className="btn-hero-pulse">
               {t("hero.play")}
             </ButtonLink>
             <ButtonLink href="/puzzles" variant="secondary" size="lg">
@@ -96,14 +100,14 @@ export default function HomePage() {
       <div className="premium-divider premium-divider-animate max-w-2xl mx-auto mb-16" />
 
       <section className="relative max-w-6xl mx-auto px-4 pb-24 pt-2">
-        <Reveal className="text-center mb-12">
+        <Reveal className="text-center mb-12" variant="scale">
           <h2 className="heading-display text-3xl md:text-4xl mb-3">{t("home.why.title")}</h2>
           <p className="text-muted max-w-lg mx-auto">{t("home.why.subtitle")}</p>
         </Reveal>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {featureLinks.map(({ href, titleKey, descKey, icon: Icon }, i) => (
-            <Reveal key={titleKey} delayMs={i * 70}>
+            <Reveal key={titleKey} delayMs={i * 90} variant={i % 2 === 0 ? "up" : "scale"}>
               <Link href={href} className="feature-card group block h-full">
                 <span className="feature-card-icon">
                   <Icon size={22} strokeWidth={1.75} />
@@ -117,7 +121,7 @@ export default function HomePage() {
                   </span>
                   <ArrowRight
                     size={18}
-                    className="shrink-0 mt-1 opacity-0 -translate-x-1 group-hover:opacity-70 group-hover:translate-x-0 transition-all duration-300 ease-premium text-africhess-gold"
+                    className="shrink-0 mt-1 opacity-0 -translate-x-2 group-hover:opacity-80 group-hover:translate-x-0 transition-all duration-350 ease-premium text-africhess-gold"
                   />
                 </span>
               </Link>
