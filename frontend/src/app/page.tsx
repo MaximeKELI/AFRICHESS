@@ -74,9 +74,6 @@ export default function HomePage() {
     if (logoPhase !== "slam") return;
 
     const playLand = () => {
-      if (landSoundSent.current) return;
-      landSoundSent.current = true;
-
       const el = landAudioRef.current;
       if (el) {
         el.volume = 1;
@@ -87,10 +84,11 @@ export default function HomePage() {
           /* ignore */
         }
         void el.play().then(
-          () => undefined,
           () => {
-            // Autoplay refusé sur l’élément DOM → repli module
-            landSoundSent.current = false;
+            landSoundSent.current = true;
+          },
+          () => {
+            // Politique autoplay : repli (HTML frais / buffer si running)
             playLogoLandSound();
             landSoundSent.current = true;
           }
@@ -98,22 +96,15 @@ export default function HomePage() {
         return;
       }
       playLogoLandSound();
+      landSoundSent.current = true;
     };
 
-    const land = window.setTimeout(playLand, SLAM_LAND_MS);
-    // Filet : 2e tentative un peu après (fichier pas encore ready)
-    const retry = window.setTimeout(() => {
-      if (!landAudioRef.current) return;
-      const el = landAudioRef.current;
-      if (!el.paused && el.currentTime > 0) return;
-      landSoundSent.current = false;
+    const land = window.setTimeout(() => {
+      if (landSoundSent.current) return;
       playLand();
-    }, SLAM_LAND_MS + 120);
+    }, SLAM_LAND_MS);
 
-    return () => {
-      window.clearTimeout(land);
-      window.clearTimeout(retry);
-    };
+    return () => window.clearTimeout(land);
   }, [logoPhase]);
 
   return (
