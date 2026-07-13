@@ -32,9 +32,10 @@ const config: Config = {
       },
       animation: {
         "piece-move": "pieceMove 0.3s ease-out",
-        "fade-in": "fadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both",
-        "slide-up": "slideUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both",
-        "slide-up-sm": "slideUpSm 0.45s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "fade-in": "fadeIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "slide-up": "slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "slide-up-sm": "slideUpSm 0.5s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "scale-in": "scaleIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both",
       },
       animationDelay: {
         75: "75ms",
@@ -59,8 +60,12 @@ const config: Config = {
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         slideUpSm: {
-          "0%": { opacity: "0", transform: "translateY(12px)" },
+          "0%": { opacity: "0", transform: "translateY(14px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        scaleIn: {
+          "0%": { opacity: "0", transform: "scale(0.94)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
         },
       },
     },

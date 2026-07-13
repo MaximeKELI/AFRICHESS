@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
@@ -181,23 +181,24 @@ function NavDropdown({
           <>
             <button
               type="button"
-              className="fixed inset-0 top-14 md:top-16 z-layer-nav-overlay bg-black/65 backdrop-blur-[2px]"
+              className="fixed inset-0 top-14 md:top-16 z-layer-nav-overlay bg-black/65 backdrop-blur-[2px] mega-menu-overlay"
               aria-label={t("nav.menu.close")}
               onClick={close}
             />
             <div
               ref={panelRef}
-              className="fixed left-0 right-0 top-14 md:top-16 z-layer-popover border-b border-white/15 bg-[var(--card)] shadow-2xl max-h-[min(78vh,42rem)] overflow-y-auto overscroll-contain"
+              className="fixed left-0 right-0 top-14 md:top-16 z-layer-popover border-b border-white/15 bg-[var(--card)] shadow-2xl max-h-[min(78vh,42rem)] overflow-y-auto overscroll-contain mega-menu-panel"
               role="dialog"
               aria-label={label}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="max-w-7xl mx-auto px-4 py-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-x-4 gap-y-6">
-                {groups.map((group) => (
+                {groups.map((group, i) => (
                   <div
                     key={group.key}
-                    className="min-w-0 rounded-xl bg-black/[0.12] dark:bg-black/25 border border-white/10 p-3"
+                    className="min-w-0 rounded-xl bg-black/[0.12] dark:bg-black/25 border border-white/10 p-3 mega-menu-group"
+                    style={{ "--mega-i": i } as CSSProperties}
                   >
                     <p className="text-[10px] uppercase tracking-wider font-semibold text-africhess-gold/80 mb-2 px-1">
                       {t(group.key)}
@@ -213,7 +214,7 @@ function NavDropdown({
                             router.push(href);
                             close();
                           }}
-                          className="px-2 py-1.5 rounded-lg text-sm leading-snug hover:bg-white/10 hover:text-africhess-gold"
+                          className="px-2 py-1.5 rounded-lg text-sm leading-snug hover:bg-white/10 hover:text-africhess-gold transition-colors duration-200"
                         >
                           {t(key)}
                         </Link>
