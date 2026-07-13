@@ -334,14 +334,14 @@ html.has-site-background nav {
 
   .glass-card-hover {
     transition:
-      transform 0.25s var(--ease-premium),
-      box-shadow 0.25s var(--ease-premium),
-      border-color 0.25s var(--ease-premium);
+      transform 0.3s var(--ease-premium),
+      box-shadow 0.3s var(--ease-premium),
+      border-color 0.3s var(--ease-premium);
   }
 
   .glass-card-hover:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--gold) 28%, transparent);
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--gold) 32%, transparent);
     box-shadow: var(--shadow-premium-lg);
   }
 
@@ -354,6 +354,12 @@ html.has-site-background nav {
     background: linear-gradient(135deg, color-mix(in srgb, var(--green) 18%, transparent), color-mix(in srgb, var(--gold) 12%, transparent));
     border: 1px solid color-mix(in srgb, var(--gold) 22%, transparent);
     color: var(--gold);
+    transition: transform 0.3s var(--ease-premium), box-shadow 0.3s var(--ease-premium);
+  }
+
+  .feature-card:hover .feature-card-icon {
+    transform: scale(1.08) rotate(-3deg);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--gold) 22%, transparent);
   }
 
   .hero-glow {
@@ -372,6 +378,7 @@ html.has-site-background nav {
     );
     pointer-events: none;
     animation: hero-glow-pulse 8s ease-in-out infinite;
+    will-change: transform, opacity;
   }
 
   @keyframes hero-glow-pulse {
@@ -379,12 +386,90 @@ html.has-site-background nav {
     50% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
   }
 
+  .hero-logo {
+    animation:
+      hero-logo-in 0.75s var(--ease-premium) both,
+      hero-logo-float 5.5s ease-in-out 0.85s infinite;
+  }
+
+  @keyframes hero-logo-in {
+    from { opacity: 0; transform: scale(0.86) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  @keyframes hero-logo-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  .hero-title-in {
+    animation: hero-title-in 0.8s var(--ease-premium) both;
+  }
+
+  @keyframes hero-title-in {
+    from { opacity: 0; transform: translateY(18px) scale(0.98); letter-spacing: 0.04em; }
+    to { opacity: 1; transform: none; letter-spacing: -0.02em; }
+  }
+
+  .premium-divider-animate {
+    transform-origin: center;
+    animation: divider-expand 0.9s var(--ease-premium) both;
+  }
+
+  @keyframes divider-expand {
+    from { opacity: 0; transform: scaleX(0.2); }
+    to { opacity: 0.8; transform: scaleX(1); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 0.55s var(--ease-premium),
+      transform 0.55s var(--ease-premium);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  .mega-menu-overlay {
+    animation: mega-overlay-in 0.22s ease both;
+  }
+
+  .mega-menu-panel {
+    animation: mega-panel-in 0.34s var(--ease-premium) both;
+  }
+
+  .mega-menu-group {
+    opacity: 0;
+    animation: mega-group-in 0.4s var(--ease-premium) both;
+    animation-delay: calc(40ms + var(--mega-i, 0) * 35ms);
+  }
+
+  @keyframes mega-overlay-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes mega-panel-in {
+    from { opacity: 0; transform: translateY(-14px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @keyframes mega-group-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+
   .page-enter {
-    animation: pageEnter 0.45s var(--ease-premium) both;
+    animation: pageEnter 0.4s var(--ease-premium) both;
   }
 
   @keyframes pageEnter {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: none; }
   }
 
@@ -415,9 +500,64 @@ html.has-site-background nav {
   }
 }
 
-.low-bandwidth .hero-glow {
+.low-bandwidth .hero-glow,
+.low-bandwidth .hero-logo {
   animation: none !important;
-  opacity: 0.5;
+}
+
+.low-bandwidth .hero-logo {
+  opacity: 1;
+  transform: none;
+}
+
+.low-bandwidth .reveal {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.low-bandwidth .mega-menu-overlay,
+.low-bandwidth .mega-menu-panel,
+.low-bandwidth .mega-menu-group,
+.low-bandwidth .premium-divider-animate,
+.low-bandwidth .hero-title-in {
+  animation: none !important;
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-glow,
+  .hero-logo,
+  .hero-title-in,
+  .premium-divider-animate,
+  .mega-menu-overlay,
+  .mega-menu-panel,
+  .mega-menu-group,
+  .page-enter,
+  .btn-primary::after,
+  .btn-hero::after {
+    animation: none !important;
+  }
+
+  .hero-logo,
+  .reveal,
+  .mega-menu-group {
+    opacity: 1;
+    transform: none;
+  }
+
+  .reveal {
+    transition: none;
+  }
+
+  .btn-primary:hover,
+  .btn-hero:hover,
+  .btn-secondary:hover,
+  .glass-card-hover:hover,
+  .feature-card:hover .feature-card-icon {
+    transform: none;
+  }
 }
 
 .chess-board-light {
