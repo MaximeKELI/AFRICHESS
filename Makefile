@@ -1,4 +1,4 @@
-.PHONY: all bootstrap up up-all down logs migrate superuser demo frontend hybrid mobile mobile-test
+.PHONY: all bootstrap up up-all down logs migrate superuser demo frontend hybrid mobile mobile-android mobile-chrome mobile-test
 
 # Install deps + Docker stack + frontend (commande unique)
 all bootstrap:
