@@ -1,16 +1,17 @@
 /**
  * Son « pion posé » — page d’accueil uniquement.
  *
- * Les navigateurs bloquent l’autoplay avec son sans geste utilisateur.
- * On tente à l’impact du logo ; si refusé, le premier clic/touche joue le son
- * (play() dans la pile du geste = activation conservée).
+ * Autoplay avec son est souvent bloqué. Après un geste, on reprend un
+ * AudioContext et on joue un buffer (fiable sur Safari/Chrome).
  */
 
-const MOVE_OGG = "/sounds/themes/standard/move.ogg";
 const MOVE_MP3 = "/sounds/themes/standard/move.mp3";
+const MOVE_OGG = "/sounds/themes/standard/move.ogg";
 
 let playedThisLoad = false;
-let unlockArmed = false;
+let audioCtx: AudioContext | null = null;
+let moveBuffer: AudioBuffer | null = null;
+let loadingBuffer: Promise<AudioBuffer | null> | null = null;
 
 function pickSrc(): string {
   if (typeof window === "undefined") return MOVE_MP3;
@@ -21,85 +22,84 @@ function pickSrc(): string {
   return oggOk ? MOVE_OGG : MOVE_MP3;
 }
 
-function createAudio(): HTMLAudioElement {
-  const audio = new Audio(pickSrc());
-  audio.preload = "auto";
-  audio.volume = 1;
-  audio.setAttribute("playsinline", "true");
-  return audio;
+function getCtx(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  if (!audioCtx) {
+    const Ctx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    audioCtx = new Ctx();
+  }
+  return audioCtx;
+}
+
+async function loadMoveBuffer(): Promise<AudioBuffer | null> {
+  if (moveBuffer) return moveBuffer;
+  if (loadingBuffer) return loadingBuffer;
+  const ctx = getCtx();
+  if (!ctx) return null;
+
+  loadingBuffer = (async () => {
+    try {
+      const res = await fetch(pickSrc());
+      if (!res.ok) return null;
+      const raw = await res.arrayBuffer();
+      moveBuffer = await ctx.decodeAudioData(raw.slice(0));
+      return moveBuffer;
+    } catch {
+      return null;
+    } finally {
+      loadingBuffer = null;
+    }
+  })();
+
+  return loadingBuffer;
 }
 
 export function resetLogoLandSoundForNewPageLoad(): void {
   playedThisLoad = false;
-  unlockArmed = false;
 }
 
 export function preloadLogoLandSound(): void {
   if (typeof window === "undefined") return;
-  createAudio().load();
+  void loadMoveBuffer();
+  // Précharge aussi via HTMLAudio (cache HTTP)
+  const a = new Audio(pickSrc());
+  a.preload = "auto";
+  a.load();
 }
 
-function playThudFallback(): void {
-  try {
-    const Ctx =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new Ctx();
-    const kick = () => {
-      const t0 = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(180, t0);
-      osc.frequency.exponentialRampToValueAtTime(55, t0 + 0.08);
-      gain.gain.setValueAtTime(0.0001, t0);
-      gain.gain.exponentialRampToValueAtTime(0.55, t0 + 0.008);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(t0);
-      osc.stop(t0 + 0.15);
-    };
-    if (ctx.state === "suspended") {
-      void ctx.resume().then(kick).catch(() => {});
-    } else {
-      kick();
-    }
-  } catch {
-    /* ignore */
+/** Débloque AudioContext (à appeler dans un geste utilisateur). */
+export function unlockLogoLandAudio(): void {
+  const ctx = getCtx();
+  if (ctx?.state === "suspended") {
+    void ctx.resume().catch(() => {});
   }
 }
 
-function armGestureUnlock(): void {
-  if (typeof window === "undefined" || unlockArmed || playedThisLoad) return;
-  unlockArmed = true;
-
-  const onGesture = () => {
-    window.removeEventListener("pointerdown", onGesture, true);
-    window.removeEventListener("keydown", onGesture, true);
-    window.removeEventListener("touchstart", onGesture, true);
-    unlockArmed = false;
-    playLogoLandSoundFromGesture();
-  };
-
-  window.addEventListener("pointerdown", onGesture, { capture: true });
-  window.addEventListener("keydown", onGesture, { capture: true });
-  window.addEventListener("touchstart", onGesture, { capture: true });
+function playBuffer(): boolean {
+  const ctx = getCtx();
+  if (!ctx || !moveBuffer) return false;
+  try {
+    if (ctx.state === "suspended") void ctx.resume();
+    const src = ctx.createBufferSource();
+    const gain = ctx.createGain();
+    gain.gain.value = 1;
+    src.buffer = moveBuffer;
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    src.start(0);
+    playedThisLoad = true;
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-/** Tentative autoplay (souvent bloquée). Si échec → arme le 1er geste. */
-export function playLogoLandSound(): void {
-  if (typeof window === "undefined" || playedThisLoad) return;
-
-  const audio = createAudio();
+function playHtmlAudio(): void {
+  const audio = new Audio(pickSrc());
   audio.volume = 1;
   audio.muted = false;
-  try {
-    audio.currentTime = 0;
-  } catch {
-    /* ignore */
-  }
-
   const p = audio.play();
   if (p !== undefined && typeof p.then === "function") {
     void p.then(
@@ -107,8 +107,7 @@ export function playLogoLandSound(): void {
         playedThisLoad = true;
       },
       () => {
-        // Ne pas marquer played — le geste doit pouvoir rejouer
-        armGestureUnlock();
+        /* ignore — le geste reprendra */
       }
     );
   } else {
@@ -116,34 +115,76 @@ export function playLogoLandSound(): void {
   }
 }
 
-/** Lecture dans un geste utilisateur (fiable). */
+function playThud(): void {
+  const ctx = getCtx();
+  if (!ctx) return;
+  const kick = () => {
+    const t0 = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(180, t0);
+    osc.frequency.exponentialRampToValueAtTime(55, t0 + 0.08);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.55, t0 + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + 0.15);
+    playedThisLoad = true;
+  };
+  if (ctx.state === "suspended") {
+    void ctx.resume().then(kick).catch(() => {});
+  } else {
+    kick();
+  }
+}
+
+/** Autoplay (souvent bloqué). */
+export function playLogoLandSound(): void {
+  if (typeof window === "undefined" || playedThisLoad) return;
+  if (playBuffer()) return;
+  playHtmlAudio();
+}
+
+/**
+ * Lecture depuis un geste (pointerdown). Débloque le contexte puis joue.
+ * Fiable sur Safari iOS / Chrome.
+ */
 export function playLogoLandSoundFromGesture(): void {
   if (typeof window === "undefined" || playedThisLoad) return;
+  unlockLogoLandAudio();
 
-  const audio = createAudio();
+  if (playBuffer()) return;
+
+  const audio = new Audio(pickSrc());
   audio.volume = 1;
-  audio.muted = false;
-  try {
-    audio.currentTime = 0;
-  } catch {
-    /* ignore */
-  }
-
   const p = audio.play();
-  // Marquer après l’appel synchrone à play() (conserve l’activation)
   playedThisLoad = true;
-
   if (p !== undefined && typeof p.then === "function") {
     void p.catch(() => {
-      playThudFallback();
+      playedThisLoad = false;
+      playThud();
     });
   }
 }
 
-export function ensureLogoLandSoundUnlock(): void {
-  if (!playedThisLoad) armGestureUnlock();
-}
-
 export function hasPlayedLogoLandSound(): boolean {
   return playedThisLoad;
+}
+
+/** Sonde : le navigateur autorise-t-il l’autoplay avec son ? */
+export async function canAutoplayLogoSound(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  const probe = new Audio(MOVE_MP3);
+  probe.volume = 0.01;
+  try {
+    await probe.play();
+    probe.pause();
+    probe.currentTime = 0;
+    return true;
+  } catch {
+    return false;
+  }
 }
