@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../api/apis.dart';
-import '../core/storage.dart';
-import '../core/api_client.dart';
+import '../../api/apis.dart';
+import '../../core/api_client.dart';
+import '../../core/storage.dart';
 
 class AuthState {
   final bool loading;
@@ -36,16 +36,16 @@ class AuthState {
   }
 }
 
-class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._ref) : super(const AuthState()) {
-    bootstrap();
+class AuthNotifier extends Notifier<AuthState> {
+  @override
+  AuthState build() {
+    Future.microtask(bootstrap);
+    return const AuthState();
   }
 
-  final Ref _ref;
-
-  TokenStorage get _storage => _ref.read(tokenStorageProvider);
-  AuthApi get _auth => _ref.read(authApiProvider);
-  UsersApi get _users => _ref.read(usersApiProvider);
+  TokenStorage get _storage => ref.read(tokenStorageProvider);
+  AuthApi get _auth => ref.read(authApiProvider);
+  UsersApi get _users => ref.read(usersApiProvider);
 
   Future<void> bootstrap() async {
     state = state.copyWith(loading: true, clearError: true);
@@ -139,6 +139,4 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 }
 
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>(
-  (ref) => AuthNotifier(ref),
-);
+final authProvider = NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);
