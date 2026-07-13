@@ -99,7 +99,7 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() => replayLogoLandSound()}
-            aria-label={t("home.logo.replaySound") !== "home.logo.replaySound" ? t("home.logo.replaySound") : "Réécouter le son du pion"}
+            aria-label="Réécouter le son du pion"
             title="Réécouter le son du pion"
             className={clsx(
               "relative inline-block mb-8 cursor-pointer rounded-2xl border-0 bg-transparent p-0",
