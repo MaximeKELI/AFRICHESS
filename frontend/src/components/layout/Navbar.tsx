@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { UserAvatar } from "@/components/profile/UserAvatar";
@@ -128,6 +128,7 @@ function NavDropdown({
   const triggerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const router = useRouter();
   const { t } = useTranslation();
 
   const close = useCallback(() => setOpen(false), []);
@@ -206,8 +207,12 @@ function NavDropdown({
                         <Link
                           key={href}
                           href={href}
-                          // Close via pathname effect after navigation — do not unmount the Link mid-click.
-                          onClick={() => onNavigate?.()}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            onNavigate?.();
+                            router.push(href);
+                            close();
+                          }}
                           className="px-2 py-1.5 rounded-lg text-sm leading-snug hover:bg-white/10 hover:text-africhess-gold"
                         >
                           {t(key)}
