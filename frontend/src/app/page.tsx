@@ -136,20 +136,7 @@ export default function HomePage() {
     if (logoPhase !== "slam") return;
 
     const land = window.setTimeout(() => {
-      // Après geste : AudioContext « running » → buffer audible.
-      // Après autoplay OK : HTMLAudio via MEI.
       playLogoLandSound();
-      const el = landAudioRef.current;
-      if (el) {
-        el.volume = 1;
-        el.muted = false;
-        try {
-          el.currentTime = 0;
-        } catch {
-          /* ignore */
-        }
-        void el.play().catch(() => undefined);
-      }
     }, SLAM_LAND_MS);
 
     return () => window.clearTimeout(land);
