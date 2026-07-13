@@ -8,18 +8,18 @@ Application mobile native **Flutter** (Android + iOS) qui consomme les **mêmes 
 
 - Flutter 3.22+ (`flutter doctor`)
 - Backend Django joignable (`make up` ou hybride)
-- Émulateur Android / simulateur iOS / device physique
+- Linux desktop **ou** Chrome (pas besoin de téléphone)
 
 ## Configuration
 
 Variables `--dart-define` :
 
-| Clé | Défaut (émulateur Android) | Notes |
-|-----|----------------------------|--------|
-| `API_URL` | `http://10.0.2.2:8000/api` | iOS sim → `http://127.0.0.1:8000/api` |
-| `WS_URL` | `ws://10.0.2.2:8000` | idem |
-| `MEDIA_ORIGIN` | `http://10.0.2.2:8000` | avatars / médias |
-| `WEB_URL` | `http://10.0.2.2:3000` | checkout Stripe / liens |
+| Clé | Défaut | Notes |
+|-----|--------|--------|
+| `API_URL` | `http://127.0.0.1:8000/api` | Android émulateur → `http://10.0.2.2:8000/api` |
+| `WS_URL` | `ws://127.0.0.1:8000` | Android → `ws://10.0.2.2:8000` |
+| `MEDIA_ORIGIN` | `http://127.0.0.1:8000` | avatars / médias |
+| `WEB_URL` | `http://127.0.0.1:3000` | checkout Stripe / liens |
 
 Exemple device LAN :
 
