@@ -60,7 +60,6 @@ export default function HomePage() {
   /** Autoplay refusé : la chute + son partent au 1er geste (activation navigateur). */
   const awaitGestureRef = useRef(false);
   const slamStartedRef = useRef(false);
-  const landAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const beginSlam = () => {
     if (slamStartedRef.current) return;
@@ -163,7 +162,6 @@ export default function HomePage() {
       <div className="hero-orb hero-orb-c" aria-hidden />
 
       <audio
-        ref={landAudioRef}
         src="/sounds/themes/standard/move.mp3"
         preload="auto"
         playsInline
