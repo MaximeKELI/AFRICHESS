@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/auth_provider.dart';
 import '../features/auth/login_screen.dart';
 import '../features/common/screens.dart';
+import '../features/hubs/extra_screens.dart';
 import '../features/hubs/hub_screens.dart';
 import '../features/play/play_screens.dart';
 import '../api/apis.dart';
@@ -378,6 +379,135 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/fairplay/:id',
+        builder: (_, s) => PlaceholderDetailScreen(
+          title: 'Fair Play',
+          loader: (r) => r.read(adminApiProvider).fairplayGame(s.pathParameters['id']!),
+        ),
+      ),
+      // --- Parité web : routes manquantes ---
+      GoRoute(path: '/arena', builder: (_, __) => const ArenaSwissHub(kind: 'arena')),
+      GoRoute(path: '/swiss', builder: (_, __) => const ArenaSwissHub(kind: 'swiss')),
+      GoRoute(path: '/players', builder: (_, __) => const PlayersSearchScreen()),
+      GoRoute(path: '/users/search', builder: (_, __) => const PlayersSearchScreen()),
+      GoRoute(
+        path: '/profile/:username',
+        builder: (_, s) => PublicProfileScreen(username: s.pathParameters['username']!),
+      ),
+      GoRoute(path: '/messages', builder: (_, __) => const MessagesInboxScreen()),
+      GoRoute(path: '/clock', builder: (_, __) => const ClockScreen()),
+      GoRoute(path: '/paste', builder: (_, __) => const PastePgnScreen()),
+      GoRoute(path: '/opening', builder: (_, __) => const OpeningExplorerScreen()),
+      GoRoute(path: '/tools', builder: (_, __) => const ToolsHubScreen()),
+      GoRoute(path: '/training', builder: (_, __) => const TrainingHubScreen()),
+      GoRoute(path: '/training/solo', builder: (_, __) => const TrainingDrillScreen(title: 'Solo')),
+      GoRoute(path: '/training/vision', builder: (_, __) => const TrainingDrillScreen(title: 'Vision')),
+      GoRoute(path: '/training/endgames', builder: (_, __) => const TrainingDrillScreen(title: 'Finales')),
+      GoRoute(path: '/community', builder: (_, __) => const CommunityHubScreen()),
+      GoRoute(
+        path: '/community/all',
+        builder: (_, __) => ApiListScreen(
+          title: 'Communauté',
+          loader: (r) => r.read(socialApiProvider).forum(),
+          itemBuilder: (c, item) => ListTile(
+            title: Text('${item['title']}'),
+            onTap: () => c.push('/forum/${item['id']}'),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/community/:id',
+        builder: (_, s) => PlaceholderDetailScreen(
+          title: 'Sujet',
+          loader: (r) => r.read(socialApiProvider).forumPost(int.parse(s.pathParameters['id']!)),
+        ),
+      ),
+      GoRoute(path: '/classroom', builder: (_, __) => const ClassroomScreen()),
+      GoRoute(path: '/legal/privacy', builder: (_, __) => const LegalPrivacyScreen()),
+      GoRoute(path: '/insights', builder: (_, __) => const InsightsScreen()),
+      GoRoute(path: '/live', builder: (_, __) => const LiveTvAliasScreen()),
+      GoRoute(path: '/puzzles/storm', builder: (_, __) => const StormRacerScreen(mode: 'storm')),
+      GoRoute(path: '/puzzles/racer', builder: (_, __) => const StormRacerScreen(mode: 'racer')),
+      GoRoute(path: '/learn', builder: (_, __) => const LearnAliasScreen()),
+      GoRoute(path: '/play/vote', builder: (_, __) => const VoteChessScreen()),
+      GoRoute(path: '/play/daily', builder: (_, __) => const PlayHubScreen()),
+      GoRoute(path: '/learning/repertoires', builder: (_, __) => const RepertoiresScreen()),
+      GoRoute(path: '/learning/study', builder: (_, __) => const StudySrsScreen()),
+      GoRoute(path: '/learning/analyze', builder: (_, __) => const AnalysisScreen()),
+      GoRoute(path: '/learning/analyze/board', builder: (_, __) => const AnalysisScreen()),
+      GoRoute(path: '/games/search', builder: (_, __) => const GamesSearchScreen()),
+      GoRoute(
+        path: '/games/:id/review',
+        builder: (_, s) => ReviewScreen(gameId: s.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/blog/:id',
+        builder: (_, s) => PlaceholderDetailScreen(
+          title: 'Article',
+          loader: (r) => r.read(socialApiProvider).forumPost(int.parse(s.pathParameters['id']!)),
+        ),
+      ),
+      GoRoute(
+        path: '/blog/new',
+        builder: (_, __) => const Scaffold(
+          body: Center(child: Text('Création d’article — utiliser le forum (catégorie blog)')),
+        ),
+      ),
+      GoRoute(
+        path: '/simul/:id',
+        builder: (_, s) => PlaceholderDetailScreen(
+          title: 'Simul',
+          loader: (r) async {
+            final list = await r.read(gamesApiProvider).simuls();
+            return list.firstWhere(
+              (e) => '${(e as Map)['id']}' == s.pathParameters['id'],
+              orElse: () => {'id': s.pathParameters['id']},
+            );
+          },
+        ),
+      ),
+      GoRoute(
+        path: '/broadcasts/:slug',
+        builder: (_, s) => PlaceholderDetailScreen(
+          title: s.pathParameters['slug']!,
+          loader: (r) async {
+            final list = await r.read(gamesApiProvider).broadcasts();
+            return list.firstWhere(
+              (e) => '${(e as Map)['slug']}' == s.pathParameters['slug'],
+              orElse: () => {'slug': s.pathParameters['slug']},
+            );
+          },
+        ),
+      ),
+      GoRoute(
+        path: '/practice/:studySlug',
+        builder: (_, s) => PlaceholderDetailScreen(
+          title: s.pathParameters['studySlug']!,
+          loader: (r) => r.read(learningApiProvider).practice(),
+        ),
+      ),
+      GoRoute(
+        path: '/practice/:studySlug/:chapterId',
+        builder: (_, s) => TrainingDrillScreen(title: s.pathParameters['chapterId']!),
+      ),
+      GoRoute(
+        path: '/settings/subscription',
+        builder: (_, __) => const PremiumScreen(),
+      ),
+      GoRoute(
+        path: '/puzzles/build',
+        builder: (_, __) => const Scaffold(
+          body: Center(child: Text('Création de problèmes — API /puzzles/custom')),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/users/:id',
+        builder: (_, s) => PlaceholderDetailScreen(
+          title: 'User ${s.pathParameters['id']}',
+          loader: (r) => r.read(adminApiProvider).users(q: s.pathParameters['id']),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/fairplay/games/:id',
         builder: (_, s) => PlaceholderDetailScreen(
           title: 'Fair Play',
           loader: (r) => r.read(adminApiProvider).fairplayGame(s.pathParameters['id']!),
