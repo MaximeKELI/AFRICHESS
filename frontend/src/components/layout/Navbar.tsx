@@ -149,11 +149,12 @@ function NavDropdown({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
     };
-    document.addEventListener("mousedown", onDoc);
+    // Use click (not mousedown) so Next.js Link can navigate before outside-dismiss runs.
+    document.addEventListener("click", onDoc);
     document.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
-      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("click", onDoc);
       document.removeEventListener("keydown", onKey);
     };
   }, [open, close]);
@@ -188,6 +189,8 @@ function NavDropdown({
               className="fixed left-0 right-0 top-14 md:top-16 z-layer-popover border-b border-white/15 bg-[var(--card)] shadow-2xl max-h-[min(78vh,42rem)] overflow-y-auto overscroll-contain"
               role="dialog"
               aria-label={label}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="max-w-7xl mx-auto px-4 py-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-x-4 gap-y-6">
                 {groups.map((group) => (
@@ -203,10 +206,8 @@ function NavDropdown({
                         <Link
                           key={href}
                           href={href}
-                          onClick={() => {
-                            close();
-                            onNavigate?.();
-                          }}
+                          // Close via pathname effect after navigation — do not unmount the Link mid-click.
+                          onClick={() => onNavigate?.()}
                           className="px-2 py-1.5 rounded-lg text-sm leading-snug hover:bg-white/10 hover:text-africhess-gold"
                         >
                           {t(key)}
