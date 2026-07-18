@@ -179,6 +179,52 @@ export function GameReviewStatsDashboard({
           </div>
         )}
 
+        {/* Ouverture jouée */}
+        {opening.name && (
+          <div className="rounded-xl bg-black/20 border border-white/8 p-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-africhess-gold/90">
+                {t("chess.review.openingTitle")}
+              </p>
+              <p className="text-sm font-semibold mt-1">{opening.name}</p>
+            </div>
+            {opening.eco && (
+              <span className="shrink-0 text-xs px-2.5 py-1 rounded-full bg-africhess-gold/10 border border-africhess-gold/25 text-africhess-gold tabular-nums font-semibold">
+                {opening.eco}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Précision par phase (ouverture / milieu / finale) */}
+        {hasPhaseData && (
+          <div className="rounded-xl bg-black/20 border border-white/8 p-4 space-y-3">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-africhess-gold/90">
+              {t("chess.review.phaseAccuracyTitle")}
+            </p>
+            <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 gap-y-2 text-sm items-center">
+              <span />
+              <span className="text-[10px] uppercase tracking-wider opacity-50 text-right">
+                {leftTitle}
+              </span>
+              <span className="text-[10px] uppercase tracking-wider opacity-50 text-right">
+                {rightTitle}
+              </span>
+              {REVIEW_PHASES.map((phase) => {
+                const sv = phaseSide(phaseAcc[phase]);
+                return (
+                  <FragmentRow
+                    key={phase}
+                    label={t(`chess.review.phase.${phase}`)}
+                    left={fmtPct(sv.left)}
+                    right={fmtPct(sv.right)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className={`grid gap-4 ${compact ? "" : "lg:grid-cols-2"}`}>
           {/* Précision par classement */}
           <div className="rounded-xl bg-black/20 border border-white/8 p-4 space-y-3">
@@ -215,5 +261,25 @@ export function GameReviewStatsDashboard({
         </div>
       </div>
     </section>
+  );
+}
+
+function FragmentRow({
+  label,
+  left,
+  right,
+}: {
+  label: string;
+  left: string;
+  right: string;
+}) {
+  return (
+    <>
+      <span className="opacity-75">{label}</span>
+      <span className="text-right font-semibold tabular-nums text-africhess-gold">
+        {left}
+      </span>
+      <span className="text-right font-semibold tabular-nums opacity-90">{right}</span>
+    </>
   );
 }
