@@ -7,6 +7,7 @@
 """
 from __future__ import annotations
 
+import unittest
 from contextlib import contextmanager
 
 import chess
@@ -32,6 +33,9 @@ def _board_after(ucis: list[str]) -> chess.Board:
 
 class _FakeEngine:
     """Moteur factice : évalue toute position à 0 (neutre)."""
+
+    def configure(self, opts):  # noqa: ARG002
+        pass
 
     def analyse(self, board, limit):  # noqa: ARG002
         return {
@@ -158,13 +162,20 @@ class BotStrengthMappingTests(SimpleTestCase):
         skills = [self.svc._skill_level_for_elo(e) for e in elos]
         self.assertEqual(skills, sorted(skills))
 
-    def test_low_elo_uses_skill_not_uci_limit(self):
+    def test_low_elo_floors_uci_elo(self):
+        # Sous le plancher UCI, on borne UCI_Elo à 1320 ; la faiblesse vient des
+        # coups faibles injectés séparément (pas du plein régime bridé par la
+        # profondeur, ancienne cause des bots « trop forts »).
         eng = _CfgEngine()
         mode = self.svc._configure_strength(eng, 1000)
-        self.assertEqual(mode, "skill")
-        # Sous le plancher : UCI_LimitStrength désactivé, Skill Level piloté.
-        self.assertFalse(eng.cfg.get("UCI_LimitStrength"))
-        self.assertIn("Skill Level", eng.cfg)
+        self.assertEqual(mode, "uci_elo")
+        self.assertTrue(eng.cfg.get("UCI_LimitStrength"))
+        self.assertEqual(eng.cfg.get("UCI_Elo"), STOCKFISH_UCI_MIN_ELO)
+
+    def test_below_floor_still_floors_uci_elo(self):
+        eng = _CfgEngine()
+        self.svc._configure_strength(eng, 300)
+        self.assertEqual(eng.cfg.get("UCI_Elo"), STOCKFISH_UCI_MIN_ELO)
 
     def test_mid_elo_uses_uci_elo(self):
         eng = _CfgEngine()
@@ -173,12 +184,33 @@ class BotStrengthMappingTests(SimpleTestCase):
         self.assertTrue(eng.cfg.get("UCI_LimitStrength"))
         self.assertEqual(eng.cfg.get("UCI_Elo"), 1600)
 
-    def test_uci_min_boundary(self):
+    def test_high_elo_capped_at_uci_max(self):
+        from apps.games.elo_config import STOCKFISH_UCI_MAX_ELO
+
         eng = _CfgEngine()
-        # Juste sous le plancher → skill ; au plancher → uci_elo.
-        self.assertEqual(self.svc._configure_strength(eng, STOCKFISH_UCI_MIN_ELO - 1), "skill")
-        eng2 = _CfgEngine()
-        self.assertEqual(self.svc._configure_strength(eng2, STOCKFISH_UCI_MIN_ELO), "uci_elo")
+        self.svc._configure_strength(eng, 5000)
+        self.assertEqual(eng.cfg.get("UCI_Elo"), STOCKFISH_UCI_MAX_ELO)
+
+    def test_skill_fallback_when_uci_unavailable(self):
+        class _NoUciEngine:
+            def __init__(self):
+                self.cfg = {}
+
+            def configure(self, opts):
+                if "UCI_Elo" in opts:
+                    raise chess.engine.EngineError("UCI_Elo non supporté")
+                self.cfg.update(opts)
+
+        eng = _NoUciEngine()
+        mode = self.svc._configure_strength(eng, 1000)
+        self.assertEqual(mode, "skill")
+        self.assertIn("Skill Level", eng.cfg)
+
+    def test_play_limit_monotonic_time(self):
+        # Le budget de réflexion croît avec l'ELO (mode UCI_Elo).
+        elos = [1000, 1400, 1800, 2300, 2800]
+        times = [self.svc._play_limit(e).time for e in elos]
+        self.assertEqual(times, sorted(times))
 
     def test_random_weak_move_only_for_low_elo(self):
         from unittest.mock import patch
@@ -195,3 +227,48 @@ class BotStrengthMappingTests(SimpleTestCase):
         strong = self.svc._limit_for_weak_elo(2200)
         self.assertLess(weak.depth, strong.depth)
         self.assertLessEqual(weak.depth, 4)
+
+
+import os  # noqa: E402
+import shutil  # noqa: E402
+
+
+def _stockfish_available() -> bool:
+    from apps.games.engine import _resolve_stockfish_path
+
+    path = _resolve_stockfish_path()
+    return bool(path) and os.path.isfile(path) and os.access(path, os.X_OK)
+
+
+@unittest.skipUnless(
+    os.environ.get("RUN_ENGINE_MATCH") and _stockfish_available(),
+    "Match moteur lent : activer avec RUN_ENGINE_MATCH=1 et un binaire Stockfish.",
+)
+class EngineHierarchyMatchTests(SimpleTestCase):
+    """Preuve avec Stockfish réel : un ELO élevé bat nettement un ELO faible."""
+
+    def _play(self, white_elo: int, black_elo: int, max_fullmoves: int = 50) -> float:
+        from apps.games.engine import ChessEngineService, close_stockfish_pool
+
+        svc = ChessEngineService()
+        board = chess.Board()
+        while not board.is_game_over(claim_draw=True) and board.fullmove_number <= max_fullmoves:
+            elo = white_elo if board.turn == chess.WHITE else black_elo
+            em = svc.get_best_move(board.fen(), target_elo=elo)
+            if not em:
+                break
+            mv = chess.Move.from_uci(em.uci)
+            if mv not in board.legal_moves:
+                break
+            board.push(mv)
+        close_stockfish_pool()
+        outcome = board.outcome(claim_draw=True)
+        if outcome is None or outcome.winner is None:
+            return 0.5
+        return 1.0 if outcome.winner == chess.WHITE else 0.0
+
+    def test_strong_bot_beats_weak_bot(self):
+        # 2500 contre 600, une partie de chaque couleur : le fort doit dominer.
+        strong_as_white = self._play(2500, 600)
+        strong_as_black = 1.0 - self._play(600, 2500)
+        self.assertGreaterEqual(strong_as_white + strong_as_black, 1.5)
