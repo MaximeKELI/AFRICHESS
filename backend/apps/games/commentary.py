@@ -28,6 +28,32 @@ OPENING_PLAYER = [
     "Solide — gardez la pression sur le centre.",
 ]
 
+# Commentaires IA qui NOMMENT l'ouverture reconnue ({opening} = nom français).
+OPENING_NAMED_AI = [
+    "Ah, une {opening} — je connais ça par cœur.",
+    "{opening} ? Classique. J'ai lu le livre, et toi ?",
+    "On part sur une {opening}. Joli choix… pour perdre avec style.",
+    "Tiens, la {opening}. Prépare-toi, je maîtrise la théorie.",
+    "{opening} : très bien. Voyons si tu tiens la ligne.",
+    "Une {opening}, hein ? Je t'attends au tournant.",
+    "La {opening}, mon terrain de jeu favori.",
+    "{opening}. Élégant. Ça ne te sauvera pas.",
+    "Ah, la {opening} ! Nostalgie… j'ai gagné mille parties comme ça.",
+    "Tu tentes la {opening} ? Audacieux. Naïf, mais audacieux.",
+    "La {opening}, sérieusement ? J'espérais un peu de surprise.",
+    "Nous voilà dans une {opening}. Le décor est planté.",
+]
+
+# Commentaires coach qui nomment l'ouverture pour le joueur ({opening}).
+OPENING_NAMED_PLAYER = [
+    "Vous jouez la {opening}. Suivez ses plans et développez vite.",
+    "{opening} : pensez au contrôle du centre et à la sécurité du roi.",
+    "Belle entrée en {opening} — restez fidèle à ses idées.",
+    "La {opening} est en place. Développez vos pièces avant d'attaquer.",
+    "{opening}. Bon choix : gardez l'initiative et roquez à temps.",
+    "Vous adoptez la {opening} : jouez naturellement, un coup après l'autre.",
+]
+
 CAPTURE_AI = [
     "Je prends cette pièce — merci pour le cadeau !",
     "Capture ! Ta pièce m'appartient maintenant.",
@@ -332,6 +358,35 @@ def _fmt(pool: list[str], san: str, move_number: int) -> str:
     return template.format(san=san) if "{san}" in template else template
 
 
+# Nombre de demi-coups pendant lesquels l'IA peut nommer l'ouverture.
+OPENING_ANNOUNCE_PLIES = 12
+
+
+def _short_opening(name: str) -> str:
+    """Garde la famille de l'ouverture (avant la variante) pour un ton concis."""
+    return name.split(" : ")[0].strip()
+
+
+def _named_opening(line_sans: Optional[list[str]]) -> Optional[str]:
+    """Nom court de l'ouverture reconnue (livre ECO), ou None si non reconnue."""
+    if not line_sans:
+        return None
+    from .openings_data import lookup_opening
+
+    info = lookup_opening(list(line_sans), "fr")
+    name = (info.get("name") or "").strip()
+    if info.get("eco") and name:
+        return _short_opening(name)
+    return None
+
+
+def _fmt_opening(pool: list[str], opening: str, san: str, move_number: int) -> str:
+    template = _pick(pool, move_number, san)
+    if not template:
+        return template
+    return template.format(opening=opening, san=san)
+
+
 def _is_castling(san: str) -> bool:
     return "O-O" in san
 
@@ -403,8 +458,13 @@ def generate_move_comment(
     eval_before: Optional[float] = None,
     eval_after: Optional[float] = None,
     best_san: Optional[str] = None,
+    line_sans: Optional[list[str]] = None,
 ) -> str:
-    """Génère un commentaire court en français pour un coup."""
+    """Génère un commentaire court en français pour un coup.
+
+    ``line_sans`` : coups SAN joués jusqu'à celui-ci inclus (permet de nommer
+    l'ouverture pendant la phase d'ouverture).
+    """
     board = chess.Board(fen_before)
     try:
         move = chess.Move.from_uci(uci)
@@ -467,10 +527,22 @@ def generate_move_comment(
             return pick(CAPTURE_AI, move_number, san)
         return _fmt(AI_REACT_PLAYER_CAPTURE, san, move_number)
 
+    opening_label = _named_opening(line_sans)
+
     if move_number <= 2:
         if played_by_ai:
+            if opening_label:
+                return _fmt_opening(OPENING_NAMED_AI, opening_label, san, move_number)
             return pick(OPENING_AI, move_number, san)
+        if opening_label:
+            return _fmt_opening(OPENING_NAMED_PLAYER, opening_label, san, move_number)
         return _fmt(AI_REACT_PLAYER_OPENING, san, move_number)
+
+    # Annonce ponctuelle de l'ouverture reconnue pendant la phase d'ouverture.
+    if opening_label and move_number <= OPENING_ANNOUNCE_PLIES and random.random() < 0.4:
+        if played_by_ai:
+            return _fmt_opening(OPENING_NAMED_AI, opening_label, san, move_number)
+        return _fmt_opening(OPENING_NAMED_PLAYER, opening_label, san, move_number)
 
     gain = eval_gain
     if not played_by_ai:

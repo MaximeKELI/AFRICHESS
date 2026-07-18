@@ -14,6 +14,9 @@ CommentSpec = dict[str, Any]
 # Profondeur Stockfish — uniquement si use_engine=True (pas pour le live)
 COMMENTARY_DEPTH = 8
 
+# Demi-coups pendant lesquels on reconstruit la ligne pour nommer l'ouverture.
+OPENING_LINE_PLIES = 12
+
 
 def generate_move_comments_for_specs(
     specs: list[CommentSpec],
@@ -57,6 +60,16 @@ def generate_move_comments_for_specs(
         eval_after = None
         best_san = None
 
+        # Ligne de coups jusqu'ici (pour nommer l'ouverture pendant la phase
+        # d'ouverture uniquement — requête légère limitée aux premiers coups).
+        line_sans = None
+        if spec.get("move_number", 999) <= OPENING_LINE_PLIES:
+            line_sans = list(
+                move.game.moves.filter(move_number__lte=move.move_number)
+                .order_by("move_number", "created_at")
+                .values_list("san", flat=True)
+            )
+
         if engine is not None:
             eval_before = engine.analyze_position(fen_before, depth=COMMENTARY_DEPTH)
             eval_after = engine.analyze_position(fen_after, depth=COMMENTARY_DEPTH)
@@ -73,6 +86,7 @@ def generate_move_comments_for_specs(
             eval_before=eval_before,
             eval_after=eval_after,
             best_san=best_san,
+            line_sans=line_sans,
         )
         Move.objects.filter(pk=move_id).update(comment=text)
         updated += 1

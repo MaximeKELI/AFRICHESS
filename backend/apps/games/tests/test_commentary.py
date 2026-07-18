@@ -94,6 +94,58 @@ class CommentaryTests(SimpleTestCase):
         )
         self.assertTrue(len(text) > 5)
 
+    def test_ai_names_bird_opening(self):
+        # 1. f4 : l'IA doit nommer l'ouverture de l'oiseau (Bird).
+        text = generate_move_comment(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            "f2f4",
+            "f4",
+            played_by_ai=True,
+            mover_is_white=True,
+            move_number=1,
+            line_sans=["f4"],
+        )
+        self.assertIn("oiseau", text.lower())
+
+    def test_ai_names_sicilian_defense(self):
+        fen = "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2"
+        text = generate_move_comment(
+            fen,
+            "g1f3",
+            "Nf3",
+            played_by_ai=True,
+            mover_is_white=True,
+            move_number=3,
+            line_sans=["e4", "c5", "Nf3"],
+        )
+        # move_number 3 : l'annonce est probabiliste ; on force plusieurs essais.
+        found = any(
+            "sicil"
+            in generate_move_comment(
+                fen,
+                "g1f3",
+                "Nf3",
+                played_by_ai=True,
+                mover_is_white=True,
+                move_number=3,
+                line_sans=["e4", "c5", "Nf3"],
+            ).lower()
+            for _ in range(40)
+        )
+        self.assertTrue(found)
+
+    def test_player_opening_naming(self):
+        text = generate_move_comment(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            "e2e4",
+            "e4",
+            played_by_ai=False,
+            mover_is_white=True,
+            move_number=1,
+            line_sans=["e4"],
+        )
+        self.assertIn("pion roi", text.lower())
+
     def test_capture_comment_without_engine(self):
         fen = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2"
         text = generate_move_comment(
