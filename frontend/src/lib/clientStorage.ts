@@ -12,7 +12,11 @@ export function readStoredLocale(fallback: StoredLocale = "fr"): StoredLocale {
 
 export function readStoredDarkMode(): boolean {
   if (typeof window === "undefined") return false;
-  return localStorage.getItem("theme") === "dark";
+  const stored = localStorage.getItem("theme");
+  if (stored === "dark") return true;
+  if (stored === "light") return false;
+  // Aucun choix explicite : suivre la préférence système.
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
 }
 
 export function readStoredLowBandwidth(): boolean {

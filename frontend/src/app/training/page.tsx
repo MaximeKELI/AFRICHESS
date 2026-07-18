@@ -26,7 +26,7 @@ const TRAINING_MODES = [
     href: "/training/solo",
     titleKey: "training.hub.solo.title",
     descKey: "training.hub.solo.desc",
-    accent: "text-white",
+    accent: "text-africhess-green",
   },
   {
     href: "/puzzles/build",

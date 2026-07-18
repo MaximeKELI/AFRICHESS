@@ -33,8 +33,8 @@ export function AccuracyGauge({
         ? "#D4A017"
         : "rgba(212,160,23,0.55)"
       : highlight
-        ? "rgba(255,255,255,0.75)"
-        : "rgba(255,255,255,0.35)";
+        ? "color-mix(in srgb, var(--text) 60%, transparent)"
+        : "color-mix(in srgb, var(--text) 32%, transparent)";
 
   return (
     <div
@@ -50,7 +50,7 @@ export function AccuracyGauge({
             cy={cy}
             r={r}
             fill="none"
-            stroke="rgba(255,255,255,0.06)"
+            stroke="var(--border-subtle)"
             strokeWidth={stroke}
           />
           {pct != null && (
@@ -72,7 +72,7 @@ export function AccuracyGauge({
           <span
             className={clsx(
               "font-bold tabular-nums leading-none",
-              highlight ? "text-africhess-gold text-xl" : "text-white/90 text-lg"
+              highlight ? "text-africhess-gold text-xl" : "opacity-90 text-lg"
             )}
           >
             {pct != null ? `${pct.toFixed(1)}` : "—"}
@@ -122,8 +122,12 @@ export function AccuracyCompareBar({
     <div className="space-y-2">
       <div className="flex h-2.5 rounded-full overflow-hidden bg-white/5 ring-1 ring-white/10">
         <div
-          className="h-full bg-gradient-to-r from-white/80 to-white/50 transition-all duration-700"
-          style={{ width: `${leftPct}%` }}
+          className="h-full transition-all duration-700"
+          style={{
+            width: `${leftPct}%`,
+            background:
+              "linear-gradient(to right, color-mix(in srgb, var(--text) 70%, transparent), color-mix(in srgb, var(--text) 45%, transparent))",
+          }}
         />
         <div
           className="h-full bg-gradient-to-l from-africhess-gold to-africhess-gold/60 transition-all duration-700"
@@ -133,7 +137,7 @@ export function AccuracyCompareBar({
       <div className="flex justify-between text-[10px] tabular-nums">
         <span className="opacity-60">
           {leftLabel}{" "}
-          <span className="font-semibold text-white/90">
+          <span className="font-semibold opacity-90">
             {left != null ? `${left.toFixed(1)}%` : "—"}
           </span>
         </span>

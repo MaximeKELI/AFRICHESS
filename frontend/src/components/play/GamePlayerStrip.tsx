@@ -84,7 +84,7 @@ export function GamePlayerStrip({
           <span
             className={clsx(
               "font-mono text-xl sm:text-2xl font-bold tabular-nums shrink-0 pl-1",
-              lowTime ? "text-africhess-terracotta" : "text-white/95"
+              lowTime ? "text-africhess-terracotta" : "opacity-95"
             )}
           >
             {formatClock(clockMs)}

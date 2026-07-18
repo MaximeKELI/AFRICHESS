@@ -63,7 +63,7 @@ function StatsColumn({
             <span
               className={clsx(
                 "font-mono font-semibold tabular-nums shrink-0",
-                counts[key] > 0 ? "text-white" : "opacity-30"
+                counts[key] > 0 ? "opacity-100" : "opacity-30"
               )}
             >
               {counts[key]}

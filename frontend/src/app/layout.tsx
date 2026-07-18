@@ -29,9 +29,14 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "AFRICHESS" },
 };
 
+const themeInitScript = `(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(t!=='light'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);var c=document.documentElement.classList;c.toggle('dark',d);if(localStorage.getItem('lowBandwidth')==='1')c.add('low-bandwidth');}catch(e){}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html suppressHydrationWarning className={`${fontDisplay.variable} ${fontBody.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-screen flex flex-col font-body has-mobile-nav">
         <Providers>
           <SkipLink />

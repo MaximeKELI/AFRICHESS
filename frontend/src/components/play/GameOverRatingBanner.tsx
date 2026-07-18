@@ -39,7 +39,7 @@ export function GameOverRatingBanner({
       <p
         className={clsx(
           "text-3xl sm:text-4xl font-bold font-mono tabular-nums tracking-tight",
-          neutral && "text-white/80",
+          neutral && "opacity-80",
           positive && "text-emerald-400",
           !positive && !neutral && "text-red-400"
         )}
