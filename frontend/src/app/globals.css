@@ -827,7 +827,9 @@ html.has-site-background nav {
 .chess-board-shell {
   width: 100%;
   min-width: 0;
-  max-width: min(100%, 820px);
+  /* Plafond haut pour laisser l'utilisateur agrandir (préférence taille).
+     La taille par défaut reste bornée par useBoardSize (max 820). */
+  max-width: min(100%, 1040px);
 }
 
 .chess-board-frame {
@@ -854,7 +856,7 @@ html.has-site-background nav {
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .chess-board-shell {
-    max-width: min(94vw, 640px);
+    max-width: min(96vw, 780px);
   }
 }
 

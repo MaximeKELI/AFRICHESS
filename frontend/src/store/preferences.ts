@@ -26,8 +26,20 @@ const PIECE_SET_KEY = "piece_set";
 const SOUND_THEME_KEY = "sound_theme";
 const ZEN_KEY = "zen_mode";
 const BLIND_KEY = "blind_mode";
+const BOARD_SIZE_KEY = "board_size";
 
 export type PieceSetId = "classic" | "african" | "african-svg";
+
+// Taille de l'échiquier en pourcentage (100 = valeur automatique par défaut).
+export const BOARD_SIZE_MIN = 70;
+export const BOARD_SIZE_MAX = 130;
+export const BOARD_SIZE_DEFAULT = 100;
+export const BOARD_SIZE_STEP = 5;
+
+export function clampBoardSize(value: number): number {
+  if (!Number.isFinite(value)) return BOARD_SIZE_DEFAULT;
+  return Math.min(BOARD_SIZE_MAX, Math.max(BOARD_SIZE_MIN, Math.round(value)));
+}
 
 export { preferenceStorageKey } from "@/store/preferenceScope";
 
@@ -73,6 +85,14 @@ function readSoundTheme(): SoundThemeId {
   return isSoundThemeId(stored) ? stored : DEFAULT_SOUND_THEME;
 }
 
+function readBoardSize(): number {
+  if (typeof window === "undefined") return BOARD_SIZE_DEFAULT;
+  const stored = localStorage.getItem(preferenceStorageKey(BOARD_SIZE_KEY));
+  if (stored === null) return BOARD_SIZE_DEFAULT;
+  const parsed = Number.parseInt(stored, 10);
+  return Number.isNaN(parsed) ? BOARD_SIZE_DEFAULT : clampBoardSize(parsed);
+}
+
 /** Recharge thème, arrière-plan, etc. après connexion / déconnexion. */
 export function syncPreferencesForUser(userId: number | null) {
   setPreferenceScopeUserId(userId);
@@ -88,6 +108,7 @@ export function syncPreferencesForUser(userId: number | null) {
     aiCommentsEnabled: readAiComments(),
     zenMode,
     blindMode: readBlindMode(),
+    boardSize: readBoardSize(),
   });
 }
 
@@ -99,6 +120,7 @@ interface PreferencesState {
   aiCommentsEnabled: boolean;
   zenMode: boolean;
   blindMode: boolean;
+  boardSize: number;
   setBoardTheme: (id: BoardThemeId) => void;
   setBoardBackground: (id: BoardBackgroundId) => void;
   setPieceSet: (id: PieceSetId) => void;
@@ -106,6 +128,7 @@ interface PreferencesState {
   setAiCommentsEnabled: (enabled: boolean) => void;
   setZenMode: (enabled: boolean) => void;
   setBlindMode: (enabled: boolean) => void;
+  setBoardSize: (value: number) => void;
 }
 
 export const usePreferencesStore = create<PreferencesState>((set) => ({
@@ -116,6 +139,7 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
   aiCommentsEnabled: true,
   zenMode: false,
   blindMode: false,
+  boardSize: BOARD_SIZE_DEFAULT,
   setBoardTheme: (id) => {
     localStorage.setItem(preferenceStorageKey(BOARD_THEME_KEY), id);
     set({ boardTheme: id });
@@ -146,5 +170,10 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
   setBlindMode: (enabled) => {
     localStorage.setItem(preferenceStorageKey(BLIND_KEY), enabled ? "1" : "0");
     set({ blindMode: enabled });
+  },
+  setBoardSize: (value) => {
+    const clamped = clampBoardSize(value);
+    localStorage.setItem(preferenceStorageKey(BOARD_SIZE_KEY), String(clamped));
+    set({ boardSize: clamped });
   },
 }));

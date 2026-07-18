@@ -1,9 +1,31 @@
 "use client";
 
 import { useEffect, useState, type RefObject } from "react";
+import { usePreferencesStore } from "@/store/preferences";
 
 const MOBILE_MQ = "(max-width: 767px)";
 const TABLET_MQ = "(min-width: 768px) and (max-width: 1023px)";
+
+/**
+ * Applique le facteur de taille choisi par l'utilisateur (en %) à la taille
+ * automatique. Le rétrécissement fonctionne partout ; l'agrandissement reste
+ * borné par la largeur du conteneur et la hauteur disponible (jamais de
+ * débordement).
+ */
+export function scaleBoardSize(
+  autoSize: number,
+  containerW: number,
+  maxByHeight: number,
+  min: number,
+  sizePct: number
+): number {
+  const scale = (Number.isFinite(sizePct) ? sizePct : 100) / 100;
+  let target = autoSize * scale;
+  if (scale > 1) {
+    target = Math.min(target, containerW, maxByHeight);
+  }
+  return Math.max(min, Math.floor(target));
+}
 
 function readSafeAreaBottom(): number {
   if (typeof window === "undefined") return 0;
@@ -31,6 +53,7 @@ export function useBoardSize(
   { min = 260, max = 720, extraBottom = 0 }: BoardSizeOptions = {}
 ): number {
   const [size, setSize] = useState(320);
+  const boardSizePct = usePreferencesStore((s) => s.boardSize);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -64,8 +87,8 @@ export function useBoardSize(
         cap = Math.min(viewportW * 0.68, maxByHeight, max);
       }
 
-      const next = Math.min(containerW, maxByHeight, cap);
-      setSize(Math.max(min, Math.floor(next)));
+      const autoSize = Math.min(containerW, maxByHeight, cap);
+      setSize(scaleBoardSize(autoSize, containerW, maxByHeight, min, boardSizePct));
     };
 
     update();
@@ -80,7 +103,7 @@ export function useBoardSize(
       window.visualViewport?.removeEventListener("resize", update);
       window.visualViewport?.removeEventListener("scroll", update);
     };
-  }, [containerRef, min, max, extraBottom]);
+  }, [containerRef, min, max, extraBottom, boardSizePct]);
 
   return size;
 }

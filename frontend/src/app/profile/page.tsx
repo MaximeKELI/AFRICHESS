@@ -29,6 +29,10 @@ const BoardThemePicker = dynamic(
   () => import("@/components/chess/BoardThemePicker").then((m) => m.BoardThemePicker),
   { ssr: false }
 );
+const BoardSizePicker = dynamic(
+  () => import("@/components/chess/BoardSizePicker").then((m) => m.BoardSizePicker),
+  { ssr: false }
+);
 const SoundThemePicker = dynamic(
   () => import("@/components/chess/SoundThemePicker").then((m) => m.SoundThemePicker),
   { ssr: false }
@@ -193,6 +197,12 @@ export default function ProfilePage() {
 
       <div id="profile-appearance" className="space-y-4 scroll-mt-20">
         <h2 className="font-semibold text-lg">{t("profile.appearance.title")}</h2>
+        <OptionSection
+          title={t("board.size.title")}
+          description={t("board.size.hint")}
+        >
+          <BoardSizePicker showHeader={false} />
+        </OptionSection>
         <OptionSection
           title={t("board.picker.title")}
           description={t("board.picker.hint")}

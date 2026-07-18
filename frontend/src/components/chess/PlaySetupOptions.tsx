@@ -17,6 +17,10 @@ const SoundThemePicker = dynamic(
   () => import("@/components/chess/SoundThemePicker").then((m) => m.SoundThemePicker),
   { ssr: false }
 );
+const BoardSizePicker = dynamic(
+  () => import("@/components/chess/BoardSizePicker").then((m) => m.BoardSizePicker),
+  { ssr: false }
+);
 
 export type PlaySetupCategory = "game" | "ai" | "online" | "style";
 
@@ -61,6 +65,9 @@ export function PlaySetupOptions({
 
       {setupCategory === "style" && (
         <div className="space-y-4">
+          <OptionSection compact title={t("board.size.title")} description={t("board.size.hint")}>
+            <BoardSizePicker compact showHeader={false} />
+          </OptionSection>
           <OptionSection compact title={t("board.picker.title")} description={t("board.picker.hint")}>
             <BoardThemePicker compact showHeader={false} showPieces={false} />
           </OptionSection>

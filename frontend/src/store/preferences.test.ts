@@ -1,5 +1,12 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { preferenceStorageKey, syncPreferencesForUser } from "./preferences";
+import {
+  BOARD_SIZE_DEFAULT,
+  BOARD_SIZE_MAX,
+  BOARD_SIZE_MIN,
+  clampBoardSize,
+  preferenceStorageKey,
+  syncPreferencesForUser,
+} from "./preferences";
 
 describe("preferenceStorageKey", () => {
   beforeEach(() => {
@@ -54,5 +61,55 @@ describe("soundTheme preference", () => {
     expect(usePreferencesStore.getState().soundTheme).toBe("silent");
     usePreferencesStore.getState().setSoundTheme("woodland");
     expect(usePreferencesStore.getState().soundTheme).toBe("woodland");
+  });
+});
+
+describe("clampBoardSize", () => {
+  it("borne la valeur dans [min, max]", () => {
+    expect(clampBoardSize(BOARD_SIZE_MIN - 50)).toBe(BOARD_SIZE_MIN);
+    expect(clampBoardSize(BOARD_SIZE_MAX + 50)).toBe(BOARD_SIZE_MAX);
+    expect(clampBoardSize(100)).toBe(100);
+  });
+
+  it("retombe sur la valeur par défaut pour une entrée invalide", () => {
+    expect(clampBoardSize(Number.NaN)).toBe(BOARD_SIZE_DEFAULT);
+    expect(clampBoardSize(Number.POSITIVE_INFINITY)).toBe(BOARD_SIZE_DEFAULT);
+  });
+});
+
+describe("boardSize preference", () => {
+  beforeEach(() => {
+    const store = new Map<string, string>();
+    const ls = {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        store.set(k, String(v));
+      },
+      removeItem: (k: string) => {
+        store.delete(k);
+      },
+      clear: () => store.clear(),
+    };
+    Object.defineProperty(globalThis, "localStorage", { configurable: true, value: ls });
+    Object.defineProperty(globalThis, "window", { configurable: true, value: globalThis });
+    syncPreferencesForUser(null);
+  });
+
+  it("défaut à 100 puis persiste et se réhydrate", async () => {
+    const { usePreferencesStore } = await import("./preferences");
+    expect(usePreferencesStore.getState().boardSize).toBe(BOARD_SIZE_DEFAULT);
+    usePreferencesStore.getState().setBoardSize(120);
+    expect(usePreferencesStore.getState().boardSize).toBe(120);
+    expect(localStorage.getItem(preferenceStorageKey("board_size"))).toBe("120");
+    syncPreferencesForUser(null);
+    expect(usePreferencesStore.getState().boardSize).toBe(120);
+  });
+
+  it("borne les valeurs hors limites lors de l'écriture", async () => {
+    const { usePreferencesStore } = await import("./preferences");
+    usePreferencesStore.getState().setBoardSize(999);
+    expect(usePreferencesStore.getState().boardSize).toBe(BOARD_SIZE_MAX);
+    usePreferencesStore.getState().setBoardSize(10);
+    expect(usePreferencesStore.getState().boardSize).toBe(BOARD_SIZE_MIN);
   });
 });
