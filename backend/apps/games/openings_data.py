@@ -1,194 +1,106 @@
-"""Livre d'ouvertures simplifié (arbre de lignes principales)."""
+"""Livre d'ouvertures d'AFRICHESS.
+
+Les données proviennent du jeu de données open source Lichess
+(https://github.com/lichess-org/chess-openings, licence CC0) et sont regénérées
+par ``backend/scripts/build_openings_book.py`` dans ``data/openings_book.tsv``.
+
+Le fichier contient ~3800 ouvertures avec, pour chaque ligne, la séquence de
+coups SAN, le code ECO, le nom français et le nom anglais.
+
+La reconnaissance se fait par « plus long préfixe » : on cherche la ligne nommée
+la plus profonde qui correspond au début de la partie. Ainsi ``1. f4`` est
+identifiée comme « Ouverture de l'oiseau » plutôt que renvoyée telle quelle.
+"""
 
 from __future__ import annotations
 
-OPENING_TREE: dict[str, dict] = {
-    "": {
-        "name_fr": "Position initiale",
-        "name_en": "Starting position",
-        "children": {
-            "e4": "e4",
-            "d4": "d4",
-            "Nf3": "Nf3",
-            "c4": "c4",
-        },
-    },
-    "e4": {
-        "name_fr": "Ouverture du roi",
-        "name_en": "King's Pawn",
-        "eco": "B00",
-        "children": {"e5": "e4_e5", "c5": "e4_c5", "e6": "e4_e6", "c6": "e4_c6", "d5": "e4_d5", "Nf6": "e4_Nf6"},
-    },
-    "e4_e5": {
-        "name_fr": "Partie ouverte",
-        "name_en": "Open Game",
-        "eco": "C20",
-        "children": {"Nf3": "e4_e5_Nf3", "Bc4": "e4_e5_Bc4", "f4": "e4_e5_f4"},
-    },
-    "e4_e5_Nf3": {
-        "name_fr": "Défense des deux cavaliers",
-        "name_en": "Two Knights Defense",
-        "eco": "C55",
-        "children": {"Nc6": "e4_e5_Nf3_Nc6", "Nf6": "e4_e5_Nf3_Nf6"},
-    },
-    "e4_e5_Nf3_Nc6": {
-        "name_fr": "Partie italienne",
-        "name_en": "Italian Game",
-        "eco": "C50",
-        "children": {"Bc4": "italian", "Bb5": "ruy_lopez"},
-    },
-    "italian": {
-        "name_fr": "Ouverture italienne",
-        "name_en": "Italian Game",
-        "eco": "C50",
-        "children": {},
-    },
-    "ruy_lopez": {
-        "name_fr": "Partie espagnole (Ruy López)",
-        "name_en": "Ruy López",
-        "eco": "C60",
-        "children": {},
-    },
-    "e4_c5": {
-        "name_fr": "Défense sicilienne",
-        "name_en": "Sicilian Defense",
-        "eco": "B20",
-        "children": {"Nf3": "e4_c5_Nf3", "c3": "e4_c5_c3"},
-    },
-    "e4_c5_Nf3": {
-        "name_fr": "Sicilienne — variante principale",
-        "name_en": "Sicilian — main line",
-        "eco": "B30",
-        "children": {"d6": "sicilian_najdorf", "Nc6": "sicilian_nc6"},
-    },
-    "sicilian_najdorf": {
-        "name_fr": "Sicilienne Najdorf",
-        "name_en": "Sicilian Najdorf",
-        "eco": "B90",
-        "children": {},
-    },
-    "e4_e6": {
-        "name_fr": "Défense française",
-        "name_en": "French Defense",
-        "eco": "C00",
-        "children": {"d4": "french_main"},
-    },
-    "french_main": {
-        "name_fr": "Française — échange",
-        "name_en": "French — main line",
-        "eco": "C01",
-        "children": {},
-    },
-    "e4_c6": {
-        "name_fr": "Défense caro-kann",
-        "name_en": "Caro-Kann Defense",
-        "eco": "B10",
-        "children": {},
-    },
-    "d4": {
-        "name_fr": "Ouverture de la dame",
-        "name_en": "Queen's Pawn",
-        "eco": "D00",
-        "children": {"d5": "d4_d5", "Nf6": "d4_Nf6", "f5": "d4_f5"},
-    },
-    "d4_d5": {
-        "name_fr": "Gambit de la dame refusé",
-        "name_en": "Queen's Gambit Declined",
-        "eco": "D30",
-        "children": {"c4": "qgd"},
-    },
-    "qgd": {
-        "name_fr": "Gambit de la dame",
-        "name_en": "Queen's Gambit",
-        "eco": "D06",
-        "children": {},
-    },
-    "d4_Nf6": {
-        "name_fr": "Défense indienne",
-        "name_en": "Indian Defense",
-        "eco": "A40",
-        "children": {"c4": "indian_c4", "Nf3": "indian_nf3"},
-    },
-    "indian_c4": {
-        "name_fr": "Indienne du roi",
-        "name_en": "King's Indian",
-        "eco": "E60",
-        "children": {"g6": "kings_indian"},
-    },
-    "kings_indian": {
-        "name_fr": "Indienne du roi — classique",
-        "name_en": "King's Indian — classical",
-        "eco": "E90",
-        "children": {},
-    },
-    "Nf3": {
-        "name_fr": "Ouverture Réti",
-        "name_en": "Réti Opening",
-        "eco": "A04",
-        "children": {"d5": "reti_d5", "Nf6": "reti_Nf6"},
-    },
-    "c4": {
-        "name_fr": "Ouverture anglaise",
-        "name_en": "English Opening",
-        "eco": "A10",
-        "children": {"e5": "english_e5", "Nf6": "english_Nf6"},
-    },
-}
+import csv
+from functools import lru_cache
+from pathlib import Path
+
+_BOOK_PATH = Path(__file__).resolve().parent / "data" / "openings_book.tsv"
+
+# key (coups SAN normalisés séparés par des espaces) -> (eco, name_fr, name_en)
+_BOOK: dict[str, tuple[str, str, str]] = {}
+# séquence normalisée -> ensemble des coups SAN qui prolongent vers une ligne nommée
+_CONTINUATIONS: dict[str, set[str]] = {}
+
+_ROOT_CHILDREN = ["e4", "d4", "Nf3", "c4"]
 
 
-def _san_key(san: str) -> str:
-    return san.replace("+", "").replace("#", "").strip()[:6]
+def _norm(san: str) -> str:
+    """Normalise un coup SAN (retire échec/mat et annotations)."""
+    return san.replace("+", "").replace("#", "").replace("!", "").replace("?", "").strip()
+
+
+def _load_book() -> None:
+    if _BOOK or not _BOOK_PATH.exists():
+        return
+    with _BOOK_PATH.open(encoding="utf-8") as fh:
+        reader = csv.reader(fh, delimiter="\t")
+        header = next(reader, None)
+        for row in reader:
+            if len(row) < 4:
+                continue
+            key, eco, name_fr, name_en = row[0], row[1], row[2], row[3]
+            _BOOK[key] = (eco, name_fr, name_en)
+            moves = key.split(" ")
+            for i, move in enumerate(moves):
+                parent = " ".join(moves[:i])
+                _CONTINUATIONS.setdefault(parent, set()).add(move)
+
+
+_load_book()
+
+
+def _normalized_moves(moves: list[str]) -> list[str]:
+    return [_norm(m) for m in moves if _norm(m)]
 
 
 def path_key_from_moves(moves: list[str]) -> str:
-    """Parcourt l'arbre selon les coups SAN."""
-    if not moves:
-        return ""
-    key = ""
-    for san in moves:
-        sk = _san_key(san)
-        if not key:
-            key = sk
-            continue
-        parent = OPENING_TREE.get(key, {})
-        child_key = parent.get("children", {}).get(sk)
-        key = child_key if child_key else f"{key}_{sk}"
-    return key
+    """Clé normalisée d'une ligne (coups SAN séparés par des espaces)."""
+    return " ".join(_normalized_moves(moves))
+
+
+def _longest_named_prefix(norm_moves: list[str]) -> tuple[str, tuple[str, str, str]] | None:
+    """Retourne (clé, entrée) de la ligne nommée la plus profonde correspondante."""
+    for i in range(len(norm_moves), 0, -1):
+        key = " ".join(norm_moves[:i])
+        entry = _BOOK.get(key)
+        if entry:
+            return key, entry
+    return None
+
+
+@lru_cache(maxsize=2048)
+def _lookup_cached(full_key: str, locale: str) -> tuple[str, str, str, tuple[str, ...]]:
+    norm_moves = full_key.split(" ") if full_key else []
+    match = _longest_named_prefix(norm_moves) if norm_moves else None
+
+    if not norm_moves:
+        children = list(_ROOT_CHILDREN)
+    else:
+        children = sorted(_CONTINUATIONS.get(full_key, set()))
+
+    if match is None:
+        if norm_moves:
+            # Aucune ligne connue : on renvoie au moins le dernier coup joué.
+            return norm_moves[-1], "", full_key, tuple(children)
+        name = "Position initiale" if locale == "fr" else "Starting position"
+        return name, "", "", tuple(children)
+
+    _key, (eco, name_fr, name_en) = match
+    name = name_fr if locale == "fr" else (name_en or name_fr)
+    return name, eco, full_key, tuple(children)
 
 
 def lookup_opening(moves: list[str], locale: str = "fr") -> dict:
-    """Retourne nom, ECO, enfants possibles pour une ligne."""
-    path = path_key_from_moves(moves)
-    node = OPENING_TREE.get(path)
-    if not node:
-        # Repli : chercher le préfixe le plus long
-        parts = path.split("_") if path else []
-        while parts:
-            parts.pop()
-            candidate = "_".join(parts)
-            node = OPENING_TREE.get(candidate)
-            if node:
-                break
-    if not node:
-        if moves:
-            return {
-                "name": moves[-1],
-                "eco": "",
-                "children": [],
-                "path": path,
-            }
-        return {
-            "name": "Position initiale" if locale == "fr" else "Starting position",
-            "eco": "",
-            "children": list(OPENING_TREE[""]["children"].keys()),
-            "path": "",
-        }
-
-    name = node.get("name_fr") if locale == "fr" else node.get("name_en", node.get("name_fr", ""))
-    children_sans = list(node.get("children", {}).keys())
+    """Retourne nom, code ECO, coups de suite possibles et chemin d'une ligne."""
+    full_key = path_key_from_moves(moves)
+    name, eco, path, children = _lookup_cached(full_key, locale if locale == "fr" else "en")
     return {
         "name": name,
-        "eco": node.get("eco", ""),
-        "children": children_sans,
+        "eco": eco,
+        "children": list(children),
         "path": path,
     }

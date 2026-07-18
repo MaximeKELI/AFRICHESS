@@ -5,7 +5,7 @@ import { Chess } from "chess.js";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { gamesApi } from "@/lib/api";
 import { useTranslation } from "@/hooks/useTranslation";
-import { openingNameFromMoves } from "@/lib/openings";
+import { openingInfoFromMoves } from "@/lib/openings";
 import { BookOpen } from "lucide-react";
 
 interface OpeningInfo {
@@ -51,9 +51,10 @@ export default function OpeningExplorerPage() {
       gamesApi
         .openingLookup(line, locale)
         .then(({ data }) => setInfo(data))
-        .catch(() =>
-          setInfo({ name: openingNameFromMoves(line), eco: "", children: [], path: "" })
-        );
+        .catch(() => {
+          const local = openingInfoFromMoves(line, locale === "en" ? "en" : "fr");
+          setInfo({ name: local.name, eco: local.eco, children: [], path: "" });
+        });
     },
     [locale]
   );

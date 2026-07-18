@@ -14,43 +14,14 @@ from apps.ratings.models import PlayerRating, RatingHistory
 
 from .models import Game, GameAnalysis
 
-OPENING_LINES: dict[str, str] = {
-    "e4": "Ouverture du roi",
-    "e4 e5": "Partie ouverte",
-    "e4 c5": "Défense sicilienne",
-    "e4 e6": "Défense française",
-    "e4 c6": "Défense caro-kann",
-    "d4": "Ouverture de la dame",
-    "d4 d5": "Gambit de la dame refusé",
-    "d4 Nf6": "Défense indienne",
-    "d4 f5": "Défense hollandaise",
-    "Nf3": "Ouverture Réti",
-    "c4": "Ouverture anglaise",
-    "e4 Nf6": "Défense alekhine",
-    "e4 d5": "Scandinave",
-}
-
-
-def _san_key(san: str) -> str:
-    return san.replace("+", "").replace("#", "").strip()[:5]
-
-
 def opening_from_moves(sans: list[str]) -> str:
+    """Nom français de l'ouverture, reconnu via le livre complet (~3800 lignes)."""
+    from .openings_data import lookup_opening
+
     if not sans:
         return "Position initiale"
-    white_moves = [sans[i] for i in range(0, len(sans), 2)]
-    w0 = _san_key(white_moves[0]) if white_moves else ""
-    b0 = _san_key(sans[1]) if len(sans) > 1 else ""
-    two = f"{w0} {b0}".strip()
-    if two in OPENING_LINES:
-        return OPENING_LINES[two]
-    if w0 in OPENING_LINES:
-        return OPENING_LINES[w0]
-    if w0.startswith("e4") and b0.startswith("e5"):
-        return "Partie ouverte"
-    if w0.startswith("d4") and "Nf" in b0:
-        return "Défense indienne"
-    return f"Après {white_moves[0]}" if white_moves else "Milieu de partie"
+    name = lookup_opening(sans, locale="fr").get("name")
+    return name or (f"Après {sans[0]}" if sans else "Milieu de partie")
 
 
 def effective_cadence(game: Game) -> str:

@@ -149,7 +149,7 @@ function PlayContent() {
   const botFromUrl = params.get("bot");
   const setupFromUrl = params.get("setup");
   const { user } = useAuthStore();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [gameId, setGameId] = useState<string | null>(null);
   const [gameData, setGameData] = useState<GameState>({ fen: "start", moves: [] });
   const [orientation, setOrientation] = useState<"white" | "black">("white");
@@ -409,8 +409,8 @@ function PlayContent() {
 
   const openingName = useMemo(() => {
     const sans = gameData.moves?.map((m) => m.san) ?? [];
-    return openingNameFromMoves(sans);
-  }, [gameData.moves]);
+    return openingNameFromMoves(sans, locale === "en" ? "en" : "fr");
+  }, [gameData.moves, locale]);
 
   const gamePlayersSource = useMemo(() => {
     const patchSelf = (p: GamePlayerPublic | null | undefined) => {
