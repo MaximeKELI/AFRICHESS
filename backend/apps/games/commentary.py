@@ -692,6 +692,9 @@ def generate_move_comment(
     eval_mover = _eval_for_mover(eval_after, mover_is_white)
     eval_gain = _eval_gain_for_mover(eval_before, eval_after, mover_is_white)
 
+    opening_label = _named_opening(line_sans)
+    lore = OPENING_LORE.get(opening_label) if opening_label else None
+
     if is_mate:
         return pick(MATE_AI if played_by_ai else MATE_PLAYER, move_number, san)
 
@@ -715,6 +718,18 @@ def generate_move_comment(
             return pick(CHECK_AI, move_number, san)
         return _fmt(AI_REACT_PLAYER_CHECK, san, move_number)
 
+    # Nommer l'ouverture reconnue en priorité pendant la phase d'ouverture.
+    # Les 3 premiers coups sont toujours nommés ; ensuite l'annonce est fréquente.
+    # Le cas gambit (capture) passe donc AVANT le commentaire de prise générique.
+    if opening_label and move_number <= OPENING_ANNOUNCE_PLIES:
+        announce = move_number <= 3 or random.random() < 0.6
+        if announce:
+            if lore:
+                return _pick(lore, move_number, san)
+            if played_by_ai:
+                return _fmt_opening(OPENING_NAMED_AI, opening_label, san, move_number)
+            return _fmt_opening(OPENING_NAMED_PLAYER, opening_label, san, move_number)
+
     if _is_castling(san):
         if played_by_ai:
             return pick(CASTLE_AI, move_number, san)
@@ -730,27 +745,12 @@ def generate_move_comment(
             return pick(CAPTURE_AI, move_number, san)
         return _fmt(AI_REACT_PLAYER_CAPTURE, san, move_number)
 
-    opening_label = _named_opening(line_sans)
-    lore = OPENING_LORE.get(opening_label) if opening_label else None
-
-    if move_number <= 2:
-        if lore:
-            return _pick(lore, move_number, san)
+    # Ouverture non reconnue par le livre : commentaire d'ouverture générique
+    # sur les tout premiers coups (le cas nommé est traité plus haut).
+    if move_number <= 2 and not opening_label:
         if played_by_ai:
-            if opening_label:
-                return _fmt_opening(OPENING_NAMED_AI, opening_label, san, move_number)
             return pick(OPENING_AI, move_number, san)
-        if opening_label:
-            return _fmt_opening(OPENING_NAMED_PLAYER, opening_label, san, move_number)
         return _fmt(AI_REACT_PLAYER_OPENING, san, move_number)
-
-    # Annonce ponctuelle de l'ouverture reconnue pendant la phase d'ouverture.
-    if opening_label and move_number <= OPENING_ANNOUNCE_PLIES and random.random() < 0.45:
-        if lore:
-            return _pick(lore, move_number, san)
-        if played_by_ai:
-            return _fmt_opening(OPENING_NAMED_AI, opening_label, san, move_number)
-        return _fmt_opening(OPENING_NAMED_PLAYER, opening_label, san, move_number)
 
     gain = eval_gain
     if not played_by_ai:

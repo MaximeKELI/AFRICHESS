@@ -191,6 +191,41 @@ class CommentaryTests(SimpleTestCase):
 
         self.assertIn(text, _LORE["Partie du pion roi"])
 
+    def test_gambit_capture_named_during_opening(self):
+        """Une prise qui prolonge une ligne nommée (gambit) doit être nommée,
+        au lieu du commentaire de prise générique, pendant l'ouverture."""
+        # 1.d4 d5 2.c4 dxc4 : Gambit dame accepté (prise au coup 4).
+        fen = "rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq c3 0 2"
+        line = ["d4", "d5", "c4", "dxc4"]
+        texts = {
+            generate_move_comment(
+                fen,
+                "d5c4",
+                "dxc4",
+                played_by_ai=False,
+                mover_is_white=False,
+                move_number=4,
+                line_sans=line,
+            )
+            for _ in range(60)
+        }
+        joined = " ".join(texts).lower()
+        self.assertTrue("gambit" in joined or "accept" in joined)
+
+    def test_opening_named_beyond_move_two(self):
+        """L'ouverture reconnue est nommée aussi après le 2e coup (coup 3)."""
+        fen = "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2"
+        text = generate_move_comment(
+            fen,
+            "g1f3",
+            "Nf3",
+            played_by_ai=True,
+            mover_is_white=True,
+            move_number=3,
+            line_sans=["e4", "c5", "Nf3"],
+        )
+        self.assertIn(text, OPENING_LORE["Défense sicilienne"])
+
     def test_capture_comment_without_engine(self):
         fen = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2"
         text = generate_move_comment(

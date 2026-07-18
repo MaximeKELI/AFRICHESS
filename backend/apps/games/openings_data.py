@@ -33,12 +33,18 @@ def _norm(san: str) -> str:
     return san.replace("+", "").replace("#", "").replace("!", "").replace("?", "").strip()
 
 
-def _load_book() -> None:
+def _load_book() -> bool:
+    """Charge le livre en mémoire. Renvoie True si un chargement vient d'avoir lieu.
+
+    Idempotent : appelé à l'import mais aussi paresseusement à chaque lookup, ce
+    qui rend la reconnaissance robuste même si le processus a démarré avant que
+    ``openings_book.tsv`` n'existe (sinon toutes les ouvertures restent muettes).
+    """
     if _BOOK or not _BOOK_PATH.exists():
-        return
+        return False
     with _BOOK_PATH.open(encoding="utf-8") as fh:
         reader = csv.reader(fh, delimiter="\t")
-        header = next(reader, None)
+        next(reader, None)  # en-tête
         for row in reader:
             if len(row) < 4:
                 continue
@@ -48,6 +54,7 @@ def _load_book() -> None:
             for i, move in enumerate(moves):
                 parent = " ".join(moves[:i])
                 _CONTINUATIONS.setdefault(parent, set()).add(move)
+    return bool(_BOOK)
 
 
 _load_book()
@@ -96,6 +103,11 @@ def _lookup_cached(full_key: str, locale: str) -> tuple[str, str, str, tuple[str
 
 def lookup_opening(moves: list[str], locale: str = "fr") -> dict:
     """Retourne nom, code ECO, coups de suite possibles et chemin d'une ligne."""
+    # Chargement paresseux : si le livre a été chargé vide à l'import (fichier
+    # généré après le démarrage du processus), on le récupère ici et on purge le
+    # cache des lookups déjà calculés « à vide ».
+    if not _BOOK and _load_book():
+        _lookup_cached.cache_clear()
     full_key = path_key_from_moves(moves)
     name, eco, path, children = _lookup_cached(full_key, locale if locale == "fr" else "en")
     return {
