@@ -211,10 +211,17 @@ class MatchmakingConsumerTests(TransactionTestCase):
     def setUp(self):
         reset_matchmaking_state()
 
-    def test_disconnect_keeps_http_queue_entry(self):
-        async_to_sync(self._test_disconnect_keeps_http_queue_entry)()
+    def test_disconnect_clears_queue_even_when_http_initiated(self):
+        async_to_sync(self._test_disconnect_clears_queue_even_when_http_initiated)()
 
-    async def _test_disconnect_keeps_http_queue_entry(self):
+    async def _test_disconnect_clears_queue_even_when_http_initiated(self):
+        """Contrat anti-fantômes : la déconnexion du WS matchmaking vide TOUJOURS
+        la file, même si l'entrée avait été créée via HTTP.
+
+        Auparavant on conservait les entrées HTTP à la déconnexion, ce qui laissait
+        des joueurs « fantômes » (WS listenOnly fermé mais toujours en file). Le
+        front compense en se réinscrivant en HTTP à la reconnexion (listenOnly).
+        """
         from channels.db import database_sync_to_async
 
         from apps.games.models import MatchmakingQueue
@@ -229,6 +236,7 @@ class MatchmakingConsumerTests(TransactionTestCase):
             )
 
         await join_queue()
+        self.assertTrue(await MatchmakingQueue.objects.filter(user=user).aexists())
         token = str(AccessToken.for_user(user))
         ws = WebsocketCommunicator(
             application,
@@ -237,7 +245,7 @@ class MatchmakingConsumerTests(TransactionTestCase):
         self.assertTrue((await ws.connect())[0])
         await ws.receive_json_from()
         await ws.disconnect()
-        self.assertTrue(
+        self.assertFalse(
             await MatchmakingQueue.objects.filter(user=user).aexists()
         )
 
