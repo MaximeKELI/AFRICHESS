@@ -1268,6 +1268,8 @@ const fr: Record<string, string> = {
   "chess.review.classificationAccuracyTitle": "Précision par classement",
   "chess.review.estimatedEloTitle": "Niveau estimé de la partie",
   "chess.review.estimatedEloHint": "Performance de cette partie — peut différer de votre classement habituel.",
+  "chess.review.openingTitle": "Ouverture jouée",
+  "chess.review.phaseAccuracyTitle": "Précision par phase",
   "chess.review.prev": "Précédent",
   "chess.review.next": "Suivant",
   "chess.review.moveOf": "Coup {current} / {total}",
