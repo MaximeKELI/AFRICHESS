@@ -7,6 +7,13 @@ import {
   countForColor,
   countForSides,
 } from "@/lib/moveClassificationStats";
+import { openingInfoFromMoves } from "@/lib/openings";
+import {
+  REVIEW_PHASES,
+  computePhaseAccuracies,
+  countMovesByColor,
+  estimateEloFromAccuracy,
+} from "@/lib/reviewInsights";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AccuracyCompareBar, AccuracyGauge } from "./charts/AccuracyGauge";
 import { ClassificationCompareChart } from "./charts/ClassificationCompareChart";
@@ -26,10 +33,26 @@ export function GameReviewStatsDashboard({
   colorColumns = false,
   compact = false,
 }: GameReviewStatsDashboardProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const moveAcc = resolveMoveAccuracies(analysis);
 
   if (!moves.length) return null;
+
+  // Repli client pour l'ELO estimé si l'analyse stockée ne l'a pas (anciennes
+  // parties analysées avant l'ajout du champ) : calcul depuis la précision.
+  const moveCounts = countMovesByColor(moves);
+  const estEloWhite =
+    analysis.est_elo_white ??
+    estimateEloFromAccuracy(moveAcc.white, moveCounts.white);
+  const estEloBlack =
+    analysis.est_elo_black ??
+    estimateEloFromAccuracy(moveAcc.black, moveCounts.black);
+
+  const phaseAcc = computePhaseAccuracies(moves);
+  const opening = openingInfoFromMoves(
+    moves.map((m) => m.san),
+    locale === "en" ? "en" : "fr"
+  );
 
   let leftTitle: string;
   let rightTitle: string;
@@ -41,9 +64,8 @@ export function GameReviewStatsDashboard({
   let rightClassAcc: number | null;
   let leftEstElo: number | null;
   let rightEstElo: number | null;
-
-  const estEloWhite = analysis.est_elo_white ?? null;
-  const estEloBlack = analysis.est_elo_black ?? null;
+  // true = la colonne de gauche correspond aux Blancs (sinon aux Noirs).
+  let leftIsWhite: boolean;
 
   if (colorColumns) {
     leftTitle = t("chess.analysis.whiteShort");
@@ -56,6 +78,7 @@ export function GameReviewStatsDashboard({
     rightClassAcc = analysis.accuracy_black;
     leftEstElo = estEloWhite;
     rightEstElo = estEloBlack;
+    leftIsWhite = true;
   } else if (playerIsWhite !== undefined) {
     const sides = countForSides(moves, playerIsWhite);
     leftTitle = t("chess.review.you");
@@ -68,13 +91,23 @@ export function GameReviewStatsDashboard({
     rightClassAcc = playerIsWhite ? analysis.accuracy_black : analysis.accuracy_white;
     leftEstElo = playerIsWhite ? estEloWhite : estEloBlack;
     rightEstElo = playerIsWhite ? estEloBlack : estEloWhite;
+    leftIsWhite = playerIsWhite;
   } else {
     return null;
   }
 
+  const phaseSide = (v: { white: number | null; black: number | null }) =>
+    leftIsWhite
+      ? { left: v.white, right: v.black }
+      : { left: v.black, right: v.white };
+  const hasPhaseData = REVIEW_PHASES.some(
+    (p) => phaseAcc[p].white != null || phaseAcc[p].black != null
+  );
+
   const totalBlunders = analysis.blunders_white + analysis.blunders_black;
   const hasEstElo = leftEstElo != null || rightEstElo != null;
   const fmtElo = (v: number | null) => (v == null ? "—" : `~${v}`);
+  const fmtPct = (v: number | null) => (v == null ? "—" : `${v.toFixed(0)}%`);
 
   return (
     <section className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] via-transparent to-africhess-gold/[0.04] overflow-hidden">
