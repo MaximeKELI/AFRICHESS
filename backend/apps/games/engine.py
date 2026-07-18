@@ -16,7 +16,11 @@ import chess
 import chess.engine
 from django.conf import settings
 
-from .elo_config import STOCKFISH_UCI_MAX_ELO, clamp_elo
+from .elo_config import (
+    STOCKFISH_UCI_MAX_ELO,
+    STOCKFISH_UCI_MIN_ELO,
+    clamp_elo,
+)
 from .variant_utils import apply_move as variant_apply_move
 from .variant_utils import board_from_fen, pick_variant_move
 
@@ -148,36 +152,66 @@ class ChessEngineService:
             yield engine
 
     def _skill_level_for_elo(self, elo: int) -> int:
-        """Skill Level 0–20 : plus bas = plus faible (débutants)."""
+        """Skill Level 0–20 : plus bas = plus faible (débutants).
+
+        Utilisé sous le plancher UCI_Elo (~1320) et en repli. Le mapping est
+        volontairement granulaire dans le bas du spectre pour ne pas surjouer.
+        """
         if elo <= 500:
             return 0
-        if elo <= 900:
+        if elo <= 700:
             return 1
-        if elo <= 1100:
+        if elo <= 900:
             return 2
-        if elo <= 1400:
-            return 5
+        if elo <= 1100:
+            return 3
+        if elo <= STOCKFISH_UCI_MIN_ELO:
+            return 4
+        if elo <= 1500:
+            return 6
         if elo <= 1800:
-            return 8
+            return 9
         if elo <= 2200:
-            return 12
+            return 13
+        if elo <= 2600:
+            return 17
         return 20
 
     def _configure_strength(self, engine, target_elo: int) -> str:
         """
         Configure la force du moteur.
         Retourne 'uci_elo', 'skill' ou 'depth' selon les options supportées.
+
+        Deux régimes :
+        - ELO < ~1320 : UCI_Elo ne descend pas assez bas et ignore Skill Level.
+          On désactive UCI_LimitStrength et on pilote la faiblesse via Skill
+          Level + profondeur réduite + coups aléatoires (débutants réalistes).
+        - ELO >= ~1320 : UCI_Elo est calibré ; Skill Level est ignoré dans ce
+          mode, on ne l'envoie donc pas (évite un cumul incohérent).
         """
         elo = min(clamp_elo(target_elo), STOCKFISH_UCI_MAX_ELO)
         skill = self._skill_level_for_elo(elo)
         slow = {"Slow Mover": 150} if elo <= 1100 else {}
+
+        if elo < STOCKFISH_UCI_MIN_ELO:
+            try:
+                engine.configure(
+                    {
+                        "UCI_LimitStrength": False,
+                        "Skill Level": skill,
+                        **slow,
+                    }
+                )
+                return "skill"
+            except chess.engine.EngineError:
+                logger.warning("Skill Level non supporté, repli profondeur")
+                return "depth"
+
         try:
             engine.configure(
                 {
                     "UCI_LimitStrength": True,
                     "UCI_Elo": elo,
-                    "Skill Level": skill,
-                    **slow,
                 }
             )
             return "uci_elo"
@@ -188,7 +222,6 @@ class ChessEngineService:
                 {
                     "UCI_LimitStrength": False,
                     "Skill Level": skill,
-                    **slow,
                 }
             )
             return "skill"
@@ -197,15 +230,20 @@ class ChessEngineService:
             return "depth"
 
     def _limit_for_weak_elo(self, elo: int) -> chess.engine.Limit:
-        """Profondeur/temps calibrés pour simuler un ELO faible sans UCI_Elo."""
-        if elo <= 400:
-            return chess.engine.Limit(depth=2, time=0.03)
-        if elo <= 700:
-            return chess.engine.Limit(depth=3, time=0.05)
-        if elo <= 1000:
-            return chess.engine.Limit(depth=4, time=0.08)
+        """Profondeur/temps calibrés pour simuler un ELO faible.
+
+        La profondeur est le principal levier : même en Skill Level bas,
+        Stockfish reste tactiquement fort si on le laisse chercher profond.
+        On plafonne donc fortement la profondeur dans le bas du spectre.
+        """
+        if elo <= 500:
+            return chess.engine.Limit(depth=1, time=0.03)
+        if elo <= 800:
+            return chess.engine.Limit(depth=2, time=0.05)
+        if elo <= 1100:
+            return chess.engine.Limit(depth=3, time=0.08)
         if elo <= 1400:
-            return chess.engine.Limit(depth=6, time=0.12)
+            return chess.engine.Limit(depth=5, time=0.12)
         if elo <= 1800:
             return chess.engine.Limit(depth=8, time=0.2)
         if elo <= 2200:
@@ -228,10 +266,26 @@ class ChessEngineService:
         return chess.engine.Limit(depth=depth)
 
     def _maybe_random_weak_move(self, board: chess.Board, elo: int) -> Optional[EngineMove]:
-        """Coup aléatoire légal pour débutants (0–500 / 500–1000 ELO)."""
-        if elo > 1000:
+        """Coup aléatoire légal pour simuler les erreurs des niveaux faibles.
+
+        Sous le plancher UCI_Elo, un vrai débutant gaffe régulièrement. On
+        injecte donc une probabilité (décroissante avec l'ELO) de jouer un
+        coup légal aléatoire, ce qui casse la « perfection » de Stockfish.
+        """
+        if elo > STOCKFISH_UCI_MIN_ELO:
             return None
-        chance = 0.45 if elo <= 500 else 0.28
+        if elo <= 400:
+            chance = 0.55
+        elif elo <= 600:
+            chance = 0.42
+        elif elo <= 800:
+            chance = 0.30
+        elif elo <= 1000:
+            chance = 0.20
+        elif elo <= 1150:
+            chance = 0.12
+        else:
+            chance = 0.06
         if random.random() > chance:
             return None
         legal = list(board.legal_moves)
@@ -339,9 +393,7 @@ class ChessEngineService:
             with self._use_engine() as engine:
                 info = engine.analyse(board, chess.engine.Limit(depth=depth))
                 score = info["score"].white()
-                if score.is_mate():
-                    return 10000 if score.mate() > 0 else -10000
-                return score.score() / 100.0
+                return self._score_to_cp(score, board) / 100.0
         except Exception as e:
             logger.error("Analysis error: %s", e)
         return None
@@ -429,16 +481,31 @@ class ChessEngineService:
                     best_uci = best_move.uci() if best_move else None
                     pv_san = self._pv_to_san(board, pv)
                     san = board.san(move)
+                    is_best = best_move is not None and move == best_move
                     board.push(move)
-                    info = engine.analyse(board, limit)
-                    eval_after = self._score_to_cp(info["score"].white())
+                    # Position terminée (mat, pat, nulle) : ne pas ré-analyser
+                    # une position sans coup légal — on lit le résultat.
+                    terminal = board.is_game_over(claim_draw=False)
+                    if terminal:
+                        eval_after = self._terminal_eval_cp(board)
+                    else:
+                        info = engine.analyse(board, limit)
+                        eval_after = self._score_to_cp(info["score"].white())
                     if played_by_white:
                         cp_loss = max(0, eval_before - eval_after)
                         eval_gain = eval_after - eval_before
                     else:
                         cp_loss = max(0, eval_after - eval_before)
                         eval_gain = eval_before - eval_after
-                    is_best = best_move is not None and move == best_move
+                    classification = self._classify_move(
+                        cp_loss, eval_gain, is_best, ply=len(evaluations)
+                    )
+                    # Le coup qui donne mat conclut la partie de la meilleure
+                    # façon possible : il ne doit jamais être compté comme une
+                    # erreur ni faire chuter la précision du gagnant.
+                    if terminal and board.is_checkmate():
+                        cp_loss = 0
+                        classification = "best"
                     evaluations.append(
                         MoveEvaluation(
                             uci=move.uci(),
@@ -446,26 +513,48 @@ class ChessEngineService:
                             eval_before=eval_before / 100,
                             eval_after=eval_after / 100,
                             centipawn_loss=cp_loss,
-                            classification=self._classify_move(
-                                cp_loss,
-                                eval_gain,
-                                is_best,
-                                ply=len(evaluations),
-                            ),
+                            classification=classification,
                             best_uci=best_uci,
                             best_san=best_san,
                             pv_san=pv_san,
                         )
                     )
+                    if terminal:
+                        break
         except Exception as e:
             logger.error("Game analysis error: %s", e)
         return evaluations
 
     @staticmethod
-    def _score_to_cp(score) -> int:
+    def _score_to_cp(score, board: chess.Board | None = None) -> int:
+        """Score (point de vue Blancs) en centipions.
+
+        Gère le cas `Mate(0)` : à une position déjà mat, python-chess renvoie
+        un mat de distance 0 dont le signe est perdu. On lève l'ambiguïté avec
+        `board.turn` (le camp au trait est le camp maté), sinon un mat livré par
+        les Blancs était compté −10000 (donc une gaffe monumentale).
+        """
         if score.is_mate():
-            return 10000 if score.mate() > 0 else -10000
+            mate = score.mate()
+            if mate is None:
+                return 0
+            if mate > 0:
+                return 10000
+            if mate < 0:
+                return -10000
+            # mate == 0 : position déjà mat — le camp au trait a perdu.
+            if board is not None and board.is_checkmate():
+                return -10000 if board.turn == chess.WHITE else 10000
+            return 0
         return score.score() or 0
+
+    @staticmethod
+    def _terminal_eval_cp(board: chess.Board) -> int:
+        """Évaluation (point de vue Blancs) d'une position terminée."""
+        outcome = board.outcome(claim_draw=False)
+        if outcome is None or outcome.winner is None:
+            return 0  # nulle (pat, matériel insuffisant, etc.)
+        return 10000 if outcome.winner == chess.WHITE else -10000
 
     @staticmethod
     def _classify_move(
@@ -524,23 +613,29 @@ class ChessEngineService:
                 san = board.san(move)
                 is_best = best_move is not None and move == best_move
                 board.push(move)
-                info_after = engine.analyse(board, limit)
-                eval_after = self._score_to_cp(info_after["score"].white())
+                terminal = board.is_game_over(claim_draw=False)
+                if terminal:
+                    eval_after = self._terminal_eval_cp(board)
+                else:
+                    info_after = engine.analyse(board, limit)
+                    eval_after = self._score_to_cp(info_after["score"].white())
             if played_by_white:
                 cp_loss = max(0, eval_before - eval_after)
                 eval_gain = eval_after - eval_before
             else:
                 cp_loss = max(0, eval_after - eval_before)
                 eval_gain = eval_before - eval_after
+            classification = self._classify_move(cp_loss, eval_gain, is_best, ply=ply)
+            if terminal and board.is_checkmate():
+                cp_loss = 0
+                classification = "best"
             return MoveEvaluation(
                 uci=move.uci(),
                 san=san,
                 eval_before=eval_before / 100,
                 eval_after=eval_after / 100,
                 centipawn_loss=cp_loss,
-                classification=self._classify_move(
-                    cp_loss, eval_gain, is_best, ply=ply
-                ),
+                classification=classification,
                 best_uci=best_uci,
                 best_san=best_san,
                 pv_san=pv_san,

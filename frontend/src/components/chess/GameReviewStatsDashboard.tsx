@@ -39,6 +39,11 @@ export function GameReviewStatsDashboard({
   let rightMoveAcc: number | null;
   let leftClassAcc: number | null;
   let rightClassAcc: number | null;
+  let leftEstElo: number | null;
+  let rightEstElo: number | null;
+
+  const estEloWhite = analysis.est_elo_white ?? null;
+  const estEloBlack = analysis.est_elo_black ?? null;
 
   if (colorColumns) {
     leftTitle = t("chess.analysis.whiteShort");
@@ -49,6 +54,8 @@ export function GameReviewStatsDashboard({
     rightMoveAcc = moveAcc.black;
     leftClassAcc = analysis.accuracy_white;
     rightClassAcc = analysis.accuracy_black;
+    leftEstElo = estEloWhite;
+    rightEstElo = estEloBlack;
   } else if (playerIsWhite !== undefined) {
     const sides = countForSides(moves, playerIsWhite);
     leftTitle = t("chess.review.you");
@@ -59,11 +66,15 @@ export function GameReviewStatsDashboard({
     rightMoveAcc = playerIsWhite ? moveAcc.black : moveAcc.white;
     leftClassAcc = playerIsWhite ? analysis.accuracy_white : analysis.accuracy_black;
     rightClassAcc = playerIsWhite ? analysis.accuracy_black : analysis.accuracy_white;
+    leftEstElo = playerIsWhite ? estEloWhite : estEloBlack;
+    rightEstElo = playerIsWhite ? estEloBlack : estEloWhite;
   } else {
     return null;
   }
 
   const totalBlunders = analysis.blunders_white + analysis.blunders_black;
+  const hasEstElo = leftEstElo != null || rightEstElo != null;
+  const fmtElo = (v: number | null) => (v == null ? "—" : `~${v}`);
 
   return (
     <section className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] via-transparent to-africhess-gold/[0.04] overflow-hidden">
@@ -108,6 +119,32 @@ export function GameReviewStatsDashboard({
             rightLabel={rightTitle}
           />
         </div>
+
+        {/* Niveau estimé de la partie (performance) */}
+        {hasEstElo && (
+          <div className="rounded-xl bg-black/20 border border-white/8 p-4 space-y-2">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-africhess-gold/90">
+              {t("chess.review.estimatedEloTitle")}
+            </p>
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider opacity-50">{leftTitle}</p>
+                <p className="text-2xl font-bold text-africhess-gold tabular-nums">
+                  {fmtElo(leftEstElo)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider opacity-50">{rightTitle}</p>
+                <p className="text-2xl font-semibold tabular-nums opacity-90">
+                  {fmtElo(rightEstElo)}
+                </p>
+              </div>
+            </div>
+            <p className="text-[10px] opacity-45 text-center">
+              {t("chess.review.estimatedEloHint")}
+            </p>
+          </div>
+        )}
 
         <div className={`grid gap-4 ${compact ? "" : "lg:grid-cols-2"}`}>
           {/* Précision par classement */}

@@ -12,6 +12,14 @@ OPENING_AI = [
     "Commençons… et prépare-toi à souffrir.",
     "Tu crois me surprendre ? Drôle.",
     "Ouverture classique — pour toi, pas pour moi.",
+    "Allez, on démarre. J'ai bien dormi, et toi ?",
+    "Bonne partie d'avance — enfin, pour l'un de nous deux.",
+    "Je pose mes pièces tranquillement. Rien ne presse.",
+    "Première pierre à l'édifice. On verra qui construit le mieux.",
+    "J'aime bien ce moment, tout est encore possible… en théorie.",
+    "Café en main, coup joué. À toi de voir.",
+    "On se connaît pas encore, mais ça va venir.",
+    "Petit coup d'échauffement pour commencer.",
 ]
 
 OPENING_PLAYER = [
@@ -25,6 +33,13 @@ CAPTURE_AI = [
     "Capture ! Ta pièce m'appartient maintenant.",
     "Échange favorable pour moi — adieu !",
     "Une pièce de moins pour toi, une de plus pour moi.",
+    "Hop, je ramasse. C'était laissé là, non ?",
+    "Miam. J'adore quand ça tombe tout seul.",
+    "Je prends, et je ne rends pas, désolé.",
+    "Petite prise de rien du tout… enfin, pour toi.",
+    "Merci, je garde. Ça ira dans ma collection.",
+    "Tu me la donnes ? J'accepte, je suis poli.",
+    "Une capture propre. Rien de personnel, hein.",
 ]
 
 CAPTURE_PLAYER = [
@@ -38,6 +53,12 @@ CHECK_AI = [
     "Je mets la pression — ton roi transpire.",
     "Échec. Trouve la parade… si tu peux.",
     "Échec ! Ça se complique pour toi.",
+    "Toc toc. C'est ton roi qu'on dérange.",
+    "Échec ! Respire un bon coup, tu vas en avoir besoin.",
+    "Je frappe à la porte du roi. Personne pour ouvrir ?",
+    "Échec — juste pour te tenir éveillé.",
+    "Alerte pour ton roi. Prends ton temps… ou pas.",
+    "Petit échec sympathique. Enfin, sympathique pour moi.",
 ]
 
 CHECK_PLAYER = [
@@ -51,6 +72,12 @@ MATE_AI = [
     "Mat ! La partie est terminée — merci pour le spectacle.",
     "Mat ! Tu t'en es bien sorti… non, en fait non.",
     "Checkmate ! À la prochaine — si tu oses.",
+    "Et voilà, c'est mat. Belle bagarre quand même.",
+    "Mat ! Ne le prends pas mal, on remet ça quand tu veux.",
+    "Échec et mat. GG — tu as tenu plus longtemps que d'autres.",
+    "C'est terminé : mat. Tu progresses, sincèrement.",
+    "Mat ! Rejoue-moi, je te laisserai peut-être une chance.",
+    "Fin de partie. Le roi tombe — révérence.",
 ]
 
 MATE_PLAYER = [
@@ -113,6 +140,12 @@ STRONG_AI = [
     "Je renforce ma position. Tu suis ?",
     "Position solide… pour moi. Pas pour toi.",
     "Pas mal, moi. Très mal, toi.",
+    "Là, je me sens bien. Vraiment bien.",
+    "Chaque pièce à sa place. J'aime quand un plan se déroule.",
+    "Je serre les boulons. Difficile de rentrer, hein ?",
+    "Tranquille. Je pose mon jeu, pierre après pierre.",
+    "Voilà, ça prend forme. Tu vois le problème arriver ?",
+    "Je garde la main. Patiemment.",
 ]
 
 STRONG_PLAYER = [
@@ -149,6 +182,15 @@ NEUTRAL_AI = [
     "Je garde le cap. Trouve une idée, humain.",
     "Position flexible. À toi de te tromper… ou pas.",
     "Je joue pour gagner — rien de personnel.",
+    "Hmm, laisse-moi réfléchir… voilà, c'est joué.",
+    "Coup posé. Honnêtement, la partie est plaisante.",
+    "J'improvise un peu là, on va voir.",
+    "Pas mon meilleur coup, mais il fait le travail.",
+    "Je temporise. Parfois il faut savoir attendre.",
+    "Bon, je développe tranquillement. Chacun son rythme.",
+    "Intéressant, ta structure. Je m'adapte.",
+    "On reste concentrés tous les deux, c'est bien.",
+    "Je respire, je réfléchis, je joue. Classique.",
 ]
 
 NEUTRAL_PLAYER = [
@@ -181,6 +223,15 @@ TAUNT_AI_GENERAL = [
     "La tension monte — surtout de ton côté.",
     "Tu as une idée ? Parce que moi, j'en ai plusieurs.",
     "Je ne suis pas pressé. Toi, si.",
+    "Franchement, tu joues pas mal. Ça m'oblige à me concentrer.",
+    "J'aime bien ce duel. On se vaut… presque.",
+    "Tu me fais réfléchir, c'est déjà ça.",
+    "Allez, montre-moi ce que tu as dans le ventre.",
+    "Respect pour ta pugnacité — mais ça ne suffira pas.",
+    "On dirait que tu commences à comprendre mon jeu. Trop tard ?",
+    "Petit conseil d'ami : surveille tes diagonales.",
+    "Joli effort. Sincèrement. Continue.",
+    "Tu me pousses dans mes retranchements, bravo.",
 ]
 
 AI_REACT_PLAYER_NEUTRAL = [

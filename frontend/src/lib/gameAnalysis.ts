@@ -44,6 +44,8 @@ export interface GameAnalysisData {
   accuracy_black: number | null;
   move_accuracy_white?: number | null;
   move_accuracy_black?: number | null;
+  est_elo_white?: number | null;
+  est_elo_black?: number | null;
   blunders_white: number;
   blunders_black: number;
   best_moves_json: AnalysisMove[];
@@ -85,6 +87,8 @@ export function parseAnalysisPayload(payload: unknown): GameAnalysisData | null 
     accuracy_black: (p.accuracy_black as number | null) ?? null,
     move_accuracy_white: (p.move_accuracy_white as number | null) ?? null,
     move_accuracy_black: (p.move_accuracy_black as number | null) ?? null,
+    est_elo_white: (p.est_elo_white as number | null) ?? null,
+    est_elo_black: (p.est_elo_black as number | null) ?? null,
     blunders_white: Number(p.blunders_white ?? 0),
     blunders_black: Number(p.blunders_black ?? 0),
     best_moves_json: moves as AnalysisMove[],

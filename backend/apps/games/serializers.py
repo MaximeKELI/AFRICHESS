@@ -66,6 +66,7 @@ class GameAnalysisSerializer(serializers.ModelSerializer):
         fields = [
             "accuracy_white", "accuracy_black",
             "move_accuracy_white", "move_accuracy_black",
+            "est_elo_white", "est_elo_black",
             "blunders_white", "blunders_black",
             "best_moves_json", "summary_fr", "summary_en", "key_moments_json",
             "deep_review_json", "analysis_depth_used", "analysis_incomplete",

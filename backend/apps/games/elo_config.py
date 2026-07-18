@@ -9,6 +9,10 @@ MIN_AI_ELO = 100
 MAX_AI_ELO = 5000
 # Stockfish UCI_LimitStrength plafonne souvent vers 3190
 STOCKFISH_UCI_MAX_ELO = 3190
+# Plancher pratique de UCI_Elo : en dessous, UCI_LimitStrength ne descend pas
+# réellement (Stockfish borne ~1320). On passe alors par Skill Level + coups
+# faibles pour simuler un vrai niveau débutant.
+STOCKFISH_UCI_MIN_ELO = 1320
 
 # Paliers IA (alignés frontend AI_LEVELS)
 AI_PRESET_ELOS = (250, 750, 1250, 1750, 2250, 2750, 3250, 4000)

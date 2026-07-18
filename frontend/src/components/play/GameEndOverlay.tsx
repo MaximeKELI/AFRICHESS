@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Trophy, Frown, Handshake } from "lucide-react";
+import { Trophy, Frown, Handshake, RotateCcw, ChevronLeft } from "lucide-react";
 import clsx from "clsx";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { PlayerOutcome } from "@/lib/gameOutcome";
@@ -12,6 +12,11 @@ interface GameEndOverlayProps {
   terminationReason?: string | null;
   result?: string | null;
   onContinue: () => void;
+  /** Parties vs IA : proposer rejouer + retour aux bots. */
+  isVsAi?: boolean;
+  onReplay?: () => void;
+  onBackToBots?: () => void;
+  replayBusy?: boolean;
 }
 
 export function GameEndOverlay({
@@ -19,6 +24,10 @@ export function GameEndOverlay({
   terminationReason,
   result,
   onContinue,
+  isVsAi = false,
+  onReplay,
+  onBackToBots,
+  replayBusy = false,
 }: GameEndOverlayProps) {
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
@@ -102,6 +111,31 @@ export function GameEndOverlay({
         >
           {t("play.gameEnd.continue")}
         </button>
+        {isVsAi && (onReplay || onBackToBots) && (
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {onReplay && (
+              <button
+                type="button"
+                onClick={onReplay}
+                disabled={replayBusy}
+                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-africhess-gold/50 text-africhess-gold font-semibold text-sm hover:bg-africhess-gold/10 transition disabled:opacity-50"
+              >
+                <RotateCcw className="w-4 h-4" aria-hidden />
+                {t("play.gameEnd.replay")}
+              </button>
+            )}
+            {onBackToBots && (
+              <button
+                type="button"
+                onClick={onBackToBots}
+                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-white/25 font-semibold text-sm hover:bg-white/10 transition"
+              >
+                <ChevronLeft className="w-4 h-4" aria-hidden />
+                {t("play.gameEnd.backToBots")}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>,
     document.body

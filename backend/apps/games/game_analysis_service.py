@@ -76,7 +76,11 @@ def build_and_save_game_analysis(
     from apps.games.engine import ChessEngineService
     from apps.learning.review_nlg import generate_game_review
 
-    from .analysis_utils import compute_accuracies, compute_move_accuracies
+    from .analysis_utils import (
+        compute_accuracies,
+        compute_estimated_elos,
+        compute_move_accuracies,
+    )
     from .models import GameAnalysis
     from .review_phases import build_analyzed_moves_json
 
@@ -102,6 +106,7 @@ def build_and_save_game_analysis(
     )
     acc_w, acc_b = compute_accuracies(evaluations, move_rows)
     move_acc_w, move_acc_b = compute_move_accuracies(evaluations, move_rows)
+    est_elo_w, est_elo_b = compute_estimated_elos(move_acc_w, move_acc_b, move_rows)
     best_moves_json = build_analyzed_moves_json(evaluations, move_rows)
     summary_fr, summary_en, key_moments = generate_game_review(
         best_moves_json,
@@ -132,6 +137,8 @@ def build_and_save_game_analysis(
             "accuracy_black": acc_b,
             "move_accuracy_white": move_acc_w,
             "move_accuracy_black": move_acc_b,
+            "est_elo_white": est_elo_w,
+            "est_elo_black": est_elo_b,
             "blunders_white": blunders_w,
             "blunders_black": blunders_b,
             "best_moves_json": best_moves_json,

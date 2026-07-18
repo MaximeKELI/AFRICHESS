@@ -1022,8 +1022,8 @@ function PlayContent() {
     }
   }, [botFromUrl, gameId]);
 
-  const startAI = useCallback(async () => {
-    if (aiStarting || gameId) return;
+  const beginAiGame = useCallback(async () => {
+    if (aiStarting) return;
     unlockAiSpeech();
     resetLiveMoveSpeech();
     if (aiCommentsEnabled) {
@@ -1075,7 +1075,6 @@ function PlayContent() {
     }
   }, [
     aiStarting,
-    gameId,
     aiPlayMode,
     selectedBot,
     aiEloChoice,
@@ -1089,6 +1088,32 @@ function PlayContent() {
     syncGameInUrl,
     t,
   ]);
+
+  const startAI = useCallback(async () => {
+    if (gameId) return;
+    await beginAiGame();
+  }, [gameId, beginAiGame]);
+
+  /** Rejouer immédiatement une partie contre la même IA / le même bot. */
+  const replayVsAi = useCallback(async () => {
+    setGameEndOverlay(null);
+    setReviewOpen(false);
+    stopAiSpeech();
+    gameEndShownRef.current = null;
+    gameWasActiveRef.current = false;
+    setGameData({ fen: "start", moves: [] });
+    setGameId(null);
+    await beginAiGame();
+  }, [beginAiGame]);
+
+  /** Revenir à la sélection des bots. */
+  const backToBots = useCallback(() => {
+    setGameEndOverlay(null);
+    setReviewOpen(false);
+    stopAiSpeech();
+    clearActiveGame();
+    router.push("/bots");
+  }, [router]);
 
   const handleUndo = async () => {
     if (!gameId || !isVsAi) return;
@@ -2023,6 +2048,10 @@ function PlayContent() {
           terminationReason={gameEndOverlay.terminationReason}
           result={gameEndOverlay.result}
           onContinue={handleGameEndContinue}
+          isVsAi={isVsAi}
+          onReplay={isVsAi ? replayVsAi : undefined}
+          onBackToBots={isVsAi ? backToBots : undefined}
+          replayBusy={aiStarting}
         />
       )}
     </div>

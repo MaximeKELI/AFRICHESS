@@ -307,6 +307,10 @@ class GameAnalysis(models.Model):
     accuracy_black = models.FloatField(null=True, blank=True)
     move_accuracy_white = models.FloatField(null=True, blank=True)
     move_accuracy_black = models.FloatField(null=True, blank=True)
+    # ELO « de la partie » (performance estimée à partir de la précision).
+    # Peut différer nettement du classement habituel du joueur.
+    est_elo_white = models.PositiveIntegerField(null=True, blank=True)
+    est_elo_black = models.PositiveIntegerField(null=True, blank=True)
     blunders_white = models.PositiveSmallIntegerField(default=0)
     blunders_black = models.PositiveSmallIntegerField(default=0)
     best_moves_json = models.JSONField(default=list)

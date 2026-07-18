@@ -30,6 +30,13 @@ export function AccuracySummary({ analysis, playerIsWhite, compact = false }: Ac
         : analysis.accuracy_black
       : null;
 
+  const estEloWhite = analysis.est_elo_white ?? null;
+  const estEloBlack = analysis.est_elo_black ?? null;
+  const userEstElo =
+    playerIsWhite !== undefined ? (playerIsWhite ? estEloWhite : estEloBlack) : null;
+  const hasEstElo = estEloWhite != null || estEloBlack != null;
+  const fmtElo = (v: number | null) => (v == null ? "—" : `~${v}`);
+
   const titleClass = compact ? "text-[10px]" : "text-xs";
   const moveValueClass = compact ? "text-xl" : "text-2xl";
   const classValueClass = compact ? "text-base" : "text-lg";
@@ -91,6 +98,33 @@ export function AccuracySummary({ analysis, playerIsWhite, compact = false }: Ac
           </div>
         </div>
       </div>
+
+      {hasEstElo && (
+        <div>
+          <p className={`${titleClass} font-semibold text-africhess-gold mb-1`}>
+            {t("chess.review.estimatedEloTitle")}
+          </p>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            {playerIsWhite !== undefined && (
+              <div className="rounded-xl bg-white/5 p-2">
+                <p className="text-[10px] uppercase opacity-50">{t("chess.review.you")}</p>
+                <p className={`${classValueClass} font-bold text-africhess-gold`}>
+                  {fmtElo(userEstElo)}
+                </p>
+              </div>
+            )}
+            <div className="rounded-xl bg-white/5 p-2">
+              <p className="text-[10px] uppercase opacity-50">{t("chess.analysis.whiteShort")}</p>
+              <p className={`${classValueClass} font-semibold`}>{fmtElo(estEloWhite)}</p>
+            </div>
+            <div className="rounded-xl bg-white/5 p-2">
+              <p className="text-[10px] uppercase opacity-50">{t("chess.analysis.blackShort")}</p>
+              <p className={`${classValueClass} font-semibold`}>{fmtElo(estEloBlack)}</p>
+            </div>
+          </div>
+          <p className="text-[10px] opacity-50 mt-1">{t("chess.review.estimatedEloHint")}</p>
+        </div>
+      )}
     </div>
   );
 }
