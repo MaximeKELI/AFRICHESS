@@ -179,55 +179,69 @@ class ChessEngineService:
 
     def _configure_strength(self, engine, target_elo: int) -> str:
         """
-        Configure la force du moteur.
+        Configure la force du moteur pour jouer au niveau ``target_elo``.
         Retourne 'uci_elo', 'skill' ou 'depth' selon les options supportées.
 
-        Deux régimes :
-        - ELO < ~1320 : UCI_Elo ne descend pas assez bas et ignore Skill Level.
-          On désactive UCI_LimitStrength et on pilote la faiblesse via Skill
-          Level + profondeur réduite + coups aléatoires (débutants réalistes).
-        - ELO >= ~1320 : UCI_Elo est calibré ; Skill Level est ignoré dans ce
-          mode, on ne l'envoie donc pas (évite un cumul incohérent).
+        Stratégie (alignée sur l'usage standard de Stockfish, comme les bots
+        Lichess) :
+        - On utilise UCI_LimitStrength + UCI_Elo sur toute la plage supportée
+          [1320, 3190]. C'est le réglage calibré par les développeurs de
+          Stockfish : le bot joue vraiment à l'ELO demandé.
+        - En dessous du plancher UCI (1320), Stockfish ne descend pas plus bas.
+          On fixe donc UCI_Elo=1320 et on simule un niveau débutant en injectant
+          des coups faibles/aléatoires (``_maybe_random_weak_move``) dont la
+          fréquence augmente quand l'ELO cible baisse.
+        - Skill Level / profondeur ne servent que de repli si UCI_Elo est
+          indisponible sur le binaire.
         """
         elo = min(clamp_elo(target_elo), STOCKFISH_UCI_MAX_ELO)
-        skill = self._skill_level_for_elo(elo)
-        slow = {"Slow Mover": 150} if elo <= 1100 else {}
-
-        if elo < STOCKFISH_UCI_MIN_ELO:
-            try:
-                engine.configure(
-                    {
-                        "UCI_LimitStrength": False,
-                        "Skill Level": skill,
-                        **slow,
-                    }
-                )
-                return "skill"
-            except chess.engine.EngineError:
-                logger.warning("Skill Level non supporté, repli profondeur")
-                return "depth"
+        uci_elo = max(STOCKFISH_UCI_MIN_ELO, elo)
 
         try:
-            engine.configure(
-                {
-                    "UCI_LimitStrength": True,
-                    "UCI_Elo": elo,
-                }
-            )
+            engine.configure({"UCI_LimitStrength": True, "UCI_Elo": uci_elo})
             return "uci_elo"
         except chess.engine.EngineError:
-            logger.debug("UCI_Elo indisponible, essai Skill Level seul")
+            logger.debug("UCI_Elo indisponible, repli Skill Level")
+
         try:
             engine.configure(
-                {
-                    "UCI_LimitStrength": False,
-                    "Skill Level": skill,
-                }
+                {"UCI_LimitStrength": False, "Skill Level": self._skill_level_for_elo(elo)}
             )
             return "skill"
         except chess.engine.EngineError:
-            logger.warning("Skill Level non supporté, repli profondeur/ELO")
+            logger.warning("Skill Level non supporté, repli profondeur")
             return "depth"
+
+    def _play_limit(self, elo: int) -> chess.engine.Limit:
+        """Budget de réflexion d'un coup d'IA en mode UCI_Elo.
+
+        UCI_Elo détermine déjà la force : on laisse un temps suffisant pour qu'il
+        s'exprime tout en gardant des coups rapides. En dessous du plancher, on
+        limite un peu plus (le niveau débutant vient surtout des coups faibles
+        injectés séparément).
+        """
+        if elo < STOCKFISH_UCI_MIN_ELO:
+            return chess.engine.Limit(depth=6, time=0.05)
+        if elo <= 1600:
+            return chess.engine.Limit(time=0.10)
+        if elo <= 2000:
+            return chess.engine.Limit(time=0.15)
+        if elo <= 2500:
+            return chess.engine.Limit(time=0.20)
+        return chess.engine.Limit(time=0.30)
+
+    def _reset_full_strength(self, engine) -> None:
+        """Rétablit la pleine force du moteur mutualisé.
+
+        Le pool réutilise un seul processus Stockfish : après un coup d'IA
+        faible (`_configure_strength` a baissé Skill Level / UCI_Elo), toute
+        analyse ultérieure (Game Review, coaching, ELO estimé) hériterait de ce
+        bridage et deviendrait fausse. On réinitialise donc avant chaque analyse.
+        """
+        try:
+            engine.configure({"UCI_LimitStrength": False, "Skill Level": 20})
+        except chess.engine.EngineError:
+            pass
 
     def _limit_for_weak_elo(self, elo: int) -> chess.engine.Limit:
         """Profondeur/temps calibrés pour simuler un ELO faible.
@@ -349,14 +363,13 @@ class ChessEngineService:
                         if elo is not None and elo <= STOCKFISH_UCI_MAX_ELO
                         else "depth"
                     )
-                    if strength_mode == "uci_elo":
-                        limit = self._limit_for_weak_elo(elo)
-                    elif strength_mode == "skill":
-                        limit = self._limit_for_weak_elo(elo)
-                    elif elo is not None and elo > STOCKFISH_UCI_MAX_ELO:
+                    if elo is not None and elo > STOCKFISH_UCI_MAX_ELO:
                         # Au-delà du plafond UCI : profondeur/temps max (GM / monstre)
                         limit = self._limit_for_elo(elo, diff_key)
+                    elif strength_mode == "uci_elo" and elo is not None:
+                        limit = self._play_limit(elo)
                     elif elo is not None:
+                        # Repli Skill Level / profondeur si UCI_Elo indisponible.
                         limit = self._limit_for_weak_elo(elo)
                     else:
                         limit = self._limit_for_elo(1200, diff_key)
@@ -391,6 +404,7 @@ class ChessEngineService:
         depth = depth or settings.ENGINE_DEPTH
         try:
             with self._use_engine() as engine:
+                self._reset_full_strength(engine)
                 info = engine.analyse(board, chess.engine.Limit(depth=depth))
                 score = info["score"].white()
                 return self._score_to_cp(score, board) / 100.0
@@ -403,6 +417,7 @@ class ChessEngineService:
         board = chess.Board(fen)
         try:
             with self._use_engine() as engine:
+                self._reset_full_strength(engine)
                 info = engine.analyse(board, chess.engine.Limit(depth=depth))
                 pv = info.get("pv") or []
                 if pv and pv[0] in board.legal_moves:
@@ -464,6 +479,7 @@ class ChessEngineService:
         limit = self._analysis_limit(depth, movetime_ms)
         try:
             with self._use_engine() as engine:
+                self._reset_full_strength(engine)
                 info = engine.analyse(board, limit)
                 for uci, played_by_white in moves:
                     try:
@@ -603,6 +619,7 @@ class ChessEngineService:
         limit = chess.engine.Limit(depth=depth)
         try:
             with self._use_engine() as engine:
+                self._reset_full_strength(engine)
                 info = engine.analyse(board, limit)
                 eval_before = self._score_to_cp(info["score"].white())
                 pv = info.get("pv") or []
