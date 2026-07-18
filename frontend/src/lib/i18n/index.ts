@@ -3169,6 +3169,8 @@ const en: Record<string, string> = {
   "chess.review.classificationAccuracyTitle": "Classification accuracy",
   "chess.review.estimatedEloTitle": "Estimated game rating",
   "chess.review.estimatedEloHint": "Performance in this game — may differ from your usual rating.",
+  "chess.review.openingTitle": "Opening played",
+  "chess.review.phaseAccuracyTitle": "Accuracy by phase",
   "chess.review.prev": "Previous",
   "chess.review.next": "Next",
   "chess.review.moveOf": "Move {current} / {total}",
