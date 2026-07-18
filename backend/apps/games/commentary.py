@@ -33,12 +33,12 @@ CAPTURE_AI = [
     "Capture ! Ta pièce m'appartient maintenant.",
     "Échange favorable pour moi — adieu !",
     "Une pièce de moins pour toi, une de plus pour moi.",
-    "Hop, je ramasse. C'était laissé là, non ?",
-    "Miam. J'adore quand ça tombe tout seul.",
+    "Hop, je ramasse cette pièce. C'était laissé là, non ?",
+    "Miam, je capture. J'adore quand ça tombe tout seul.",
     "Je prends, et je ne rends pas, désolé.",
-    "Petite prise de rien du tout… enfin, pour toi.",
-    "Merci, je garde. Ça ira dans ma collection.",
-    "Tu me la donnes ? J'accepte, je suis poli.",
+    "Petite prise… merci pour le matériel !",
+    "Merci pour la pièce, je la garde dans ma collection.",
+    "Tu me la donnes ? J'accepte la pièce, je suis poli.",
     "Une capture propre. Rien de personnel, hein.",
 ]
 
@@ -53,11 +53,11 @@ CHECK_AI = [
     "Je mets la pression — ton roi transpire.",
     "Échec. Trouve la parade… si tu peux.",
     "Échec ! Ça se complique pour toi.",
-    "Toc toc. C'est ton roi qu'on dérange.",
+    "Toc toc — échec. C'est ton roi qu'on dérange.",
     "Échec ! Respire un bon coup, tu vas en avoir besoin.",
-    "Je frappe à la porte du roi. Personne pour ouvrir ?",
+    "Échec : je frappe à la porte du roi. Personne pour ouvrir ?",
     "Échec — juste pour te tenir éveillé.",
-    "Alerte pour ton roi. Prends ton temps… ou pas.",
+    "Échec ! Alerte pour ton roi. Prends ton temps… ou pas.",
     "Petit échec sympathique. Enfin, sympathique pour moi.",
 ]
 
@@ -77,7 +77,7 @@ MATE_AI = [
     "Échec et mat. GG — tu as tenu plus longtemps que d'autres.",
     "C'est terminé : mat. Tu progresses, sincèrement.",
     "Mat ! Rejoue-moi, je te laisserai peut-être une chance.",
-    "Fin de partie. Le roi tombe — révérence.",
+    "Échec et mat. Le roi tombe — révérence.",
 ]
 
 MATE_PLAYER = [
