@@ -76,6 +76,22 @@ if ! docker info >/dev/null 2>&1; then
 fi
 echo "✓ Docker OK"
 
+# Libérer :8000 seulement si c’est un backend AFRICHESS (daphne / container)
+echo "→ Vérification du port 8000…"
+pkill -f "daphne.*config.asgi:application" 2>/dev/null || true
+docker compose stop backend 2>/dev/null || true
+sleep 1
+
+if ss -tln 2>/dev/null | grep -qE '[:.]8000 '; then
+  echo "✗ Port 8000 déjà occupé par un autre processus :"
+  ss -tlnp 2>/dev/null | grep -E '[:.]8000 ' || true
+  lsof -nP -iTCP:8000 -sTCP:LISTEN 2>/dev/null || true
+  echo ""
+  echo "  Arrêtez-le (ex. un autre Django/runserver), puis relancez : make dev"
+  echo "  Exemple :  kill \$(lsof -t -iTCP:8000 -sTCP:LISTEN)"
+  exit 1
+fi
+
 echo "→ Démarrage db + redis…"
 docker compose up -d db redis
 
