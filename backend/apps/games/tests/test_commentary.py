@@ -1,7 +1,7 @@
 """Tests commentaires de coups."""
 from django.test import SimpleTestCase
 
-from apps.games.commentary import generate_move_comment
+from apps.games.commentary import OPENING_LORE, generate_move_comment
 
 START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
@@ -105,7 +105,8 @@ class CommentaryTests(SimpleTestCase):
             move_number=1,
             line_sans=["f4"],
         )
-        self.assertIn("oiseau", text.lower())
+        lowered = text.lower()
+        self.assertTrue("oiseau" in lowered or "bird" in lowered)
 
     def test_ai_names_sicilian_defense(self):
         fen = "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2"
@@ -134,6 +135,47 @@ class CommentaryTests(SimpleTestCase):
         )
         self.assertTrue(found)
 
+    def test_ai_uses_sicilian_lore(self):
+        # 1...c5 : réaction de l'IA au coup du joueur -> phrase de « lore ».
+        fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
+        text = generate_move_comment(
+            fen,
+            "c7c5",
+            "c5",
+            played_by_ai=False,
+            mover_is_white=False,
+            move_number=2,
+            line_sans=["e4", "c5"],
+        )
+        self.assertIn(text, OPENING_LORE["Défense sicilienne"])
+
+    def test_queens_gambit_lore_mentions_context(self):
+        # Exemple demandé : le gambit de la dame, joué par grands maîtres et débutants.
+        fen = "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq d6 0 2"
+        text = generate_move_comment(
+            fen,
+            "c2c4",
+            "c4",
+            played_by_ai=True,
+            mover_is_white=True,
+            move_number=3,
+            line_sans=["d4", "d5", "c4"],
+        )
+        # move_number 3 : annonce probabiliste, on force plusieurs essais.
+        texts = {
+            generate_move_comment(
+                fen,
+                "c2c4",
+                "c4",
+                played_by_ai=True,
+                mover_is_white=True,
+                move_number=3,
+                line_sans=["d4", "d5", "c4"],
+            )
+            for _ in range(60)
+        }
+        self.assertTrue(texts & set(OPENING_LORE["Gambit dame"]))
+
     def test_player_opening_naming(self):
         text = generate_move_comment(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
@@ -144,7 +186,10 @@ class CommentaryTests(SimpleTestCase):
             move_number=1,
             line_sans=["e4"],
         )
-        self.assertIn("pion roi", text.lower())
+        # « Partie du pion roi » dispose de phrases de lore (1.e4 …).
+        from apps.games.commentary import OPENING_LORE as _LORE
+
+        self.assertIn(text, _LORE["Partie du pion roi"])
 
     def test_capture_comment_without_engine(self):
         fen = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2"

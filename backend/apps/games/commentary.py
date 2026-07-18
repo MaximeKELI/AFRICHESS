@@ -54,6 +54,209 @@ OPENING_NAMED_PLAYER = [
     "Vous adoptez la {opening} : jouez naturellement, un coup après l'autre.",
 ]
 
+# Descriptions caractérielles par ouverture (voix de l'IA, ton taquin + culture
+# échiquéenne). Clé = nom de famille français (partie avant « : »). Les phrases
+# sont « neutres » : elles conviennent que l'ouverture soit jouée par l'IA ou
+# par le joueur. Pour les ouvertures absentes, on retombe sur les modèles
+# génériques OPENING_NAMED_AI / OPENING_NAMED_PLAYER.
+OPENING_LORE: dict[str, list[str]] = {
+    "Défense sicilienne": [
+        "La sicilienne : la réponse la plus mordante à 1.e4. Les champions du monde l'adorent… ça ne t'aidera pas contre moi.",
+        "Ah, la sicilienne ! La meilleure arme des Noirs contre le pion roi. On va se battre, j'aime ça.",
+        "Défense sicilienne. Asymétrique, tranchante, dangereuse — pour toi surtout.",
+    ],
+    "Partie espagnole (Ruy López)": [
+        "La Ruy López, l'espagnole ! Vieille de cinq siècles et toujours redoutable. Du grand classique.",
+        "Partie espagnole : l'ouverture préférée des grands maîtres. Bon goût — dommage pour la suite.",
+        "La Ruy López — je pince ton cavalier et je te presse lentement. Un vrai supplice.",
+    ],
+    "Défense française": [
+        "La française : solide comme un roc, un brin passive. Je vais étouffer ton fou de cases blanches.",
+        "Défense française. Tu fermes le jeu ? Parfait, j'adore les longues tortures positionnelles.",
+        "La française — chaîne de pions et patience. Voyons qui craque le premier.",
+    ],
+    "Défense Caro-Kann": [
+        "La Caro-Kann : le choix des joueurs solides qui détestent perdre. Sérieux… mais un peu lent.",
+        "Défense Caro-Kann. Béton armé. Je vais devoir travailler, mais ça me connaît.",
+        "La Caro-Kann, l'ouverture des sages. Prudente. Trop, peut-être.",
+    ],
+    "Défense scandinave": [
+        "La scandinave ! Tu sors la dame tôt ? Audacieux… je vais la pourchasser avec plaisir.",
+        "Défense scandinave : directe et sans complexe. Populaire chez les amateurs, sous-estimée par les autres.",
+    ],
+    "Défense Pirc": [
+        "La Pirc : tu me laisses le centre pour mieux le miner ? Ruse hypermoderne. On verra.",
+        "Défense Pirc — souple et venimeuse. J'occupe, tu contres. Que le meilleur gagne.",
+    ],
+    "Défense moderne": [
+        "La moderne : fianchetto et contre-attaque. Tu me donnes de l'espace… je m'en servirai.",
+        "Défense moderne. Flexible, provocatrice. J'aime ce genre de duel.",
+    ],
+    "Défense Alekhine": [
+        "La défense Alekhine ! Tu provoques mes pions pour les attaquer. Osé — et risqué.",
+        "Alekhine : tu invites tout mon centre à avancer. J'accepte l'invitation avec gourmandise.",
+    ],
+    "Défense Nimzowitsch": [
+        "La Nimzowitsch : hypermoderne jusqu'au bout des ongles. Original, je te l'accorde.",
+        "Défense Nimzowitsch — étrange mais rusée. Voyons si tu la maîtrises vraiment.",
+    ],
+    "Défense Philidor": [
+        "La Philidor : « le pion est l'âme des échecs », disait-il. Solide, mais un peu à l'étroit.",
+        "Défense Philidor — vieille école, jeu compact. Je vais t'ouvrir ça de force.",
+    ],
+    "Défense Petroff (russe)": [
+        "La russe, la Petroff ! L'arme des joueurs qui veulent la nulle. Bonne chance pour m'endormir.",
+        "Défense Petroff : symétrique et réputée solide. Réputée ennuyeuse aussi.",
+    ],
+    "Partie italienne": [
+        "La partie italienne : élégante, naturelle, jouée par les débutants comme par les champions.",
+        "L'italienne — le fou pointe sur f7, le point faible éternel. Prudence.",
+        "Partie italienne, giuoco piano : « le jeu tranquille ». Tranquille avant la tempête.",
+    ],
+    "Partie écossaise": [
+        "La partie écossaise : j'ouvre le centre tout de suite. Pas de cachotteries, du jeu franc.",
+        "L'écossaise — Kasparov l'a remise à la mode. Excellente compagnie, tu ne trouves pas ?",
+    ],
+    "Partie viennoise": [
+        "La viennoise : je prépare f4 et ça va chauffer. Vieille école romantique.",
+        "Partie viennoise — discrète puis explosive. Méfie-toi du calme apparent.",
+    ],
+    "Partie des quatre cavaliers": [
+        "Les quatre cavaliers : symétrie et développement sain. Correct… mais je vise plus haut.",
+        "Partie des quatre cavaliers — tout le monde développe poliment. Puis la vraie partie commence.",
+    ],
+    "Ouverture du fou": [
+        "L'ouverture du fou : je braque f7 dès le deuxième coup. Simple, direct, désagréable.",
+        "Ouverture du fou — discrète, mais elle vise déjà ton point faible.",
+    ],
+    "Partie du centre": [
+        "La partie du centre : j'ouvre tout, ma dame sort tôt. Jeu romantique et vif.",
+        "Partie du centre — droit au but. On échange, on se bat, on tranche.",
+    ],
+    "Gambit du roi accepté": [
+        "Le gambit du roi ! Je sacrifie un pion pour l'attaque. Romantique, sauvage, glorieux.",
+        "Gambit du roi accepté — tu prends l'appât ? Parfait. Place au feu d'artifice.",
+    ],
+    "Gambit du roi refusé": [
+        "Gambit du roi refusé : prudent. Tu déclines mon cadeau empoisonné ? Sage décision.",
+        "Tu refuses le gambit du roi. Dommage, j'avais préparé un beau sacrifice.",
+    ],
+    "Gambit letton": [
+        "Le gambit letton ! Un contre-gambit fou et rare. Tu as du cran, je te l'accorde.",
+        "Gambit letton — téméraire et douteux. J'adore quand on me facilite le travail.",
+    ],
+    "Partie du pion roi": [
+        "1.e4, le roi des premiers coups. « Le meilleur coup par excellence », disait Fischer.",
+        "Partie du pion roi : je libère fou et dame d'un coup. Le classique des classiques.",
+    ],
+    "Gambit dame": [
+        "Le gambit de la dame : je t'offre un pion pour dominer le centre. Joué par les grands maîtres comme par les débutants.",
+        "Gambit dame — un cadeau que peu osent garder. On verra si tu le digères.",
+    ],
+    "Gambit dame accepté": [
+        "Gambit dame accepté : tu prends le pion c4 ? Tu me rendras le centre, crois-moi.",
+        "Tu acceptes le gambit de la dame. Courageux — mais ce pion va te coûter cher en temps.",
+    ],
+    "Gambit dame refusé": [
+        "Le gambit de la dame refusé : l'une des défenses les plus sûres qui soient. Du très solide.",
+        "Gambit dame refusé — le choix des puristes. Championnats du monde garantis dedans.",
+    ],
+    "Partie du pion dame": [
+        "1.d4 : jeu de position, patient et profond. L'école des stratèges.",
+        "Partie du pion dame — moins de feu, plus de manœuvres. Un marathon, pas un sprint.",
+    ],
+    "Défense slave": [
+        "La slave : solide et fiable, elle tient tête au gambit dame depuis toujours.",
+        "Défense slave — ton fou de cases blanches respire enfin. Bien vu.",
+    ],
+    "Défense semi-slave": [
+        "La semi-slave : riche, complexe, théorique à l'extrême. Terrain des grands maîtres.",
+        "Défense semi-slave — Méran, anti-Méran, botvinnik… un labyrinthe. Tu connais le chemin ?",
+    ],
+    "Défense Tarrasch": [
+        "La Tarrasch : pion isolé assumé pour des pièces actives. « L'activité avant tout ! »",
+        "Défense Tarrasch — dynamique et courageuse. J'aime cette philosophie.",
+    ],
+    "Défense nimzo-indienne": [
+        "La nimzo-indienne : je cloue mon cavalier, tu abîmes ma structure. L'une des meilleures défenses contre 1.d4.",
+        "Défense nimzo-indienne — stratégie pure, chère à Nimzowitsch. Redoutable.",
+    ],
+    "Défense indienne de la dame": [
+        "L'indienne de la dame : fianchetto solide, contrôle des cases claires. Très pro.",
+        "Défense ouest-indienne — patiente et saine. On va manœuvrer longtemps.",
+    ],
+    "Défense indienne du roi": [
+        "L'indienne du roi ! Je te laisse le centre, puis je le prends d'assaut. Une arme de gagneur.",
+        "Défense est-indienne — Kasparov et Fischer l'adoraient. Contre-attaque féroce en vue.",
+    ],
+    "Défense Grünfeld": [
+        "La Grünfeld : tu me donnes un beau centre… pour le canarder. Hypermodernisme au sommet.",
+        "Défense Grünfeld — mon centre imposant sera ta cible. Duel classique.",
+    ],
+    "Défense Benoni": [
+        "La Benoni : déséquilibre assumé, contre-jeu tranchant sur l'aile dame. Risqué et excitant.",
+        "Défense Benoni — « le fils de la douleur » en hébreu. Ça promet de la bagarre.",
+    ],
+    "Défense bogo-indienne": [
+        "La bogo-indienne : échec du fou en b4, jeu sain et sûr. Discrète mais efficace.",
+        "Défense bogo-indienne — solide, sans histoires. Je vais devoir créer les complications moi-même.",
+    ],
+    "Ancienne défense indienne": [
+        "L'ancienne indienne : setup compact à l'ancienne. Modeste, mais coriace.",
+    ],
+    "Défense hollandaise": [
+        "La hollandaise : f5 d'entrée, tu vises mon roi. Ambitieux… et un peu fragile.",
+        "Défense hollandaise — Leningrad, Stonewall, classique ? Choisis ton poison.",
+    ],
+    "Ouverture anglaise": [
+        "L'anglaise : 1.c4, jeu de flanc et grande finesse. L'ouverture des positionnels.",
+        "Ouverture anglaise — souple, caméléon. Elle peut tout devenir. Méfie-toi.",
+    ],
+    "Ouverture Réti": [
+        "La Réti : hypermodernisme élégant, je contrôle le centre de loin. Raffiné.",
+        "Ouverture Réti — fianchetto et pression discrète. Le venin vient lentement.",
+    ],
+    "Ouverture Zukertort": [
+        "1.Cf3, l'ouverture Zukertort : flexible et rusée. Je garde toutes mes options.",
+        "Ouverture Zukertort — je ne montre rien, encore. Patience.",
+    ],
+    "Ouverture catalane": [
+        "La catalane : gambit dame plus fianchetto, le meilleur des deux mondes. Une étreinte lente.",
+        "Ouverture catalane — mon fou en g2 va te hanter toute la partie.",
+    ],
+    "Attaque indienne du roi": [
+        "L'attaque indienne du roi : un système passe-partout, tempête sur l'aile roi en préparation.",
+        "Attaque indienne du roi — Fischer en a fait un art. Je m'installe, puis j'attaque.",
+    ],
+    "Ouverture de l'oiseau (Bird)": [
+        "L'ouverture de l'oiseau : 1.f4, à la hollandaise inversée. Originale et combative.",
+        "Ouverture Bird — rare et piquante. J'aime sortir des sentiers battus.",
+    ],
+    "Ouverture polonaise (Orang-outan)": [
+        "L'orang-outan : 1.b4 ! Excentrique, provocatrice, amusante. On va bien rigoler.",
+        "Ouverture polonaise — mon fou balaie la grande diagonale. Surprise !",
+    ],
+    "Ouverture hongroise": [
+        "L'ouverture hongroise : fianchetto tranquille en g3. Modeste, mais pleine d'idées.",
+    ],
+    "Ouverture Grob": [
+        "Le Grob : 1.g4 ?! Complètement fou. Soit tu es un génie, soit… on va vite le savoir.",
+        "Ouverture Grob — provocante et douteuse. J'adore réfuter ce genre d'audace.",
+    ],
+    "Ouverture Ponziani": [
+        "La Ponziani : 3.c3, une vieillerie oubliée que tu ressors. Charmant.",
+    ],
+    "Attaque Nimzo-Larsen": [
+        "L'attaque Nimzo-Larsen : 1.b3, fianchetto dame. Discrète, hypermoderne, sournoise.",
+    ],
+    "Ouverture Van Geet": [
+        "L'ouverture Van Geet : 1.Cc3, rare et déroutante. Sortons de la théorie, veux-tu ?",
+    ],
+    "Défense indienne": [
+        "Une défense indienne : tu vises le centre de loin. Hypermodernisme, on connaît la chanson.",
+    ],
+}
+
 CAPTURE_AI = [
     "Je prends cette pièce — merci pour le cadeau !",
     "Capture ! Ta pièce m'appartient maintenant.",
@@ -125,7 +328,7 @@ TAUNT_AI_NEAR_MATE = [
 # IA en danger — le joueur menace le mat
 TAUNT_AI_UNDER_MATE_THREAT = [
     "Ouch… tu es dangereusement proche de me mater sauvagement.",
-    "Ok ok, tu me pousses au bord — pas si vite !",
+    "Ok ok, tu me mets la pression au bord — pas si vite !",
     "Je sens le mat venir… tu es redoutable !",
     "Mon roi transpire — tu es proche du mat, j'en ai peur.",
     "Tu me mater sauvagement ? Pas si facile, humain !",
@@ -528,8 +731,11 @@ def generate_move_comment(
         return _fmt(AI_REACT_PLAYER_CAPTURE, san, move_number)
 
     opening_label = _named_opening(line_sans)
+    lore = OPENING_LORE.get(opening_label) if opening_label else None
 
     if move_number <= 2:
+        if lore:
+            return _pick(lore, move_number, san)
         if played_by_ai:
             if opening_label:
                 return _fmt_opening(OPENING_NAMED_AI, opening_label, san, move_number)
@@ -539,7 +745,9 @@ def generate_move_comment(
         return _fmt(AI_REACT_PLAYER_OPENING, san, move_number)
 
     # Annonce ponctuelle de l'ouverture reconnue pendant la phase d'ouverture.
-    if opening_label and move_number <= OPENING_ANNOUNCE_PLIES and random.random() < 0.4:
+    if opening_label and move_number <= OPENING_ANNOUNCE_PLIES and random.random() < 0.45:
+        if lore:
+            return _pick(lore, move_number, san)
         if played_by_ai:
             return _fmt_opening(OPENING_NAMED_AI, opening_label, san, move_number)
         return _fmt_opening(OPENING_NAMED_PLAYER, opening_label, san, move_number)
