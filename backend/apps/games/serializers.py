@@ -261,6 +261,7 @@ class LiveGameSerializer(serializers.ModelSerializer):
 
     white_player = UserPublicSerializer(read_only=True)
     black_player = UserPublicSerializer(read_only=True)
+    bot = ChessBotSerializer(read_only=True)
     white_elo = serializers.SerializerMethodField()
     black_elo = serializers.SerializerMethodField()
     tv_analysis = serializers.SerializerMethodField()
@@ -276,14 +277,23 @@ class LiveGameSerializer(serializers.ModelSerializer):
             return player.initial_elo
         return 1200
 
+    def _ai_elo(self, obj: Game) -> int | None:
+        if obj.bot_id and obj.bot is not None:
+            return obj.bot.elo
+        return obj.ai_target_elo
+
     def get_white_elo(self, obj: Game):
         if obj.is_tv_exhibition:
             return 3200
+        if not obj.white_player_id and obj.is_vs_ai:
+            return self._ai_elo(obj)
         return self._elo_for(obj, obj.white_player_id, obj.white_player)
 
     def get_black_elo(self, obj: Game):
         if obj.is_tv_exhibition:
             return 3200
+        if not obj.black_player_id and obj.is_vs_ai:
+            return self._ai_elo(obj)
         return self._elo_for(obj, obj.black_player_id, obj.black_player)
 
     def get_tv_analysis(self, obj: Game):
@@ -304,11 +314,14 @@ class LiveGameSerializer(serializers.ModelSerializer):
             "move_count",
             "white_player",
             "black_player",
+            "bot",
             "white_elo",
             "black_elo",
             "white_time_ms",
             "black_time_ms",
             "is_timed",
+            "is_vs_ai",
+            "ai_target_elo",
             "is_tv_exhibition",
             "tv_analysis",
         ]

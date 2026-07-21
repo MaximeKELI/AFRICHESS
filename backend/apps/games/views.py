@@ -794,7 +794,7 @@ class LiveTvView(APIView):
         ids.extend(payload.get("queue_game_ids") or [])
         games = list(
             Game.objects.filter(id__in=ids)
-            .select_related("white_player", "black_player", "analysis")
+            .select_related("white_player", "black_player", "bot", "analysis")
         )
         by_id = {str(g.id): g for g in games}
         # Cache périmé (parties terminées) → rafraîchir sans cache
@@ -810,7 +810,7 @@ class LiveTvView(APIView):
             ids.extend(payload.get("queue_game_ids") or [])
             games = list(
                 Game.objects.filter(id__in=ids)
-                .select_related("white_player", "black_player", "analysis")
+                .select_related("white_player", "black_player", "bot", "analysis")
             )
             by_id = {str(g.id): g for g in games}
             current_id = payload.get("current_game_id")

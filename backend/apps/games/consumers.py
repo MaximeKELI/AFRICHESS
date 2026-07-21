@@ -234,7 +234,8 @@ class ChessConsumer(AsyncWebsocketConsumer):
 
                 if Club.objects.filter(pk__in=club_ids, members=self.user).exists():
                     return True
-        return game.status == Game.Status.ACTIVE and not game.is_vs_ai
+        # Parties actives spectatables : PvP, humain vs IA, exhibitions TV
+        return game.status == Game.Status.ACTIVE
 
     async def _handle_draw_offer(self):
         result = await self._draw_offer()

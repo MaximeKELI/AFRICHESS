@@ -47,6 +47,31 @@ class LiveTvFilterTests(TestCase):
         )
         self.assertIn(g, list(live_games_queryset()))
 
+    def test_human_vs_ai_with_moves_included(self):
+        g = Game.objects.create(
+            white_player=self.w,
+            black_player=None,
+            mode="ai",
+            status=Game.Status.ACTIVE,
+            is_vs_ai=True,
+            move_count=2,
+            ai_target_elo=1500,
+        )
+        self.assertIn(g, list(live_games_queryset()))
+
+    def test_human_vs_ai_zero_moves_excluded(self):
+        Game.objects.create(
+            white_player=self.w,
+            mode="ai",
+            status=Game.Status.ACTIVE,
+            is_vs_ai=True,
+            move_count=0,
+        )
+        self.assertEqual(
+            live_games_queryset().filter(is_vs_ai=True, is_tv_exhibition=False).count(),
+            0,
+        )
+
 
 class TvExhibitionTests(TestCase):
     @patch("apps.games.tv_exhibition.append_move_analysis")

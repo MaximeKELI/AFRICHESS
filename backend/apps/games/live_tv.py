@@ -38,6 +38,12 @@ def _avg_elo(game: Game, elo_map: dict[tuple[int, str], int]) -> int:
             elo = player.initial_elo
         total += elo or 1200
         count += 1
+    if count == 0:
+        return 0
+    if game.is_vs_ai and not game.is_tv_exhibition:
+        ai_elo = game.ai_target_elo or (game.bot.elo if game.bot_id and game.bot else 1500)
+        total += int(ai_elo or 1500)
+        count += 1
     return total // max(count, 1)
 
 
@@ -46,7 +52,7 @@ def tv_games_for_channel(channel: str, games: list[Game] | None = None) -> list[
     if games is None:
         qs = live_games_queryset()
         if channel != "best":
-            # Humans filtrés par cadence + TOUTES les exhibitions
+            # Humans / vs IA filtrés par cadence + TOUTES les exhibitions
             qs = qs.filter(Q(mode=channel) | Q(is_tv_exhibition=True))
         games = list(qs[:50])
     elif channel != "best":
@@ -54,7 +60,14 @@ def tv_games_for_channel(channel: str, games: list[Game] | None = None) -> list[
             g for g in games if g.mode == channel or g.is_tv_exhibition
         ][:50]
     elo_map = batch_player_elos(games)
-    games.sort(key=lambda g: (_avg_elo(g, elo_map), g.move_count), reverse=True)
+    # Parties réelles (humain / vs IA) avant exhibitions IA vs IA
+    games.sort(
+        key=lambda g: (
+            0 if not g.is_tv_exhibition else 1,
+            -_avg_elo(g, elo_map),
+            -g.move_count,
+        )
+    )
     return games
 
 

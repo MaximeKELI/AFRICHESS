@@ -61,8 +61,9 @@ export default function TvPage() {
   const allGames = useMemo(() => {
     const merged = dedupeGames([...(current ? [current] : []), ...queue]);
     return merged.sort((a, b) => {
-      const ae = a.is_tv_exhibition ? 0 : 1;
-      const be = b.is_tv_exhibition ? 0 : 1;
+      // Parties réelles (humain / vs IA) avant exhibitions IA vs IA
+      const ae = a.is_tv_exhibition ? 1 : 0;
+      const be = b.is_tv_exhibition ? 1 : 0;
       if (ae !== be) return ae - be;
       return (b.move_count ?? 0) - (a.move_count ?? 0);
     });

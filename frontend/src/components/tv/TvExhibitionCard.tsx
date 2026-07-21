@@ -57,11 +57,25 @@ export interface TvGame {
   mode?: string;
   white_player?: { username: string; display_name?: string };
   black_player?: { username: string; display_name?: string };
+  bot?: { name?: string; name_en?: string; slug?: string } | null;
   white_elo?: number;
   black_elo?: number;
+  is_vs_ai?: boolean;
   is_tv_exhibition?: boolean;
   move_count?: number;
   tv_analysis?: TvAnalysis | null;
+}
+
+function sideLabel(
+  player?: { username: string; display_name?: string } | null,
+  bot?: TvGame["bot"],
+  fallback = "?"
+): string {
+  if (player?.display_name || player?.username) {
+    return player.display_name || player.username;
+  }
+  if (bot?.name) return bot.name;
+  return fallback;
 }
 
 function classLabelKey(moveClass: string): string {
@@ -80,8 +94,8 @@ function classLabelKey(moveClass: string): string {
 }
 
 function playerLabel(g: TvGame): string {
-  const w = g.white_player?.display_name || g.white_player?.username || "?";
-  const b = g.black_player?.display_name || g.black_player?.username || "?";
+  const w = sideLabel(g.white_player, g.is_vs_ai && !g.white_player ? g.bot : null);
+  const b = sideLabel(g.black_player, g.is_vs_ai && !g.black_player ? g.bot : null);
   const welo = g.white_elo ? ` (${g.white_elo})` : "";
   const belo = g.black_elo ? ` (${g.black_elo})` : "";
   return `${w}${welo} vs ${b}${belo}`;
@@ -174,7 +188,10 @@ export function TvExhibitionCard({ game, featured = false, onSelect }: TvExhibit
             <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-start text-sm">
               <div className="min-w-0">
                 <p className="font-medium truncate text-xs sm:text-sm mb-1">
-                  {game.white_player?.display_name || game.white_player?.username || "?"}
+                  {sideLabel(
+                    game.white_player,
+                    game.is_vs_ai && !game.white_player ? game.bot : null
+                  )}
                 </p>
                 <p className="font-mono tabular-nums text-xs space-x-1">
                   <span className="text-emerald-600 dark:text-emerald-400">
@@ -196,7 +213,10 @@ export function TvExhibitionCard({ game, featured = false, onSelect }: TvExhibit
               <div className="text-center opacity-40 text-[10px] pt-1 shrink-0">vs</div>
               <div className="min-w-0 text-right">
                 <p className="font-medium truncate text-xs sm:text-sm mb-1">
-                  {game.black_player?.display_name || game.black_player?.username || "?"}
+                  {sideLabel(
+                    game.black_player,
+                    game.is_vs_ai && !game.black_player ? game.bot : null
+                  )}
                 </p>
                 <p className="font-mono tabular-nums text-xs space-x-1">
                   <span className="text-emerald-600 dark:text-emerald-400">

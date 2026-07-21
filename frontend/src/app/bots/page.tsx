@@ -169,26 +169,26 @@ export default function BotsPage() {
                   return (
                     <article
                       key={b.slug}
-                      className={`relative rounded-xl border p-4 transition-colors ${
+                      className={`relative isolate overflow-hidden rounded-xl border p-4 transition-colors bg-black/45 ${
                         b.beaten
-                          ? "border-africhess-green/40 bg-africhess-green/5"
+                          ? "border-africhess-green/40 bg-africhess-green/10"
                           : locked
                             ? "border-white/10 opacity-70"
                             : "border-white/15 hover:border-africhess-gold/40"
                       }`}
                     >
                       {locked && (
-                        <div className="absolute top-3 right-3 text-africhess-gold/80">
+                        <div className="absolute top-3 right-3 z-10 text-africhess-gold/80">
                           <Lock size={16} />
                         </div>
                       )}
                       {b.beaten && (
-                        <div className="absolute top-3 right-3 text-africhess-green">
+                        <div className="absolute top-3 right-3 z-10 text-africhess-green">
                           <Check size={16} />
                         </div>
                       )}
                       <div className="flex gap-3 mb-3">
-                        <span className="relative w-14 h-14 rounded-xl overflow-hidden ring-2 ring-africhess-gold/30 shrink-0">
+                        <div className="relative block h-14 w-14 shrink-0 overflow-hidden rounded-xl ring-2 ring-africhess-gold/30">
                           <Image
                             src={getAiAvatarSrc(b.avatar_id)}
                             alt=""
@@ -196,8 +196,8 @@ export default function BotsPage() {
                             className={`object-cover ${locked ? "grayscale" : ""}`}
                             sizes="56px"
                           />
-                        </span>
-                        <div className="min-w-0">
+                        </div>
+                        <div className="min-w-0 flex-1 overflow-hidden">
                           <h3 className="font-semibold truncate">{label(b)}</h3>
                           <p className="text-africhess-gold font-mono text-sm">{b.elo} Elo</p>
                           <p className="text-[11px] opacity-50 truncate">

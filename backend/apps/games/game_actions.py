@@ -417,6 +417,7 @@ def live_games_queryset():
     """
     Parties visibles sur Live / TV :
     - PvP humains avec au moins 1 coup (évite les seeks abandonnés à 0 coup)
+    - humain vs IA avec au moins 1 coup
     - exhibitions IA vs IA (is_tv_exhibition)
     """
     from django.db.models import Q
@@ -424,9 +425,7 @@ def live_games_queryset():
     return Game.objects.filter(
         status=Game.Status.ACTIVE,
     ).filter(
-        Q(
-            is_tv_exhibition=True,
-        )
+        Q(is_tv_exhibition=True)
         | Q(
             is_vs_ai=False,
             is_tv_exhibition=False,
@@ -434,4 +433,9 @@ def live_games_queryset():
             white_player__isnull=False,
             black_player__isnull=False,
         )
-    ).select_related("white_player", "black_player")
+        | Q(
+            is_vs_ai=True,
+            is_tv_exhibition=False,
+            move_count__gte=1,
+        )
+    ).select_related("white_player", "black_player", "bot")

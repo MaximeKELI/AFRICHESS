@@ -13,8 +13,22 @@ interface LiveGame {
   id: string;
   white_player?: { username: string; display_name?: string };
   black_player?: { username: string; display_name?: string };
+  bot?: { name?: string; name_en?: string } | null;
+  is_vs_ai?: boolean;
   mode: string;
   move_count?: number;
+}
+
+function liveSideName(
+  player?: { username: string; display_name?: string },
+  bot?: LiveGame["bot"],
+  useBot = false
+): string {
+  if (player?.display_name || player?.username) {
+    return player.display_name || player.username || "?";
+  }
+  if (useBot && bot?.name) return bot.name;
+  return "?";
 }
 
 export default function LiveGamesPage() {
@@ -71,8 +85,8 @@ export default function LiveGamesPage() {
     >
       <div>
         <span className="font-medium">
-          {(g.white_player?.display_name || g.white_player?.username) ?? "?"} vs{" "}
-          {(g.black_player?.display_name || g.black_player?.username) ?? "?"}
+          {liveSideName(g.white_player, g.bot, Boolean(g.is_vs_ai && !g.white_player))} vs{" "}
+          {liveSideName(g.black_player, g.bot, Boolean(g.is_vs_ai && !g.black_player))}
         </span>
         <span className="text-xs opacity-60 ml-2 capitalize">{g.mode}</span>
         {g.move_count != null && (

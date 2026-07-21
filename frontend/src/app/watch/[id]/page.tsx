@@ -91,10 +91,14 @@ export default function WatchGamePage() {
         setIsExhibition(Boolean(data.is_tv_exhibition));
         setTvAnalysis((data.tv_analysis as TvAnalysis) ?? null);
         setWhiteName(
-          data.white_player?.display_name || data.white_player?.username || "?"
+          data.white_player?.display_name ||
+            data.white_player?.username ||
+            (data.is_vs_ai && data.bot?.name && !data.white_player ? data.bot.name : "?")
         );
         setBlackName(
-          data.black_player?.display_name || data.black_player?.username || "?"
+          data.black_player?.display_name ||
+            data.black_player?.username ||
+            (data.is_vs_ai && data.bot?.name && !data.black_player ? data.bot.name : "?")
         );
         setError(null);
       })

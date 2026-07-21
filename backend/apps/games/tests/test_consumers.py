@@ -143,22 +143,25 @@ class ChessConsumerTests(TransactionTestCase):
         self.assertEqual(msg["event"], "game_state")
         await communicator.disconnect()
 
-    def test_unauthenticated_rejected_vs_ai(self):
-        async_to_sync(self._test_unauthenticated_rejected_vs_ai)()
+    def test_unauthenticated_can_spectate_vs_ai(self):
+        async_to_sync(self._test_unauthenticated_can_spectate_vs_ai)()
 
-    async def _test_unauthenticated_rejected_vs_ai(self):
+    async def _test_unauthenticated_can_spectate_vs_ai(self):
         user = await User.objects.acreate(username="wsg_ai_anon", password="x")
         game = await Game.objects.acreate(
             white_player=user,
             status=Game.Status.ACTIVE,
             is_vs_ai=True,
+            move_count=1,
         )
         communicator = WebsocketCommunicator(
             application,
             f"/ws/game/{game.id}/",
         )
         connected, _ = await communicator.connect()
-        self.assertFalse(connected)
+        self.assertTrue(connected)
+        msg = await communicator.receive_json_from()
+        self.assertEqual(msg["event"], "game_state")
         await communicator.disconnect()
 
     def test_resign_via_websocket_completes_game(self):
