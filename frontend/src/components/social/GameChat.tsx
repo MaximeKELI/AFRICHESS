@@ -89,6 +89,7 @@ export function GameChat({
   const pendingIdRef = useRef<string | null>(null);
   const pendingContentRef = useRef<string | null>(null);
   const wasConnectedRef = useRef(false);
+  const hadDisconnectRef = useRef(false);
 
   const clearPendingTimer = useCallback(() => {
     if (pendingTimerRef.current) {
