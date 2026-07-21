@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Shield, Users, BarChart3, LayoutDashboard, Scale } from "lucide-react";
@@ -17,19 +17,12 @@ const ADMIN_LINKS = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, fetchProfile } = useAuthStore();
   const { t } = useTranslation();
-  const router = useRouter();
   const pathname = usePathname();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     fetchProfile().finally(() => setChecking(false));
   }, [fetchProfile]);
-
-  useEffect(() => {
-    if (!checking && (!user || !user.is_staff)) {
-      router.replace("/");
-    }
-  }, [checking, user, router]);
 
   if (checking) {
     return (
@@ -39,7 +32,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  if (!user?.is_staff) return null;
+  if (!user) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
+        <Shield className="mx-auto text-africhess-gold" size={40} />
+        <h1 className="font-display text-2xl font-bold">{t("admin.title")}</h1>
+        <p className="opacity-70">{t("admin.loginRequired")}</p>
+        <Link
+          href={`/login?next=${encodeURIComponent(pathname || "/admin")}`}
+          className="inline-flex px-5 py-2.5 rounded-lg african-gradient text-white text-sm font-medium"
+        >
+          {t("nav.login")}
+        </Link>
+      </div>
+    );
+  }
+
+  if (!user.is_staff) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
+        <Shield className="mx-auto text-africhess-gold" size={40} />
+        <h1 className="font-display text-2xl font-bold">{t("admin.title")}</h1>
+        <p className="opacity-70">{t("admin.forbidden")}</p>
+        <p className="text-sm opacity-50">{t("admin.forbiddenHint")}</p>
+        <Link href="/" className="inline-flex text-africhess-gold hover:underline text-sm">
+          ← {t("legal.backHome")}
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
