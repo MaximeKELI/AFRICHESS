@@ -116,6 +116,8 @@ class ChessConsumerTests(TransactionTestCase):
         await communicator.send_json_to({"event": "chat", "message": "Hi"})
         err = await communicator.receive_json_from()
         self.assertEqual(err["event"], "error")
+        self.assertEqual(err["data"]["message"], "Chat indisponible contre l'IA")
+        self.assertEqual(err["data"]["code"], "chat_rejected")
 
         count = await ChatMessage.objects.filter(room_id=str(game.id)).acount()
         self.assertEqual(count, 0)

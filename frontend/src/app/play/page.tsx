@@ -852,7 +852,7 @@ function PlayContent() {
     [user?.id, applyGameResponse, t, syncGameInUrl]
   );
 
-  const { connected: wsConnected, wsError, sendMove: wsSendMove, resign: wsResign, sendChat: wsSendChat, subscribeChat: wsSubscribeChat } = useGameWebSocket(
+  const { connected: wsConnected, wsError, sendMove: wsSendMove, resign: wsResign, sendChat: wsSendChat, subscribeChat: wsSubscribeChat, subscribeChatError: wsSubscribeChatError } = useGameWebSocket(
     gameId,
     Boolean(gameId) && (isLiveHuman || isVoteChess || isVsAi),
     handleWsUpdate,
@@ -2023,6 +2023,7 @@ function PlayContent() {
                 wsConnected={wsConnected}
                 sendChat={wsSendChat}
                 subscribeChat={wsSubscribeChat}
+                subscribeChatError={wsSubscribeChatError}
                 compact={mobileTab === "chat"}
               />
             </div>
