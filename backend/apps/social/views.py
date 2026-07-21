@@ -515,13 +515,33 @@ class PostChatMessageView(APIView):
             )
         except ValidationError as exc:
             return Response({"error": exc.detail}, status=400)
+
+        if room_type == ChatMessage.RoomType.GAME:
+            from apps.games.models import Game
+
+            try:
+                game = Game.objects.get(pk=room_id)
+            except Game.DoesNotExist:
+                return Response({"error": "Partie introuvable"}, status=404)
+            if game.is_vs_ai:
+                return Response({"error": "Chat indisponible contre l'IA"}, status=400)
+
         msg = ChatMessage.objects.create(
             sender=request.user,
             room_type=room_type,
             room_id=room_id,
             content=content,
         )
-        return Response(ChatMessageSerializer(msg).data, status=201)
+        msg = ChatMessage.objects.select_related("sender").get(pk=msg.pk)
+        payload = ChatMessageSerializer(msg).data
+
+        # Broadcast live aux clients WS de la partie (fallback HTTP)
+        if room_type == ChatMessage.RoomType.GAME:
+            from apps.games.ws_notify import notify_game_room
+
+            notify_game_room(room_id, "relay_chat", payload)
+
+        return Response(payload, status=201)
 
 
 def _dm_room_id(user_a_id: int, user_b_id: int) -> str:

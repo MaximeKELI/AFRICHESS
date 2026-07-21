@@ -95,7 +95,10 @@ class ChessConsumer(AsyncWebsocketConsumer):
                 return
             saved = await self._save_game_chat(message)
             if saved.get("error"):
-                await self._send_event("error", saved)
+                await self._send_event(
+                    "error",
+                    {"message": saved["error"], "code": "chat_rejected"},
+                )
                 return
             await self.channel_layer.group_send(
                 self.room_group_name,

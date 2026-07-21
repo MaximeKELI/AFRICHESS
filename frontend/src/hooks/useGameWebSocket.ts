@@ -91,6 +91,7 @@ export interface WsChatPayload {
 }
 
 type ChatListener = (msg: WsChatPayload) => void;
+type ChatErrorListener = (message: string) => void;
 
 export interface WsAnalysisReadyPayload {
   game_id: string;
@@ -143,6 +144,7 @@ export function useGameWebSocket(
   const onVoteUpdateRef = useRef(onVoteUpdate);
   const onRematchReadyRef = useRef(onRematchReady);
   const chatListenersRef = useRef<Set<ChatListener>>(new Set());
+  const chatErrorListenersRef = useRef<Set<ChatErrorListener>>(new Set());
 
   useEffect(() => {
     onUpdateRef.current = onUpdate;
@@ -235,8 +237,15 @@ export function useGameWebSocket(
           }
           if (event === "error") {
             const message =
-              typeof data?.message === "string" ? data.message : tr("ws.error.game");
+              typeof data?.message === "string"
+                ? data.message
+                : typeof data?.error === "string"
+                  ? data.error
+                  : tr("ws.error.game");
             setWsError(message);
+            if (data?.code === "chat_rejected" || /chat|message/i.test(message)) {
+              chatErrorListenersRef.current.forEach((fn) => fn(message));
+            }
           }
         } catch {
           setWsError(tr("ws.error.invalidMessage"));
@@ -316,5 +325,21 @@ export function useGameWebSocket(
     };
   }, []);
 
-  return { connected, wsError, sendMove, resign, startGame, sendChat, subscribeChat };
+  const subscribeChatError = useCallback((listener: ChatErrorListener) => {
+    chatErrorListenersRef.current.add(listener);
+    return () => {
+      chatErrorListenersRef.current.delete(listener);
+    };
+  }, []);
+
+  return {
+    connected,
+    wsError,
+    sendMove,
+    resign,
+    startGame,
+    sendChat,
+    subscribeChat,
+    subscribeChatError,
+  };
 }
