@@ -87,6 +87,7 @@ export function GameChat({
   const panelRef = useRef<HTMLDivElement>(null);
   const pendingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingIdRef = useRef<string | null>(null);
+  const pendingContentRef = useRef<string | null>(null);
   const wasConnectedRef = useRef(false);
 
   const clearPendingTimer = useCallback(() => {
@@ -118,11 +119,25 @@ export function GameChat({
       return [...withoutPending, mapped];
     });
     pendingIdRef.current = null;
+    pendingContentRef.current = null;
   }, [clearPendingTimer]);
 
   const appendMessage = useCallback((msg: GameChatMessage) => {
     setMessages((prev) => {
       if (prev.some((m) => m.id === msg.id)) return prev;
+      // Évite un doublon si HTTP + WS livrent le même message
+      if (
+        typeof msg.id === "number" &&
+        prev.some(
+          (m) =>
+            !m.pending &&
+            m.content === msg.content &&
+            m.sender.username === msg.sender.username &&
+            Math.abs(Date.parse(m.created_at) - Date.parse(msg.created_at)) < 5000
+        )
+      ) {
+        return prev;
+      }
       return [...prev, msg];
     });
   }, []);
@@ -133,12 +148,17 @@ export function GameChat({
         const { data } = await socialApi.sendChat("game", gameId, msg);
         clearPendingTimer();
         pendingIdRef.current = null;
-        setMessages((prev) =>
-          prev.filter((m) => m.id !== optimisticId).concat(mapApiMessage(data))
-        );
+        pendingContentRef.current = null;
+        setMessages((prev) => {
+          const without = prev.filter((m) => m.id !== optimisticId);
+          const mapped = mapApiMessage(data);
+          if (without.some((m) => m.id === mapped.id)) return without;
+          return without.concat(mapped);
+        });
         setSendError(null);
       } catch (err) {
         removePending(optimisticId);
+        pendingContentRef.current = null;
         setSendError(formatApiError(err, t("chat.error.send")));
         setText(msg);
       } finally {
