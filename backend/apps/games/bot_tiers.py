@@ -82,7 +82,7 @@ BOT_TIERS: list[BotTier] = [
     {
         "id": "master",
         "min_elo": 2500,
-        "max_elo": 2899,
+        "max_elo": 2749,
         "label_fr": "Maître",
         "label_en": "Master",
         "description_fr": "Force maître international",
@@ -91,7 +91,7 @@ BOT_TIERS: list[BotTier] = [
     },
     {
         "id": "elite",
-        "min_elo": 2900,
+        "min_elo": 2750,
         "max_elo": 9999,
         "label_fr": "Élite",
         "label_en": "Elite",
