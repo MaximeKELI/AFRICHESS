@@ -214,15 +214,14 @@ export function GameChat({
     return subscribeChatError((message) => {
       clearPendingTimer();
       const pendingId = pendingIdRef.current;
-      if (pendingId) {
-        const pending = messages.find((m) => m.id === pendingId);
-        removePending(pendingId);
-        if (pending?.content) setText(pending.content);
-      }
+      const pendingContent = pendingContentRef.current;
+      if (pendingId) removePending(pendingId);
+      pendingContentRef.current = null;
+      if (pendingContent) setText(pendingContent);
       setSendError(message);
       setSending(false);
     });
-  }, [subscribeChatError, clearPendingTimer, removePending, messages]);
+  }, [subscribeChatError, clearPendingTimer, removePending]);
 
   useEffect(() => {
     if (!collapsed) {
@@ -253,15 +252,39 @@ export function GameChat({
       pending: true,
     };
     pendingIdRef.current = optimisticId;
+    pendingContentRef.current = msg;
     appendMessage(optimistic);
     setText("");
 
     const sentViaWs = wsConnected && sendChat?.(msg);
     if (sentViaWs) {
-      // Si l'écho WS n'arrive pas, bascule HTTP (avec broadcast serveur)
+      // Si l'écho WS n'arrive pas, vérifie l'historique puis bascule HTTP
       pendingTimerRef.current = setTimeout(() => {
         if (pendingIdRef.current !== optimisticId) return;
-        void sendViaHttp(msg, optimisticId);
+        void (async () => {
+          try {
+            const { data } = await socialApi.chatHistory("game", gameId);
+            const list = Array.isArray(data) ? data : data.results ?? [];
+            const found = [...list]
+              .reverse()
+              .map(mapApiMessage)
+              .find(
+                (m) =>
+                  m.content === msg &&
+                  m.sender.username === user.username
+              );
+            if (found && pendingIdRef.current === optimisticId) {
+              confirmPending(found);
+              setSending(false);
+              return;
+            }
+          } catch {
+            /* fallback HTTP */
+          }
+          if (pendingIdRef.current === optimisticId) {
+            await sendViaHttp(msg, optimisticId);
+          }
+        })();
       }, WS_CHAT_CONFIRM_MS);
       setSending(false);
       return;
