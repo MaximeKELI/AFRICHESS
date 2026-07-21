@@ -13,6 +13,8 @@ import { EmotePicker } from "@/components/social/EmotePicker";
 import { UserFlair } from "@/components/profile/UserFlair";
 import type { WsChatPayload } from "@/hooks/useGameWebSocket";
 
+const WS_CHAT_CONFIRM_MS = 3500;
+
 export interface GameChatMessage {
   id: number | string;
   sender: { username: string; display_name: string; flair?: string };
@@ -27,6 +29,7 @@ interface GameChatProps {
   wsConnected?: boolean;
   sendChat?: (message: string) => boolean;
   subscribeChat?: (listener: (msg: WsChatPayload) => void) => () => void;
+  subscribeChatError?: (listener: (message: string) => void) => () => void;
   compact?: boolean;
 }
 
@@ -68,6 +71,7 @@ export function GameChat({
   wsConnected = false,
   sendChat,
   subscribeChat,
+  subscribeChatError,
   compact = false,
 }: GameChatProps) {
   const { user } = useAuthStore();
@@ -81,6 +85,40 @@ export function GameChat({
   const [unread, setUnread] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const pendingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingIdRef = useRef<string | null>(null);
+  const wasConnectedRef = useRef(false);
+
+  const clearPendingTimer = useCallback(() => {
+    if (pendingTimerRef.current) {
+      clearTimeout(pendingTimerRef.current);
+      pendingTimerRef.current = null;
+    }
+  }, []);
+
+  const removePending = useCallback((pendingId?: string | null) => {
+    const id = pendingId ?? pendingIdRef.current;
+    if (!id) return;
+    setMessages((prev) => prev.filter((m) => m.id !== id));
+    if (pendingIdRef.current === id) pendingIdRef.current = null;
+  }, []);
+
+  const confirmPending = useCallback((mapped: GameChatMessage) => {
+    clearPendingTimer();
+    setMessages((prev) => {
+      const withoutPending = prev.filter(
+        (m) =>
+          !(
+            m.pending &&
+            m.content === mapped.content &&
+            m.sender.username === mapped.sender.username
+          )
+      );
+      if (withoutPending.some((m) => m.id === mapped.id)) return withoutPending;
+      return [...withoutPending, mapped];
+    });
+    pendingIdRef.current = null;
+  }, [clearPendingTimer]);
 
   const appendMessage = useCallback((msg: GameChatMessage) => {
     setMessages((prev) => {
@@ -88,6 +126,27 @@ export function GameChat({
       return [...prev, msg];
     });
   }, []);
+
+  const sendViaHttp = useCallback(
+    async (msg: string, optimisticId: string) => {
+      try {
+        const { data } = await socialApi.sendChat("game", gameId, msg);
+        clearPendingTimer();
+        pendingIdRef.current = null;
+        setMessages((prev) =>
+          prev.filter((m) => m.id !== optimisticId).concat(mapApiMessage(data))
+        );
+        setSendError(null);
+      } catch (err) {
+        removePending(optimisticId);
+        setSendError(formatApiError(err, t("chat.error.send")));
+        setText(msg);
+      } finally {
+        setSending(false);
+      }
+    },
+    [gameId, t, clearPendingTimer, removePending]
+  );
 
   const load = useCallback(() => {
     if (!user || !gameId) return;
@@ -108,24 +167,42 @@ export function GameChat({
     load();
   }, [load]);
 
+  // Recharger l'historique après reconnexion WS (messages HTTP manqués)
+  useEffect(() => {
+    if (wsConnected && !wasConnectedRef.current) {
+      load();
+    }
+    wasConnectedRef.current = wsConnected;
+  }, [wsConnected, load]);
+
   useEffect(() => {
     if (!subscribeChat) return;
     return subscribeChat((payload) => {
       const mapped = mapWsPayload(payload);
+      if (!mapped.content) return;
       if (mapped.sender.username === user?.username) {
-        setMessages((prev) => {
-          const withoutPending = prev.filter(
-            (m) => !(m.pending && m.content === mapped.content && m.sender.username === mapped.sender.username)
-          );
-          if (withoutPending.some((m) => m.id === mapped.id)) return withoutPending;
-          return [...withoutPending, mapped];
-        });
+        confirmPending(mapped);
       } else {
         appendMessage(mapped);
         if (collapsed) setUnread((n) => n + 1);
       }
     });
-  }, [subscribeChat, user?.username, appendMessage, collapsed]);
+  }, [subscribeChat, user?.username, appendMessage, collapsed, confirmPending]);
+
+  useEffect(() => {
+    if (!subscribeChatError) return;
+    return subscribeChatError((message) => {
+      clearPendingTimer();
+      const pendingId = pendingIdRef.current;
+      if (pendingId) {
+        const pending = messages.find((m) => m.id === pendingId);
+        removePending(pendingId);
+        if (pending?.content) setText(pending.content);
+      }
+      setSendError(message);
+      setSending(false);
+    });
+  }, [subscribeChatError, clearPendingTimer, removePending, messages]);
 
   useEffect(() => {
     if (!collapsed) {
@@ -134,14 +211,18 @@ export function GameChat({
     }
   }, [messages, collapsed]);
 
+  useEffect(() => () => clearPendingTimer(), [clearPendingTimer]);
+
   const deliver = async (content: string) => {
     const msg = content.trim();
     if (!msg || sending || !user) return;
     setSending(true);
     setSendError(null);
+    clearPendingTimer();
 
+    const optimisticId = `pending-${Date.now()}`;
     const optimistic: GameChatMessage = {
-      id: `pending-${Date.now()}`,
+      id: optimisticId,
       sender: {
         username: user.username,
         display_name: user.display_name || user.username,
@@ -151,29 +232,22 @@ export function GameChat({
       created_at: new Date().toISOString(),
       pending: true,
     };
+    pendingIdRef.current = optimisticId;
     appendMessage(optimistic);
     setText("");
 
     const sentViaWs = wsConnected && sendChat?.(msg);
     if (sentViaWs) {
+      // Si l'écho WS n'arrive pas, bascule HTTP (avec broadcast serveur)
+      pendingTimerRef.current = setTimeout(() => {
+        if (pendingIdRef.current !== optimisticId) return;
+        void sendViaHttp(msg, optimisticId);
+      }, WS_CHAT_CONFIRM_MS);
       setSending(false);
       return;
     }
 
-    try {
-      const { data } = await socialApi.sendChat("game", gameId, msg);
-      setMessages((prev) =>
-        prev
-          .filter((m) => m.id !== optimistic.id)
-          .concat(mapApiMessage(data))
-      );
-    } catch (err) {
-      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
-      setSendError(formatApiError(err, t("chat.error.send")));
-      setText(msg);
-    } finally {
-      setSending(false);
-    }
+    await sendViaHttp(msg, optimisticId);
   };
 
   if (!user) {
@@ -232,11 +306,19 @@ export function GameChat({
                     isMe ? "ml-auto bg-africhess-green/20 text-right" : "mr-auto bg-white/5"
                   } ${m.pending ? "opacity-60" : ""}`}
                 >
-                  <div className={`font-medium text-africhess-gold inline-flex items-center gap-0.5 ${isMe ? "justify-end" : ""}`}>
+                  <div
+                    className={`font-medium text-africhess-gold inline-flex items-center gap-0.5 ${
+                      isMe ? "justify-end" : ""
+                    }`}
+                  >
                     <UserFlair flair={m.sender.flair} />
                     <span>{isMe ? t("chat.you") : m.sender.display_name || m.sender.username}</span>
                   </div>
-                  <div className={isEmoteOnlyMessage(m.content) ? "text-2xl mt-0.5" : "mt-0.5 break-words"}>
+                  <div
+                    className={
+                      isEmoteOnlyMessage(m.content) ? "text-2xl mt-0.5" : "mt-0.5 break-words"
+                    }
+                  >
                     {m.content}
                   </div>
                 </div>
