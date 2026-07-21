@@ -102,7 +102,10 @@ export function GameChat({
     const id = pendingId ?? pendingIdRef.current;
     if (!id) return;
     setMessages((prev) => prev.filter((m) => m.id !== id));
-    if (pendingIdRef.current === id) pendingIdRef.current = null;
+    if (pendingIdRef.current === id) {
+      pendingIdRef.current = null;
+      pendingContentRef.current = null;
+    }
   }, []);
 
   const confirmPending = useCallback((mapped: GameChatMessage) => {
@@ -190,10 +193,16 @@ export function GameChat({
 
   // Recharger l'historique après reconnexion WS (messages HTTP manqués)
   useEffect(() => {
-    if (wsConnected && !wasConnectedRef.current) {
-      load();
+    if (!wsConnected) {
+      if (wasConnectedRef.current) hadDisconnectRef.current = true;
+      wasConnectedRef.current = false;
+      return;
     }
-    wasConnectedRef.current = wsConnected;
+    if (hadDisconnectRef.current) {
+      load();
+      hadDisconnectRef.current = false;
+    }
+    wasConnectedRef.current = true;
   }, [wsConnected, load]);
 
   useEffect(() => {
