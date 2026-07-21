@@ -73,9 +73,16 @@ def ladder_payload(user, locale: str = "fr") -> dict:
     ceiling = unlock_ceiling(max_elo)
     is_premium = bool(user and user.is_authenticated and getattr(user, "is_premium", False))
 
+    # Vitrine haut de tableau : plus fort d'abord. Paliers bas : progression faible → fort.
+    showcase_tiers = {"expert", "master", "elite"}
+
     tiers_out = []
     for tier in BOT_TIERS:
         tier_bots = [b for b in bots if tier["min_elo"] <= b.elo <= tier["max_elo"]]
+        if tier["id"] in showcase_tiers:
+            tier_bots.sort(key=lambda b: (-b.elo, b.name))
+        else:
+            tier_bots.sort(key=lambda b: (b.elo, b.name))
         items = []
         for b in tier_bots:
             unlocked = b.elo <= ceiling and (not b.is_premium or is_premium)

@@ -1,4 +1,4 @@
-.PHONY: all bootstrap dev up up-all down logs migrate superuser demo frontend hybrid mobile mobile-android mobile-chrome mobile-test mobile-emulator
+.PHONY: all bootstrap dev up up-all down logs migrate seed-bots superuser demo frontend hybrid mobile mobile-android mobile-chrome mobile-test mobile-emulator
 
 # Install deps + Docker stack + frontend (commande unique)
 # Usage quotidien : make dev  (ou make bootstrap)
@@ -51,6 +51,9 @@ logs:
 
 migrate:
 	docker compose exec backend python manage.py migrate
+
+seed-bots:
+	docker compose exec backend python manage.py seed_bots --deactivate-old
 
 superuser:
 	docker compose exec backend python manage.py createsuperuser

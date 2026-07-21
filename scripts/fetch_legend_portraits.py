@@ -61,7 +61,8 @@ COMMONS_FILES: dict[str, str] = {
 
 SEARCH_QUERIES: dict[str, str] = {
     "maxime-keli": "Maxime Keli",
-    "joachim-mouhamad": "Joachim Mouhamad chess Cameroon",
+    "joachim-mouhamad": "Joachim Mouhamad chess",
+    "blitzstream": "Kevin Bordi Blitzstream chess",
 }
 
 
