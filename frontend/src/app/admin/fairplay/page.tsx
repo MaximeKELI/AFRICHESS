@@ -140,7 +140,7 @@ export default function AdminFairPlayPage() {
 
       <AdminPanel
         title={t("admin.fairplay.queue")}
-        subtitle={loading ? t("common.loading") : `${cases.length} dossier(s)`}
+        subtitle={loading ? t("common.loading") : t("admin.fairplay.caseCount", { count: cases.length })}
         bodyClassName="p-0 sm:p-0"
       >
         {loading ? (

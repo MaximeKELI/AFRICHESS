@@ -31,7 +31,10 @@ function LoginContent() {
     setError("");
     try {
       await login(username, password, needsTotp ? totpCode : undefined);
-      router.push(consumeReturnAfterLogin() ?? "/play");
+      const next = searchParams.get("next");
+      const safeNext =
+        next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+      router.push(safeNext ?? consumeReturnAfterLogin() ?? "/play");
     } catch (err) {
       const message = err instanceof Error ? err.message : t("common.error");
       if (message === "TOTP_REQUIRED") {
