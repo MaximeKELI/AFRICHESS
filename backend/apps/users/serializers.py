@@ -87,6 +87,7 @@ class UserSerializer(serializers.ModelSerializer):
             "is_premium",
             "is_diamond",
             "is_staff",
+            "is_superuser",
             "title",
             "fide_id",
             "flair",
@@ -101,6 +102,7 @@ class UserSerializer(serializers.ModelSerializer):
             "subscription_tier",
             "premium_until",
             "is_staff",
+            "is_superuser",
         ]
 
 

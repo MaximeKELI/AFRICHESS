@@ -27,6 +27,7 @@ interface User {
   chess_level?: string;
   country: string;
   is_staff?: boolean;
+  is_superuser?: boolean;
   subscription_tier?: string;
   is_premium?: boolean;
   is_diamond?: boolean;

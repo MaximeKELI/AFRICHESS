@@ -140,6 +140,27 @@ export default function AdminOverviewPage() {
         actions={
           <>
             <Link
+              href="/admin/tables"
+              className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border border-[var(--border-subtle)] hover:border-africhess-gold/40"
+            >
+              {t("admin.nav.tables")}
+              <ArrowRight size={14} />
+            </Link>
+            <Link
+              href="/admin/stats"
+              className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border border-[var(--border-subtle)] hover:border-africhess-gold/40"
+            >
+              {t("admin.nav.stats")}
+              <ArrowRight size={14} />
+            </Link>
+            <Link
+              href="/admin/data-science"
+              className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border border-[var(--border-subtle)] hover:border-africhess-gold/40"
+            >
+              {t("admin.nav.dataScience")}
+              <ArrowRight size={14} />
+            </Link>
+            <Link
               href="/admin/users"
               className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border border-[var(--border-subtle)] hover:border-africhess-gold/40"
             >

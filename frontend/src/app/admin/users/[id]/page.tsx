@@ -11,6 +11,7 @@ import { displayCountry } from "@/lib/countries";
 import { countryFlag } from "@/lib/worldCountries";
 import { formatLocaleDate } from "@/lib/i18n/labels";
 import { ArrowLeft } from "lucide-react";
+import { useAuthStore } from "@/store/auth";
 import {
   AdminBadge,
   AdminEmpty,
@@ -36,6 +37,11 @@ interface UserDetail {
     chess_level: string;
     date_joined: string;
     last_login: string | null;
+    is_staff?: boolean;
+    is_active?: boolean;
+    is_superuser?: boolean;
+    fairplay_exempt?: boolean;
+    subscription_tier?: string;
   };
   stats: {
     games_played: number;
@@ -92,12 +98,16 @@ export default function AdminUserDetailPage() {
   const params = useParams();
   const id = Number(params.id);
   const { t, locale } = useTranslation();
+  const actor = useAuthStore((s) => s.user);
   const [data, setData] = useState<UserDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [powerMsg, setPowerMsg] = useState<string | null>(null);
+  const [powerBusy, setPowerBusy] = useState(false);
 
-  useEffect(() => {
+  const reload = () => {
     if (!id || Number.isNaN(id)) return;
+    setLoading(true);
     adminApi
       .userDetail(id, { limit: 200 })
       .then(({ data: d }) => {
@@ -106,7 +116,34 @@ export default function AdminUserDetailPage() {
       })
       .catch((err) => setError(formatApiError(err, t("admin.error.load"))))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, t]);
+
+  const applyPower = async (body: Record<string, unknown>) => {
+    setPowerBusy(true);
+    setPowerMsg(null);
+    try {
+      const { data: res } = await adminApi.userPowers(id, body as never);
+      setPowerMsg(t("admin.powers.saved"));
+      if (data) {
+        setData({
+          ...data,
+          user: {
+            ...data.user,
+            ...res.user,
+          },
+        });
+      }
+    } catch (err) {
+      setPowerMsg(formatApiError(err, t("admin.error.load")));
+    } finally {
+      setPowerBusy(false);
+    }
+  };
 
   if (loading) return <AdminSkeleton rows={8} />;
   if (error) return <InlineAlert>{error}</InlineAlert>;
@@ -136,6 +173,78 @@ export default function AdminUserDetailPage() {
           </Link>
         }
       />
+
+      <AdminPanel title={t("admin.powers.title")} subtitle={t("admin.powers.subtitle")}>
+        {powerMsg && <p className="text-sm mb-3 opacity-80">{powerMsg}</p>}
+        <div className="flex flex-wrap gap-2 mb-4">
+          <AdminBadge tone={user.is_active === false ? "danger" : "ok"}>
+            {user.is_active === false ? "inactive" : "active"}
+          </AdminBadge>
+          {user.is_staff && <AdminBadge tone="gold">staff</AdminBadge>}
+          {user.is_superuser && <AdminBadge tone="gold">superuser</AdminBadge>}
+          {user.fairplay_exempt && <AdminBadge tone="warn">fairplay exempt</AdminBadge>}
+          <AdminBadge tone="neutral">{user.subscription_tier || "free"}</AdminBadge>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={powerBusy}
+            className="px-3 py-2 rounded-xl text-sm border border-[var(--border-subtle)] hover:border-africhess-gold/40 disabled:opacity-50"
+            onClick={() => applyPower({ is_active: user.is_active === false })}
+          >
+            {user.is_active === false ? t("admin.powers.activate") : t("admin.powers.deactivate")}
+          </button>
+          <button
+            type="button"
+            disabled={powerBusy}
+            className="px-3 py-2 rounded-xl text-sm border border-[var(--border-subtle)] hover:border-africhess-gold/40 disabled:opacity-50"
+            onClick={() => applyPower({ fairplay_exempt: !user.fairplay_exempt })}
+          >
+            {t("admin.powers.toggleFairplay")}
+          </button>
+          {(["free", "gold", "diamond"] as const).map((tier) => (
+            <button
+              key={tier}
+              type="button"
+              disabled={powerBusy || user.subscription_tier === tier}
+              className="px-3 py-2 rounded-xl text-sm border border-[var(--border-subtle)] hover:border-africhess-gold/40 disabled:opacity-50"
+              onClick={() => applyPower({ subscription_tier: tier })}
+            >
+              {tier}
+            </button>
+          ))}
+          {actor?.is_superuser && (
+            <>
+              <button
+                type="button"
+                disabled={powerBusy}
+                className="px-3 py-2 rounded-xl text-sm border border-amber-500/40 hover:bg-amber-500/10 disabled:opacity-50"
+                onClick={() => applyPower({ is_staff: !user.is_staff })}
+              >
+                {t("admin.powers.toggleStaff")}
+              </button>
+              <button
+                type="button"
+                disabled={powerBusy}
+                className="px-3 py-2 rounded-xl text-sm border border-red-500/40 hover:bg-red-500/10 disabled:opacity-50"
+                onClick={() => applyPower({ is_superuser: !user.is_superuser })}
+              >
+                {t("admin.powers.toggleSuper")}
+              </button>
+            </>
+          )}
+        </div>
+        <p className="text-xs opacity-50 mt-3">
+          <a
+            href={`${process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:8000"}/admin/users/user/${user.id}/change/`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-africhess-gold hover:underline"
+          >
+            {t("admin.powers.djangoEdit")}
+          </a>
+        </p>
+      </AdminPanel>
 
       <AdminPanel>
         <AdminMetaGrid

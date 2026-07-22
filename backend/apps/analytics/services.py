@@ -302,4 +302,7 @@ def _user_admin_dict(user) -> dict[str, Any]:
         "last_login": user.last_login.isoformat() if user.last_login else None,
         "is_staff": user.is_staff,
         "is_active": user.is_active,
+        "is_superuser": user.is_superuser,
+        "fairplay_exempt": getattr(user, "fairplay_exempt", False),
+        "subscription_tier": getattr(user, "subscription_tier", "free"),
     }
