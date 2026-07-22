@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import (
+    ChessBot,
     FairPlayAppeal,
     FairPlayAuditLog,
     FairPlayReport,
@@ -14,6 +15,14 @@ from .models import (
     MatchmakingQueue,
     Move,
 )
+
+
+@admin.register(ChessBot)
+class ChessBotAdmin(admin.ModelAdmin):
+    list_display = ["name", "slug", "elo", "tier", "is_active", "is_premium", "games_played"]
+    list_filter = ["tier", "is_active", "is_premium"]
+    search_fields = ["name", "slug", "name_en"]
+    list_editable = ["is_active", "is_premium"]
 
 
 @admin.register(GameRoom)
