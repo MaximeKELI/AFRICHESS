@@ -237,7 +237,7 @@ def table_rows(name: str, *, q: str = "", limit: int = 50, offset: int = 0) -> d
     if name == "tournaments":
         from apps.tournaments.models import Tournament
 
-        qs = Tournament.objects.annotate(participants=Count("participants")).order_by("-starts_at")
+        qs = Tournament.objects.annotate(participant_count=Count("participants")).order_by("-starts_at")
         if q:
             qs = qs.filter(Q(name__icontains=q) | Q(status__icontains=q) | Q(format__icontains=q))
         total, items = _paginate(qs, limit=limit, offset=offset)
@@ -254,7 +254,7 @@ def table_rows(name: str, *, q: str = "", limit: int = 50, offset: int = 0) -> d
                     "format": t.format,
                     "status": t.status,
                     "mode": t.mode,
-                    "participants": t.participants,
+                    "participants": t.participant_count,
                     "starts_at": t.starts_at.isoformat() if t.starts_at else None,
                 }
                 for t in items
@@ -403,7 +403,7 @@ def table_rows(name: str, *, q: str = "", limit: int = 50, offset: int = 0) -> d
     if name == "fairplay_reports":
         from apps.games.models import FairPlayReport
 
-        qs = FairPlayReport.objects.select_related("user", "game").order_by("-created_at")
+        qs = FairPlayReport.objects.select_related("user", "game").order_by("-analyzed_at")
         if q:
             qs = qs.filter(Q(user__username__icontains=q) | Q(verdict__icontains=q))
         total, items = _paginate(qs, limit=limit, offset=offset)
@@ -420,7 +420,7 @@ def table_rows(name: str, *, q: str = "", limit: int = 50, offset: int = 0) -> d
                     "game_id": str(r.game_id) if r.game_id else None,
                     "verdict": r.verdict,
                     "overall_score": round(float(r.overall_score or 0), 2),
-                    "created_at": r.created_at.isoformat() if r.created_at else None,
+                    "created_at": r.analyzed_at.isoformat() if r.analyzed_at else None,
                 }
                 for r in items
             ],
@@ -486,7 +486,7 @@ def statistics_and_probability(*, days: int = 30) -> dict[str, Any]:
     joined = User.objects.filter(date_joined__gte=since).count()
     logged_7d = User.objects.filter(last_login__gte=timezone.now() - timedelta(days=7)).count()
 
-    fp = FairPlayReport.objects.filter(created_at__gte=since)
+    fp = FairPlayReport.objects.filter(analyzed_at__gte=since)
     fp_total = fp.count()
     fp_by_verdict = {r["verdict"]: r["count"] for r in fp.values("verdict").annotate(count=Count("id"))}
 
