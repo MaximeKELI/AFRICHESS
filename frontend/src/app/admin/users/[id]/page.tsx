@@ -11,6 +11,15 @@ import { displayCountry } from "@/lib/countries";
 import { countryFlag } from "@/lib/worldCountries";
 import { formatLocaleDate } from "@/lib/i18n/labels";
 import { ArrowLeft } from "lucide-react";
+import {
+  AdminBadge,
+  AdminEmpty,
+  AdminKpi,
+  AdminMetaGrid,
+  AdminPageHeader,
+  AdminPanel,
+  AdminSkeleton,
+} from "@/components/admin/AdminPrimitives";
 
 interface UserDetail {
   user: {
@@ -99,176 +108,212 @@ export default function AdminUserDetailPage() {
       .finally(() => setLoading(false));
   }, [id, t]);
 
-  if (loading) return <p className="opacity-60">{t("common.loading")}</p>;
+  if (loading) return <AdminSkeleton rows={8} />;
   if (error) return <InlineAlert>{error}</InlineAlert>;
   if (!data) return null;
 
   const { user, stats, learning, activity, timeline } = data;
 
   return (
-    <div className="space-y-8">
-      <Link href="/admin/users" className="inline-flex items-center gap-2 text-sm opacity-70 hover:opacity-100">
+    <div className="space-y-5">
+      <Link
+        href="/admin/users"
+        className="inline-flex items-center gap-2 text-sm opacity-60 hover:opacity-100 hover:text-africhess-gold"
+      >
         <ArrowLeft size={16} />
         {t("admin.user.back")}
       </Link>
 
-      <div className="glass-card p-6">
-        <h2 className="font-display text-2xl font-bold mb-2">{user.username}</h2>
-        <p className="opacity-60 mb-4">{user.email}</p>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-          <div>
-            <span className="opacity-50">{t("admin.col.country")}</span>
-            <p>{countryFlag(user.country)} {displayCountry(user.country, locale)}</p>
-          </div>
-          <div>
-            <span className="opacity-50">{t("auth.register.city")}</span>
-            <p>{user.city || "—"}</p>
-          </div>
-          <div>
-            <span className="opacity-50">{t("auth.register.gender")}</span>
-            <p>{user.gender ? t(`auth.register.gender.${user.gender}`) : "—"}</p>
-          </div>
-          <div>
-            <span className="opacity-50">{t("auth.register.discovery")}</span>
-            <p>
-              {user.discovery_source
-                ? t(`auth.register.discovery.${user.discovery_source}`)
-                : "—"}
-            </p>
-          </div>
-          <div>
-            <span className="opacity-50">{t("auth.register.birthYear")}</span>
-            <p>{user.birth_year ?? "—"}</p>
-          </div>
-          <div>
-            <span className="opacity-50">{t("admin.col.joined")}</span>
-            <p>{formatLocaleDate(locale, user.date_joined, { dateStyle: "medium" })}</p>
-          </div>
-          <div>
-            <span className="opacity-50">{t("admin.col.lastLogin")}</span>
-            <p>
-              {user.last_login
-                ? formatLocaleDate(locale, user.last_login, { dateStyle: "medium", timeStyle: "short" })
-                : "—"}
-            </p>
-          </div>
-          <div>
-            <span className="opacity-50">{t("admin.col.sessions")}</span>
-            <p>{activity.sessions_estimated}</p>
-          </div>
-        </div>
-      </div>
+      <AdminPageHeader
+        title={user.username}
+        description={user.email}
+        actions={
+          <Link
+            href={`/profile/${encodeURIComponent(user.username)}`}
+            className="text-sm px-3 py-2 rounded-xl border border-[var(--border-subtle)] hover:border-africhess-gold/40"
+          >
+            {t("admin.user.publicProfile")}
+          </Link>
+        }
+      />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {[
-          { label: t("admin.col.clicks"), value: activity.clicks_total },
-          { label: t("admin.col.pageViews"), value: activity.page_views_total },
-          { label: t("admin.col.events"), value: activity.events_total },
-          { label: t("admin.col.games"), value: stats?.games_played ?? data.games_total },
-          { label: t("admin.col.puzzles"), value: stats?.puzzles_solved ?? data.puzzle_attempts_total },
-          { label: "XP", value: learning?.xp ?? 0 },
-        ].map((k) => (
-          <div key={k.label} className="glass-card p-4 text-center">
-            <p className="text-xl font-bold text-africhess-gold">{k.value}</p>
-            <p className="text-xs opacity-60">{k.label}</p>
-          </div>
-        ))}
+      <AdminPanel>
+        <AdminMetaGrid
+          items={[
+            {
+              label: t("admin.col.country"),
+              value: `${countryFlag(user.country)} ${displayCountry(user.country, locale)}`,
+            },
+            { label: t("auth.register.city"), value: user.city || "—" },
+            {
+              label: t("auth.register.gender"),
+              value: user.gender ? t(`auth.register.gender.${user.gender}`) : "—",
+            },
+            {
+              label: t("auth.register.discovery"),
+              value: user.discovery_source
+                ? t(`auth.register.discovery.${user.discovery_source}`)
+                : "—",
+            },
+            { label: t("auth.register.birthYear"), value: user.birth_year ?? "—" },
+            {
+              label: t("admin.col.joined"),
+              value: formatLocaleDate(locale, user.date_joined, { dateStyle: "medium" }),
+            },
+            {
+              label: t("admin.col.lastLogin"),
+              value: user.last_login
+                ? formatLocaleDate(locale, user.last_login, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })
+                : "—",
+            },
+            { label: t("admin.col.sessions"), value: activity.sessions_estimated },
+          ]}
+        />
+      </AdminPanel>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <AdminKpi label={t("admin.col.clicks")} value={activity.clicks_total.toLocaleString(locale)} />
+        <AdminKpi
+          label={t("admin.col.pageViews")}
+          value={activity.page_views_total.toLocaleString(locale)}
+        />
+        <AdminKpi label={t("admin.col.events")} value={activity.events_total.toLocaleString(locale)} />
+        <AdminKpi
+          label={t("admin.col.games")}
+          value={(stats?.games_played ?? data.games_total).toLocaleString(locale)}
+        />
+        <AdminKpi
+          label={t("admin.col.puzzles")}
+          value={(stats?.puzzles_solved ?? data.puzzle_attempts_total).toLocaleString(locale)}
+        />
+        <AdminKpi label="XP" value={(learning?.xp ?? 0).toLocaleString(locale)} />
       </div>
 
       {Object.keys(activity.by_type).length > 0 && (
-        <div className="glass-card p-6">
-          <h3 className="font-semibold mb-4">{t("admin.user.byType")}</h3>
+        <AdminPanel title={t("admin.user.byType")}>
           <div className="flex flex-wrap gap-2">
-            {Object.entries(activity.by_type).map(([type, count]) => (
-              <span
-                key={type}
-                className="px-3 py-1 rounded-full text-xs border border-white/15 bg-white/5"
-              >
-                {type}: <strong>{count}</strong>
-              </span>
-            ))}
+            {Object.entries(activity.by_type)
+              .sort((a, b) => b[1] - a[1])
+              .map(([type, count]) => (
+                <AdminBadge key={type} tone="neutral">
+                  {type}: <strong className="tabular-nums ml-0.5">{count}</strong>
+                </AdminBadge>
+              ))}
           </div>
-        </div>
+        </AdminPanel>
       )}
 
       {data.fairplay && (
-        <div className="glass-card p-6 space-y-4">
-          <h3 className="font-semibold">{t("admin.fairplay.userSection")}</h3>
-          {data.fairplay.baseline.games_analyzed >= 5 && (
-            <p className="text-sm opacity-70">
-              {t("admin.fairplay.baseline")}: top1{" "}
-              {(data.fairplay.baseline.avg_top1_rate * 100).toFixed(1)}% · accuracy{" "}
-              {data.fairplay.baseline.avg_accuracy.toFixed(1)} · CPL{" "}
-              {data.fairplay.baseline.avg_cpl.toFixed(0)} ({data.fairplay.baseline.games_analyzed}{" "}
-              parties)
-            </p>
-          )}
-          {data.fairplay.active_sanctions.length > 0 && (
-            <div>
-              <p className="text-sm font-medium text-red-400 mb-1">{t("admin.fairplay.activeSanctions")}</p>
-              <ul className="text-xs space-y-1">
-                {data.fairplay.active_sanctions.map((s, i) => (
-                  <li key={i}>
-                    {s.sanction_type}
-                    {s.until ? ` → ${s.until}` : ""}
+        <AdminPanel title={t("admin.fairplay.userSection")}>
+          <div className="space-y-4">
+            {data.fairplay.baseline.games_analyzed >= 5 && (
+              <p className="text-sm opacity-70">
+                {t("admin.fairplay.baseline")}: top1{" "}
+                {(data.fairplay.baseline.avg_top1_rate * 100).toFixed(1)}% · accuracy{" "}
+                {data.fairplay.baseline.avg_accuracy.toFixed(1)} · CPL{" "}
+                {data.fairplay.baseline.avg_cpl.toFixed(0)} ({data.fairplay.baseline.games_analyzed}{" "}
+                parties)
+              </p>
+            )}
+            {data.fairplay.active_sanctions.length > 0 && (
+              <div>
+                <p className="text-sm font-medium text-red-500 mb-1">
+                  {t("admin.fairplay.activeSanctions")}
+                </p>
+                <ul className="text-xs space-y-1 opacity-80">
+                  {data.fairplay.active_sanctions.map((s, i) => (
+                    <li key={i}>
+                      {s.sanction_type}
+                      {s.until ? ` → ${s.until}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {data.fairplay.recent_reports.length > 0 ? (
+              <ul className="text-sm space-y-2">
+                {data.fairplay.recent_reports.map((r) => (
+                  <li key={r.game_id} className="flex flex-wrap items-center gap-2">
+                    <AdminBadge
+                      tone={
+                        r.verdict === "likely_cheat"
+                          ? "danger"
+                          : r.verdict === "clean"
+                            ? "ok"
+                            : "warn"
+                      }
+                    >
+                      {r.verdict}
+                    </AdminBadge>
+                    <Link
+                      href={`/admin/fairplay/games/${r.game_id}`}
+                      className="text-africhess-gold hover:underline"
+                    >
+                      score {r.overall_score.toFixed(1)}
+                    </Link>
+                    {r.review_status && (
+                      <span className="text-xs opacity-50">({r.review_status})</span>
+                    )}
                   </li>
                 ))}
               </ul>
-            </div>
-          )}
-          {data.fairplay.recent_reports.length > 0 && (
-            <ul className="text-sm space-y-2">
-              {data.fairplay.recent_reports.map((r) => (
-                <li key={r.game_id}>
-                  <Link href={`/admin/fairplay/games/${r.game_id}`} className="text-africhess-gold hover:underline">
-                    {r.verdict}
-                  </Link>{" "}
-                  — score {r.overall_score.toFixed(1)}
-                  {r.review_status ? ` (${r.review_status})` : ""}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+            ) : (
+              <p className="text-sm opacity-50">—</p>
+            )}
+          </div>
+        </AdminPanel>
       )}
 
-      <div className="glass-card overflow-x-auto">
-        <h3 className="font-semibold p-4 border-b border-white/10">
-          {t("admin.user.timeline")} ({timeline.total})
-        </h3>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-white/10 text-left">
-              <th className="p-3">{t("admin.col.time")}</th>
-              <th className="p-3">{t("admin.col.type")}</th>
-              <th className="p-3">{t("admin.col.path")}</th>
-              <th className="p-3">{t("admin.col.element")}</th>
-              <th className="p-3">{t("admin.col.label")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {timeline.events.map((ev) => (
-              <tr key={ev.id} className="border-b border-white/5 hover:bg-white/5 font-mono text-xs">
-                <td className="p-3 whitespace-nowrap opacity-70">
-                  {formatLocaleDate(locale, ev.created_at, {
-                    dateStyle: "short",
-                    timeStyle: "medium",
-                  })}
-                </td>
-                <td className="p-3">
-                  <span className="px-2 py-0.5 rounded bg-white/10">{ev.event_type}</span>
-                </td>
-                <td className="p-3 max-w-[200px] truncate">{ev.path || "—"}</td>
-                <td className="p-3 max-w-[160px] truncate">{ev.element || "—"}</td>
-                <td className="p-3 max-w-[160px] truncate">{ev.label || "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {timeline.events.length === 0 && (
-          <p className="p-8 text-center opacity-60">{t("admin.user.noEvents")}</p>
+      <AdminPanel
+        title={`${t("admin.user.timeline")} (${timeline.total})`}
+        bodyClassName="p-0 sm:p-0"
+      >
+        {timeline.events.length === 0 ? (
+          <div className="p-5">
+            <AdminEmpty>{t("admin.user.noEvents")}</AdminEmpty>
+          </div>
+        ) : (
+          <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-[color-mix(in_srgb,var(--card)_96%,transparent)] backdrop-blur">
+                <tr className="text-[11px] uppercase tracking-wide opacity-55 border-b border-[var(--border-subtle)] text-left">
+                  <th className="px-3 py-2.5 font-medium">{t("admin.col.time")}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("admin.col.type")}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("admin.col.path")}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("admin.col.element")}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("admin.col.label")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {timeline.events.map((ev) => (
+                  <tr
+                    key={ev.id}
+                    className="border-b border-[var(--border-subtle)]/50 hover:bg-[color-mix(in_srgb,var(--foreground)_4%,transparent)] font-mono text-xs"
+                  >
+                    <td className="px-3 py-2 whitespace-nowrap opacity-70">
+                      {formatLocaleDate(locale, ev.created_at, {
+                        dateStyle: "short",
+                        timeStyle: "medium",
+                      })}
+                    </td>
+                    <td className="px-3 py-2">
+                      <AdminBadge tone="neutral">{ev.event_type}</AdminBadge>
+                    </td>
+                    <td className="px-3 py-2 max-w-[200px] truncate">{ev.path || "—"}</td>
+                    <td className="px-3 py-2 max-w-[160px] truncate opacity-70">
+                      {ev.element || "—"}
+                    </td>
+                    <td className="px-3 py-2 max-w-[160px] truncate">{ev.label || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-      </div>
+      </AdminPanel>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { adminApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
@@ -9,7 +9,14 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { displayCountry } from "@/lib/countries";
 import { countryFlag } from "@/lib/worldCountries";
 import { formatLocaleDate } from "@/lib/i18n/labels";
-import { Search } from "lucide-react";
+import { Search, ArrowUpRight } from "lucide-react";
+import {
+  AdminBadge,
+  AdminEmpty,
+  AdminPageHeader,
+  AdminPanel,
+  AdminSkeleton,
+} from "@/components/admin/AdminPrimitives";
 
 interface AdminUserRow {
   id: number;
@@ -24,6 +31,8 @@ interface AdminUserRow {
   discovery_source: string;
 }
 
+type SortKey = "username" | "joined" | "clicks" | "events" | "games";
+
 export default function AdminUsersPage() {
   const { t, locale } = useTranslation();
   const [users, setUsers] = useState<AdminUserRow[]>([]);
@@ -32,6 +41,8 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sortKey, setSortKey] = useState<SortKey>("joined");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
     setLoading(true);
@@ -46,82 +57,159 @@ export default function AdminUsersPage() {
       .finally(() => setLoading(false));
   }, [search, t]);
 
+  const sorted = useMemo(() => {
+    const list = [...users];
+    const mul = sortDir === "asc" ? 1 : -1;
+    list.sort((a, b) => {
+      switch (sortKey) {
+        case "username":
+          return mul * a.username.localeCompare(b.username);
+        case "joined":
+          return mul * (new Date(a.date_joined).getTime() - new Date(b.date_joined).getTime());
+        case "clicks":
+          return mul * (a.clicks_total - b.clicks_total);
+        case "events":
+          return mul * (a.events_total - b.events_total);
+        case "games":
+          return mul * (a.games_played - b.games_played);
+        default:
+          return 0;
+      }
+    });
+    return list;
+  }, [users, sortKey, sortDir]);
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(key);
+      setSortDir(key === "username" ? "asc" : "desc");
+    }
+  };
+
+  const SortTh = ({
+    label,
+    k,
+    align = "left",
+  }: {
+    label: string;
+    k: SortKey;
+    align?: "left" | "right";
+  }) => (
+    <th className={`px-3 py-2.5 font-medium ${align === "right" ? "text-right" : "text-left"}`}>
+      <button
+        type="button"
+        onClick={() => toggleSort(k)}
+        className="inline-flex items-center gap-1 hover:text-africhess-gold"
+      >
+        {label}
+        {sortKey === k && <span className="opacity-60">{sortDir === "asc" ? "↑" : "↓"}</span>}
+      </button>
+    </th>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      <AdminPageHeader
+        title={t("admin.nav.users")}
+        description={t("admin.users.count", { count: total })}
+      />
+
       <form
-        className="flex gap-2"
+        className="flex flex-col sm:flex-row gap-2"
         onSubmit={(e) => {
           e.preventDefault();
-          setSearch(q);
+          setSearch(q.trim());
         }}
       >
-        <div className="relative flex-1 max-w-md">
+        <div className="relative flex-1 max-w-xl">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" size={18} />
           <input
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={t("admin.users.search")}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border bg-transparent"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[var(--border-subtle)] bg-transparent focus:border-africhess-gold focus:outline-none focus:ring-1 focus:ring-africhess-gold/40"
           />
         </div>
-        <button type="submit" className="px-4 py-2 rounded-lg african-gradient text-white text-sm">
+        <button
+          type="submit"
+          className="px-4 py-2.5 rounded-xl african-gradient text-white text-sm font-medium shrink-0"
+        >
           {t("admin.users.searchBtn")}
         </button>
       </form>
 
       {error && <InlineAlert>{error}</InlineAlert>}
-      {loading && <p className="opacity-60">{t("common.loading")}</p>}
+      {loading && <AdminSkeleton rows={6} />}
 
-      <p className="text-sm opacity-60">
-        {t("admin.users.count", { count: total })}
-      </p>
-
-      <div className="glass-card overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-white/10 text-left">
-              <th className="p-4">{t("admin.col.user")}</th>
-              <th className="p-4">{t("admin.col.country")}</th>
-              <th className="p-4">{t("admin.col.joined")}</th>
-              <th className="p-4 text-right">{t("admin.col.clicks")}</th>
-              <th className="p-4 text-right">{t("admin.col.events")}</th>
-              <th className="p-4 text-right">{t("admin.col.games")}</th>
-              <th className="p-4" />
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="border-b border-white/5 hover:bg-white/5">
-                <td className="p-4">
-                  <p className="font-medium">{u.username}</p>
-                  <p className="text-xs opacity-50">{u.email}</p>
-                </td>
-                <td className="p-4">
-                  {countryFlag(u.country)} {displayCountry(u.country, locale)}
-                </td>
-                <td className="p-4 opacity-70">
-                  {formatLocaleDate(locale, u.date_joined, { dateStyle: "short" })}
-                </td>
-                <td className="p-4 text-right font-mono">{u.clicks_total}</td>
-                <td className="p-4 text-right font-mono">{u.events_total}</td>
-                <td className="p-4 text-right font-mono">{u.games_played}</td>
-                <td className="p-4 text-right">
-                  <Link
-                    href={`/admin/users/${u.id}`}
-                    className="text-africhess-gold hover:underline text-sm"
-                  >
-                    {t("admin.users.detail")}
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {users.length === 0 && !loading && (
-          <p className="p-8 text-center opacity-60">{t("admin.empty")}</p>
-        )}
-      </div>
+      {!loading && (
+        <AdminPanel bodyClassName="p-0 sm:p-0">
+          {sorted.length === 0 ? (
+            <div className="p-5">
+              <AdminEmpty>{t("admin.empty")}</AdminEmpty>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 z-10 bg-[color-mix(in_srgb,var(--card)_96%,transparent)] backdrop-blur">
+                  <tr className="text-[11px] uppercase tracking-wide opacity-55 border-b border-[var(--border-subtle)]">
+                    <SortTh label={t("admin.col.user")} k="username" />
+                    <th className="px-3 py-2.5 font-medium text-left">{t("admin.col.country")}</th>
+                    <SortTh label={t("admin.col.joined")} k="joined" />
+                    <SortTh label={t("admin.col.clicks")} k="clicks" align="right" />
+                    <SortTh label={t("admin.col.events")} k="events" align="right" />
+                    <SortTh label={t("admin.col.games")} k="games" align="right" />
+                    <th className="px-3 py-2.5" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {sorted.map((u) => (
+                    <tr
+                      key={u.id}
+                      className="border-b border-[var(--border-subtle)]/50 hover:bg-[color-mix(in_srgb,var(--foreground)_4%,transparent)] group"
+                    >
+                      <td className="px-3 py-3">
+                        <p className="font-medium leading-tight">{u.username}</p>
+                        <p className="text-xs opacity-45 truncate max-w-[220px]">{u.email}</p>
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1.5">
+                          <span aria-hidden>{countryFlag(u.country)}</span>
+                          <span className="opacity-80">{displayCountry(u.country, locale)}</span>
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 opacity-70 whitespace-nowrap">
+                        {formatLocaleDate(locale, u.date_joined, { dateStyle: "short" })}
+                      </td>
+                      <td className="px-3 py-3 text-right tabular-nums font-mono text-xs">
+                        {u.clicks_total.toLocaleString(locale)}
+                      </td>
+                      <td className="px-3 py-3 text-right tabular-nums font-mono text-xs">
+                        {u.events_total.toLocaleString(locale)}
+                      </td>
+                      <td className="px-3 py-3 text-right">
+                        <AdminBadge tone={u.games_played > 0 ? "ok" : "neutral"}>
+                          {u.games_played.toLocaleString(locale)}
+                        </AdminBadge>
+                      </td>
+                      <td className="px-3 py-3 text-right">
+                        <Link
+                          href={`/admin/users/${u.id}`}
+                          className="inline-flex items-center gap-1 text-africhess-gold text-xs font-medium opacity-80 group-hover:opacity-100"
+                        >
+                          {t("admin.users.detail")}
+                          <ArrowUpRight size={14} />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </AdminPanel>
+      )}
     </div>
   );
 }

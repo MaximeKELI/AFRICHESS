@@ -1,13 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { adminApi } from "@/lib/api";
 import { formatApiError } from "@/lib/errors";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { useTranslation } from "@/hooks/useTranslation";
-import { DataTable } from "@/components/stats/StatsTables";
 import { formatLocaleDate } from "@/lib/i18n/labels";
+import { ArrowUpRight } from "lucide-react";
+import {
+  AdminBadge,
+  AdminEmpty,
+  AdminKpi,
+  AdminPageHeader,
+  AdminPanel,
+  AdminSkeleton,
+} from "@/components/admin/AdminPrimitives";
 
 interface Overview {
   pending_cases: number;
@@ -39,12 +47,23 @@ interface QueueCase {
   };
 }
 
-const VERDICT_CLASS: Record<string, string> = {
-  clean: "text-emerald-400",
-  review: "text-amber-400",
-  suspicious: "text-orange-400",
-  likely_cheat: "text-red-400",
-};
+const STATUS_FILTERS = ["pending", "in_review", "confirmed", "dismissed"] as const;
+
+function verdictTone(v: string): "ok" | "warn" | "danger" | "info" | "neutral" {
+  if (v === "clean") return "ok";
+  if (v === "review") return "warn";
+  if (v === "suspicious") return "warn";
+  if (v === "likely_cheat") return "danger";
+  return "neutral";
+}
+
+function statusTone(s: string): "ok" | "warn" | "danger" | "info" | "neutral" | "gold" {
+  if (s === "pending") return "warn";
+  if (s === "in_review") return "info";
+  if (s === "confirmed") return "danger";
+  if (s === "dismissed") return "ok";
+  return "neutral";
+}
 
 export default function AdminFairPlayPage() {
   const { t, locale } = useTranslation();
@@ -52,7 +71,7 @@ export default function AdminFairPlayPage() {
   const [cases, setCases] = useState<QueueCase[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("pending");
+  const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTERS)[number]>("pending");
 
   useEffect(() => {
     setLoading(true);
@@ -69,94 +88,139 @@ export default function AdminFairPlayPage() {
       .finally(() => setLoading(false));
   }, [statusFilter, t]);
 
-  const rows = useMemo(
-    () =>
-      cases.map((c) => ({
-        player: (
-          <Link href={`/admin/users/${c.report.user_id}`} className="text-africhess-gold hover:underline">
-            {c.report.username}
-          </Link>
-        ),
-        game: (
-          <Link href={`/admin/fairplay/games/${c.game.id}`} className="hover:underline">
-            {c.game.white ?? "?"} vs {c.game.black ?? "?"}
-          </Link>
-        ),
-        verdict: <span className={VERDICT_CLASS[c.report.verdict] ?? ""}>{c.report.verdict}</span>,
-        score: c.report.overall_score.toFixed(1),
-        peerDelta: c.peer_score_delta.toFixed(1),
-        status: c.status,
-        date: c.game.ended_at ? formatLocaleDate(c.game.ended_at, locale) : "—",
-        action: (
-          <Link
-            href={`/admin/fairplay/games/${c.game.id}`}
-            className="text-sm px-2 py-1 rounded border hover:border-africhess-gold/50"
-          >
-            {t("admin.fairplay.viewGame")}
-          </Link>
-        ),
-      })),
-    [cases, locale, t]
-  );
+  const statusLabel = (s: string) => t(`admin.fairplay.status.${s}`) || s;
+  const verdictLabel = (v: string) => t(`admin.fairplay.verdict.${v}`) || v;
 
-  if (loading) return <p className="opacity-60">{t("common.loading")}</p>;
+  if (loading && !overview) return <AdminSkeleton rows={7} />;
   if (error) return <InlineAlert>{error}</InlineAlert>;
 
-  const cards = [
-    { label: t("admin.fairplay.pending"), value: overview?.pending_cases ?? 0 },
-    { label: t("admin.fairplay.inReview"), value: overview?.in_review_cases ?? 0 },
-    { label: t("admin.fairplay.likely7d"), value: overview?.likely_cheat_7d ?? 0 },
-  ];
-
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="font-display text-xl font-bold">{t("admin.fairplay.title")}</h2>
-        <p className="text-sm opacity-60">{t("admin.fairplay.subtitle")}</p>
+    <div className="space-y-5">
+      <AdminPageHeader
+        title={t("admin.fairplay.title")}
+        description={t("admin.fairplay.subtitle")}
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <AdminKpi
+          label={t("admin.fairplay.pending")}
+          value={overview?.pending_cases ?? 0}
+          tone={(overview?.pending_cases ?? 0) > 0 ? "warn" : "default"}
+        />
+        <AdminKpi
+          label={t("admin.fairplay.inReview")}
+          value={overview?.in_review_cases ?? 0}
+          tone="default"
+        />
+        <AdminKpi
+          label={t("admin.fairplay.likely7d")}
+          value={overview?.likely_cheat_7d ?? 0}
+          tone={(overview?.likely_cheat_7d ?? 0) > 0 ? "danger" : "default"}
+        />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {cards.map((c) => (
-          <div key={c.label} className="glass-card p-4">
-            <p className="text-sm opacity-60">{c.label}</p>
-            <p className="text-2xl font-bold">{c.value}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {(["pending", "in_review", "confirmed", "dismissed"] as const).map((s) => (
+      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label={t("admin.fairplay.queue")}>
+        {STATUS_FILTERS.map((s) => (
           <button
             key={s}
             type="button"
+            role="tab"
+            aria-selected={statusFilter === s}
             onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-sm border ${
-              statusFilter === s ? "african-gradient text-white border-transparent" : "hover:border-africhess-gold/40"
+            className={`px-3 py-1.5 rounded-xl text-sm border transition-colors ${
+              statusFilter === s
+                ? "african-gradient text-white border-transparent"
+                : "border-[var(--border-subtle)] hover:border-africhess-gold/40"
             }`}
           >
-            {s}
+            {statusLabel(s)}
           </button>
         ))}
       </div>
 
-      {rows.length === 0 ? (
-        <p className="opacity-60">{t("admin.fairplay.noCases")}</p>
-      ) : (
-        <DataTable
-          caption={t("admin.fairplay.queue")}
-          columns={[
-            { key: "player", label: t("admin.fairplay.col.player") },
-            { key: "game", label: t("admin.fairplay.col.game") },
-            { key: "verdict", label: t("admin.fairplay.col.verdict") },
-            { key: "score", label: t("admin.fairplay.col.score") },
-            { key: "peerDelta", label: t("admin.fairplay.col.peerDelta") },
-            { key: "status", label: t("admin.fairplay.col.status") },
-            { key: "date", label: t("admin.fairplay.col.date") },
-            { key: "action", label: "" },
-          ]}
-          rows={rows}
-        />
-      )}
+      <AdminPanel
+        title={t("admin.fairplay.queue")}
+        subtitle={loading ? t("common.loading") : `${cases.length} dossier(s)`}
+        bodyClassName="p-0 sm:p-0"
+      >
+        {loading ? (
+          <div className="p-5">
+            <AdminSkeleton rows={4} />
+          </div>
+        ) : cases.length === 0 ? (
+          <div className="p-5">
+            <AdminEmpty>{t("admin.fairplay.noCases")}</AdminEmpty>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-[color-mix(in_srgb,var(--card)_96%,transparent)] backdrop-blur">
+                <tr className="text-[11px] uppercase tracking-wide opacity-55 border-b border-[var(--border-subtle)] text-left">
+                  <th className="px-3 py-2.5 font-medium">{t("admin.fairplay.col.player")}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("admin.fairplay.col.game")}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("admin.fairplay.col.verdict")}</th>
+                  <th className="px-3 py-2.5 font-medium text-right">{t("admin.fairplay.col.score")}</th>
+                  <th className="px-3 py-2.5 font-medium text-right">{t("admin.fairplay.col.peerDelta")}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("admin.fairplay.col.status")}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("admin.fairplay.col.date")}</th>
+                  <th className="px-3 py-2.5" />
+                </tr>
+              </thead>
+              <tbody>
+                {cases.map((c) => (
+                  <tr
+                    key={c.id}
+                    className="border-b border-[var(--border-subtle)]/50 hover:bg-[color-mix(in_srgb,var(--foreground)_4%,transparent)] group"
+                  >
+                    <td className="px-3 py-3">
+                      <Link
+                        href={`/admin/users/${c.report.user_id}`}
+                        className="font-medium text-africhess-gold hover:underline"
+                      >
+                        {c.report.username}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-3">
+                      <p className="truncate max-w-[180px]">
+                        {c.game.white ?? "?"} vs {c.game.black ?? "?"}
+                      </p>
+                      <p className="text-[11px] opacity-45 uppercase">{c.game.mode}</p>
+                    </td>
+                    <td className="px-3 py-3">
+                      <AdminBadge tone={verdictTone(c.report.verdict)}>
+                        {verdictLabel(c.report.verdict)}
+                      </AdminBadge>
+                    </td>
+                    <td className="px-3 py-3 text-right tabular-nums font-mono text-xs">
+                      {c.report.overall_score.toFixed(1)}
+                    </td>
+                    <td className="px-3 py-3 text-right tabular-nums font-mono text-xs">
+                      {c.peer_score_delta.toFixed(1)}
+                    </td>
+                    <td className="px-3 py-3">
+                      <AdminBadge tone={statusTone(c.status)}>{statusLabel(c.status)}</AdminBadge>
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap opacity-70 text-xs">
+                      {c.game.ended_at
+                        ? formatLocaleDate(locale, c.game.ended_at, { dateStyle: "short" })
+                        : "—"}
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <Link
+                        href={`/admin/fairplay/games/${c.game.id}`}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-africhess-gold opacity-80 group-hover:opacity-100"
+                      >
+                        {t("admin.fairplay.viewGame")}
+                        <ArrowUpRight size={14} />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </AdminPanel>
     </div>
   );
 }
