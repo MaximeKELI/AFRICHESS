@@ -597,7 +597,7 @@ def data_science_report(*, days: int = 60) -> dict[str, Any]:
         .count()
     )
     puzzled = (
-        User.objects.filter(date_joined__gte=since, puzzle_attempts__isnull=False).distinct().count()
+        User.objects.filter(date_joined__gte=since, puzzleattempt__isnull=False).distinct().count()
     )
     lesson_users = (
         UserActivityEvent.objects.filter(
