@@ -362,6 +362,25 @@ export const adminApi = {
     api.get("/analytics/admin/users/", { params }),
   userDetail: (id: number, params?: { limit?: number; offset?: number }) =>
     api.get(`/analytics/admin/users/${id}/`, { params }),
+  userPowers: (
+    id: number,
+    body: {
+      is_active?: boolean;
+      is_staff?: boolean;
+      is_superuser?: boolean;
+      fairplay_exempt?: boolean;
+      subscription_tier?: string;
+    }
+  ) => api.patch(`/analytics/admin/users/${id}/powers/`, body),
+  tablesCatalog: () => api.get("/analytics/admin/tables/"),
+  tableRows: (
+    table: string,
+    params?: { q?: string; limit?: number; offset?: number }
+  ) => api.get(`/analytics/admin/tables/${table}/`, { params }),
+  stats: (params?: { days?: number }) =>
+    api.get("/analytics/admin/stats/", { params }),
+  dataScience: (params?: { days?: number }) =>
+    api.get("/analytics/admin/data-science/", { params }),
   fairplayOverview: () => api.get("/games/admin/fairplay/overview/"),
   fairplayQueue: (params?: { status?: string; verdict?: string; limit?: number; offset?: number }) =>
     api.get("/games/admin/fairplay/queue/", { params }),

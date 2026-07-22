@@ -13,12 +13,18 @@ import {
   LayoutDashboard,
   Scale,
   ChevronRight,
+  Table2,
+  Percent,
+  FlaskConical,
 } from "lucide-react";
 import clsx from "clsx";
 import { AdminBadge, AdminSkeleton } from "@/components/admin/AdminPrimitives";
 
 const ADMIN_LINKS = [
   { href: "/admin", key: "admin.nav.overview", icon: LayoutDashboard, exact: true },
+  { href: "/admin/tables", key: "admin.nav.tables", icon: Table2 },
+  { href: "/admin/stats", key: "admin.nav.stats", icon: Percent },
+  { href: "/admin/data-science", key: "admin.nav.dataScience", icon: FlaskConical },
   { href: "/admin/users", key: "admin.nav.users", icon: Users },
   { href: "/admin/fairplay", key: "admin.nav.fairplay", icon: Scale, badge: "fairplay" as const },
 ] as const;
@@ -114,6 +120,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     if (pathname.startsWith("/admin/users")) {
       return [{ label: t("admin.nav.users") }];
+    }
+    if (pathname.startsWith("/admin/tables")) {
+      return [{ label: t("admin.nav.tables") }];
+    }
+    if (pathname.startsWith("/admin/stats")) {
+      return [{ label: t("admin.nav.stats") }];
+    }
+    if (pathname.startsWith("/admin/data-science")) {
+      return [{ label: t("admin.nav.dataScience") }];
     }
     return [{ label: t("admin.nav.overview") }];
   })();
