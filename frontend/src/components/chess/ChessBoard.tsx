@@ -504,8 +504,13 @@ function ChessBoardInner({
       aria-label={t("chess.board.aria")}
       tabIndex={disabled ? -1 : 0}
       onKeyDown={onBoardKeyDown}
-      className="chess-board-shell w-full min-w-0 mx-auto select-none"
-      style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
+      className="chess-board-shell min-w-0 mx-auto select-none"
+      style={{
+        touchAction: "manipulation",
+        WebkitTapHighlightColor: "transparent",
+        width: "100%",
+        maxWidth: boardWidth > 0 ? boardWidth : undefined,
+      }}
     >
       <div
         className="chess-board-frame mx-auto rounded-lg overflow-hidden shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold relative"

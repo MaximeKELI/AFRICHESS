@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, Suspense, useEffect, useMemo, useRef } from "react";
+import { useState, useCallback, Suspense, useEffect, useMemo, useRef, type CSSProperties } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
 import { MessageCircle } from "lucide-react";
@@ -1617,13 +1617,17 @@ function PlayContent() {
       )}
 
       <div
-        className="grid grid-cols-1 gap-4 lg:gap-5 items-start"
+        className="grid grid-cols-1 gap-4 lg:gap-5 items-start lg:[grid-template-columns:minmax(0,1fr)_minmax(var(--play-side-min),var(--play-side-max))]"
         style={
-          typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches
-            ? undefined
-            : undefined
+          {
+            ["--play-side-max" as string]:
+              boardSize >= 120 ? "220px" : boardSize >= 110 ? "260px" : "300px",
+            ["--play-side-min" as string]:
+              boardSize >= 120 ? "180px" : boardSize >= 110 ? "200px" : "240px",
+          } as CSSProperties
         }
       >
+        <div className={`w-full min-w-0 max-w-full space-y-3 ${mobileTab !== "board" ? "hidden lg:block" : ""}`}>
           {activeGameId && !gameReady && (
             <p className="text-xs text-center text-africhess-gold animate-pulse">
               {t("common.loading")}
