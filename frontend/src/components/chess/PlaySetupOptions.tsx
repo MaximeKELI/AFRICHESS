@@ -59,15 +59,16 @@ export function PlaySetupOptions({
         ariaLabel={t("play.options.sectionNav")}
       />
 
+      <OptionSection compact title={t("board.size.title")} description={t("board.size.hint")}>
+        <BoardSizePicker compact showHeader={false} />
+      </OptionSection>
+
       {setupCategory === "game" && gameSection}
       {setupCategory === "ai" && aiSection}
       {setupCategory === "online" && onlineSection}
 
       {setupCategory === "style" && (
         <div className="space-y-4">
-          <OptionSection compact title={t("board.size.title")} description={t("board.size.hint")}>
-            <BoardSizePicker compact showHeader={false} />
-          </OptionSection>
           <OptionSection compact title={t("board.picker.title")} description={t("board.picker.hint")}>
             <BoardThemePicker compact showHeader={false} showPieces={false} />
           </OptionSection>

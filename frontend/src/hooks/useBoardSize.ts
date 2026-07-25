@@ -7,10 +7,10 @@ const MOBILE_MQ = "(max-width: 767px)";
 const TABLET_MQ = "(min-width: 768px) and (max-width: 1023px)";
 
 /**
- * Applique le facteur de taille choisi par l'utilisateur (en %) à la taille
- * automatique. Le rétrécissement fonctionne partout ; l'agrandissement reste
- * borné par la largeur du conteneur et la hauteur disponible (jamais de
- * débordement).
+ * Applique le facteur de taille choisi par l'utilisateur (en %).
+ * - ≤100 % : rétrécit depuis autoSize (toujours visible).
+ * - >100 % : agrandit vers la place réellement disponible (conteneur × hauteur),
+ *   pas seulement depuis un autoSize déjà plafonné au conteneur.
  */
 export function scaleBoardSize(
   autoSize: number,
@@ -20,11 +20,15 @@ export function scaleBoardSize(
   sizePct: number
 ): number {
   const scale = (Number.isFinite(sizePct) ? sizePct : 100) / 100;
-  let target = autoSize * scale;
-  if (scale > 1) {
-    target = Math.min(target, containerW, maxByHeight);
+  const hardMax = Math.min(containerW, maxByHeight);
+
+  if (scale <= 1) {
+    return Math.max(min, Math.floor(autoSize * scale));
   }
-  return Math.max(min, Math.floor(target));
+
+  // Room to grow above the "fit" size, capped by hard layout limits.
+  const target = autoSize * scale;
+  return Math.max(min, Math.floor(Math.min(target, hardMax)));
 }
 
 function readSafeAreaBottom(): number {
@@ -47,6 +51,7 @@ export interface BoardSizeOptions {
 /**
  * Calcule la taille carrée optimale de l'échiquier (style Chess.com).
  * Pleine largeur sur mobile, limitée par la hauteur disponible (dvh + barre du bas).
+ * Au-dessus de 100 %, élargit le plafond viewport pour que le curseur ait un effet.
  */
 export function useBoardSize(
   containerRef: RefObject<HTMLElement | null>,
@@ -60,8 +65,12 @@ export function useBoardSize(
     if (!el) return;
 
     const update = () => {
+      const parent = el.parentElement;
+      const parentW = parent?.clientWidth ?? 0;
       const rect = el.getBoundingClientRect();
-      const containerW = rect.width;
+      // Prefer parent width so the shell can shrink below 100% while still
+      // measuring the full column for growth headroom.
+      const containerW = parentW > 0 ? parentW : rect.width;
       if (containerW <= 0) return;
 
       const viewportH = window.visualViewport?.height ?? window.innerHeight;
@@ -78,22 +87,32 @@ export function useBoardSize(
       const maxByWidth = viewportW - horizontalPad;
       const maxByHeight = viewportH - reservedTop - reservedBottom;
 
+      // At >100%, claim a larger share of the viewport so growth is visible.
+      const growT = Math.max(0, Math.min(1, (boardSizePct - 100) / 30));
+      let widthFrac = 0.68;
+      if (isMobile) widthFrac = 1;
+      else if (isTablet) widthFrac = 0.94;
+      else widthFrac = 0.68 + growT * 0.24; // 0.68 → 0.92
+
       let cap = max;
       if (isMobile) {
         cap = Math.min(maxByWidth, maxByHeight, max);
       } else if (isTablet) {
-        cap = Math.min(viewportW * 0.94, maxByHeight, 640);
+        cap = Math.min(viewportW * widthFrac, maxByHeight, 640 + growT * 100);
       } else {
-        cap = Math.min(viewportW * 0.68, maxByHeight, max);
+        cap = Math.min(viewportW * widthFrac, maxByHeight, max + growT * 160);
       }
 
+      // Baseline (100%) fits the column; growth can use the raised cap via parent expansion.
       const autoSize = Math.min(containerW, maxByHeight, cap);
-      setSize(scaleBoardSize(autoSize, containerW, maxByHeight, min, boardSizePct));
+      const availW = Math.max(containerW, Math.min(cap, maxByWidth, maxByHeight));
+      setSize(scaleBoardSize(autoSize, availW, maxByHeight, min, boardSizePct));
     };
 
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
+    if (el.parentElement) ro.observe(el.parentElement);
     window.addEventListener("resize", update);
     window.visualViewport?.addEventListener("resize", update);
     window.visualViewport?.addEventListener("scroll", update);

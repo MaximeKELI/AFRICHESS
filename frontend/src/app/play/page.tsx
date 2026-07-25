@@ -182,7 +182,7 @@ function PlayContent() {
   } | null>(null);
   const gameEndShownRef = useRef<string | null>(null);
   const gameWasActiveRef = useRef(false);
-  const { aiCommentsEnabled, blindMode, setBlindMode } = usePreferencesStore();
+  const { aiCommentsEnabled, blindMode, setBlindMode, boardSize } = usePreferencesStore();
   const turnStartRef = useRef(Date.now());
   const activeGameId = gameId ?? gameFromUrl;
 
@@ -1616,8 +1616,14 @@ function PlayContent() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(240px,300px)] gap-4 lg:gap-5 items-start">
-        <div className={`w-full min-w-0 max-w-full space-y-3 ${mobileTab !== "board" ? "hidden lg:block" : ""}`}>
+      <div
+        className="grid grid-cols-1 gap-4 lg:gap-5 items-start"
+        style={
+          typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches
+            ? undefined
+            : undefined
+        }
+      >
           {activeGameId && !gameReady && (
             <p className="text-xs text-center text-africhess-gold animate-pulse">
               {t("common.loading")}
