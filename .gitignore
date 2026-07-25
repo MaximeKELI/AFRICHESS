@@ -15,6 +15,7 @@ node_modules/
 .next/
 .next-dev/
 .next-build/
+.next-local/
 frontend/tmp/
 out/
 *.tsbuildinfo

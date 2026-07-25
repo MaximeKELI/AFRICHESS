@@ -64,6 +64,7 @@ import {
   type GamePlayerPublic,
 } from "@/lib/gamePlayers";
 import { isAnalysisIncomplete, parseAnalysisPayload, type GameAnalysisData } from "@/lib/gameAnalysis";
+import { FairPlayConsentModal } from "@/components/fairplay/FairPlayConsentModal";
 
 import { useGameWebSocket, type WsGamePatch, type WsGamePayload } from "@/hooks/useGameWebSocket";
 import { useMatchmakingWebSocket } from "@/hooks/useMatchmakingWebSocket";
@@ -79,10 +80,6 @@ const GameReview = dynamic(
 );
 const AiCommentaryPanel = dynamic(
   () => import("@/components/chess/AiCommentaryPanel").then((m) => m.AiCommentaryPanel),
-  { ssr: false }
-);
-const FairPlayConsentModal = dynamic(
-  () => import("@/components/fairplay/FairPlayConsentModal").then((m) => m.FairPlayConsentModal),
   { ssr: false }
 );
 const RecentGamesList = dynamic(

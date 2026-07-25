@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useMemo } from "react";
+import { BoardSizePicker } from "@/components/chess/BoardSizePicker";
 import {
   ClockedPlayerStrip,
   LiveClockProvider,
@@ -117,6 +118,9 @@ function PlayBoardSectionInner({
           />
         )}
       </LiveClockProvider>
+      <div className="mt-2 hide-in-zen">
+        <BoardSizePicker inline />
+      </div>
     </div>
   );
 }

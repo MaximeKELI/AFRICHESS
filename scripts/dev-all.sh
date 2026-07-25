@@ -104,7 +104,31 @@ for i in $(seq 1 40); do
 done
 
 echo "→ Démarrage backend (migrations)…"
-docker compose up -d --build backend
+# Le code est monté en volume : pas besoin de rebuild à chaque fois.
+# Rebuild forcé : FORCE_REBUILD=1 make dev
+# (Évite l'échec Docker Hub IPv6 quand l'image locale existe déjà.)
+need_build=0
+if [ "${FORCE_REBUILD:-0}" = "1" ]; then
+  need_build=1
+elif ! docker image inspect africhess-backend:latest >/dev/null 2>&1; then
+  need_build=1
+fi
+
+if [ "$need_build" = "1" ]; then
+  if ! docker compose build backend; then
+    if docker image inspect africhess-backend:latest >/dev/null 2>&1; then
+      echo "⚠ Build Docker Hub échoué — image locale africhess-backend réutilisée."
+      echo "  Cause fréquente : IPv6 injoignable vers auth.docker.io (IPv4 OK)."
+      echo "  Contournement : sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1"
+      echo "  Ou : make hybrid  (backend local + db/redis Docker)"
+    else
+      echo "✗ Impossible de builder le backend et aucune image locale."
+      echo "  Vérifiez l'accès à Docker Hub, ou : make hybrid"
+      exit 1
+    fi
+  fi
+fi
+docker compose up -d backend
 
 echo "→ Attente API…"
 for i in $(seq 1 60); do

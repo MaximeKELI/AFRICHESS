@@ -12,17 +12,55 @@ import { useTranslation } from "@/hooks/useTranslation";
 interface BoardSizePickerProps {
   compact?: boolean;
   showHeader?: boolean;
+  /** Curseur minimal sous l'échiquier pendant une partie. */
+  inline?: boolean;
 }
 
 export function BoardSizePicker({
   compact = false,
   showHeader = true,
+  inline = false,
 }: BoardSizePickerProps) {
   const boardSize = usePreferencesStore((s) => s.boardSize);
   const setBoardSize = usePreferencesStore((s) => s.setBoardSize);
   const { t } = useTranslation();
 
   const isDefault = boardSize === BOARD_SIZE_DEFAULT;
+
+  if (inline) {
+    return (
+      <div className="flex items-center gap-2 w-full max-w-[min(100%,820px)] mx-auto px-1 py-1">
+        <span className="text-[10px] opacity-45 select-none shrink-0" aria-hidden>
+          −
+        </span>
+        <input
+          type="range"
+          min={BOARD_SIZE_MIN}
+          max={BOARD_SIZE_MAX}
+          step={BOARD_SIZE_STEP}
+          value={boardSize}
+          onChange={(e) => setBoardSize(Number(e.target.value))}
+          aria-label={t("board.size.title")}
+          className="flex-1 h-1.5 accent-africhess-gold cursor-pointer"
+        />
+        <span className="text-[10px] opacity-45 select-none shrink-0" aria-hidden>
+          +
+        </span>
+        <span className="text-[10px] tabular-nums opacity-60 w-8 text-right shrink-0">
+          {boardSize}%
+        </span>
+        {!isDefault && (
+          <button
+            type="button"
+            onClick={() => setBoardSize(BOARD_SIZE_DEFAULT)}
+            className="text-[10px] px-1.5 py-0.5 rounded border border-white/15 text-africhess-gold hover:border-africhess-gold/40 shrink-0"
+          >
+            {t("board.size.reset")}
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2">
