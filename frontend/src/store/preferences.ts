@@ -24,11 +24,15 @@ const BOARD_BACKGROUND_KEY = "board_background";
 const AI_COMMENTS_KEY = "ai_comments";
 const PIECE_SET_KEY = "piece_set";
 const SOUND_THEME_KEY = "sound_theme";
+const MATE_SOUND_THEME_KEY = "mate_sound_theme";
+const SOUND_VOLUME_KEY = "sound_volume";
 const ZEN_KEY = "zen_mode";
 const BLIND_KEY = "blind_mode";
 const BOARD_SIZE_KEY = "board_size";
 
 export type PieceSetId = "classic" | "african" | "african-svg";
+
+export const SOUND_VOLUME_DEFAULT = 0.85;
 
 // Taille de l'échiquier en pourcentage (100 = valeur automatique par défaut).
 export const BOARD_SIZE_MIN = 70;
