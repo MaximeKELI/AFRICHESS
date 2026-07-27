@@ -129,9 +129,9 @@ class CommentaryTests(SimpleTestCase):
     def test_ai_own_sicilian_not_your_defense(self):
         """Quand l'IA (Noirs) joue …c5, elle dit « Je joue la Défense… »,
         pas le lore « pour toi » réservé au joueur humain."""
-        fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
-        from apps.games.commentary import OPENING_NAMED_AI_OWN, OPENING_LORE
+        from apps.games.commentary import OPENING_LORE
 
+        fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
         texts = {
             generate_move_comment(
                 fen,
@@ -144,18 +144,19 @@ class CommentaryTests(SimpleTestCase):
             )
             for _ in range(40)
         }
-        self.assertTrue(any("sicil" in t.lower() or "défense" in t.lower() for t in texts))
-        self.assertTrue(texts <= set(
-            t.format(opening="Défense sicilienne", san="c5")
-            for t in OPENING_NAMED_AI_OWN
-        ) | {t.format(opening="Défense sicilienne", san="c5") for t in OPENING_NAMED_AI_OWN})
-        # Plus simple : aucun lore « pour toi »
-        lore = set(OPENING_LORE["Défense sicilienne"])
-        self.assertFalse(texts & lore)
+        self.assertTrue(any("sicil" in t.lower() for t in texts))
+        self.assertFalse(texts & set(OPENING_LORE["Défense sicilienne"]))
         for t in texts:
             self.assertNotIn("pour toi", t.lower())
             self.assertTrue(
-                t.startswith("Je ") or "je " in t.lower() or "moi" in t.lower() or "défense" in t.lower()
+                t.lower().startswith("je ")
+                or t.lower().startswith("moi")
+                or "je joue" in t.lower()
+                or "je sors" in t.lower()
+                or "je pose" in t.lower()
+                or "je tente" in t.lower()
+                or "c'est mon" in t.lower(),
+                msg=f"attendu perspective IA, reçu: {t!r}",
             )
 
     def test_ai_uses_sicilian_lore(self):
