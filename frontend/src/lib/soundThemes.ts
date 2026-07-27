@@ -1,4 +1,4 @@
-/** Thèmes sonores de coups — alignés sur Lichess (`SoundSet`). */
+/** Thèmes sonores de coups — Lichess (`SoundSet`) + packs AFRICHESS. */
 
 export type SoundThemeId =
   | "silent"
@@ -10,6 +10,14 @@ export type SoundThemeId =
   | "lisp"
   | "woodland"
   | "robot"
+  | "music"
+  | "guitar"
+  | "energy"
+  | "crystal"
+  | "drums"
+  | "glass"
+  | "brass"
+  | "retro"
   | "arena";
 
 export interface SoundTheme {
@@ -30,6 +38,15 @@ export const SOUND_THEMES: SoundTheme[] = [
   { id: "lisp", labelKey: "sound.theme.lisp", folder: "lisp" },
   { id: "woodland", labelKey: "sound.theme.woodland", folder: "woodland" },
   { id: "robot", labelKey: "sound.theme.robot", folder: "robot" },
+  /** Lichess « Music / Pentatonic » (échantillons celesta / clav / swells). */
+  { id: "music", labelKey: "sound.theme.music", folder: "music" },
+  { id: "guitar", labelKey: "sound.theme.guitar", folder: "guitar" },
+  { id: "energy", labelKey: "sound.theme.energy", folder: "energy" },
+  { id: "crystal", labelKey: "sound.theme.crystal", folder: "crystal" },
+  { id: "drums", labelKey: "sound.theme.drums", folder: "drums" },
+  { id: "glass", labelKey: "sound.theme.glass", folder: "glass" },
+  { id: "brass", labelKey: "sound.theme.brass", folder: "brass" },
+  { id: "retro", labelKey: "sound.theme.retro", folder: "retro" },
   /** Mat dramatique original (esprit « fin de partie », pas un asset Chess.com). */
   { id: "arena", labelKey: "sound.theme.arena", folder: "arena" },
 ];

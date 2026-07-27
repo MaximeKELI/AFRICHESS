@@ -7,8 +7,8 @@ import {
   soundFilePaths,
 } from "./soundThemes";
 
-describe("soundThemes — catalogue Lichess", () => {
-  it("inclut silent + thèmes fichier Lichess", () => {
+describe("soundThemes — catalogue Lichess + AFRICHESS", () => {
+  it("inclut silent + thèmes fichier Lichess et packs supplémentaires", () => {
     const ids = SOUND_THEMES.map((t) => t.id);
     expect(ids).toEqual([
       "silent",
@@ -20,6 +20,14 @@ describe("soundThemes — catalogue Lichess", () => {
       "lisp",
       "woodland",
       "robot",
+      "music",
+      "guitar",
+      "energy",
+      "crystal",
+      "drums",
+      "glass",
+      "brass",
+      "retro",
       "arena",
     ]);
     expect(DEFAULT_SOUND_THEME).toBe("standard");
@@ -28,6 +36,8 @@ describe("soundThemes — catalogue Lichess", () => {
   it("valide les ids", () => {
     expect(isSoundThemeId("piano")).toBe(true);
     expect(isSoundThemeId("silent")).toBe(true);
+    expect(isSoundThemeId("music")).toBe(true);
+    expect(isSoundThemeId("guitar")).toBe(true);
     expect(isSoundThemeId("pentatonic")).toBe(false);
     expect(isSoundThemeId(null)).toBe(false);
   });
@@ -40,5 +50,8 @@ describe("soundThemes — catalogue Lichess", () => {
       ogg: "/sounds/themes/standard/move.ogg",
     });
     expect(soundFilePaths("nes", "capture")?.mp3).toBe("/sounds/themes/nes/capture.mp3");
+    expect(soundFilePaths("music", "checkmate")?.ogg).toBe(
+      "/sounds/themes/music/checkmate.ogg"
+    );
   });
 });
