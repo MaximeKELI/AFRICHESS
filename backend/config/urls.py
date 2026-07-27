@@ -62,6 +62,7 @@ urlpatterns = [
     path("api/learning/", include("apps.learning.urls")),
     path("api/stats/", include("apps.stats_urls")),
     path("api/analytics/", include("apps.analytics.urls")),
+    path("api/ads/", include("apps.ads.urls")),
 ]
 
 if settings.DEBUG:

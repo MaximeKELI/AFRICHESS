@@ -399,6 +399,40 @@ export const adminApi = {
     appealId: number,
     body: { status: string; staff_response?: string }
   ) => api.post(`/games/admin/fairplay/appeals/${appealId}/resolve/`, body),
+  adsList: () => api.get<AdSlideAdmin[]>("/ads/admin/slides/"),
+  adsCreate: (data: FormData) => api.post<AdSlideAdmin>("/ads/admin/slides/", data),
+  adsUpdate: (id: number, data: FormData) =>
+    api.patch<AdSlideAdmin>(`/ads/admin/slides/${id}/`, data),
+  adsDelete: (id: number) => api.delete(`/ads/admin/slides/${id}/`),
+  adsReorder: (order: number[]) =>
+    api.post("/ads/admin/slides/reorder/", { order }),
+};
+
+export interface AdSlidePublic {
+  id: number;
+  title: string;
+  image_url: string;
+  link_url: string;
+  order: number;
+}
+
+export interface AdSlideAdmin {
+  id: number;
+  title: string;
+  image_url: string | null;
+  link_url: string;
+  is_active: boolean;
+  order: number;
+  starts_at: string | null;
+  ends_at: string | null;
+  created_by: number | null;
+  created_by_username: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const adsApi = {
+  active: () => api.get<AdSlidePublic[]>("/ads/active/"),
 };
 
 export const ratingsApi = {

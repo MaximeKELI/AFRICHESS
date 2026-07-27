@@ -16,6 +16,7 @@ import {
   Table2,
   Percent,
   FlaskConical,
+  Megaphone,
 } from "lucide-react";
 import clsx from "clsx";
 import { AdminBadge, AdminSkeleton } from "@/components/admin/AdminPrimitives";
@@ -26,6 +27,7 @@ const ADMIN_LINKS = [
   { href: "/admin/stats", key: "admin.nav.stats", icon: Percent },
   { href: "/admin/data-science", key: "admin.nav.dataScience", icon: FlaskConical },
   { href: "/admin/users", key: "admin.nav.users", icon: Users },
+  { href: "/admin/ads", key: "admin.nav.ads", icon: Megaphone },
   { href: "/admin/fairplay", key: "admin.nav.fairplay", icon: Scale, badge: "fairplay" as const },
 ] as const;
 
@@ -129,6 +131,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     if (pathname.startsWith("/admin/data-science")) {
       return [{ label: t("admin.nav.dataScience") }];
+    }
+    if (pathname.startsWith("/admin/ads")) {
+      return [{ label: t("admin.nav.ads") }];
     }
     return [{ label: t("admin.nav.overview") }];
   })();

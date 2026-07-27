@@ -1,7 +1,8 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 from rest_framework import serializers
 
-from apps.common.validators import validate_uploaded_image
+from apps.common.validators import ALLOWED_IMAGE_CONTENT_TYPES
 
 from .models import AdSlide
 
@@ -13,7 +14,12 @@ def validate_ad_image(upload):
         return upload
     if upload.size > MAX_AD_IMAGE_BYTES:
         raise serializers.ValidationError("Fichier trop volumineux (max 5 Mo).")
-    return validate_uploaded_image(upload)
+    content_type = getattr(upload, "content_type", "") or ""
+    if content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+        raise serializers.ValidationError(
+            "Format d'image non autorisé (JPEG, PNG, WebP, GIF)."
+        )
+    return upload
 
 
 class AdSlidePublicSerializer(serializers.ModelSerializer):
@@ -71,7 +77,10 @@ class AdSlideAdminSerializer(serializers.ModelSerializer):
         return url
 
     def validate_image(self, value):
-        return validate_ad_image(value)
+        try:
+            return validate_ad_image(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.messages)
 
     def validate(self, attrs):
         starts = attrs.get("starts_at", getattr(self.instance, "starts_at", None))

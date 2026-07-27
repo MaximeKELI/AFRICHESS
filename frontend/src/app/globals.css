@@ -892,8 +892,16 @@ html.has-site-background nav {
   padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
 }
 
+.has-mobile-nav .ad-carousel {
+  padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+}
+
 @media (min-width: 768px) {
   .has-mobile-nav main {
+    padding-bottom: 0;
+  }
+
+  .has-mobile-nav .ad-carousel {
     padding-bottom: 0;
   }
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTranslation } from "@/hooks/useTranslation";
+import { AdCarousel } from "./AdCarousel";
 
 const FOOTER_SECTIONS = [
   {
@@ -84,6 +85,7 @@ export function Footer() {
           <p>{t("footer.developer", { name: "Maxime Dzidula KELI" })}</p>
         </div>
       </div>
+      <AdCarousel />
     </footer>
   );
 }
