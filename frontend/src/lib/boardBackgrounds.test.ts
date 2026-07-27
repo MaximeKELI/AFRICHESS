@@ -38,4 +38,11 @@ describe("boardBackgrounds", () => {
       expect(backgroundsInCategory(cat).length).toBeGreaterThan(0);
     }
   });
+
+  it("uses thumbnails for heavy Lichess gallery assets", () => {
+    const g = getBoardBackground("lichess-07");
+    expect(g.thumbSrc).toContain("/thumbs/bg07.webp");
+    expect(g.src).toContain("/lichess/bg07.webp");
+    expect(getBoardBackground("lichess-landscape").thumbSrc).toContain("thumbs/landscape.webp");
+  });
 });

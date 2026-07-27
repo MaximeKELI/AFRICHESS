@@ -97,6 +97,8 @@ export interface BoardBackground {
   category: BoardBackgroundCategory;
   /** Chemin public ; absent pour "none" */
   src?: string;
+  /** Miniature légère pour le sélecteur (évite de décoder les full-res). */
+  thumbSrc?: string;
 }
 
 /** Ordre d’affichage des sections dans le sélecteur. */
@@ -124,6 +126,7 @@ const LICHESS_GALLERY_BACKGROUNDS: BoardBackground[] = Array.from({ length: 28 }
     labelEn: `Gallery ${n}`,
     category: "gallery",
     src: `/images/backgrounds/lichess/bg${n}.webp`,
+    thumbSrc: `/images/backgrounds/lichess/thumbs/bg${n}.webp`,
   };
 });
 
@@ -458,6 +461,7 @@ export const BOARD_BACKGROUNDS: BoardBackground[] = [
     labelEn: "Landscape",
     category: "gallery",
     src: "/images/backgrounds/lichess/landscape.jpg",
+    thumbSrc: "/images/backgrounds/lichess/thumbs/landscape.webp",
   },
   ...LICHESS_GALLERY_BACKGROUNDS,
 ];
