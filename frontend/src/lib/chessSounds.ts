@@ -33,17 +33,48 @@ const audioCache = new Map<string, HTMLAudioElement>();
 let useFileSounds = true;
 let preloadedTheme: SoundThemeId | null = null;
 let activeTheme: SoundThemeId = DEFAULT_SOUND_THEME;
+/** Thème dédié au mat (null = même thème que les coups). */
+let mateThemeOverride: SoundThemeId | null = null;
+/** Volume global 0–1. */
+let masterVolume = 1;
 
 /** Applique le thème choisi (préférence utilisateur). Vide le cache si besoin. */
 export function setChessSoundTheme(themeId: SoundThemeId) {
   if (activeTheme === themeId) return;
   activeTheme = themeId;
   audioCache.clear();
-  useFileSounds = themeId !== "silent";
+  useFileSounds = themeId !== "silent" || mateThemeOverride != null;
   preloadedTheme = null;
 }
 
 export function getChessSoundTheme(): SoundThemeId {
+  return activeTheme;
+}
+
+/** Son de mat issu d'un autre thème (ou null = hériter du thème principal). */
+export function setMateSoundTheme(themeId: SoundThemeId | null) {
+  if (mateThemeOverride === themeId) return;
+  mateThemeOverride = themeId;
+  audioCache.clear();
+  useFileSounds =
+    (activeTheme !== "silent" || (themeId != null && themeId !== "silent"));
+  preloadedTheme = null;
+}
+
+export function getMateSoundTheme(): SoundThemeId | null {
+  return mateThemeOverride;
+}
+
+export function setChessSoundVolume(volume: number) {
+  masterVolume = Math.min(1, Math.max(0, volume));
+}
+
+export function getChessSoundVolume(): number {
+  return masterVolume;
+}
+
+function effectiveThemeFor(type: FileSoundType): SoundThemeId {
+  if (type === "checkmate" && mateThemeOverride) return mateThemeOverride;
   return activeTheme;
 }
 
@@ -56,7 +87,7 @@ function createAudio(theme: SoundThemeId, type: FileSoundType): HTMLAudioElement
   if (!paths) return null;
 
   const audio = new Audio();
-  audio.volume = VOLUME[type];
+  audio.volume = VOLUME[type] * masterVolume;
   audio.preload = "auto";
 
   const canOgg =
@@ -81,11 +112,12 @@ function createAudio(theme: SoundThemeId, type: FileSoundType): HTMLAudioElement
 }
 
 function getAudio(type: FileSoundType): HTMLAudioElement | null {
-  if (activeTheme === "silent") return null;
-  const key = cacheKey(activeTheme, type);
+  const theme = effectiveThemeFor(type);
+  if (theme === "silent") return null;
+  const key = cacheKey(theme, type);
   let audio = audioCache.get(key);
   if (!audio) {
-    audio = createAudio(activeTheme, type) ?? undefined;
+    audio = createAudio(theme, type) ?? undefined;
     if (!audio) return null;
     audioCache.set(key, audio);
   }
@@ -95,12 +127,26 @@ function getAudio(type: FileSoundType): HTMLAudioElement | null {
 /** Précharge les sons du thème actif (appeler après un geste utilisateur). */
 export function preloadChessSounds() {
   if (typeof window === "undefined") return;
-  if (activeTheme === "silent") return;
-  if (preloadedTheme === activeTheme) return;
-  preloadedTheme = activeTheme;
-  (["move", "capture", "castle", "check", "checkmate"] as FileSoundType[]).forEach((type) => {
-    getAudio(type)?.load();
+  const moveTheme = activeTheme;
+  const mateTheme = mateThemeOverride ?? activeTheme;
+  if (moveTheme === "silent" && mateTheme === "silent") return;
+  if (preloadedTheme === moveTheme && !mateThemeOverride) return;
+  preloadedTheme = moveTheme;
+  (["move", "capture", "castle", "check"] as FileSoundType[]).forEach((type) => {
+    if (moveTheme !== "silent") getAudio(type)?.load();
   });
+  if (mateTheme !== "silent") {
+    const key = cacheKey(mateTheme, "checkmate");
+    if (!audioCache.has(key)) {
+      const audio = createAudio(mateTheme, "checkmate");
+      if (audio) {
+        audioCache.set(key, audio);
+        audio.load();
+      }
+    } else {
+      audioCache.get(key)?.load();
+    }
+  }
 }
 
 function playFileSound(type: FileSoundType) {
@@ -110,7 +156,7 @@ function playFileSound(type: FileSoundType) {
     return;
   }
   const node = base.cloneNode(true) as HTMLAudioElement;
-  node.volume = VOLUME[type];
+  node.volume = VOLUME[type] * masterVolume;
   node.currentTime = 0;
   void node.play().catch(() => {
     /* Autoplay bloqué ≠ fichier mort : repli synthétique pour ce coup seulement. */
@@ -206,7 +252,10 @@ function playDrawWhistleSynthetic() {
 
 export function playChessSound(type: ChessSoundType, enabled = true) {
   if (!enabled || typeof window === "undefined") return;
-  if (activeTheme === "silent") return;
+  if (masterVolume <= 0.001) return;
+  const themeForType =
+    type === "checkmate" && mateThemeOverride ? mateThemeOverride : activeTheme;
+  if (themeForType === "silent" && type !== "draw") return;
   if (type === "draw") {
     playSyntheticSound("draw");
     return;
@@ -279,18 +328,20 @@ export function playDrawWhistle(enabled = true) {
 /** Fanfare courte — victoire */
 export function playGameVictory(enabled = true) {
   if (!enabled || typeof window === "undefined") return;
-  if (activeTheme === "silent") return;
-  tone(262, 0.14, 0.22, "triangle");
-  tone(330, 0.14, 0.22, "triangle", 120);
-  tone(392, 0.14, 0.24, "triangle", 240);
-  tone(523, 0.28, 0.28, "triangle", 360);
+  if (activeTheme === "silent" || masterVolume <= 0.001) return;
+  const v = masterVolume;
+  tone(262, 0.14, 0.22 * v, "triangle");
+  tone(330, 0.14, 0.22 * v, "triangle", 120);
+  tone(392, 0.14, 0.24 * v, "triangle", 240);
+  tone(523, 0.28, 0.28 * v, "triangle", 360);
 }
 
 /** Son grave — défaite */
 export function playGameDefeat(enabled = true) {
   if (!enabled || typeof window === "undefined") return;
-  if (activeTheme === "silent") return;
-  tone(220, 0.2, 0.2, "sawtooth");
-  tone(165, 0.25, 0.18, "sine", 150);
-  tone(110, 0.35, 0.15, "sine", 300);
+  if (activeTheme === "silent" || masterVolume <= 0.001) return;
+  const v = masterVolume;
+  tone(220, 0.2, 0.2 * v, "sawtooth");
+  tone(165, 0.25, 0.18 * v, "sine", 150);
+  tone(110, 0.35, 0.15 * v, "sine", 300);
 }

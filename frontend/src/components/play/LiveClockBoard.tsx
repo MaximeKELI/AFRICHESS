@@ -100,6 +100,8 @@ export interface PlayBoardCoreProps {
   captured?: CapturedState;
   lastMove: { from: string; to: string } | null;
   blindMode?: boolean;
+  playSoundOnFenChange?: boolean;
+  areArrowsAllowed?: boolean;
 }
 
 function PlayBoardCoreInner({
@@ -117,6 +119,8 @@ function PlayBoardCoreInner({
   captured,
   lastMove,
   blindMode = false,
+  playSoundOnFenChange = true,
+  areArrowsAllowed = true,
 }: PlayBoardCoreProps) {
   return (
     <CapturedBoardStack captured={captured} orientation={orientation}>
@@ -129,12 +133,13 @@ function PlayBoardCoreInner({
         disabled={disabled}
         playerColor={playerColor}
         lastMove={lastMove}
-        playSoundOnFenChange={true}
+        playSoundOnFenChange={playSoundOnFenChange}
         serverValidated={serverValidated}
         pendingDrop={pendingDrop}
         onDropAtSquare={onDropAtSquare}
         extraBottom={extraBottom}
         blindMode={blindMode}
+        areArrowsAllowed={areArrowsAllowed}
       />
     </CapturedBoardStack>
   );

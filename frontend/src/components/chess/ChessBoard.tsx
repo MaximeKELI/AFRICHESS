@@ -106,7 +106,6 @@ function ChessBoardInner({
   const boardThemeId = usePreferencesStore((s) => s.boardTheme);
   const pieceSet = usePreferencesStore((s) => s.pieceSet);
   const [arrowBrush, setArrowBrush] = useState<string>(ARROW_BRUSHES.green);
-  const [drawnArrows, setDrawnArrows] = useState<Arrow[]>([]);
   const [markedSquares, setMarkedSquares] = useState<Record<string, string>>({});
   const customPieces = useMemo(() => {
     if (!blindMode) return customPiecesForSet(pieceSet);
@@ -158,25 +157,8 @@ function ChessBoardInner({
   }, [areArrowsAllowed]);
 
   const clearAnnotations = useCallback(() => {
-    setDrawnArrows([]);
     setMarkedSquares({});
   }, []);
-
-  const boardArrows = useMemo(() => {
-    const base = customArrows ?? [];
-    if (!drawnArrows.length) return base;
-    return [...base, ...drawnArrows];
-  }, [customArrows, drawnArrows]);
-
-  const onArrowsChange = useCallback((arrows: Arrow[]) => {
-    const external = customArrows ?? [];
-    if (!external.length) {
-      setDrawnArrows(arrows);
-      return;
-    }
-    const extKeys = new Set(external.map((a) => `${a[0]}${a[1]}`));
-    setDrawnArrows(arrows.filter((a) => !extKeys.has(`${a[0]}${a[1]}`)));
-  }, [customArrows]);
 
   const onSquareRightClick = useCallback(
     (square: Square) => {
@@ -225,9 +207,8 @@ function ChessBoardInner({
 
   const displayFen = normalizeFenForDisplay(fen);
 
-  /** Nouvelle position → efface annotations libres (comme Lichess). */
+  /** Nouvelle position → efface cercles (les flèches sont déjà vidées par react-chessboard). */
   useEffect(() => {
-    setDrawnArrows([]);
     setMarkedSquares({});
   }, [displayFen]);
 
@@ -405,7 +386,7 @@ function ChessBoardInner({
 
   const onSquareClick = useCallback(
     (square: Square) => {
-      if (drawnArrows.length || Object.keys(markedSquares).length) {
+      if (Object.keys(markedSquares).length) {
         clearAnnotations();
       }
       if (disabled) return;
@@ -444,7 +425,6 @@ function ChessBoardInner({
       highlightTargets,
       pendingDrop,
       onDropAtSquare,
-      drawnArrows.length,
       markedSquares,
       clearAnnotations,
     ]
@@ -518,6 +498,14 @@ function ChessBoardInner({
       };
     }
 
+    for (const [sq, color] of Object.entries(markedSquares)) {
+      styles[sq] = {
+        ...styles[sq],
+        boxShadow: `inset 0 0 0 3px ${color}`,
+        background: `radial-gradient(circle at center, ${color} 0%, ${color} 42%, transparent 46%)`,
+      };
+    }
+
     if (selectedSquare) {
       styles[selectedSquare] = { ...squareStyles.selected };
     }
@@ -549,7 +537,7 @@ function ChessBoardInner({
     }
 
     return styles;
-  }, [lastMove, reviewHighlight, selectedSquare, legalTargets, activeChess, game, squareStyles, lowBandwidth, focusSquare, disabled, theme.accent, isCoarse]);
+  }, [lastMove, reviewHighlight, selectedSquare, legalTargets, activeChess, game, squareStyles, lowBandwidth, focusSquare, disabled, theme.accent, isCoarse, markedSquares]);
 
   const notationStyle = useMemo(
     () => ({
@@ -626,6 +614,7 @@ function ChessBoardInner({
           }
           onPieceDrop={onDrop}
           onSquareClick={onSquareClick}
+          onSquareRightClick={onSquareRightClick}
           boardOrientation={orientation}
           customSquareStyles={customSquareStyles}
           customDarkSquareStyle={squareBase.dark as Record<string, string>}
@@ -634,6 +623,9 @@ function ChessBoardInner({
           customNotationStyle={notationStyle}
           animationDuration={pieceAnimMs}
           arePiecesDraggable={!disabled}
+          areArrowsAllowed={areArrowsAllowed}
+          customArrowColor={arrowBrush}
+          {...(customArrows?.length ? { customArrows } : {})}
           autoPromoteToQueen={false}
           showBoardNotation={true}
           snapToCursor={!isCoarse}

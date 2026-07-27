@@ -17,7 +17,11 @@ export interface PlayerStripConfig {
 
 interface PlayBoardSectionProps {
   fen: string;
+  /** FEN live pour l'horloge (si différent du FEN affiché en revue locale). */
+  clockFen?: string;
   moves?: ApiMove[];
+  /** Surbrillance last-move (ex. position revue) — sinon dérivé de `moves`. */
+  lastMove?: { from: string; to: string } | null;
   orientation: "white" | "black";
   disabled: boolean;
   playerColor: "w" | "b";
@@ -39,11 +43,15 @@ interface PlayBoardSectionProps {
   captured?: CapturedState;
   blindMode?: boolean;
   onFlag?: (side: "w" | "b") => void;
+  playSoundOnFenChange?: boolean;
+  areArrowsAllowed?: boolean;
 }
 
 function PlayBoardSectionInner({
   fen,
+  clockFen,
   moves,
+  lastMove: lastMoveProp,
   orientation,
   disabled,
   playerColor,
@@ -65,9 +73,14 @@ function PlayBoardSectionInner({
   captured,
   blindMode = false,
   onFlag,
+  playSoundOnFenChange = true,
+  areArrowsAllowed = true,
 }: PlayBoardSectionProps) {
-  const turn = turnFromFen(fen);
-  const lastMove = useMemo(() => lastMoveFromMoves(moves), [moves]);
+  const turn = turnFromFen(clockFen ?? fen);
+  const lastMove = useMemo(
+    () => lastMoveProp ?? lastMoveFromMoves(moves),
+    [lastMoveProp, moves]
+  );
   const clockActive = clockRunning && showClock;
 
   return (
@@ -105,6 +118,8 @@ function PlayBoardSectionInner({
           captured={captured}
           lastMove={lastMove}
           blindMode={blindMode}
+          playSoundOnFenChange={playSoundOnFenChange}
+          areArrowsAllowed={areArrowsAllowed}
         />
         {bottomPlayer && (
           <ClockedPlayerStrip
