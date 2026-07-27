@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Chess } from "chess.js";
-import { inferSoundFromFenChange, soundForMove } from "./chessSounds";
+import { inferSoundFromFenChange, soundForMove, soundForSan } from "./chessSounds";
 
 describe("soundForMove", () => {
   it("détecte mat, échec, prise, roque et coup simple", () => {
@@ -11,6 +11,18 @@ describe("soundForMove", () => {
     expect(soundForMove("k", "O-O")).toBe("castle");
     expect(soundForMove("q", "O-O-O")).toBe("castle");
     expect(soundForMove("n", "e4")).toBe("move");
+  });
+});
+
+describe("soundForSan", () => {
+  it("détecte depuis le SAN seul (relecture)", () => {
+    expect(soundForSan("e4")).toBe("move");
+    expect(soundForSan("Nxe5")).toBe("capture");
+    expect(soundForSan("exd6")).toBe("capture");
+    expect(soundForSan("Nf6+")).toBe("check");
+    expect(soundForSan("Qh7#")).toBe("checkmate");
+    expect(soundForSan("O-O")).toBe("castle");
+    expect(soundForSan("O-O-O")).toBe("castle");
   });
 });
 

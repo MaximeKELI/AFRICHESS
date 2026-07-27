@@ -36,7 +36,7 @@ import { usePreferencesStore } from "@/store/preferences";
 import { formatTimeControlLabel, defaultPresetForMode, matchmakingTimeControl, playModeFromPreset, TIME_PRESETS, inferPresetFromMs, type TimePresetId } from "@/lib/timeControl";
 import { turnFromFen } from "@/lib/gameDisplayFast";
 import { TimeControlPicker } from "@/components/chess/TimeControlPicker";
-import { playDrawWhistle, playGameVictory, playGameDefeat } from "@/lib/chessSounds";
+import { playDrawWhistle, playGameVictory, playGameDefeat, playSanMoveSound } from "@/lib/chessSounds";
 import { computePlayerOutcome, type PlayerOutcome } from "@/lib/gameOutcome";
 import { formatApiError } from "@/lib/errors";
 import {
@@ -456,11 +456,22 @@ function PlayContent() {
 
   const seekToPly = useCallback(
     (ply: number) => {
-      setAllowFenSound(false);
       const clamped = Math.max(0, Math.min(moveCount, ply));
+      const from = effectivePly;
+      if (Math.abs(clamped - from) === 1) {
+        const moveList = gameData.moves ?? [];
+        const ordered = [...moveList].sort((a, b) => {
+          if (a.move_number !== b.move_number) return a.move_number - b.move_number;
+          if (a.played_by_white === b.played_by_white) return 0;
+          return a.played_by_white ? -1 : 1;
+        });
+        const move = ordered[clamped > from ? clamped - 1 : from - 1];
+        playSanMoveSound(move?.san);
+      }
+      setAllowFenSound(false);
       setViewPly(clamped >= moveCount ? null : clamped);
     },
-    [moveCount]
+    [moveCount, effectivePly, gameData.moves]
   );
 
   const goLive = useCallback(() => {

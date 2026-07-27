@@ -277,6 +277,25 @@ export function soundForMove(flags: string, san?: string): ChessSoundType {
   return "move";
 }
 
+/** Infère le son depuis le SAN seul (relecture avant/arrière, sans flags chess.js). */
+export function soundForSan(san: string): ChessSoundType {
+  if (san.includes("#")) return "checkmate";
+  if (san.includes("+")) return "check";
+  if (san.includes("x")) return "capture";
+  if (san === "O-O" || san === "O-O-O" || san.startsWith("O-O")) return "castle";
+  return "move";
+}
+
+/** Son de déplacement lors d’un pas de relecture (avant / arrière). */
+export function playSanMoveSound(san: string | undefined | null, enabled = true) {
+  if (!enabled) return;
+  if (!san) {
+    playChessSound("move", true);
+    return;
+  }
+  playChessSound(soundForSan(san), true);
+}
+
 function normalizeFenInput(fen: string): string {
   if (fen === "start") return "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
   return fen.replace(/\[.*?\]/g, "").trim();

@@ -26,6 +26,8 @@ describe("boardBackgrounds", () => {
     expect(getBoardBackground("savanna-sunset").src).toContain("savanna-sunset");
     expect(getBoardBackground("animal-tigers").src).toContain("animal-tigers.webp");
     expect(getBoardBackground("animal-tigers").category).toBe("animals");
+    expect(getBoardBackground("animal-tigers-sky").src).toContain("animal-tigers-sky.webp");
+    expect(getBoardBackground("animal-tigers-sky").category).toBe("animals");
     expect(getBoardBackground("sahara-dunes").category).toBe("desert");
     expect(getBoardBackground("rainforest").category).toBe("forest");
     expect(getBoardBackground("kilimanjaro").category).toBe("mountains");

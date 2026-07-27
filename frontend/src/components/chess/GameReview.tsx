@@ -31,6 +31,7 @@ import {
   REVIEW_START_FEN,
 } from "@/lib/reviewDisplay";
 import { planReviewVoiceAutoStart } from "@/lib/reviewVoiceTour";
+import { playSanMoveSound } from "@/lib/chessSounds";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuthStore } from "@/store/auth";
 import {
@@ -115,6 +116,7 @@ export function GameReview({
   const autoTourRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const voiceTourRef = useRef(false);
   const analysisTourStartedRef = useRef(false);
+  const prevSelectedIdxRef = useRef<number | null>(null);
   const [plans, setPlans] = useState<SubscriptionPlansPayload | null>(null);
 
   useEffect(() => {
@@ -146,6 +148,7 @@ export function GameReview({
   useEffect(() => {
     if (analysis?.best_moves_json.length) {
       setSelectedIdx(0);
+      prevSelectedIdxRef.current = null;
     }
   }, [analysis]);
 
@@ -189,6 +192,14 @@ export function GameReview({
 
   const moves = analysis?.best_moves_json ?? [];
   const selectedMove = moves[selectedIdx] ?? null;
+
+  useEffect(() => {
+    const prev = prevSelectedIdxRef.current;
+    prevSelectedIdxRef.current = selectedIdx;
+    if (prev == null || prev === selectedIdx) return;
+    if (Math.abs(selectedIdx - prev) !== 1) return;
+    playSanMoveSound(moves[selectedIdx]?.san);
+  }, [selectedIdx, moves]);
 
   const filteredMoves = useMemo(() => {
     if (classFilter === "all") return moves.map((m, i) => ({ move: m, index: i }));

@@ -45,6 +45,7 @@ export type BoardBackgroundId =
   | "animal-giraffe"
   | "animal-whale"
   | "animal-tigers"
+  | "animal-tigers-sky"
   | "lichess-landscape"
   | "lichess-01"
   | "lichess-02"
@@ -140,6 +141,13 @@ export const BOARD_BACKGROUNDS: BoardBackground[] = [
     labelEn: "Tigers — emerald",
     category: "animals",
     src: "/images/backgrounds/animal-tigers.webp",
+  },
+  {
+    id: "animal-tigers-sky",
+    labelFr: "Tigres — bleu ciel",
+    labelEn: "Tigers — sky blue",
+    category: "animals",
+    src: "/images/backgrounds/animal-tigers-sky.webp",
   },
   {
     id: "animal-lion",
