@@ -2,6 +2,7 @@
 
 import clsx from "clsx";
 import Image from "next/image";
+import { Check } from "lucide-react";
 import {
   BOARD_BACKGROUNDS,
   boardBackgroundLabel,
@@ -10,6 +11,7 @@ import {
 } from "@/lib/boardBackgrounds";
 import { usePreferencesStore } from "@/store/preferences";
 import { useTranslation } from "@/hooks/useTranslation";
+import { StyleBoardPreview } from "@/components/chess/StyleBoardPreview";
 
 interface BackgroundPickerProps {
   compact?: boolean;
@@ -17,8 +19,18 @@ interface BackgroundPickerProps {
   showHeader?: boolean;
 }
 
-function BackgroundSwatch({ bg, size }: { bg: BoardBackground; size: "sm" | "md" }) {
-  const dim = size === "sm" ? "w-14 h-10" : "w-16 h-11";
+const CATEGORY_ORDER: BoardBackgroundCategory[] = [
+  "animals",
+  "africa",
+  "nature",
+  "classic",
+  "abstract",
+  "lichess",
+];
+
+function BackgroundSwatch({ bg, size }: { bg: BoardBackground; size: "sm" | "md" | "row" }) {
+  const dim =
+    size === "row" ? "w-full h-9" : size === "sm" ? "w-14 h-10" : "w-16 h-11";
   if (!bg.src) {
     return (
       <span
@@ -32,65 +44,19 @@ function BackgroundSwatch({ bg, size }: { bg: BoardBackground; size: "sm" | "md"
   }
   return (
     <span className={clsx("relative overflow-hidden rounded shrink-0 ring-1 ring-white/10", dim)}>
-      <Image src={bg.src} alt="" fill className="object-cover" sizes="64px" />
+      <Image src={bg.src} alt="" fill className="object-cover" sizes="160px" />
     </span>
   );
 }
 
-function BackgroundButton({
-  bg,
-  selected,
-  compact,
-  onSelect,
-  label,
-}: {
-  bg: BoardBackground;
-  selected: boolean;
-  compact: boolean;
-  onSelect: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      title={label}
-      className={clsx(
-        "flex flex-col items-center gap-1.5 p-2 rounded-lg border-2 transition-all hover:scale-[1.02]",
-        selected
-          ? "border-africhess-gold bg-africhess-gold/10 ring-1 ring-africhess-gold/50"
-          : "border-white/15 hover:border-white/30"
-      )}
-      aria-pressed={selected}
-      aria-label={label}
-    >
-      <BackgroundSwatch bg={bg} size={compact ? "sm" : "md"} />
-      <span className={clsx("leading-tight text-center line-clamp-2", compact ? "text-[10px]" : "text-xs")}>
-        {label}
-      </span>
-    </button>
-  );
-}
-
-const CATEGORY_ORDER: BoardBackgroundCategory[] = [
-  "lichess",
-  "animals",
-  "africa",
-  "nature",
-  "classic",
-  "abstract",
-];
-
-export function BackgroundPicker({ compact = false, className, showHeader = true }: BackgroundPickerProps) {
-  const { boardBackground, setBoardBackground } = usePreferencesStore();
+export function BackgroundPicker({
+  compact = false,
+  className,
+  showHeader = true,
+}: BackgroundPickerProps) {
+  const { boardBackground, setBoardBackground, boardTheme, pieceSet } = usePreferencesStore();
   const { t, locale } = useTranslation();
-
-  const gridClass = clsx(
-    "grid gap-2",
-    compact ? "grid-cols-3 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
-  );
-
-  const categoryLabel = (cat: BoardBackgroundCategory) => t(`background.picker.category.${cat}`);
+  const selected = BOARD_BACKGROUNDS.find((b) => b.id === boardBackground);
 
   return (
     <div className={className}>
@@ -105,34 +71,80 @@ export function BackgroundPicker({ compact = false, className, showHeader = true
         </>
       )}
 
-      {CATEGORY_ORDER.map((cat) => {
-        const items = BOARD_BACKGROUNDS.filter((b) => b.category === cat);
-        if (!items.length) return null;
-        return (
-          <div key={cat} className="mb-4 last:mb-0">
-            <p
-              className={clsx(
-                "opacity-50 mb-2 uppercase tracking-wide",
-                compact ? "text-[10px]" : "text-xs"
-              )}
-            >
-              {categoryLabel(cat)}
+      <div
+        className={clsx(
+          "flex gap-3",
+          compact ? "flex-col" : "flex-col md:flex-row md:items-start"
+        )}
+      >
+        <div className="flex-1 min-w-0 max-h-[min(48vh,420px)] overflow-y-auto pr-1 scrollbar-thin space-y-3 order-2 md:order-1">
+          {CATEGORY_ORDER.map((cat) => {
+            const items = BOARD_BACKGROUNDS.filter((b) => b.category === cat);
+            if (!items.length) return null;
+            return (
+              <div key={cat}>
+                <p
+                  className={clsx(
+                    "opacity-50 mb-1.5 uppercase tracking-wide sticky top-0 bg-[color-mix(in_srgb,var(--bg,#111)_92%,transparent)] py-1 z-10",
+                    compact ? "text-[10px]" : "text-xs"
+                  )}
+                >
+                  {t(`background.picker.category.${cat}`)}
+                </p>
+                <div className="space-y-1.5">
+                  {items.map((bg) => {
+                    const label = boardBackgroundLabel(locale, bg);
+                    const isSelected = boardBackground === bg.id;
+                    return (
+                      <button
+                        key={bg.id}
+                        type="button"
+                        onClick={() => setBoardBackground(bg.id)}
+                        title={label}
+                        aria-pressed={isSelected}
+                        aria-label={label}
+                        className={clsx(
+                          "relative w-full flex items-center gap-2.5 rounded-lg border-2 p-1.5 text-left transition-all",
+                          isSelected
+                            ? "border-emerald-500 bg-emerald-500/10"
+                            : "border-white/10 hover:border-white/25 bg-black/20"
+                        )}
+                      >
+                        {isSelected && (
+                          <span className="absolute top-1 left-1 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white shadow">
+                            <Check className="h-2.5 w-2.5" strokeWidth={3} aria-hidden />
+                          </span>
+                        )}
+                        <BackgroundSwatch bg={bg} size="row" />
+                        <span className={clsx("truncate pr-1", compact ? "text-[11px]" : "text-xs")}>
+                          {label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="order-1 md:order-2 shrink-0 flex flex-col items-center gap-2 md:sticky md:top-2">
+          <p className="text-[10px] uppercase tracking-wide opacity-50">
+            {t("board.picker.preview")}
+          </p>
+          <StyleBoardPreview
+            boardThemeId={boardTheme}
+            pieceSetId={pieceSet}
+            squareSize={compact ? 48 : 58}
+            backdropSrc={selected?.src ?? null}
+          />
+          {selected && (
+            <p className="text-[11px] opacity-70 text-center max-w-[11rem] line-clamp-2">
+              {boardBackgroundLabel(locale, selected)}
             </p>
-            <div className={gridClass}>
-              {items.map((bg) => (
-                <BackgroundButton
-                  key={bg.id}
-                  bg={bg}
-                  compact={compact}
-                  selected={boardBackground === bg.id}
-                  onSelect={() => setBoardBackground(bg.id)}
-                  label={boardBackgroundLabel(locale, bg)}
-                />
-              ))}
-            </div>
-          </div>
-        );
-      })}
+          )}
+        </div>
+      </div>
     </div>
   );
 }
