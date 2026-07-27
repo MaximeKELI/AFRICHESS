@@ -75,13 +75,20 @@ export type BoardBackgroundId =
   | "lichess-27"
   | "lichess-28";
 
+/** Catégories thématiques bien séparées (animaux, désert, forêt…). */
 export type BoardBackgroundCategory =
-  | "africa"
-  | "nature"
+  | "none"
+  | "animals"
+  | "desert"
+  | "forest"
+  | "mountains"
+  | "water"
+  | "sky"
+  | "culture"
+  | "city"
   | "classic"
   | "abstract"
-  | "animals"
-  | "lichess";
+  | "gallery";
 
 export interface BoardBackground {
   id: BoardBackgroundId;
@@ -92,6 +99,22 @@ export interface BoardBackground {
   src?: string;
 }
 
+/** Ordre d’affichage des sections dans le sélecteur. */
+export const BOARD_BACKGROUND_CATEGORY_ORDER: BoardBackgroundCategory[] = [
+  "none",
+  "animals",
+  "desert",
+  "forest",
+  "mountains",
+  "water",
+  "sky",
+  "culture",
+  "city",
+  "classic",
+  "abstract",
+  "gallery",
+];
+
 /** Galerie Picture Lichess (lifat/background/gallery, Unsplash licence). */
 const LICHESS_GALLERY_BACKGROUNDS: BoardBackground[] = Array.from({ length: 28 }, (_, i) => {
   const n = String(i + 1).padStart(2, "0");
@@ -99,251 +122,15 @@ const LICHESS_GALLERY_BACKGROUNDS: BoardBackground[] = Array.from({ length: 28 }
     id: `lichess-${n}` as BoardBackgroundId,
     labelFr: `Galerie ${n}`,
     labelEn: `Gallery ${n}`,
-    category: "lichess",
+    category: "gallery",
     src: `/images/backgrounds/lichess/bg${n}.webp`,
   };
 });
 
 export const BOARD_BACKGROUNDS: BoardBackground[] = [
-  { id: "none", labelFr: "Aucun", labelEn: "None", category: "classic" },
-  {
-    id: "savanna-sunset",
-    labelFr: "Savane — coucher",
-    labelEn: "Savanna sunset",
-    category: "africa",
-    src: "/images/backgrounds/savanna-sunset.svg",
-  },
-  {
-    id: "savanna-dawn",
-    labelFr: "Savane — aube",
-    labelEn: "Savanna dawn",
-    category: "africa",
-    src: "/images/backgrounds/savanna-dawn.svg",
-  },
-  {
-    id: "sahara-dunes",
-    labelFr: "Dunes du Sahara",
-    labelEn: "Sahara dunes",
-    category: "africa",
-    src: "/images/backgrounds/sahara-dunes.svg",
-  },
-  {
-    id: "rainforest",
-    labelFr: "Forêt tropicale",
-    labelEn: "Rainforest",
-    category: "africa",
-    src: "/images/backgrounds/rainforest.svg",
-  },
-  {
-    id: "kilimanjaro",
-    labelFr: "Kilimandjaro",
-    labelEn: "Kilimanjaro",
-    category: "africa",
-    src: "/images/backgrounds/kilimanjaro.svg",
-  },
-  {
-    id: "nile-dusk",
-    labelFr: "Nil au crépuscule",
-    labelEn: "Nile at dusk",
-    category: "africa",
-    src: "/images/backgrounds/nile-dusk.svg",
-  },
-  {
-    id: "baobab-night",
-    labelFr: "Baobabs — nuit",
-    labelEn: "Baobab night",
-    category: "africa",
-    src: "/images/backgrounds/baobab-night.svg",
-  },
-  {
-    id: "kente-gold",
-    labelFr: "Kente doré",
-    labelEn: "Golden kente",
-    category: "africa",
-    src: "/images/backgrounds/kente-gold.svg",
-  },
-  {
-    id: "kente-royal",
-    labelFr: "Kente royal",
-    labelEn: "Royal kente",
-    category: "africa",
-    src: "/images/backgrounds/kente-royal.svg",
-  },
-  {
-    id: "adinkra-gold",
-    labelFr: "Adinkra",
-    labelEn: "Adinkra",
-    category: "africa",
-    src: "/images/backgrounds/adinkra-gold.svg",
-  },
-  {
-    id: "mudcloth",
-    labelFr: "Bogolan",
-    labelEn: "Mudcloth",
-    category: "africa",
-    src: "/images/backgrounds/mudcloth.svg",
-  },
-  {
-    id: "ankara-burst",
-    labelFr: "Ankara",
-    labelEn: "Ankara",
-    category: "africa",
-    src: "/images/backgrounds/ankara-burst.svg",
-  },
-  {
-    id: "coral-coast",
-    labelFr: "Côte corallienne",
-    labelEn: "Coral coast",
-    category: "africa",
-    src: "/images/backgrounds/coral-coast.svg",
-  },
-  {
-    id: "lagos-neon",
-    labelFr: "Lagos — nuit",
-    labelEn: "Lagos neon",
-    category: "africa",
-    src: "/images/backgrounds/lagos-neon.svg",
-  },
-  {
-    id: "cape-mountains",
-    labelFr: "Montagnes du Cap",
-    labelEn: "Cape mountains",
-    category: "africa",
-    src: "/images/backgrounds/cape-mountains.svg",
-  },
-  {
-    id: "serengeti",
-    labelFr: "Serengeti",
-    labelEn: "Serengeti",
-    category: "africa",
-    src: "/images/backgrounds/serengeti.svg",
-  },
-  {
-    id: "marrakech",
-    labelFr: "Marrakech",
-    labelEn: "Marrakech",
-    category: "africa",
-    src: "/images/backgrounds/marrakech.svg",
-  },
-  {
-    id: "ethiopian-highlands",
-    labelFr: "Hauts plateaux",
-    labelEn: "Ethiopian highlands",
-    category: "africa",
-    src: "/images/backgrounds/ethiopian-highlands.svg",
-  },
-  {
-    id: "victoria-mist",
-    labelFr: "Chutes Victoria",
-    labelEn: "Victoria Falls",
-    category: "africa",
-    src: "/images/backgrounds/victoria-mist.svg",
-  },
-  {
-    id: "sahara-stars",
-    labelFr: "Sahara — étoiles",
-    labelEn: "Sahara stars",
-    category: "africa",
-    src: "/images/backgrounds/sahara-stars.svg",
-  },
-  {
-    id: "fireflies",
-    labelFr: "Lucioles",
-    labelEn: "Fireflies",
-    category: "nature",
-    src: "/images/backgrounds/fireflies.svg",
-  },
-  {
-    id: "marble-hall",
-    labelFr: "Salle de marbre",
-    labelEn: "Marble hall",
-    category: "classic",
-    src: "/images/backgrounds/marble-hall.svg",
-  },
-  {
-    id: "library-classic",
-    labelFr: "Bibliothèque",
-    labelEn: "Classic library",
-    category: "classic",
-    src: "/images/backgrounds/library-classic.svg",
-  },
-  {
-    id: "midnight-tournament",
-    labelFr: "Tournoi de minuit",
-    labelEn: "Midnight tournament",
-    category: "classic",
-    src: "/images/backgrounds/midnight-tournament.svg",
-  },
-  {
-    id: "aurora",
-    labelFr: "Aurore boréale",
-    labelEn: "Aurora",
-    category: "nature",
-    src: "/images/backgrounds/aurora.svg",
-  },
-  {
-    id: "deep-ocean",
-    labelFr: "Océan profond",
-    labelEn: "Deep ocean",
-    category: "nature",
-    src: "/images/backgrounds/deep-ocean.svg",
-  },
-  {
-    id: "sakura",
-    labelFr: "Sakura",
-    labelEn: "Sakura",
-    category: "nature",
-    src: "/images/backgrounds/sakura.svg",
-  },
-  {
-    id: "autumn-forest",
-    labelFr: "Forêt d'automne",
-    labelEn: "Autumn forest",
-    category: "nature",
-    src: "/images/backgrounds/autumn-forest.svg",
-  },
-  {
-    id: "winter-frost",
-    labelFr: "Givre d'hiver",
-    labelEn: "Winter frost",
-    category: "nature",
-    src: "/images/backgrounds/winter-frost.svg",
-  },
-  {
-    id: "zen-garden",
-    labelFr: "Jardin zen",
-    labelEn: "Zen garden",
-    category: "nature",
-    src: "/images/backgrounds/zen-garden.svg",
-  },
-  {
-    id: "cosmic-nebula",
-    labelFr: "Nébuleuse",
-    labelEn: "Cosmic nebula",
-    category: "abstract",
-    src: "/images/backgrounds/cosmic-nebula.svg",
-  },
-  {
-    id: "warm-cafe",
-    labelFr: "Café chaleureux",
-    labelEn: "Warm café",
-    category: "classic",
-    src: "/images/backgrounds/warm-cafe.svg",
-  },
-  {
-    id: "royal-purple",
-    labelFr: "Velours pourpre",
-    labelEn: "Royal purple",
-    category: "abstract",
-    src: "/images/backgrounds/royal-purple.svg",
-  },
-  {
-    id: "emerald-palace",
-    labelFr: "Palais d'émeraude",
-    labelEn: "Emerald palace",
-    category: "abstract",
-    src: "/images/backgrounds/emerald-palace.svg",
-  },
+  { id: "none", labelFr: "Aucun", labelEn: "None", category: "none" },
+
+  /* —— Animaux —— */
   {
     id: "animal-tigers",
     labelFr: "Tigres — émeraude",
@@ -407,11 +194,269 @@ export const BOARD_BACKGROUNDS: BoardBackground[] = [
     category: "animals",
     src: "/images/backgrounds/animal-whale.jpg",
   },
+
+  /* —— Désert / savane —— */
+  {
+    id: "sahara-dunes",
+    labelFr: "Dunes du Sahara",
+    labelEn: "Sahara dunes",
+    category: "desert",
+    src: "/images/backgrounds/sahara-dunes.svg",
+  },
+  {
+    id: "sahara-stars",
+    labelFr: "Sahara — étoiles",
+    labelEn: "Sahara stars",
+    category: "desert",
+    src: "/images/backgrounds/sahara-stars.svg",
+  },
+  {
+    id: "savanna-sunset",
+    labelFr: "Savane — coucher",
+    labelEn: "Savanna sunset",
+    category: "desert",
+    src: "/images/backgrounds/savanna-sunset.svg",
+  },
+  {
+    id: "savanna-dawn",
+    labelFr: "Savane — aube",
+    labelEn: "Savanna dawn",
+    category: "desert",
+    src: "/images/backgrounds/savanna-dawn.svg",
+  },
+  {
+    id: "serengeti",
+    labelFr: "Serengeti",
+    labelEn: "Serengeti",
+    category: "desert",
+    src: "/images/backgrounds/serengeti.svg",
+  },
+  {
+    id: "marrakech",
+    labelFr: "Marrakech",
+    labelEn: "Marrakech",
+    category: "desert",
+    src: "/images/backgrounds/marrakech.svg",
+  },
+
+  /* —— Forêt —— */
+  {
+    id: "rainforest",
+    labelFr: "Forêt tropicale",
+    labelEn: "Rainforest",
+    category: "forest",
+    src: "/images/backgrounds/rainforest.svg",
+  },
+  {
+    id: "autumn-forest",
+    labelFr: "Forêt d'automne",
+    labelEn: "Autumn forest",
+    category: "forest",
+    src: "/images/backgrounds/autumn-forest.svg",
+  },
+  {
+    id: "baobab-night",
+    labelFr: "Baobabs — nuit",
+    labelEn: "Baobab night",
+    category: "forest",
+    src: "/images/backgrounds/baobab-night.svg",
+  },
+  {
+    id: "fireflies",
+    labelFr: "Lucioles",
+    labelEn: "Fireflies",
+    category: "forest",
+    src: "/images/backgrounds/fireflies.svg",
+  },
+  {
+    id: "sakura",
+    labelFr: "Sakura",
+    labelEn: "Sakura",
+    category: "forest",
+    src: "/images/backgrounds/sakura.svg",
+  },
+  {
+    id: "zen-garden",
+    labelFr: "Jardin zen",
+    labelEn: "Zen garden",
+    category: "forest",
+    src: "/images/backgrounds/zen-garden.svg",
+  },
+  {
+    id: "winter-frost",
+    labelFr: "Givre d'hiver",
+    labelEn: "Winter frost",
+    category: "forest",
+    src: "/images/backgrounds/winter-frost.svg",
+  },
+
+  /* —— Montagnes —— */
+  {
+    id: "kilimanjaro",
+    labelFr: "Kilimandjaro",
+    labelEn: "Kilimanjaro",
+    category: "mountains",
+    src: "/images/backgrounds/kilimanjaro.svg",
+  },
+  {
+    id: "cape-mountains",
+    labelFr: "Montagnes du Cap",
+    labelEn: "Cape mountains",
+    category: "mountains",
+    src: "/images/backgrounds/cape-mountains.svg",
+  },
+  {
+    id: "ethiopian-highlands",
+    labelFr: "Hauts plateaux",
+    labelEn: "Ethiopian highlands",
+    category: "mountains",
+    src: "/images/backgrounds/ethiopian-highlands.svg",
+  },
+  {
+    id: "victoria-mist",
+    labelFr: "Chutes Victoria",
+    labelEn: "Victoria Falls",
+    category: "mountains",
+    src: "/images/backgrounds/victoria-mist.svg",
+  },
+
+  /* —— Eau —— */
+  {
+    id: "coral-coast",
+    labelFr: "Côte corallienne",
+    labelEn: "Coral coast",
+    category: "water",
+    src: "/images/backgrounds/coral-coast.svg",
+  },
+  {
+    id: "nile-dusk",
+    labelFr: "Nil au crépuscule",
+    labelEn: "Nile at dusk",
+    category: "water",
+    src: "/images/backgrounds/nile-dusk.svg",
+  },
+  {
+    id: "deep-ocean",
+    labelFr: "Océan profond",
+    labelEn: "Deep ocean",
+    category: "water",
+    src: "/images/backgrounds/deep-ocean.svg",
+  },
+
+  /* —— Ciel —— */
+  {
+    id: "aurora",
+    labelFr: "Aurore boréale",
+    labelEn: "Aurora",
+    category: "sky",
+    src: "/images/backgrounds/aurora.svg",
+  },
+  {
+    id: "cosmic-nebula",
+    labelFr: "Nébuleuse",
+    labelEn: "Cosmic nebula",
+    category: "sky",
+    src: "/images/backgrounds/cosmic-nebula.svg",
+  },
+
+  /* —— Culture / motifs —— */
+  {
+    id: "kente-gold",
+    labelFr: "Kente doré",
+    labelEn: "Golden kente",
+    category: "culture",
+    src: "/images/backgrounds/kente-gold.svg",
+  },
+  {
+    id: "kente-royal",
+    labelFr: "Kente royal",
+    labelEn: "Royal kente",
+    category: "culture",
+    src: "/images/backgrounds/kente-royal.svg",
+  },
+  {
+    id: "adinkra-gold",
+    labelFr: "Adinkra",
+    labelEn: "Adinkra",
+    category: "culture",
+    src: "/images/backgrounds/adinkra-gold.svg",
+  },
+  {
+    id: "mudcloth",
+    labelFr: "Bogolan",
+    labelEn: "Mudcloth",
+    category: "culture",
+    src: "/images/backgrounds/mudcloth.svg",
+  },
+  {
+    id: "ankara-burst",
+    labelFr: "Ankara",
+    labelEn: "Ankara",
+    category: "culture",
+    src: "/images/backgrounds/ankara-burst.svg",
+  },
+
+  /* —— Ville / nuit —— */
+  {
+    id: "lagos-neon",
+    labelFr: "Lagos — nuit",
+    labelEn: "Lagos neon",
+    category: "city",
+    src: "/images/backgrounds/lagos-neon.svg",
+  },
+  {
+    id: "midnight-tournament",
+    labelFr: "Tournoi de minuit",
+    labelEn: "Midnight tournament",
+    category: "city",
+    src: "/images/backgrounds/midnight-tournament.svg",
+  },
+  {
+    id: "warm-cafe",
+    labelFr: "Café chaleureux",
+    labelEn: "Warm café",
+    category: "city",
+    src: "/images/backgrounds/warm-cafe.svg",
+  },
+
+  /* —— Classique —— */
+  {
+    id: "marble-hall",
+    labelFr: "Salle de marbre",
+    labelEn: "Marble hall",
+    category: "classic",
+    src: "/images/backgrounds/marble-hall.svg",
+  },
+  {
+    id: "library-classic",
+    labelFr: "Bibliothèque",
+    labelEn: "Classic library",
+    category: "classic",
+    src: "/images/backgrounds/library-classic.svg",
+  },
+
+  /* —— Abstrait —— */
+  {
+    id: "royal-purple",
+    labelFr: "Velours pourpre",
+    labelEn: "Royal purple",
+    category: "abstract",
+    src: "/images/backgrounds/royal-purple.svg",
+  },
+  {
+    id: "emerald-palace",
+    labelFr: "Palais d'émeraude",
+    labelEn: "Emerald palace",
+    category: "abstract",
+    src: "/images/backgrounds/emerald-palace.svg",
+  },
+
+  /* —— Galerie —— */
   {
     id: "lichess-landscape",
     labelFr: "Paysage",
     labelEn: "Landscape",
-    category: "lichess",
+    category: "gallery",
     src: "/images/backgrounds/lichess/landscape.jpg",
   },
   ...LICHESS_GALLERY_BACKGROUNDS,
@@ -434,4 +479,10 @@ export function boardBackgroundLabel(
   bg: BoardBackground
 ): string {
   return locale === "fr" ? bg.labelFr : bg.labelEn;
+}
+
+export function backgroundsInCategory(
+  category: BoardBackgroundCategory
+): BoardBackground[] {
+  return BOARD_BACKGROUNDS.filter((b) => b.category === category);
 }
