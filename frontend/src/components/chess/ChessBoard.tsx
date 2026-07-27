@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Chessboard } from "react-chessboard";
-import type { CustomSquareProps } from "react-chessboard/dist/chessboard/types";
+import type { Arrow, CustomSquareProps } from "react-chessboard/dist/chessboard/types";
 import { Chess, Square } from "chess.js";
 import {
   inferSoundFromFenChange,
@@ -11,6 +11,7 @@ import {
   soundForMove,
 } from "@/lib/chessSounds";
 import { accentRgba, getBoardTheme, getThemedSquareStyles, themeHasTexturedSquares } from "@/lib/boardThemes";
+import { ARROW_BRUSHES, arrowBrushFromModifiers } from "@/lib/boardArrows";
 import { useAuthStore } from "@/store/auth";
 import { customPiecesForSet } from "@/lib/pieceSets";
 import { isPawnPromotion } from "@/lib/promotion";
@@ -56,6 +57,13 @@ interface ChessBoardProps {
   hintArrow?: { from: string; to: string } | null;
   /** Mode aveugle : pièces masquées, navigation clavier. */
   blindMode?: boolean;
+  /**
+   * Autorise le dessin de flèches (clic droit + glisser), style Lichess.
+   * Shift=rouge, Alt=bleu, Ctrl/Cmd=jaune, sinon vert.
+   */
+  areArrowsAllowed?: boolean;
+  /** Flèches contrôlées (ex. revue) — fusionnées avec le dessin libre. */
+  customArrows?: Arrow[];
 }
 
 function normalizeFenForDisplay(fen: string): string {
@@ -90,11 +98,16 @@ function ChessBoardInner({
   moveClassBadge = null,
   hintArrow = null,
   blindMode = false,
+  areArrowsAllowed = true,
+  customArrows,
 }: ChessBoardProps) {
   const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
   const boardThemeId = usePreferencesStore((s) => s.boardTheme);
   const pieceSet = usePreferencesStore((s) => s.pieceSet);
+  const [arrowBrush, setArrowBrush] = useState<string>(ARROW_BRUSHES.green);
+  const [drawnArrows, setDrawnArrows] = useState<Arrow[]>([]);
+  const [markedSquares, setMarkedSquares] = useState<Record<string, string>>({});
   const customPieces = useMemo(() => {
     if (!blindMode) return customPiecesForSet(pieceSet);
     const hidden = () => (
@@ -129,6 +142,56 @@ function ChessBoardInner({
     }
   }, [soundsOn]);
 
+  useEffect(() => {
+    if (!areArrowsAllowed) return;
+    const syncBrush = (e: KeyboardEvent | MouseEvent) => {
+      setArrowBrush(arrowBrushFromModifiers(e));
+    };
+    window.addEventListener("keydown", syncBrush);
+    window.addEventListener("keyup", syncBrush);
+    window.addEventListener("mousedown", syncBrush);
+    return () => {
+      window.removeEventListener("keydown", syncBrush);
+      window.removeEventListener("keyup", syncBrush);
+      window.removeEventListener("mousedown", syncBrush);
+    };
+  }, [areArrowsAllowed]);
+
+  const clearAnnotations = useCallback(() => {
+    setDrawnArrows([]);
+    setMarkedSquares({});
+  }, []);
+
+  const boardArrows = useMemo(() => {
+    const base = customArrows ?? [];
+    if (!drawnArrows.length) return base;
+    return [...base, ...drawnArrows];
+  }, [customArrows, drawnArrows]);
+
+  const onArrowsChange = useCallback((arrows: Arrow[]) => {
+    const external = customArrows ?? [];
+    if (!external.length) {
+      setDrawnArrows(arrows);
+      return;
+    }
+    const extKeys = new Set(external.map((a) => `${a[0]}${a[1]}`));
+    setDrawnArrows(arrows.filter((a) => !extKeys.has(`${a[0]}${a[1]}`)));
+  }, [customArrows]);
+
+  const onSquareRightClick = useCallback(
+    (square: Square) => {
+      if (!areArrowsAllowed) return;
+      const color = arrowBrush;
+      setMarkedSquares((prev) => {
+        const next = { ...prev };
+        if (next[square] === color) delete next[square];
+        else next[square] = color;
+        return next;
+      });
+    },
+    [areArrowsAllowed, arrowBrush]
+  );
+
   const squareBase = useMemo(() => getThemedSquareStyles(theme), [theme]);
   const pieceAnimMs = lowBandwidth ? 0 : isCoarse ? 80 : 120;
   const dotScale = boardWidth < 360 ? 0.24 : 0.18;
@@ -161,6 +224,13 @@ function ChessBoardInner({
   }, [theme, dotScale]);
 
   const displayFen = normalizeFenForDisplay(fen);
+
+  /** Nouvelle position → efface annotations libres (comme Lichess). */
+  useEffect(() => {
+    setDrawnArrows([]);
+    setMarkedSquares({});
+  }, [displayFen]);
+
   const positionChess = useMemo(() => chessFromDisplayFen(displayFen), [displayFen]);
   /** En mode puzzle (serverValidated), le FEN affiché est la source de vérité — évite le décalage au 2e puzzle. */
   const activeChess = serverValidated && positionChess ? positionChess : game;
@@ -335,6 +405,9 @@ function ChessBoardInner({
 
   const onSquareClick = useCallback(
     (square: Square) => {
+      if (drawnArrows.length || Object.keys(markedSquares).length) {
+        clearAnnotations();
+      }
       if (disabled) return;
 
       if (pendingDrop && onDropAtSquare) {
@@ -362,7 +435,19 @@ function ChessBoardInner({
       setSelectedSquare(null);
       setLegalTargets([]);
     },
-    [disabled, selectedSquare, legalTargets, applyMove, canSelectSquare, highlightTargets, pendingDrop, onDropAtSquare]
+    [
+      disabled,
+      selectedSquare,
+      legalTargets,
+      applyMove,
+      canSelectSquare,
+      highlightTargets,
+      pendingDrop,
+      onDropAtSquare,
+      drawnArrows.length,
+      markedSquares,
+      clearAnnotations,
+    ]
   );
 
   const onDrop = useCallback(
@@ -398,9 +483,10 @@ function ChessBoardInner({
         e.preventDefault();
         setSelectedSquare(null);
         setLegalTargets([]);
+        clearAnnotations();
       }
     },
-    [disabled, focusSquare, onSquareClick]
+    [disabled, focusSquare, onSquareClick, clearAnnotations]
   );
 
   const customSquareStyles = useMemo(() => {
