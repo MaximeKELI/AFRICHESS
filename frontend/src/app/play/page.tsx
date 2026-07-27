@@ -399,13 +399,28 @@ function PlayContent() {
 
     const prevLen = movesLenRef.current;
     if (moves.length > prevLen && moves.length - prevLen <= 2) {
-      displayCacheRef.current = appendApiMovesToDisplay(
+      const appended = appendApiMovesToDisplay(
         displayCacheRef.current,
         moves.slice(prevLen)
       );
+      displayCacheRef.current = appended;
     } else if (moves.length !== prevLen) {
       displayCacheRef.current = buildGameDisplayFromMoves("start", moves);
     }
+
+    /**
+     * FEN serveur = source de vérité, MAIS seulement quand les moves et le FEN
+     * proviennent de la même réponse API (même nombre de moves qu'avant).
+     * Pendant l'optimistic, gameData.fen est en avance sur gameData.moves :
+     * ne pas forcer un rebuild dans ce cas (le rebuild donnerait l'ancien FEN).
+     */
+    if (
+      displayCacheRef.current.fen !== gameData.fen &&
+      moves.length === prevLen
+    ) {
+      displayCacheRef.current = buildGameDisplayFromFen(gameData.fen);
+    }
+
     movesLenRef.current = moves.length;
     return displayCacheRef.current;
   }, [gameData.fen, gameData.moves]);
@@ -1039,7 +1054,7 @@ function PlayContent() {
   const boardDisabled =
     !gameId ||
     gameCompleted ||
-    movePending ||
+    (movePending && isVsAi) ||
     isViewingHistory ||
     (!isVoteChess && !isMyTurn && !premovesEnabled);
 

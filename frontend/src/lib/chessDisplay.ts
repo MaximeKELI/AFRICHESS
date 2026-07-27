@@ -139,6 +139,7 @@ export function appendApiMovesToDisplay(
         });
       }
     } catch {
+      /* Cache incrémental désynchronisé (ex. coup IA après optimistic) — abandon. */
       return prev;
     }
   }
