@@ -12,6 +12,7 @@ import {
 } from "@/lib/chessSounds";
 import { accentRgba, getBoardTheme, getThemedSquareStyles, themeHasTexturedSquares } from "@/lib/boardThemes";
 import { ARROW_BRUSHES, arrowBrushFromModifiers } from "@/lib/boardArrows";
+import { premoveDestinations } from "@/lib/premove";
 import { useAuthStore } from "@/store/auth";
 import { customPiecesForSet } from "@/lib/pieceSets";
 import { isPawnPromotion } from "@/lib/promotion";
@@ -37,6 +38,10 @@ interface ChessBoardProps {
   onMovePlayed?: (info: MoveInfo) => void;
   onPremove?: () => void;
   enablePremoves?: boolean;
+  /** Prémove en attente (surbrillance). */
+  premove?: { from: string; to: string } | null;
+  /** Annuler le prémove (clic droit / Échap). */
+  onClearPremove?: () => void;
   disabled?: boolean;
   lastMove?: { from: string; to: string } | null;
   playerColor?: "w" | "b";
@@ -86,6 +91,8 @@ function ChessBoardInner({
   onMovePlayed,
   onPremove,
   enablePremoves = false,
+  premove = null,
+  onClearPremove,
   disabled = false,
   lastMove = null,
   playerColor,
@@ -162,6 +169,10 @@ function ChessBoardInner({
 
   const onSquareRightClick = useCallback(
     (square: Square) => {
+      if (premove) {
+        onClearPremove?.();
+        return;
+      }
       if (!areArrowsAllowed) return;
       const color = arrowBrush;
       setMarkedSquares((prev) => {
@@ -171,7 +182,7 @@ function ChessBoardInner({
         return next;
       });
     },
-    [areArrowsAllowed, arrowBrush]
+    [areArrowsAllowed, arrowBrush, premove, onClearPremove]
   );
 
   const squareBase = useMemo(() => getThemedSquareStyles(theme), [theme]);
@@ -292,10 +303,14 @@ function ChessBoardInner({
 
   const highlightTargets = useCallback(
     (from: Square) => {
+      if (enablePremoves && playerColor && playerColor !== activeTurn) {
+        setLegalTargets(premoveDestinations(activeChess.fen(), from, playerColor));
+        return;
+      }
       const moves = activeChess.moves({ square: from, verbose: true });
       setLegalTargets(moves.map((m) => m.to as Square));
     },
-    [activeChess]
+    [activeChess, enablePremoves, playerColor, activeTurn]
   );
 
   const applyMoveServer = useCallback(
@@ -473,9 +488,10 @@ function ChessBoardInner({
         setSelectedSquare(null);
         setLegalTargets([]);
         clearAnnotations();
+        onClearPremove?.();
       }
     },
-    [disabled, focusSquare, onSquareClick, clearAnnotations, blindMode]
+    [disabled, focusSquare, onSquareClick, clearAnnotations, blindMode, onClearPremove]
   );
 
   const customSquareStyles = useMemo(() => {
@@ -484,6 +500,19 @@ function ChessBoardInner({
     if (lastMove && !reviewHighlight?.played) {
       styles[lastMove.from] = { ...squareStyles.lastFrom };
       styles[lastMove.to] = { ...squareStyles.lastTo };
+    }
+
+    if (premove) {
+      styles[premove.from] = {
+        ...styles[premove.from],
+        background: "rgba(59, 130, 246, 0.45)",
+        boxShadow: "inset 0 0 0 3px rgba(37, 99, 235, 0.95)",
+      };
+      styles[premove.to] = {
+        ...styles[premove.to],
+        background: "rgba(59, 130, 246, 0.55)",
+        boxShadow: "inset 0 0 0 3px rgba(37, 99, 235, 0.9)",
+      };
     }
 
     if (reviewHighlight?.best) {
@@ -546,7 +575,7 @@ function ChessBoardInner({
     }
 
     return styles;
-  }, [lastMove, reviewHighlight, selectedSquare, legalTargets, activeChess, game, squareStyles, lowBandwidth, focusSquare, disabled, theme.accent, isCoarse, markedSquares]);
+  }, [lastMove, premove, reviewHighlight, selectedSquare, legalTargets, activeChess, game, squareStyles, lowBandwidth, focusSquare, disabled, theme.accent, isCoarse, markedSquares]);
 
   const notationStyle = useMemo(
     () => ({

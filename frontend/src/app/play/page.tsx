@@ -29,6 +29,7 @@ import {
   type GameDisplayState,
 } from "@/lib/chessDisplay";
 import { displayAtPly, totalPlies } from "@/lib/plyNavigation";
+import { isUciLegalInFen, parseUci } from "@/lib/premove";
 import { mergeApiMoves } from "@/lib/gameMerge";
 import { gamesApi, ratingsApi } from "@/lib/api";
 import { usePreferencesStore } from "@/store/preferences";
@@ -179,6 +180,9 @@ function PlayContent() {
   /** null = suivre la partie en direct ; sinon nombre de demi-coups affichés. */
   const [viewPly, setViewPly] = useState<number | null>(null);
   const [allowFenSound, setAllowFenSound] = useState(true);
+  /** UCI en attente (prémove) — envoyé dès que c'est mon tour. */
+  const [premoveUci, setPremoveUci] = useState<string | null>(null);
+  const premoveUciRef = useRef<string | null>(null);
   const [gameEndOverlay, setGameEndOverlay] = useState<{
     outcome: PlayerOutcome;
     terminationReason?: string | null;
@@ -432,7 +436,35 @@ function PlayContent() {
   useEffect(() => {
     setViewPly(null);
     setAllowFenSound(true);
+    setPremoveUci(null);
+    premoveUciRef.current = null;
   }, [gameId]);
+
+  useEffect(() => {
+    if (gameCompleted || isViewingHistory) {
+      setPremoveUci(null);
+      premoveUciRef.current = null;
+    }
+  }, [gameCompleted, isViewingHistory]);
+
+  useEffect(() => {
+    premoveUciRef.current = premoveUci;
+  }, [premoveUci]);
+
+  const clearPremove = useCallback(() => {
+    setPremoveUci(null);
+    premoveUciRef.current = null;
+  }, []);
+
+  const premoveHighlight = useMemo(() => {
+    if (!premoveUci) return null;
+    const parsed = parseUci(premoveUci);
+    return parsed ? { from: parsed.from, to: parsed.to } : null;
+  }, [premoveUci]);
+
+  const premovesEnabled = Boolean(
+    isLiveHuman && gameActive && !isViewingHistory && !isVoteChess && !gameCompleted
+  );
 
   useEffect(() => {
     if (viewPly != null && viewPly > moveCount) {
@@ -1002,9 +1034,9 @@ function PlayContent() {
   const boardDisabled =
     !gameId ||
     gameCompleted ||
-    movePending ||
+    (movePending && isVsAi) ||
     isViewingHistory ||
-    (!isVoteChess && !isMyTurn);
+    (!isVoteChess && !isMyTurn && !premovesEnabled);
 
   const applyOptimisticUci = useCallback((uci: string) => {
     const apply = (ChessClass: ChessCtor) => {
@@ -1219,15 +1251,24 @@ function PlayContent() {
         }
         return;
       }
-      if (!isMyTurn) return;
       if (isViewingHistory) {
         goLive();
+        return;
+      }
+      /* Hors tour → enregistrer un prémove (jamais envoyé au serveur tout de suite). */
+      if (!isMyTurn) {
+        if (premovesEnabled) {
+          setPremoveUci(uci);
+          premoveUciRef.current = uci;
+        }
         return;
       }
       if (isVsAi && movePending) return;
       if (isVsAi) {
         unlockAiSpeech();
       }
+      setPremoveUci(null);
+      premoveUciRef.current = null;
       setDropPiece(null);
       const poolMs = playerIsWhite ? gameData.white_time_ms : gameData.black_time_ms;
       const spentMs = gameIsTimed
@@ -1272,6 +1313,7 @@ function PlayContent() {
       isMyTurn,
       isViewingHistory,
       goLive,
+      premovesEnabled,
       isVsAi,
       movePending,
       aiCommentsEnabled,
@@ -1291,6 +1333,22 @@ function PlayContent() {
       t,
     ]
   );
+
+  /** Dès que c'est mon tour, jouer le prémove s'il est encore légal. */
+  useEffect(() => {
+    if (!isMyTurn || !gameActive || !premovesEnabled) return;
+    const uci = premoveUciRef.current;
+    if (!uci) return;
+    if (!isUciLegalInFen(gameData.fen, uci)) {
+      clearPremove();
+      return;
+    }
+    clearPremove();
+    const t = window.setTimeout(() => {
+      void handleMove(uci);
+    }, 0);
+    return () => window.clearTimeout(t);
+  }, [isMyTurn, gameActive, gameData.fen, premovesEnabled, clearPremove, handleMove]);
 
   const findMatch = async () => {
     if (isRated && fairplayConsent !== true && !fairplayExempt) {
@@ -1745,6 +1803,11 @@ function PlayContent() {
               comment={latestAiComment}
               enabled={Boolean(isVsAi && gameId && aiCommentsEnabled)}
             />
+            {premoveHighlight && (
+              <p className="mb-2 text-center text-[11px] text-blue-300/90 hide-in-zen">
+                {t("play.premove.set")}
+              </p>
+            )}
             <PlayBoardSection
             fen={boardDisplay.fen}
             clockFen={gameData.fen}
@@ -1752,8 +1815,8 @@ function PlayContent() {
             lastMove={boardDisplay.lastMove}
             orientation={orientation}
             onMove={handleMove}
-            onPremove={telemetryEnabled ? notePremove : undefined}
-            enablePremoves={telemetryEnabled && isLiveHuman && !isViewingHistory}
+            onPremove={premovesEnabled ? notePremove : undefined}
+            enablePremoves={premovesEnabled}
             disabled={boardDisabled}
             playerColor={playerColor as "w" | "b"}
             showClock={Boolean(gameId && gameIsTimed)}
@@ -1772,6 +1835,8 @@ function PlayContent() {
             blindMode={blindMode}
             playSoundOnFenChange={allowFenSound && !isViewingHistory}
             areArrowsAllowed
+            premove={premoveHighlight}
+            onClearPremove={clearPremove}
           />
           </div>
           {gameCompleted &&

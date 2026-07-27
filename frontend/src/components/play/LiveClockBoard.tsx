@@ -102,6 +102,8 @@ export interface PlayBoardCoreProps {
   blindMode?: boolean;
   playSoundOnFenChange?: boolean;
   areArrowsAllowed?: boolean;
+  premove?: { from: string; to: string } | null;
+  onClearPremove?: () => void;
 }
 
 function PlayBoardCoreInner({
@@ -121,6 +123,8 @@ function PlayBoardCoreInner({
   blindMode = false,
   playSoundOnFenChange = true,
   areArrowsAllowed = true,
+  premove = null,
+  onClearPremove,
 }: PlayBoardCoreProps) {
   return (
     <CapturedBoardStack captured={captured} orientation={orientation}>
@@ -140,6 +144,8 @@ function PlayBoardCoreInner({
         extraBottom={extraBottom}
         blindMode={blindMode}
         areArrowsAllowed={areArrowsAllowed}
+        premove={premove}
+        onClearPremove={onClearPremove}
       />
     </CapturedBoardStack>
   );

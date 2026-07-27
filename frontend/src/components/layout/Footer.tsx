@@ -26,6 +26,7 @@ const FOOTER_SECTIONS = [
       { href: "/clubs", key: "home.feature.community.title" as const },
       { href: "/forum", key: "nav.forums" as const },
       { href: "/blog", key: "nav.blog" as const },
+      { href: "/donate", key: "footer.donate" as const },
     ],
   },
 ] as const;
@@ -67,6 +68,9 @@ export function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted">
           <p>© {new Date().getFullYear()} AFRICHESS</p>
           <div className="flex flex-wrap justify-center gap-4">
+            <Link href="/donate" className="hover:text-africhess-gold transition-colors font-medium">
+              {t("footer.donate")}
+            </Link>
             <Link href="/legal/privacy" className="hover:text-africhess-gold transition-colors">
               {t("footer.privacy")}
             </Link>

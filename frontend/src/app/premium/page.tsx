@@ -217,6 +217,11 @@ function PremiumContent() {
       <p className="text-xs opacity-50 mt-8 text-center">
         {stripeEnabled ? t("premium.stripeNote") : t("premium.demoNote")}
       </p>
+      <p className="text-center mt-4">
+        <Link href="/donate" className="text-sm text-africhess-gold hover:underline">
+          {t("footer.donate")}
+        </Link>
+      </p>
     </div>
   );
 }

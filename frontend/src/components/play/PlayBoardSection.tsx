@@ -45,6 +45,8 @@ interface PlayBoardSectionProps {
   onFlag?: (side: "w" | "b") => void;
   playSoundOnFenChange?: boolean;
   areArrowsAllowed?: boolean;
+  premove?: { from: string; to: string } | null;
+  onClearPremove?: () => void;
 }
 
 function PlayBoardSectionInner({
@@ -75,6 +77,8 @@ function PlayBoardSectionInner({
   onFlag,
   playSoundOnFenChange = true,
   areArrowsAllowed = true,
+  premove = null,
+  onClearPremove,
 }: PlayBoardSectionProps) {
   const turn = turnFromFen(clockFen ?? fen);
   const lastMove = useMemo(
@@ -120,6 +124,8 @@ function PlayBoardSectionInner({
           blindMode={blindMode}
           playSoundOnFenChange={playSoundOnFenChange}
           areArrowsAllowed={areArrowsAllowed}
+          premove={premove}
+          onClearPremove={onClearPremove}
         />
         {bottomPlayer && (
           <ClockedPlayerStrip
