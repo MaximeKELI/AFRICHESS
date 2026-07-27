@@ -28,6 +28,16 @@ OPENING_PLAYER = [
     "Solide — gardez la pression sur le centre.",
 ]
 
+# Fallback « vrais noms » dès le 1er coup si le livre ECO ne renvoie pas encore
+# d'entrée complète (cas fréquent sur certains préfixes courts en live).
+OPENING_FIRST_MOVE_FALLBACK: dict[str, str] = {
+    "e4": "Partie du pion roi",
+    "d4": "Partie du pion dame",
+    "Nf3": "Ouverture Réti",
+    "c4": "Ouverture anglaise",
+    "f4": "Ouverture de l'oiseau",
+}
+
 # Commentaires IA qui NOMMENT l'ouverture reconnue ({opening} = nom français).
 OPENING_NAMED_AI = [
     "Ah, une {opening} — je connais ça par cœur.",
@@ -621,6 +631,14 @@ def _is_defense_opening(opening_label: str) -> bool:
     return opening_label.strip().lower().startswith("défense")
 
 
+def _fallback_opening_label(line_sans: Optional[list[str]]) -> Optional[str]:
+    """Nom d'ouverture de secours sur le tout premier coup SAN."""
+    if not line_sans:
+        return None
+    first = line_sans[0].replace("+", "").replace("#", "").replace("!", "").replace("?", "").strip()
+    return OPENING_FIRST_MOVE_FALLBACK.get(first)
+
+
 def _fmt_opening(pool: list[str], opening: str, san: str, move_number: int) -> str:
     template = _pick(pool, move_number, san)
     if not template:
@@ -765,6 +783,8 @@ def generate_move_comment(
 
     # Annoncer l'ouverture uniquement quand ce coup la fait apparaître / changer.
     opening_label = _opening_newly_established(line_sans)
+    if not opening_label and move_number <= 2:
+        opening_label = _fallback_opening_label(line_sans)
 
     if is_mate:
         return pick(MATE_AI if played_by_ai else MATE_PLAYER, move_number, san)

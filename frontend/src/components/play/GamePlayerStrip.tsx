@@ -20,6 +20,7 @@ export interface GamePlayerStripProps {
   /** Pièces capturées par ce joueur (affichées sous le nom, style Chess.com). */
   capturedPieces?: string[];
   materialAdvantage?: number;
+  outcome?: "win" | "loss" | "draw" | null;
 }
 
 export function GamePlayerStrip({
@@ -30,6 +31,7 @@ export function GamePlayerStrip({
   clockLabel,
   capturedPieces = [],
   materialAdvantage,
+  outcome = null,
 }: GamePlayerStripProps) {
   const pieceSet = usePreferencesStore((s) => s.pieceSet);
   const lowTime = clockMs != null && clockMs < 10_000 && clockRunning && clockActive;
@@ -81,6 +83,16 @@ export function GamePlayerStrip({
             )}
             <UserFlair flair={player.kind === "user" ? player.flair : undefined} />
             <span className="truncate">{player.name}</span>
+            {outcome === "win" && (
+              <span className="text-emerald-400 text-[12px] shrink-0" title="Gagnant">
+                👑
+              </span>
+            )}
+            {outcome === "loss" && (
+              <span className="text-rose-400 text-[12px] shrink-0" title="Perdant">
+                ☠
+              </span>
+            )}
             {player.elo != null && (
               <span className="text-[11px] opacity-55 font-mono tabular-nums font-normal shrink-0">
                 {formatEloParen(player.elo, player.eloProvisional)}
