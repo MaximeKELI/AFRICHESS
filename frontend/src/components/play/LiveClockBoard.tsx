@@ -50,6 +50,7 @@ interface ClockedPlayerStripProps {
   clockLabel: string;
   capturedPieces?: string[];
   materialAdvantage?: number;
+  outcome?: "win" | "loss" | "draw" | null;
 }
 
 function ClockedPlayerStripInner({
@@ -62,6 +63,7 @@ function ClockedPlayerStripInner({
   clockLabel,
   capturedPieces,
   materialAdvantage,
+  outcome,
 }: ClockedPlayerStripProps) {
   const ms = useLiveClockMs(config.side);
   const clockActive =
@@ -80,6 +82,7 @@ function ClockedPlayerStripInner({
           : undefined,
     capturedPieces,
     materialAdvantage,
+    outcome,
   };
 
   return <GamePlayerStrip {...strip} />;

@@ -208,7 +208,13 @@ function PlayContent() {
   }, [isVsAi, gameId]);
 
   const playerColor = orientation === "white" ? "w" : "b";
-  const playerIsWhite = orientation === "white";
+  const seatIsWhite = useMemo(() => {
+    if (!user) return orientation === "white";
+    if (gameData.white_player?.id === user.id) return true;
+    if (gameData.black_player?.id === user.id) return false;
+    return orientation === "white";
+  }, [gameData.white_player?.id, gameData.black_player?.id, orientation, user]);
+  const playerIsWhite = seatIsWhite;
   const levelLabel = user?.chess_level ? chessLevelLabel(t, user.chess_level) : undefined;
   /** Mode effectif = cadence choisie (bullet/blitz/rapid/classical), pas le ?mode= URL. */
   const searchMode = useClock ? playModeFromPreset(timePreset) : mode;
@@ -605,6 +611,27 @@ function PlayContent() {
           }
         : undefined,
     [boardPlayers, orientation]
+  );
+
+  const outcomeForSide = useCallback(
+    (side: "white" | "black"): PlayerOutcome | null => {
+      if (!gameData.result) return null;
+      if (gameData.result === "1/2-1/2") return "draw";
+      if (gameData.result === "1-0") return side === "white" ? "win" : "loss";
+      if (gameData.result === "0-1") return side === "black" ? "win" : "loss";
+      return null;
+    },
+    [gameData.result]
+  );
+
+  const topOutcome = useMemo(
+    () => (topPlayerConfig ? outcomeForSide(topPlayerConfig.side) : null),
+    [outcomeForSide, topPlayerConfig]
+  );
+
+  const bottomOutcome = useMemo(
+    () => (bottomPlayerConfig ? outcomeForSide(bottomPlayerConfig.side) : null),
+    [bottomPlayerConfig, outcomeForSide]
   );
 
   const moveComments = useMemo(() => {
@@ -1865,6 +1892,8 @@ function PlayContent() {
             onFlag={handleClockFlag}
             topPlayer={topPlayerConfig}
             bottomPlayer={bottomPlayerConfig}
+            topOutcome={topOutcome}
+            bottomOutcome={bottomOutcome}
             captured={boardDisplay.captured}
             blindMode={blindMode}
             playSoundOnFenChange={allowFenSound && !isViewingHistory}

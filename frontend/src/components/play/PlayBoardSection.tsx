@@ -40,6 +40,8 @@ interface PlayBoardSectionProps {
   onDropAtSquare?: (uci: string) => void;
   topPlayer?: PlayerStripConfig;
   bottomPlayer?: PlayerStripConfig;
+  topOutcome?: "win" | "loss" | "draw" | null;
+  bottomOutcome?: "win" | "loss" | "draw" | null;
   extraBottom?: number;
   captured?: CapturedState;
   blindMode?: boolean;
@@ -74,6 +76,8 @@ function PlayBoardSectionInner({
   onDropAtSquare,
   topPlayer,
   bottomPlayer,
+  topOutcome = null,
+  bottomOutcome = null,
   extraBottom = 0,
   captured,
   blindMode = false,
@@ -113,6 +117,7 @@ function PlayBoardSectionInner({
               clockLabel={clockLabel}
               capturedPieces={stripCaptures.top}
               materialAdvantage={stripCaptures.topAdvantage}
+              outcome={topOutcome}
             />
           )}
           <div className="play-board-frame">
@@ -147,6 +152,7 @@ function PlayBoardSectionInner({
               clockLabel={clockLabel}
               capturedPieces={stripCaptures.bottom}
               materialAdvantage={stripCaptures.bottomAdvantage}
+              outcome={bottomOutcome}
             />
           )}
         </div>
