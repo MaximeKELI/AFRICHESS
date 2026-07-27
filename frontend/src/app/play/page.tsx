@@ -1220,6 +1220,10 @@ function PlayContent() {
         return;
       }
       if (!isMyTurn) return;
+      if (isViewingHistory) {
+        goLive();
+        return;
+      }
       if (isVsAi && movePending) return;
       if (isVsAi) {
         unlockAiSpeech();
@@ -1266,6 +1270,8 @@ function PlayContent() {
       gameCompleted,
       isVoteChess,
       isMyTurn,
+      isViewingHistory,
+      goLive,
       isVsAi,
       movePending,
       aiCommentsEnabled,
