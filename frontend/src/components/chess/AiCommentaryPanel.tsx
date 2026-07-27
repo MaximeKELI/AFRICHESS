@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
 import type { MoveComment } from "@/lib/chessDisplay";
 import {
   initAiSpeech,
@@ -38,7 +37,6 @@ export function AiCommentaryPanel({
   const { t } = useTranslation();
   const latest = comments.at(-1);
   const voiceSupported = isAiSpeechSupported();
-  const speakQueueRef = useRef(0);
 
   const handleTestVoice = () => {
     unlockAiSpeech();
@@ -62,7 +60,6 @@ export function AiCommentaryPanel({
     if (!enabled) {
       stopAiSpeech();
       resetLiveSpeechTracking();
-      speakQueueRef.current = 0;
     }
   }, [enabled]);
 
@@ -94,21 +91,16 @@ export function AiCommentaryPanel({
 
     const toSpeak = decision.toSpeak;
     if (!toSpeak.length) return;
-
-    const queueId = ++speakQueueRef.current;
     void (async () => {
       unlockAiSpeech();
       for (let index = 0; index < toSpeak.length; index += 1) {
-        if (speakQueueRef.current !== queueId) return;
         const comment = toSpeak[index];
-        // Couper la lecture précédente ; stopCurrentAudio résout la promesse (pas de deadlock)
         await speakComment(comment.text, {
           byAi: comment.byAi,
           enabled: true,
           forceUnlock: true,
           interrupt: index === 0,
         });
-        if (speakQueueRef.current !== queueId) return;
         liveSpokenCommentKeys.add(commentKey(comment));
       }
     })();
@@ -117,8 +109,7 @@ export function AiCommentaryPanel({
   if (!enabled) {
     return (
       <div className={compact ? "text-xs opacity-50" : "text-sm opacity-60"}>
-        Activez les commentaires : l&apos;IA parle et commente en français
-        {voiceSupported ? "" : " (texte seul sur ce navigateur)"}.
+        Activez la voix IA pour les commentaires pendant la partie.
       </div>
     );
   }
@@ -150,54 +141,12 @@ export function AiCommentaryPanel({
       )}
       {!voiceSupported && (
         <p className="text-[10px] text-africhess-terracotta opacity-80">
-          Voix non supportée par ce navigateur — texte uniquement.
+          Voix non supportée par ce navigateur.
         </p>
       )}
-
-      <AnimatePresence mode="wait">
-        {latest && (
-          <motion.div
-            key={`${latest.moveNumber}-${latest.san}-${comments.length}`}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className={`rounded-lg p-3 border ${
-              latest.byAi
-                ? "border-africhess-gold/40 bg-africhess-gold/10"
-                : "border-africhess-green/30 bg-africhess-green/10"
-            }`}
-          >
-            <p className="text-[10px] uppercase tracking-wide opacity-60 mb-1">
-              {latest.byAi ? "🤖 IA" : "💡 Coach"} · {latest.san}
-            </p>
-            <p className={compact ? "text-xs leading-relaxed" : "text-sm leading-relaxed"}>
-              {latest.text}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {comments.length > 1 && (
-        <div
-          className={`max-h-48 overflow-y-auto space-y-2 pr-1 ${
-            compact ? "text-[10px]" : "text-xs"
-          } opacity-70`}
-        >
-          {[...comments].reverse().slice(1, 12).map((c) => (
-            <p key={`${c.moveNumber}-${c.san}-${c.text.slice(0, 24)}`}>
-              <span className="font-mono text-africhess-gold">{c.san}</span>
-              {" — "}
-              <span className={c.byAi ? "" : "italic"}>{c.text}</span>
-            </p>
-          ))}
-        </div>
-      )}
-
-      {comments.length === 0 && (
-        <p className="text-xs opacity-50">
-          L&apos;IA commentera chaque coup à l&apos;oral et à l&apos;écrit…
-        </p>
-      )}
+      <p className="text-[11px] opacity-55">
+        {latest ? `Dernier coup vocal: ${latest.san}` : "En attente du prochain coup…"}
+      </p>
     </div>
   );
 }
