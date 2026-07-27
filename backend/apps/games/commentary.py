@@ -54,11 +54,29 @@ OPENING_NAMED_PLAYER = [
     "Vous adoptez la {opening} : jouez naturellement, un coup après l'autre.",
 ]
 
-# Descriptions caractérielles par ouverture (voix de l'IA, ton taquin + culture
-# échiquéenne). Clé = nom de famille français (partie avant « : »). Les phrases
-# sont « neutres » : elles conviennent que l'ouverture soit jouée par l'IA ou
-# par le joueur. Pour les ouvertures absentes, on retombe sur les modèles
-# génériques OPENING_NAMED_AI / OPENING_NAMED_PLAYER.
+# L'IA annonce SA propre ouverture / défense (pas celle du joueur).
+OPENING_NAMED_AI_OWN = [
+    "Je joue la {opening}. Tu verras bientôt pourquoi.",
+    "Moi, la {opening} — mon terrain. Prépare-toi.",
+    "Je sors la {opening}. Classique… et redoutable contre toi.",
+    "La {opening}, c'est mon choix. À toi de répondre.",
+    "Je pose la {opening}. Voyons si tu connais la théorie.",
+    "Ah, je tente la {opening}. Tu pensais que je resterais passif ?",
+]
+
+# Le coach commente une défense/ouverture adverse (le joueur n'est pas ce camp).
+OPENING_NAMED_PLAYER_FACING = [
+    "L'adversaire joue la {opening}. Anticipez ses plans typiques.",
+    "Face à la {opening} : développez vite et visez le centre.",
+    "La {opening} apparaît. Gardez le calme et jouez les idées du camp adverse.",
+    "Réponse {opening} de l'adversaire — adaptez votre plan, ne jouez pas « à l'aveugle ».",
+]
+
+# Descriptions caractérielles par ouverture.
+# IMPORTANT : ces phrases s'adressent au JOUEUR HUMAIN comme s'il venait
+# d'adopter le système (« tu / pour toi »). Ne les utiliser QUE lorsque
+# ``played_by_ai is False`` (c'est le joueur qui vient de jouer le coup).
+# Si l'IA adopte une défense noire, préférer OPENING_NAMED_AI_OWN.
 OPENING_LORE: dict[str, list[str]] = {
     "Défense sicilienne": [
         "La sicilienne : la réponse la plus mordante à 1.e4. Les champions du monde l'adorent… ça ne t'aidera pas contre moi.",
@@ -583,11 +601,64 @@ def _named_opening(line_sans: Optional[list[str]]) -> Optional[str]:
     return None
 
 
+def _opening_newly_established(line_sans: Optional[list[str]]) -> Optional[str]:
+    """Nomme l'ouverture seulement si ce coup vient de la faire apparaître / changer.
+
+    Évite de répéter « Défense sicilienne » sur Nf3 des Blancs alors que c5
+    l'avait déjà établie — et d'attribuer la défense au mauvais camp.
+    """
+    current = _named_opening(line_sans)
+    if not current:
+        return None
+    prev = _named_opening(line_sans[:-1]) if line_sans and len(line_sans) > 1 else None
+    if prev == current:
+        return None
+    return current
+
+
+def _is_defense_opening(opening_label: str) -> bool:
+    """Les « Défense … » sont des systèmes des Noirs (réponses à 1.e4 / 1.d4…)."""
+    return opening_label.strip().lower().startswith("défense")
+
+
 def _fmt_opening(pool: list[str], opening: str, san: str, move_number: int) -> str:
     template = _pick(pool, move_number, san)
     if not template:
         return template
     return template.format(opening=opening, san=san)
+
+
+def _opening_announce_comment(
+    *,
+    opening_label: str,
+    played_by_ai: bool,
+    mover_is_white: bool,
+    move_number: int,
+    san: str,
+) -> str:
+    """Choisit le texte d'annonce selon QUI vient d'établir l'ouverture."""
+    lore = OPENING_LORE.get(opening_label)
+    is_defense = _is_defense_opening(opening_label)
+
+    if played_by_ai:
+        # L'IA vient de jouer le coup qui nomme la ligne.
+        if is_defense and not mover_is_white:
+            # Ex. IA Noirs joue …c5 → « Je joue la Défense sicilienne » (pas « pour toi »).
+            return _fmt_opening(OPENING_NAMED_AI_OWN, opening_label, san, move_number)
+        # Ouverture blanche de l'IA (1.e4, gambit dame…) : lore OK (voix « je »).
+        if lore and (not is_defense or mover_is_white):
+            return _pick(lore, move_number, san)
+        return _fmt_opening(OPENING_NAMED_AI, opening_label, san, move_number)
+
+    # Coup du joueur humain.
+    if is_defense and mover_is_white:
+        # Cas rare (livre mal calé) : ne pas dire « vous jouez la Défense… » en Blancs.
+        return _fmt_opening(OPENING_NAMED_PLAYER_FACING, opening_label, san, move_number)
+    if lore:
+        return _pick(lore, move_number, san)
+    if is_defense and not mover_is_white:
+        return _fmt_opening(OPENING_NAMED_PLAYER, opening_label, san, move_number)
+    return _fmt_opening(OPENING_NAMED_PLAYER, opening_label, san, move_number)
 
 
 def _is_castling(san: str) -> bool:
@@ -692,8 +763,8 @@ def generate_move_comment(
     eval_mover = _eval_for_mover(eval_after, mover_is_white)
     eval_gain = _eval_gain_for_mover(eval_before, eval_after, mover_is_white)
 
-    opening_label = _named_opening(line_sans)
-    lore = OPENING_LORE.get(opening_label) if opening_label else None
+    # Annoncer l'ouverture uniquement quand ce coup la fait apparaître / changer.
+    opening_label = _opening_newly_established(line_sans)
 
     if is_mate:
         return pick(MATE_AI if played_by_ai else MATE_PLAYER, move_number, san)
@@ -719,17 +790,17 @@ def generate_move_comment(
         return _fmt(AI_REACT_PLAYER_CHECK, san, move_number)
 
     # Nommer l'ouverture reconnue en priorité pendant la phase d'ouverture.
-    # Les 3 premiers coups sont toujours nommés ; ensuite l'annonce est fréquente.
-    # Le cas gambit (capture) passe donc AVANT le commentaire de prise générique.
+    # Les 3 premiers coups nouveaux sont toujours nommés ; ensuite souvent.
     if opening_label and move_number <= OPENING_ANNOUNCE_PLIES:
         announce = move_number <= 3 or random.random() < 0.6
         if announce:
-            if lore:
-                return _pick(lore, move_number, san)
-            if played_by_ai:
-                return _fmt_opening(OPENING_NAMED_AI, opening_label, san, move_number)
-            return _fmt_opening(OPENING_NAMED_PLAYER, opening_label, san, move_number)
-
+            return _opening_announce_comment(
+                opening_label=opening_label,
+                played_by_ai=played_by_ai,
+                mover_is_white=mover_is_white,
+                move_number=move_number,
+                san=san,
+            )
     if _is_castling(san):
         if played_by_ai:
             return pick(CASTLE_AI, move_number, san)
