@@ -1,5 +1,5 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db.models import F, Sum
+from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import serializers
 
