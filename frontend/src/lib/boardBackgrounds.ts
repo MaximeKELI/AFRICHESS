@@ -144,8 +144,8 @@ export const BOARD_BACKGROUNDS: BoardBackground[] = [
   },
   {
     id: "animal-tigers-sky",
-    labelFr: "Tigres — bleu ciel",
-    labelEn: "Tigers — sky blue",
+    labelFr: "Tigres — pétrole",
+    labelEn: "Tigers — petrol teal",
     category: "animals",
     src: "/images/backgrounds/animal-tigers-sky.webp",
   },
