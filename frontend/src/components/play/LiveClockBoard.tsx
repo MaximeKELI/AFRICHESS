@@ -1,12 +1,12 @@
 "use client";
 
-import { createContext, memo, useContext, type ReactNode } from "react";
-import { CapturedBoardStack } from "@/components/chess/CapturedBoardStack";
+import { createContext, memo, useContext, useMemo, type ReactNode } from "react";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { GamePlayerStrip, type GamePlayerStripProps } from "@/components/play/GamePlayerStrip";
 import type { PlayerStripConfig } from "@/components/play/PlayBoardSection";
 import { useLiveClock } from "@/hooks/useLiveClock";
-import type { ApiMove, CapturedState } from "@/lib/chessDisplay";
+import type { CapturedState } from "@/lib/chessDisplay";
+import { resolveCapturedSides } from "@/lib/capturedSides";
 
 type LiveClockValue = { white: number; black: number };
 
@@ -48,6 +48,8 @@ interface ClockedPlayerStripProps {
   turn: "w" | "b";
   incrementMs: number;
   clockLabel: string;
+  capturedPieces?: string[];
+  materialAdvantage?: number;
 }
 
 function ClockedPlayerStripInner({
@@ -58,6 +60,8 @@ function ClockedPlayerStripInner({
   turn,
   incrementMs,
   clockLabel,
+  capturedPieces,
+  materialAdvantage,
 }: ClockedPlayerStripProps) {
   const ms = useLiveClockMs(config.side);
   const clockActive =
@@ -74,13 +78,11 @@ function ClockedPlayerStripInner({
         : position === "top" && showClock
           ? clockLabel
           : undefined,
+    capturedPieces,
+    materialAdvantage,
   };
 
-  return (
-    <div className={position === "top" ? "mb-1.5" : "mt-1.5"}>
-      <GamePlayerStrip {...strip} />
-    </div>
-  );
+  return <GamePlayerStrip {...strip} />;
 }
 
 export const ClockedPlayerStrip = memo(ClockedPlayerStripInner);
@@ -97,7 +99,6 @@ export interface PlayBoardCoreProps {
   pendingDrop?: string | null;
   onDropAtSquare?: (uci: string) => void;
   extraBottom?: number;
-  captured?: CapturedState;
   lastMove: { from: string; to: string } | null;
   blindMode?: boolean;
   playSoundOnFenChange?: boolean;
@@ -118,7 +119,6 @@ function PlayBoardCoreInner({
   pendingDrop = null,
   onDropAtSquare,
   extraBottom = 0,
-  captured,
   lastMove,
   blindMode = false,
   playSoundOnFenChange = true,
@@ -127,28 +127,44 @@ function PlayBoardCoreInner({
   onClearPremove,
 }: PlayBoardCoreProps) {
   return (
-    <CapturedBoardStack captured={captured} orientation={orientation}>
-      <ChessBoard
-        fen={fen}
-        orientation={orientation}
-        onMove={onMove}
-        onPremove={onPremove}
-        enablePremoves={enablePremoves}
-        disabled={disabled}
-        playerColor={playerColor}
-        lastMove={lastMove}
-        playSoundOnFenChange={playSoundOnFenChange}
-        serverValidated={serverValidated}
-        pendingDrop={pendingDrop}
-        onDropAtSquare={onDropAtSquare}
-        extraBottom={extraBottom}
-        blindMode={blindMode}
-        areArrowsAllowed={areArrowsAllowed}
-        premove={premove}
-        onClearPremove={onClearPremove}
-      />
-    </CapturedBoardStack>
+    <ChessBoard
+      fen={fen}
+      orientation={orientation}
+      onMove={onMove}
+      onPremove={onPremove}
+      enablePremoves={enablePremoves}
+      disabled={disabled}
+      playerColor={playerColor}
+      lastMove={lastMove}
+      playSoundOnFenChange={playSoundOnFenChange}
+      serverValidated={serverValidated}
+      pendingDrop={pendingDrop}
+      onDropAtSquare={onDropAtSquare}
+      extraBottom={extraBottom}
+      blindMode={blindMode}
+      areArrowsAllowed={areArrowsAllowed}
+      premove={premove}
+      onClearPremove={onClearPremove}
+    />
   );
 }
 
 export const PlayBoardCore = memo(PlayBoardCoreInner);
+
+/** Résout captures haut/bas pour les barres joueur (évite double calcul). */
+export function useStripCaptures(
+  captured: CapturedState | undefined,
+  orientation: "white" | "black"
+) {
+  return useMemo(() => {
+    if (!captured) {
+      return {
+        top: [] as string[],
+        bottom: [] as string[],
+        topAdvantage: undefined as number | undefined,
+        bottomAdvantage: undefined as number | undefined,
+      };
+    }
+    return resolveCapturedSides(captured, orientation);
+  }, [captured, orientation]);
+}

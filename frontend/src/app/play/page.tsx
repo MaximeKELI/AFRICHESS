@@ -175,6 +175,7 @@ function PlayContent() {
   const [activeVariant, setActiveVariant] = useState<GameVariant>("standard");
   const [mobileTab, setMobileTab] = useState<"board" | "moves" | "chat" | "setup">("setup");
   const [setupCategory, setSetupCategory] = useState<PlaySetupCategory>("game");
+  const [showInGameOptions, setShowInGameOptions] = useState(false);
   const [aiStarting, setAiStarting] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   /** null = suivre la partie en direct ; sinon nombre de demi-coups affichés. */
@@ -195,7 +196,10 @@ function PlayContent() {
   const activeGameId = gameId ?? gameFromUrl;
 
   useEffect(() => {
-    if (activeGameId) setMobileTab("board");
+    if (activeGameId) {
+      setMobileTab("board");
+      setShowInGameOptions(false);
+    }
   }, [activeGameId]);
 
   useEffect(() => {
@@ -1782,13 +1786,13 @@ function PlayContent() {
       )}
 
       <div
-        className="grid grid-cols-1 gap-4 lg:gap-5 items-start lg:[grid-template-columns:minmax(0,1fr)_minmax(var(--play-side-min),var(--play-side-max))]"
+        className="grid grid-cols-1 gap-3 lg:gap-4 items-start lg:[grid-template-columns:minmax(0,1fr)_minmax(var(--play-side-min),var(--play-side-max))]"
         style={
           {
             ["--play-side-max" as string]:
-              boardSize >= 120 ? "220px" : boardSize >= 110 ? "260px" : "300px",
+              boardSize >= 120 ? "280px" : boardSize >= 110 ? "320px" : "360px",
             ["--play-side-min" as string]:
-              boardSize >= 120 ? "180px" : boardSize >= 110 ? "200px" : "240px",
+              boardSize >= 120 ? "240px" : boardSize >= 110 ? "260px" : "280px",
           } as CSSProperties
         }
       >
@@ -1867,6 +1871,7 @@ function PlayContent() {
             areArrowsAllowed
             premove={premoveHighlight}
             onClearPremove={clearPremove}
+            hideBoardSizePicker={Boolean(gameId && gameActive)}
           />
           </div>
           {gameCompleted &&
@@ -1901,7 +1906,7 @@ function PlayContent() {
                 stopAiSpeech();
                 setReviewOpen(true);
               }}
-              className="w-full py-3 rounded-xl african-gradient text-white text-sm font-semibold shadow-lg"
+              className="lg:hidden w-full py-3 rounded-xl african-gradient text-white text-sm font-semibold shadow-lg"
             >
               {t("chess.review.open")}
             </button>
@@ -2167,24 +2172,58 @@ function PlayContent() {
         </div>
 
         <div
-          className={`w-full space-y-4 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:pr-1 scrollbar-thin ${
-            mobileTab === "board" || mobileTab === "setup" ? "hidden lg:block" : ""
+          className={`w-full space-y-3 lg:flex lg:flex-col lg:min-h-0 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-0.5 scrollbar-thin ${
+            mobileTab === "board" || mobileTab === "setup" ? "hidden lg:flex" : ""
           }`}
         >
-          <div className={mobileTab === "moves" ? "block space-y-4" : "hidden lg:block lg:space-y-4"}>
-            <GameSidePanel
-              moves={panelDisplay.moveRows}
-              isCheck={panelDisplay.isCheck}
-              turn={panelDisplay.turn}
-              openingName={openingName}
-              currentPly={effectivePly}
-              totalPlies={moveCount}
-              isLive={!isViewingHistory}
-              enablePlyNav={Boolean(gameId && moveCount > 0 && !reviewOpen)}
-              viewingHistory={isViewingHistory}
-              onSelectPly={seekToPly}
-              onGoLive={goLive}
-            />
+          <div
+            className={
+              mobileTab === "moves"
+                ? "block flex-1 min-h-0 space-y-3"
+                : "hidden lg:flex lg:flex-col lg:flex-1 lg:min-h-0 lg:space-y-3"
+            }
+          >
+            <div className="lg:flex-1 lg:min-h-[28rem] lg:max-h-full">
+              <GameSidePanel
+                moves={panelDisplay.moveRows}
+                isCheck={panelDisplay.isCheck}
+                turn={panelDisplay.turn}
+                openingName={openingName}
+                currentPly={effectivePly}
+                totalPlies={moveCount}
+                isLive={!isViewingHistory}
+                enablePlyNav={Boolean(gameId && moveCount > 0 && !reviewOpen)}
+                viewingHistory={isViewingHistory}
+                onSelectPly={seekToPly}
+                onGoLive={goLive}
+                fillHeight={Boolean(gameId)}
+                footer={
+                  gameCompleted && gameId && !reviewOpen ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        stopAiSpeech();
+                        setReviewOpen(true);
+                      }}
+                      className="hidden lg:block w-full py-2.5 rounded-lg african-gradient text-white text-sm font-semibold"
+                    >
+                      {t("chess.review.open")}
+                    </button>
+                  ) : gameCompleted && gameId ? (
+                    <div className="hidden lg:flex justify-center">
+                      <PgnExportButton
+                        pgn={gameData.pgn}
+                        moves={gameData.moves}
+                        white={gameData.white_player?.username}
+                        black={gameData.black_player?.username}
+                        result={gameData.result}
+                        gameId={gameId}
+                      />
+                    </div>
+                  ) : null
+                }
+              />
+            </div>
             {isVsAi && !gameId && (
               <div className="glass-card p-4 hidden lg:block">
                 <h3 className="font-semibold text-sm mb-3">{t("play.comments")}</h3>
@@ -2192,7 +2231,7 @@ function PlayContent() {
               </div>
             )}
             {gameCompleted && gameId && (
-              <div className="flex justify-center hide-in-zen">
+              <div className="flex justify-center hide-in-zen lg:hidden">
                 <PgnExportButton
                   pgn={gameData.pgn}
                   moves={gameData.moves}
@@ -2206,7 +2245,7 @@ function PlayContent() {
           </div>
 
           {gameId && !isVsAi && (
-            <div className={mobileTab === "chat" ? "block" : "hidden lg:block"}>
+            <div className={mobileTab === "chat" ? "block" : "hidden lg:block lg:shrink-0"}>
               <GameChat
                 gameId={gameId}
                 opponentName={opponentName}
@@ -2219,17 +2258,37 @@ function PlayContent() {
             </div>
           )}
 
-          <div className={mobileTab === "setup" ? "hidden lg:block space-y-4" : "hidden lg:block lg:space-y-4"}>
-          <hr className="border-white/10 hidden lg:block" />
-
-          <PlaySetupOptions
-            setupCategory={setupCategory}
-            onSetupCategoryChange={setSetupCategory}
-            gameSection={playGameSection}
-            aiSection={playAiSection}
-            onlineSection={playOnlineSection}
-            status={status ? <p className="text-sm text-africhess-gold">{status}</p> : null}
-          />
+          <div className={mobileTab === "setup" ? "hidden lg:block space-y-3 lg:shrink-0" : "hidden lg:block lg:space-y-3 lg:shrink-0"}>
+            {gameId ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowInGameOptions((v) => !v)}
+                  className="w-full text-left text-xs px-3 py-2 rounded-lg border border-white/15 bg-black/20 hover:border-africhess-gold/40 transition"
+                >
+                  {showInGameOptions ? t("play.options.hide") : t("play.options.show")}
+                </button>
+                {showInGameOptions && (
+                  <PlaySetupOptions
+                    setupCategory={setupCategory}
+                    onSetupCategoryChange={setSetupCategory}
+                    gameSection={playGameSection}
+                    aiSection={playAiSection}
+                    onlineSection={playOnlineSection}
+                    status={status ? <p className="text-sm text-africhess-gold">{status}</p> : null}
+                  />
+                )}
+              </>
+            ) : (
+              <PlaySetupOptions
+                setupCategory={setupCategory}
+                onSetupCategoryChange={setSetupCategory}
+                gameSection={playGameSection}
+                aiSection={playAiSection}
+                onlineSection={playOnlineSection}
+                status={status ? <p className="text-sm text-africhess-gold">{status}</p> : null}
+              />
+            )}
           </div>
         </div>
       </div>

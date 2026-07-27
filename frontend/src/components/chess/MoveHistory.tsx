@@ -17,6 +17,8 @@ interface MoveHistoryProps {
   onSelectPly?: (ply: number) => void;
   onGoLive?: () => void;
   showNav?: boolean;
+  /** Liste flexible qui occupe la hauteur restante (panneau latéral). */
+  fillHeight?: boolean;
 }
 
 function formatMovesForClipboard(moves: MoveRow[]): string {
@@ -38,6 +40,7 @@ export const MoveHistory = memo(function MoveHistory({
   onSelectPly,
   onGoLive,
   showNav = false,
+  fillHeight = false,
 }: MoveHistoryProps) {
   const { t } = useTranslation();
   const listRef = useRef<HTMLDivElement>(null);
@@ -84,8 +87,14 @@ export const MoveHistory = memo(function MoveHistory({
   const ply = currentPly ?? totalPlies;
 
   return (
-    <div className="flex flex-col min-h-[140px] max-h-[min(42vh,280px)] sm:max-h-[min(50vh,360px)]">
-      <div className="flex items-center justify-between gap-2 mb-2 shrink-0">
+    <div
+      className={
+        fillHeight
+          ? "flex flex-col flex-1 min-h-0"
+          : "flex flex-col min-h-[140px] max-h-[min(42vh,280px)] sm:max-h-[min(50vh,360px)]"
+      }
+    >
+      <div className="flex items-center justify-between gap-2 mb-1.5 shrink-0">
         <h3 className="text-xs font-semibold uppercase tracking-wide opacity-60">
           {t("chess.moves.title")}
         </h3>
@@ -93,7 +102,7 @@ export const MoveHistory = memo(function MoveHistory({
           <button
             type="button"
             onClick={() => void onCopy()}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[color-mix(in_srgb,var(--gold)_35%,transparent)] bg-[color-mix(in_srgb,var(--gold)_10%,transparent)] px-2.5 py-1 text-[11px] font-medium text-[var(--gold)] transition-colors hover:bg-[color-mix(in_srgb,var(--gold)_18%,transparent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
+            className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-2 py-0.5 text-[11px] font-medium opacity-80 transition-colors hover:opacity-100 hover:border-africhess-gold/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
           >
             {copied ? (
               <>
@@ -111,7 +120,7 @@ export const MoveHistory = memo(function MoveHistory({
       </div>
       <div
         ref={listRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden font-mono text-sm sm:text-[15px] space-y-0.5 pr-1 scrollbar-thin -mx-1 px-1"
+        className="flex-1 overflow-y-auto overflow-x-hidden font-mono text-sm sm:text-[15px] space-y-0.5 pr-1 scrollbar-thin -mx-1 px-1 min-h-0"
       >
         {moves.length === 0 ? (
           <p className="text-xs opacity-40 py-2">{t("chess.moves.empty")}</p>

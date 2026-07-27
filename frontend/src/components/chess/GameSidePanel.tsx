@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, type ReactNode } from "react";
 import { MoveHistory } from "./MoveHistory";
 import type { MoveRow } from "@/lib/chessDisplay";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -19,6 +19,10 @@ interface GameSidePanelProps {
   enablePlyNav?: boolean;
   /** Bandeau quand on consulte l'historique sans pouvoir jouer. */
   viewingHistory?: boolean;
+  /** Actions sous la navigation (bilan, abandon, etc.). */
+  footer?: ReactNode;
+  /** Colonne pleine hauteur alignée sur le plateau. */
+  fillHeight?: boolean;
 }
 
 export const GameSidePanel = memo(function GameSidePanel({
@@ -33,23 +37,31 @@ export const GameSidePanel = memo(function GameSidePanel({
   onGoLive,
   enablePlyNav = false,
   viewingHistory = false,
+  footer,
+  fillHeight = false,
 }: GameSidePanelProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="glass-card p-4 space-y-4 h-full">
+    <div
+      className={
+        fillHeight
+          ? "glass-card p-3 sm:p-4 flex flex-col min-h-0 h-full gap-2"
+          : "glass-card p-3 sm:p-4 flex flex-col gap-2"
+      }
+    >
       {openingName && (
-        <p className="text-xs text-africhess-gold font-medium border-b border-white/10 pb-2">
-          📖 {openingName}
+        <p className="text-xs text-africhess-gold font-medium border-b border-white/10 pb-2 shrink-0 truncate">
+          {openingName}
         </p>
       )}
       {viewingHistory && (
-        <p className="text-xs rounded-lg border border-africhess-gold/30 bg-africhess-gold/10 px-2.5 py-1.5 text-africhess-gold">
+        <p className="text-xs rounded-lg border border-africhess-gold/30 bg-africhess-gold/10 px-2.5 py-1.5 text-africhess-gold shrink-0">
           {t("chess.moves.viewingHint")}
         </p>
       )}
       {isCheck && !viewingHistory && (
-        <p className="text-sm font-semibold text-africhess-terracotta animate-pulse">
+        <p className="text-sm font-semibold text-africhess-terracotta shrink-0">
           {t("chess.check", {
             color: turn === "w" ? t("chess.check.white") : t("chess.check.black"),
           })}
@@ -63,12 +75,9 @@ export const GameSidePanel = memo(function GameSidePanel({
         onSelectPly={enablePlyNav ? onSelectPly : undefined}
         onGoLive={enablePlyNav ? onGoLive : undefined}
         showNav={enablePlyNav}
+        fillHeight={fillHeight}
       />
-      {enablePlyNav && (
-        <p className="text-[10px] opacity-45 leading-snug">
-          {t("chess.arrows.hint")}
-        </p>
-      )}
+      {footer && <div className="shrink-0 pt-1 border-t border-white/10 space-y-2">{footer}</div>}
     </div>
   );
 });

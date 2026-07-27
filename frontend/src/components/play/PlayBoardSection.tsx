@@ -6,6 +6,7 @@ import {
   ClockedPlayerStrip,
   LiveClockProvider,
   PlayBoardCore,
+  useStripCaptures,
 } from "@/components/play/LiveClockBoard";
 import type { ApiMove, CapturedState } from "@/lib/chessDisplay";
 import { lastMoveFromMoves, turnFromFen } from "@/lib/gameDisplayFast";
@@ -47,6 +48,8 @@ interface PlayBoardSectionProps {
   areArrowsAllowed?: boolean;
   premove?: { from: string; to: string } | null;
   onClearPremove?: () => void;
+  /** Masque le sélecteur de taille pendant une partie active. */
+  hideBoardSizePicker?: boolean;
 }
 
 function PlayBoardSectionInner({
@@ -79,6 +82,7 @@ function PlayBoardSectionInner({
   areArrowsAllowed = true,
   premove = null,
   onClearPremove,
+  hideBoardSizePicker = false,
 }: PlayBoardSectionProps) {
   const turn = turnFromFen(clockFen ?? fen);
   const lastMove = useMemo(
@@ -86,6 +90,7 @@ function PlayBoardSectionInner({
     [lastMoveProp, moves]
   );
   const clockActive = clockRunning && showClock;
+  const stripCaptures = useStripCaptures(captured, orientation);
 
   return (
     <div className="game-board-stack w-full min-w-0 max-w-full">
@@ -96,52 +101,61 @@ function PlayBoardSectionInner({
         running={clockActive}
         onFlag={onFlag}
       >
-        {topPlayer && (
-          <ClockedPlayerStrip
-            config={topPlayer}
-            position="top"
-            showClock={showClock}
-            clockRunning={clockRunning}
-            turn={turn}
-            incrementMs={incrementMs}
-            clockLabel={clockLabel}
-          />
-        )}
-        <PlayBoardCore
-          fen={fen}
-          orientation={orientation}
-          disabled={disabled}
-          playerColor={playerColor}
-          onMove={onMove}
-          onPremove={onPremove}
-          enablePremoves={enablePremoves}
-          serverValidated={serverValidated}
-          pendingDrop={pendingDrop}
-          onDropAtSquare={onDropAtSquare}
-          extraBottom={extraBottom}
-          captured={captured}
-          lastMove={lastMove}
-          blindMode={blindMode}
-          playSoundOnFenChange={playSoundOnFenChange}
-          areArrowsAllowed={areArrowsAllowed}
-          premove={premove}
-          onClearPremove={onClearPremove}
-        />
-        {bottomPlayer && (
-          <ClockedPlayerStrip
-            config={bottomPlayer}
-            position="bottom"
-            showClock={showClock}
-            clockRunning={clockRunning}
-            turn={turn}
-            incrementMs={incrementMs}
-            clockLabel={clockLabel}
-          />
-        )}
+        <div className="play-board-column flex flex-col w-full min-w-0">
+          {topPlayer && (
+            <ClockedPlayerStrip
+              config={topPlayer}
+              position="top"
+              showClock={showClock}
+              clockRunning={clockRunning}
+              turn={turn}
+              incrementMs={incrementMs}
+              clockLabel={clockLabel}
+              capturedPieces={stripCaptures.top}
+              materialAdvantage={stripCaptures.topAdvantage}
+            />
+          )}
+          <div className="play-board-frame">
+            <PlayBoardCore
+              fen={fen}
+              orientation={orientation}
+              disabled={disabled}
+              playerColor={playerColor}
+              onMove={onMove}
+              onPremove={onPremove}
+              enablePremoves={enablePremoves}
+              serverValidated={serverValidated}
+              pendingDrop={pendingDrop}
+              onDropAtSquare={onDropAtSquare}
+              extraBottom={extraBottom}
+              lastMove={lastMove}
+              blindMode={blindMode}
+              playSoundOnFenChange={playSoundOnFenChange}
+              areArrowsAllowed={areArrowsAllowed}
+              premove={premove}
+              onClearPremove={onClearPremove}
+            />
+          </div>
+          {bottomPlayer && (
+            <ClockedPlayerStrip
+              config={bottomPlayer}
+              position="bottom"
+              showClock={showClock}
+              clockRunning={clockRunning}
+              turn={turn}
+              incrementMs={incrementMs}
+              clockLabel={clockLabel}
+              capturedPieces={stripCaptures.bottom}
+              materialAdvantage={stripCaptures.bottomAdvantage}
+            />
+          )}
+        </div>
       </LiveClockProvider>
-      <div className="mt-2 hide-in-zen">
-        <BoardSizePicker inline />
-      </div>
+      {!hideBoardSizePicker && (
+        <div className="mt-2 hide-in-zen">
+          <BoardSizePicker inline />
+        </div>
+      )}
     </div>
   );
 }
