@@ -25,7 +25,12 @@ export function displayAtPly(
     return buildGameDisplayFromMoves("start", list);
   }
   if (ply <= 0) return buildGameDisplayFromFen("start");
-  return buildGameDisplayFromMoves("start", list.slice(0, ply));
+  const ordered = [...list].sort((a, b) => {
+    if (a.move_number !== b.move_number) return a.move_number - b.move_number;
+    if (a.played_by_white === b.played_by_white) return 0;
+    return a.played_by_white ? -1 : 1;
+  });
+  return buildGameDisplayFromMoves("start", ordered.slice(0, ply));
 }
 
 /** Index de demi-coup (1-based) pour la case blanche / noire d'une rangée. */
