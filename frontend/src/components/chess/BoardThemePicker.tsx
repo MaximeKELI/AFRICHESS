@@ -6,6 +6,7 @@ import {
   getThemedSquareStyles,
   type BoardTheme,
 } from "@/lib/boardThemes";
+import { PIECE_SETS, getPieceSet, pieceSvgUrl } from "@/lib/pieceSets";
 import { usePreferencesStore } from "@/store/preferences";
 import { useTranslation } from "@/hooks/useTranslation";
 import { boardThemeLabel } from "@/lib/i18n/labels";
@@ -69,6 +70,57 @@ function ThemeButton({
   );
 }
 
+function PieceSetButton({
+  id,
+  label,
+  selected,
+  onSelect,
+}: {
+  id: (typeof PIECE_SETS)[number]["id"];
+  label: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const meta = getPieceSet(id);
+  const preview =
+    meta.folder != null ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={pieceSvgUrl(meta.folder, "wN")}
+        alt=""
+        className="w-5 h-5 object-contain"
+        draggable={false}
+      />
+    ) : id === "african" || id === "african-svg" ? (
+      <span className="text-sm leading-none" aria-hidden>
+        ♘
+      </span>
+    ) : (
+      <span className="text-sm leading-none opacity-70" aria-hidden>
+        ♞
+      </span>
+    );
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      aria-label={label}
+      title={label}
+      className={clsx(
+        "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs border focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold",
+        selected
+          ? "border-africhess-gold bg-africhess-gold/20"
+          : "border-white/20 hover:border-white/35"
+      )}
+    >
+      {preview}
+      <span>{label}</span>
+    </button>
+  );
+}
+
 export function BoardThemePicker({
   compact = false,
   className,
@@ -78,8 +130,10 @@ export function BoardThemePicker({
 }: BoardThemePickerProps) {
   const { boardTheme, setBoardTheme, pieceSet, setPieceSet } = usePreferencesStore();
   const { t } = useTranslation();
-  const classic = BOARD_THEMES.filter((t) => !t.floral);
-  const floral = BOARD_THEMES.filter((t) => t.floral);
+  const classic = BOARD_THEMES.filter((th) => !th.floral);
+  const floral = BOARD_THEMES.filter((th) => th.floral);
+  const africhessPieces = PIECE_SETS.filter((s) => s.group === "africhess");
+  const lichessPieces = PIECE_SETS.filter((s) => s.group === "lichess");
 
   const gridClass = clsx(
     "grid gap-2",
@@ -101,76 +155,92 @@ export function BoardThemePicker({
 
       {showColors && (
         <>
-      <p className={clsx("opacity-50 mb-2 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs")}>
-        {t("board.picker.classics")}
-      </p>
-      <div className={clsx(gridClass, showPieces ? "mb-4" : "")}>
-        {classic.map((theme) => (
-          <ThemeButton
-            key={theme.id}
-            theme={theme}
-            compact={compact}
-            selected={boardTheme === theme.id}
-            onSelect={() => setBoardTheme(theme.id)}
-            label={boardThemeLabel(t, theme.id, theme.labelFr)}
-          />
-        ))}
-      </div>
+          <p
+            className={clsx(
+              "opacity-50 mb-2 uppercase tracking-wide",
+              compact ? "text-[10px]" : "text-xs"
+            )}
+          >
+            {t("board.picker.classics")}
+          </p>
+          <div className={clsx(gridClass, showPieces ? "mb-4" : "")}>
+            {classic.map((theme) => (
+              <ThemeButton
+                key={theme.id}
+                theme={theme}
+                compact={compact}
+                selected={boardTheme === theme.id}
+                onSelect={() => setBoardTheme(theme.id)}
+                label={boardThemeLabel(t, theme.id, theme.labelFr)}
+              />
+            ))}
+          </div>
 
-      <p className={clsx("opacity-50 mb-2 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs")}>
-        {t("board.picker.floral")}
-      </p>
-      <div className={clsx(gridClass, showPieces ? "mb-0" : "")}>
-        {floral.map((theme) => (
-          <ThemeButton
-            key={theme.id}
-            theme={theme}
-            compact={compact}
-            selected={boardTheme === theme.id}
-            onSelect={() => setBoardTheme(theme.id)}
-            label={boardThemeLabel(t, theme.id, theme.labelFr)}
-          />
-        ))}
-      </div>
+          <p
+            className={clsx(
+              "opacity-50 mb-2 uppercase tracking-wide",
+              compact ? "text-[10px]" : "text-xs"
+            )}
+          >
+            {t("board.picker.floral")}
+          </p>
+          <div className={clsx(gridClass, showPieces ? "mb-0" : "")}>
+            {floral.map((theme) => (
+              <ThemeButton
+                key={theme.id}
+                theme={theme}
+                compact={compact}
+                selected={boardTheme === theme.id}
+                onSelect={() => setBoardTheme(theme.id)}
+                label={boardThemeLabel(t, theme.id, theme.labelFr)}
+              />
+            ))}
+          </div>
         </>
       )}
 
       {showPieces && (
         <>
-      {showColors && (
-      <p className={clsx("opacity-50 mb-2 mt-4 uppercase tracking-wide", compact ? "text-[10px]" : "text-xs")}>
-        {t("board.picker.pieces")}
-      </p>
-      )}
-      <div className="flex flex-wrap gap-2">
-        {(["classic", "african", "african-svg"] as const).map((id) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setPieceSet(id)}
-            aria-pressed={pieceSet === id}
-            aria-label={
-              id === "african-svg"
-                ? t("board.picker.africanSvg")
-                : id === "african"
-                  ? t("board.picker.african")
-                  : t("board.picker.classic")
-            }
+          {showColors && (
+            <p
+              className={clsx(
+                "opacity-50 mb-2 mt-4 uppercase tracking-wide",
+                compact ? "text-[10px]" : "text-xs"
+              )}
+            >
+              {t("board.picker.pieces")}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2 mb-3">
+            {africhessPieces.map((set) => (
+              <PieceSetButton
+                key={set.id}
+                id={set.id}
+                label={t(set.labelKey)}
+                selected={pieceSet === set.id}
+                onSelect={() => setPieceSet(set.id)}
+              />
+            ))}
+          </div>
+          <p
             className={clsx(
-              "px-3 py-1 rounded text-xs capitalize border focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold",
-              pieceSet === id
-                ? "border-africhess-gold bg-africhess-gold/20"
-                : "border-white/20"
+              "opacity-50 mb-2 uppercase tracking-wide",
+              compact ? "text-[10px]" : "text-xs"
             )}
           >
-            {id === "african-svg"
-              ? t("board.picker.africanSvg")
-              : id === "african"
-                ? t("board.picker.african")
-                : t("board.picker.classic")}
-          </button>
-        ))}
-      </div>
+            {t("board.picker.piecesLichess")}
+          </p>
+          <div className="flex flex-wrap gap-2 max-h-[min(40vh,280px)] overflow-y-auto pr-1 scrollbar-thin">
+            {lichessPieces.map((set) => (
+              <PieceSetButton
+                key={set.id}
+                id={set.id}
+                label={t(set.labelKey)}
+                selected={pieceSet === set.id}
+                onSelect={() => setPieceSet(set.id)}
+              />
+            ))}
+          </div>
         </>
       )}
     </div>
