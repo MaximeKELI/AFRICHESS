@@ -109,20 +109,11 @@ class CommentaryTests(SimpleTestCase):
         self.assertTrue("oiseau" in lowered or "bird" in lowered)
 
     def test_ai_names_sicilian_defense(self):
+        """Nf3 des Blancs après …c5 ne doit PAS ré-annoncer la sicilienne
+        (déjà établie) — sinon on l'attribue au mauvais camp."""
         fen = "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2"
-        text = generate_move_comment(
-            fen,
-            "g1f3",
-            "Nf3",
-            played_by_ai=True,
-            mover_is_white=True,
-            move_number=3,
-            line_sans=["e4", "c5", "Nf3"],
-        )
-        # move_number 3 : l'annonce est probabiliste ; on force plusieurs essais.
-        found = any(
-            "sicil"
-            in generate_move_comment(
+        texts = {
+            generate_move_comment(
                 fen,
                 "g1f3",
                 "Nf3",
@@ -130,13 +121,45 @@ class CommentaryTests(SimpleTestCase):
                 mover_is_white=True,
                 move_number=3,
                 line_sans=["e4", "c5", "Nf3"],
-            ).lower()
+            )
+            for _ in range(30)
+        }
+        self.assertFalse(any("sicil" in t.lower() for t in texts))
+
+    def test_ai_own_sicilian_not_your_defense(self):
+        """Quand l'IA (Noirs) joue …c5, elle dit « Je joue la Défense… »,
+        pas le lore « pour toi » réservé au joueur humain."""
+        fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
+        from apps.games.commentary import OPENING_NAMED_AI_OWN, OPENING_LORE
+
+        texts = {
+            generate_move_comment(
+                fen,
+                "c7c5",
+                "c5",
+                played_by_ai=True,
+                mover_is_white=False,
+                move_number=2,
+                line_sans=["e4", "c5"],
+            )
             for _ in range(40)
-        )
-        self.assertTrue(found)
+        }
+        self.assertTrue(any("sicil" in t.lower() or "défense" in t.lower() for t in texts))
+        self.assertTrue(texts <= set(
+            t.format(opening="Défense sicilienne", san="c5")
+            for t in OPENING_NAMED_AI_OWN
+        ) | {t.format(opening="Défense sicilienne", san="c5") for t in OPENING_NAMED_AI_OWN})
+        # Plus simple : aucun lore « pour toi »
+        lore = set(OPENING_LORE["Défense sicilienne"])
+        self.assertFalse(texts & lore)
+        for t in texts:
+            self.assertNotIn("pour toi", t.lower())
+            self.assertTrue(
+                t.startswith("Je ") or "je " in t.lower() or "moi" in t.lower() or "défense" in t.lower()
+            )
 
     def test_ai_uses_sicilian_lore(self):
-        # 1...c5 : réaction de l'IA au coup du joueur -> phrase de « lore ».
+        # 1...c5 : le JOUEUR (Noirs) joue la sicilienne -> phrases de lore OK.
         fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
         text = generate_move_comment(
             fen,
@@ -213,18 +236,21 @@ class CommentaryTests(SimpleTestCase):
         self.assertTrue("gambit" in joined or "accept" in joined)
 
     def test_opening_named_beyond_move_two(self):
-        """L'ouverture reconnue est nommée aussi après le 2e coup (coup 3)."""
+        """Après …c5, Nf3 ne ré-annonce plus la sicilienne (déjà établie)."""
         fen = "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2"
-        text = generate_move_comment(
-            fen,
-            "g1f3",
-            "Nf3",
-            played_by_ai=True,
-            mover_is_white=True,
-            move_number=3,
-            line_sans=["e4", "c5", "Nf3"],
-        )
-        self.assertIn(text, OPENING_LORE["Défense sicilienne"])
+        texts = {
+            generate_move_comment(
+                fen,
+                "g1f3",
+                "Nf3",
+                played_by_ai=True,
+                mover_is_white=True,
+                move_number=3,
+                line_sans=["e4", "c5", "Nf3"],
+            )
+            for _ in range(25)
+        }
+        self.assertFalse(texts & set(OPENING_LORE["Défense sicilienne"]))
 
     def test_capture_comment_without_engine(self):
         fen = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2"
