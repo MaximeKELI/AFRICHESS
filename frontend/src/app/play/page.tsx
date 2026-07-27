@@ -463,7 +463,12 @@ function PlayContent() {
   }, [premoveUci]);
 
   const premovesEnabled = Boolean(
-    isLiveHuman && gameActive && !isViewingHistory && !isVoteChess && !gameCompleted
+    isLiveHuman &&
+      gameActive &&
+      !movePending &&
+      !isViewingHistory &&
+      !isVoteChess &&
+      !gameCompleted
   );
 
   useEffect(() => {
@@ -1034,7 +1039,7 @@ function PlayContent() {
   const boardDisabled =
     !gameId ||
     gameCompleted ||
-    (movePending && isVsAi) ||
+    movePending ||
     isViewingHistory ||
     (!isVoteChess && !isMyTurn && !premovesEnabled);
 
