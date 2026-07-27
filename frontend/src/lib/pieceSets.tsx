@@ -11,6 +11,7 @@ export type PieceSetId =
   | "cburnett"
   | "merida"
   | "chessnut"
+  | "mono"
   | "letter"
   | "pirouetti"
   | "pixel"
@@ -21,7 +22,9 @@ export type PieceSetId =
   | "celtic"
   | "kiwen-suwi"
   | "mpchess"
-  | "firi";
+  | "firi"
+  | "papercut"
+  | "totoy";
 
 export interface PieceSetMeta {
   id: PieceSetId;
@@ -40,6 +43,7 @@ export const PIECE_SETS: PieceSetMeta[] = [
   { id: "cburnett", labelKey: "board.picker.cburnett", folder: "cburnett", group: "lichess" },
   { id: "merida", labelKey: "board.picker.merida", folder: "merida", group: "lichess" },
   { id: "chessnut", labelKey: "board.picker.chessnut", folder: "chessnut", group: "lichess" },
+  { id: "mono", labelKey: "board.picker.mono", folder: "mono", group: "lichess" },
   { id: "letter", labelKey: "board.picker.letter", folder: "letter", group: "lichess" },
   { id: "pirouetti", labelKey: "board.picker.pirouetti", folder: "pirouetti", group: "lichess" },
   { id: "pixel", labelKey: "board.picker.pixel", folder: "pixel", group: "lichess" },
@@ -51,6 +55,8 @@ export const PIECE_SETS: PieceSetMeta[] = [
   { id: "kiwen-suwi", labelKey: "board.picker.kiwenSuwi", folder: "kiwen-suwi", group: "lichess" },
   { id: "mpchess", labelKey: "board.picker.mpchess", folder: "mpchess", group: "lichess" },
   { id: "firi", labelKey: "board.picker.firi", folder: "firi", group: "lichess" },
+  { id: "papercut", labelKey: "board.picker.papercut", folder: "papercut", group: "lichess" },
+  { id: "totoy", labelKey: "board.picker.totoy", folder: "totoy", group: "lichess" },
 ];
 
 const PIECE_SET_MAP = new Map(PIECE_SETS.map((s) => [s.id, s]));

@@ -14,6 +14,7 @@ import {
   isSoundThemeId,
   type SoundThemeId,
 } from "@/lib/soundThemes";
+import { isPieceSetId, type PieceSetId } from "@/lib/pieceSets";
 import {
   preferenceStorageKey,
   setPreferenceScopeUserId,
@@ -30,7 +31,7 @@ const ZEN_KEY = "zen_mode";
 const BLIND_KEY = "blind_mode";
 const BOARD_SIZE_KEY = "board_size";
 
-export type PieceSetId = "classic" | "african" | "african-svg";
+export type { PieceSetId };
 
 export const SOUND_VOLUME_DEFAULT = 0.85;
 
@@ -69,8 +70,7 @@ function readAiComments(): boolean {
 function readPieceSet(): PieceSetId {
   if (typeof window === "undefined") return "classic";
   const v = localStorage.getItem(preferenceStorageKey(PIECE_SET_KEY));
-  if (v === "african" || v === "african-svg") return v;
-  return "classic";
+  return isPieceSetId(v) ? v : "classic";
 }
 
 function readZenMode(): boolean {

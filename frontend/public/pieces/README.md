@@ -21,5 +21,9 @@ Only sets with redistribution-friendly licenses are included (no CC BY-NC).
 | kiwen-suwi | neverRare | CC BY 4.0 |
 | mpchess | Maxime Chupin | GPL-3.0+ |
 | firi | James Faure | CC BY 4.0 |
+| papercut | Nikolay Anzarov | CC BY 4.0 |
+| totoy | Kosal Sen | CC BY 4.0 |
 
 See https://github.com/lichess-org/lila/blob/master/COPYING.md
+
+`mono` upstream uses unprefixed `K.svg`…`P.svg`; we duplicate as `w*` / `b*` for the board API.
