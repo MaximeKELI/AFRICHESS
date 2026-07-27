@@ -22,6 +22,7 @@ describe("boardBackgrounds", () => {
 
   it("resolves known ids", () => {
     expect(getBoardBackground("savanna-sunset").src).toContain("savanna-sunset");
+    expect(getBoardBackground("animal-tigers").src).toContain("animal-tigers.webp");
     expect(isBoardBackgroundId("none")).toBe(true);
     expect(isBoardBackgroundId("invalid")).toBe(false);
   });

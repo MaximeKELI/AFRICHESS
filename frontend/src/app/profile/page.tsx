@@ -204,16 +204,10 @@ export default function ProfilePage() {
           <BoardSizePicker showHeader={false} />
         </OptionSection>
         <OptionSection
-          title={t("board.picker.title")}
-          description={t("board.picker.hint")}
+          title={t("board.picker.styleSection")}
+          description={t("board.picker.styleSectionHint")}
         >
-          <BoardThemePicker showHeader={false} showPieces={false} />
-        </OptionSection>
-        <OptionSection
-          title={t("board.picker.pieces")}
-          description={t("board.picker.piecesHint")}
-        >
-          <BoardThemePicker showHeader={false} showColors={false} />
+          <BoardThemePicker showHeader={false} tabbed />
         </OptionSection>
         <OptionSection
           title={t("sound.picker.title")}

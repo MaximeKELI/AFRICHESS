@@ -69,18 +69,13 @@ export function PlaySetupOptions({
 
       {setupCategory === "style" && (
         <div className="space-y-4">
-          <OptionSection compact title={t("board.picker.title")} description={t("board.picker.hint")}>
-            <BoardThemePicker compact showHeader={false} showPieces={false} />
+          <OptionSection
+            compact
+            title={t("board.picker.styleSection")}
+            description={t("board.picker.styleSectionHint")}
+          >
+            <BoardThemePicker compact showHeader={false} tabbed />
           </OptionSection>
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-africhess-gold py-2 list-none flex items-center justify-between">
-              {t("board.picker.pieces")}
-              <span className="opacity-50 group-open:rotate-180 transition-transform">▾</span>
-            </summary>
-            <OptionSection compact title="" description={t("board.picker.piecesHint")}>
-              <BoardThemePicker compact showHeader={false} showColors={false} />
-            </OptionSection>
-          </details>
           <details className="group">
             <summary className="cursor-pointer text-sm font-medium text-africhess-gold py-2 list-none flex items-center justify-between">
               {t("sound.picker.title")}
@@ -90,7 +85,7 @@ export function PlaySetupOptions({
               <SoundThemePicker compact showHeader={false} />
             </OptionSection>
           </details>
-          <details className="group">
+          <details className="group" open>
             <summary className="cursor-pointer text-sm font-medium text-africhess-gold py-2 list-none flex items-center justify-between">
               {t("background.picker.title")}
               <span className="opacity-50 group-open:rotate-180 transition-transform">▾</span>
