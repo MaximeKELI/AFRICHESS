@@ -17,6 +17,7 @@ import { useAuthStore } from "@/store/auth";
 import { customPiecesForSet } from "@/lib/pieceSets";
 import { isPawnPromotion } from "@/lib/promotion";
 import { usePreferencesStore } from "@/store/preferences";
+import { applyKingOutcomesToPieces } from "./KingOutcomeBadge";
 import { PromotionDialog } from "./PromotionDialog";
 import { MoveClassPieceBadge } from "./MoveClassPieceBadge";
 import { PuzzleHintArrow } from "@/components/puzzles/PuzzleHintArrow";
@@ -114,14 +115,6 @@ function ChessBoardInner({
   const pieceSet = usePreferencesStore((s) => s.pieceSet);
   const [arrowBrush, setArrowBrush] = useState<string>(ARROW_BRUSHES.green);
   const [markedSquares, setMarkedSquares] = useState<Record<string, string>>({});
-  const customPieces = useMemo(() => {
-    if (!blindMode) return customPiecesForSet(pieceSet);
-    const hidden = () => (
-      <div aria-hidden style={{ width: "100%", height: "100%", opacity: 0 }} />
-    );
-    const keys = ["wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK"] as const;
-    return Object.fromEntries(keys.map((k) => [k, hidden]));
-  }, [blindMode, pieceSet]);
   const theme = getBoardTheme(boardThemeId);
   const soundsOn = !lowBandwidth;
   const isCoarse = useCoarsePointer();
@@ -227,6 +220,32 @@ function ChessBoardInner({
   /** En mode puzzle (serverValidated), le FEN affiché est la source de vérité — évite le décalage au 2e puzzle. */
   const activeChess = serverValidated && positionChess ? positionChess : game;
   const activeTurn = activeChess.turn();
+
+  /** Mat : pastilles couronne (vert gagnant / rouge perdant) + spin du roi maté. */
+  const mateOutcome = useMemo(() => {
+    if (blindMode || lowBandwidth) return null;
+    try {
+      if (!activeChess.isCheckmate()) return null;
+      const loser = activeChess.turn();
+      const winner = loser === "w" ? "b" : "w";
+      return { winner: winner as "w" | "b", spinKey: activeChess.fen() };
+    } catch {
+      return null;
+    }
+  }, [activeChess, blindMode, lowBandwidth]);
+
+  const customPieces = useMemo(() => {
+    if (blindMode) {
+      const hidden = () => (
+        <div aria-hidden style={{ width: "100%", height: "100%", opacity: 0 }} />
+      );
+      const keys = ["wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK"] as const;
+      return Object.fromEntries(keys.map((k) => [k, hidden]));
+    }
+    const base = customPiecesForSet(pieceSet);
+    if (!mateOutcome) return base;
+    return applyKingOutcomesToPieces(base, mateOutcome.winner, true, mateOutcome.spinKey);
+  }, [blindMode, pieceSet, mateOutcome]);
 
   useEffect(() => {
     try {
@@ -563,9 +582,9 @@ function ChessBoardInner({
       };
     }
 
-    const kingDanger = lowBandwidth ? null : getKingDangerStyle(game);
+    const kingDanger = lowBandwidth ? null : getKingDangerStyle(activeChess);
     if (kingDanger) {
-      const kingSquare = findKingSquare(game, game.turn());
+      const kingSquare = findKingSquare(activeChess, activeChess.turn());
       if (kingSquare) {
         styles[kingSquare] = {
           ...styles[kingSquare],
@@ -575,7 +594,7 @@ function ChessBoardInner({
     }
 
     return styles;
-  }, [lastMove, premove, reviewHighlight, selectedSquare, legalTargets, activeChess, game, squareStyles, lowBandwidth, focusSquare, disabled, theme.accent, isCoarse, markedSquares]);
+  }, [lastMove, premove, reviewHighlight, selectedSquare, legalTargets, activeChess, squareStyles, lowBandwidth, focusSquare, disabled, theme.accent, isCoarse, markedSquares]);
 
   const notationStyle = useMemo(
     () => ({

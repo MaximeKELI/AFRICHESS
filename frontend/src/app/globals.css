@@ -1004,6 +1004,42 @@ html.has-site-background nav {
   }
 }
 
+/* Mat Chess.com : pastilles couronne sur les rois */
+.king-outcome-badge {
+  position: absolute;
+  z-index: 6;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 0 1.5px rgba(255, 255, 255, 0.35);
+}
+
+.king-outcome-badge--win {
+  background: #22c55e;
+}
+
+.king-outcome-badge--loss {
+  background: #ef4444;
+}
+
+/* Roi maté : 2 tours complets sur lui-même */
+@keyframes king-lose-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(720deg);
+  }
+}
+
+.king-piece-lose-spin {
+  animation: king-lose-spin 1.35s ease-in-out 1;
+  transform-origin: center center;
+  will-change: transform;
+}
+
 /* Low-bandwidth: reduce animations */
 .low-bandwidth * {
   animation: none !important;
