@@ -1,8 +1,10 @@
+import tempfile
 from datetime import timedelta
+from pathlib import Path
 
-from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -10,18 +12,20 @@ from apps.ads.models import AdSlide
 
 User = get_user_model()
 
-# Minimal 1x1 PNG
-PNG_1X1 = (
-    b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
-    b"\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00"
-    b"\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82"
+# Valid 1×1 PNG (Pillow-accepted)
+PNG_1X1 = bytes.fromhex(
+    "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
+    "0000000a49444154789c63000100000500010d0a2db40000000049454e44ae426082"
 )
+
+MEDIA_ROOT = tempfile.mkdtemp(prefix="africhess_ads_test_")
 
 
 def _png(name="ad.png"):
     return SimpleUploadedFile(name, PNG_1X1, content_type="image/png")
 
 
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
 class AdSlideApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
@@ -29,6 +33,7 @@ class AdSlideApiTests(TestCase):
             username="staff_ads", password="pass12345", is_staff=True
         )
         self.user = User.objects.create_user(username="player_ads", password="pass12345")
+        Path(MEDIA_ROOT).mkdir(parents=True, exist_ok=True)
 
     def test_public_lists_only_active_in_window(self):
         AdSlide.objects.create(title="Live", image=_png("a.png"), is_active=True, order=0)
@@ -64,7 +69,13 @@ class AdSlideApiTests(TestCase):
         self.client.force_authenticate(self.staff)
         res = self.client.post(
             "/api/ads/admin/slides/",
-            {"title": "Promo", "image": _png(), "link_url": "https://example.com", "is_active": True, "order": 3},
+            {
+                "title": "Promo",
+                "image": _png(),
+                "link_url": "https://example.com",
+                "is_active": True,
+                "order": 3,
+            },
             format="multipart",
         )
         self.assertEqual(res.status_code, 201, res.data)
