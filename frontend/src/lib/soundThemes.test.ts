@@ -20,6 +20,7 @@ describe("soundThemes — catalogue Lichess", () => {
       "lisp",
       "woodland",
       "robot",
+      "arena",
     ]);
     expect(DEFAULT_SOUND_THEME).toBe("standard");
   });

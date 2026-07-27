@@ -9,7 +9,8 @@ export type SoundThemeId =
   | "futuristic"
   | "lisp"
   | "woodland"
-  | "robot";
+  | "robot"
+  | "arena";
 
 export interface SoundTheme {
   id: SoundThemeId;
@@ -29,6 +30,8 @@ export const SOUND_THEMES: SoundTheme[] = [
   { id: "lisp", labelKey: "sound.theme.lisp", folder: "lisp" },
   { id: "woodland", labelKey: "sound.theme.woodland", folder: "woodland" },
   { id: "robot", labelKey: "sound.theme.robot", folder: "robot" },
+  /** Mat dramatique original (esprit « fin de partie », pas un asset Chess.com). */
+  { id: "arena", labelKey: "sound.theme.arena", folder: "arena" },
 ];
 
 export const DEFAULT_SOUND_THEME: SoundThemeId = "standard";

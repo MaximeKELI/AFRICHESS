@@ -56,7 +56,8 @@ export function SoundThemePicker({
 
   const mateOptions: Array<{ id: SoundThemeId | null; label: string }> = [
     { id: null, label: t("sound.mate.inherit") },
-    ...SOUND_THEMES.map((theme) => ({
+    { id: "arena", label: t("sound.theme.arena") },
+    ...SOUND_THEMES.filter((theme) => theme.id !== "arena").map((theme) => ({
       id: theme.id as SoundThemeId,
       label: t(theme.labelKey),
     })),

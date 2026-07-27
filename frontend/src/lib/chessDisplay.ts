@@ -117,11 +117,15 @@ export function buildGameDisplayFromMoves(
   return extractDisplayState(chess, applied);
 }
 
-/** Met à jour l'affichage en appliquant seulement les nouveaux coups (O(k) au lieu de O(n)). */
+/**
+ * Met à jour l'affichage en appliquant seulement les nouveaux coups (O(k) au lieu de O(n)).
+ * Retourne `null` si le cache est désynchronisé (ex. FEN déjà avancé par optimistic)
+ * — l'appelant doit alors reconstruire depuis la liste complète.
+ */
 export function appendApiMovesToDisplay(
   prev: GameDisplayState,
   newMoves: ApiMove[]
-): GameDisplayState {
+): GameDisplayState | null {
   if (!newMoves.length) return prev;
 
   const chess = new Chess(prev.fen === "start" ? undefined : prev.fen);
@@ -130,17 +134,16 @@ export function appendApiMovesToDisplay(
   for (const m of newMoves) {
     try {
       const verbose = chess.move(m.uci);
-      if (verbose) {
-        appliedVerbose.push({
-          captured: verbose.captured,
-          color: verbose.color,
-          from: verbose.from,
-          to: verbose.to,
-        });
-      }
+      if (!verbose) return null;
+      appliedVerbose.push({
+        captured: verbose.captured,
+        color: verbose.color,
+        from: verbose.from,
+        to: verbose.to,
+      });
     } catch {
-      /* Cache incrémental désynchronisé (ex. coup IA après optimistic) — abandon. */
-      return prev;
+      /* Cache incrémental désynchronisé (ex. coup IA après optimistic). */
+      return null;
     }
   }
 

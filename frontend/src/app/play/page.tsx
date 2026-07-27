@@ -398,31 +398,41 @@ function PlayContent() {
     }
 
     const prevLen = movesLenRef.current;
-    if (moves.length > prevLen && moves.length - prevLen <= 2) {
-      const appended = appendApiMovesToDisplay(
-        displayCacheRef.current,
-        moves.slice(prevLen)
-      );
-      displayCacheRef.current = appended;
-    } else if (moves.length !== prevLen) {
-      displayCacheRef.current = buildGameDisplayFromMoves("start", moves);
+    let next = displayCacheRef.current;
+
+    if (moves.length !== prevLen) {
+      if (moves.length > prevLen && moves.length - prevLen <= 2) {
+        const appended = appendApiMovesToDisplay(next, moves.slice(prevLen));
+        next = appended ?? buildGameDisplayFromMoves("start", moves);
+      } else {
+        next = buildGameDisplayFromMoves("start", moves);
+      }
+      /**
+       * Après une réponse serveur, le FEN affiché doit coller au FEN API.
+       * Cas typique : cache déjà avancé par optimistic → append rejoue le même
+       * coup, échoue, et sans rebuild le plateau reste figé (trait adverse).
+       */
+      if (next.fen !== gameData.fen) {
+        next = buildGameDisplayFromMoves("start", moves);
+      }
+      if (next.fen !== gameData.fen) {
+        const fromFen = buildGameDisplayFromFen(gameData.fen);
+        next = { ...fromFen, moveRows: next.moveRows, captured: next.captured };
+      }
+    } else if (next.fen !== gameData.fen) {
+      /** Optimistic : même nombre de coups, FEN en avance — garder l'historique. */
+      const fromFen = buildGameDisplayFromFen(gameData.fen);
+      next = {
+        ...fromFen,
+        moveRows: next.moveRows,
+        captured: next.captured,
+        lastMove: next.lastMove,
+      };
     }
 
-    /**
-     * FEN serveur = source de vérité, MAIS seulement quand les moves et le FEN
-     * proviennent de la même réponse API (même nombre de moves qu'avant).
-     * Pendant l'optimistic, gameData.fen est en avance sur gameData.moves :
-     * ne pas forcer un rebuild dans ce cas (le rebuild donnerait l'ancien FEN).
-     */
-    if (
-      displayCacheRef.current.fen !== gameData.fen &&
-      moves.length === prevLen
-    ) {
-      displayCacheRef.current = buildGameDisplayFromFen(gameData.fen);
-    }
-
+    displayCacheRef.current = next;
     movesLenRef.current = moves.length;
-    return displayCacheRef.current;
+    return next;
   }, [gameData.fen, gameData.moves]);
 
   const moveCount = totalPlies(gameData.moves);
@@ -1845,7 +1855,7 @@ function PlayContent() {
             clockRunning={Boolean(gameActive && gameIsTimed && (isLiveHuman || isMyTurn))}
             incrementMs={gameData.increment_ms ?? 0}
             clockLabel={clockLabel}
-            serverValidated={isLiveHuman || activeVariant !== "standard"}
+            serverValidated
             pendingDrop={activeVariant === "crazyhouse" ? dropPiece : null}
             onDropAtSquare={(uci) => handleMove(uci)}
             onFlag={handleClockFlag}
