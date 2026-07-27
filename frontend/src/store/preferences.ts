@@ -89,6 +89,23 @@ function readSoundTheme(): SoundThemeId {
   return isSoundThemeId(stored) ? stored : DEFAULT_SOUND_THEME;
 }
 
+/** null = hériter du thème coups ; sinon thème fichier pour le mat uniquement. */
+function readMateSoundTheme(): SoundThemeId | null {
+  if (typeof window === "undefined") return null;
+  const stored = localStorage.getItem(preferenceStorageKey(MATE_SOUND_THEME_KEY));
+  if (stored === null || stored === "" || stored === "inherit") return null;
+  return isSoundThemeId(stored) ? stored : null;
+}
+
+function readSoundVolume(): number {
+  if (typeof window === "undefined") return SOUND_VOLUME_DEFAULT;
+  const stored = localStorage.getItem(preferenceStorageKey(SOUND_VOLUME_KEY));
+  if (stored === null) return SOUND_VOLUME_DEFAULT;
+  const parsed = Number.parseFloat(stored);
+  if (!Number.isFinite(parsed)) return SOUND_VOLUME_DEFAULT;
+  return Math.min(1, Math.max(0, parsed));
+}
+
 function readBoardSize(): number {
   if (typeof window === "undefined") return BOARD_SIZE_DEFAULT;
   const stored = localStorage.getItem(preferenceStorageKey(BOARD_SIZE_KEY));
@@ -109,6 +126,8 @@ export function syncPreferencesForUser(userId: number | null) {
     boardBackground: readBoardBackground(),
     pieceSet: readPieceSet(),
     soundTheme: readSoundTheme(),
+    mateSoundTheme: readMateSoundTheme(),
+    soundVolume: readSoundVolume(),
     aiCommentsEnabled: readAiComments(),
     zenMode,
     blindMode: readBlindMode(),
@@ -121,6 +140,8 @@ interface PreferencesState {
   boardBackground: BoardBackgroundId;
   pieceSet: PieceSetId;
   soundTheme: SoundThemeId;
+  mateSoundTheme: SoundThemeId | null;
+  soundVolume: number;
   aiCommentsEnabled: boolean;
   zenMode: boolean;
   blindMode: boolean;
@@ -129,6 +150,8 @@ interface PreferencesState {
   setBoardBackground: (id: BoardBackgroundId) => void;
   setPieceSet: (id: PieceSetId) => void;
   setSoundTheme: (id: SoundThemeId) => void;
+  setMateSoundTheme: (id: SoundThemeId | null) => void;
+  setSoundVolume: (value: number) => void;
   setAiCommentsEnabled: (enabled: boolean) => void;
   setZenMode: (enabled: boolean) => void;
   setBlindMode: (enabled: boolean) => void;
@@ -140,6 +163,8 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
   boardBackground: DEFAULT_BOARD_BACKGROUND,
   pieceSet: "classic" as PieceSetId,
   soundTheme: DEFAULT_SOUND_THEME,
+  mateSoundTheme: null as SoundThemeId | null,
+  soundVolume: SOUND_VOLUME_DEFAULT,
   aiCommentsEnabled: true,
   zenMode: false,
   blindMode: false,
@@ -159,6 +184,18 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
   setSoundTheme: (id) => {
     localStorage.setItem(preferenceStorageKey(SOUND_THEME_KEY), id);
     set({ soundTheme: id });
+  },
+  setMateSoundTheme: (id) => {
+    localStorage.setItem(
+      preferenceStorageKey(MATE_SOUND_THEME_KEY),
+      id == null ? "inherit" : id
+    );
+    set({ mateSoundTheme: id });
+  },
+  setSoundVolume: (value) => {
+    const clamped = Math.min(1, Math.max(0, value));
+    localStorage.setItem(preferenceStorageKey(SOUND_VOLUME_KEY), String(clamped));
+    set({ soundVolume: clamped });
   },
   setAiCommentsEnabled: (enabled) => {
     localStorage.setItem(preferenceStorageKey(AI_COMMENTS_KEY), enabled ? "1" : "0");

@@ -28,6 +28,7 @@ import {
   type ApiMove,
   type GameDisplayState,
 } from "@/lib/chessDisplay";
+import { displayAtPly, totalPlies } from "@/lib/plyNavigation";
 import { mergeApiMoves } from "@/lib/gameMerge";
 import { gamesApi, ratingsApi } from "@/lib/api";
 import { usePreferencesStore } from "@/store/preferences";
@@ -175,6 +176,9 @@ function PlayContent() {
   const [setupCategory, setSetupCategory] = useState<PlaySetupCategory>("game");
   const [aiStarting, setAiStarting] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
+  /** null = suivre la partie en direct ; sinon nombre de demi-coups affichés. */
+  const [viewPly, setViewPly] = useState<number | null>(null);
+  const [allowFenSound, setAllowFenSound] = useState(true);
   const [gameEndOverlay, setGameEndOverlay] = useState<{
     outcome: PlayerOutcome;
     terminationReason?: string | null;
@@ -401,6 +405,72 @@ function PlayContent() {
     movesLenRef.current = moves.length;
     return displayCacheRef.current;
   }, [gameData.fen, gameData.moves]);
+
+  const moveCount = totalPlies(gameData.moves);
+  const isViewingHistory = viewPly != null && viewPly < moveCount;
+  const effectivePly = viewPly == null ? moveCount : viewPly;
+
+  const boardDisplay = useMemo(() => {
+    if (!isViewingHistory) return panelDisplay;
+    return displayAtPly(gameData.moves, viewPly, gameData.fen);
+  }, [isViewingHistory, panelDisplay, gameData.moves, gameData.fen, viewPly]);
+
+  const seekToPly = useCallback(
+    (ply: number) => {
+      setAllowFenSound(false);
+      const clamped = Math.max(0, Math.min(moveCount, ply));
+      setViewPly(clamped >= moveCount ? null : clamped);
+    },
+    [moveCount]
+  );
+
+  const goLive = useCallback(() => {
+    setAllowFenSound(false);
+    setViewPly(null);
+  }, []);
+
+  useEffect(() => {
+    setViewPly(null);
+    setAllowFenSound(true);
+  }, [gameId]);
+
+  useEffect(() => {
+    if (viewPly != null && viewPly > moveCount) {
+      setViewPly(null);
+    }
+  }, [moveCount, viewPly]);
+
+  useEffect(() => {
+    if (!allowFenSound) {
+      const id = window.requestAnimationFrame(() => setAllowFenSound(true));
+      return () => window.cancelAnimationFrame(id);
+    }
+  }, [allowFenSound, boardDisplay.fen]);
+
+  useEffect(() => {
+    if (reviewOpen || !gameId || gameData.moves == null) return;
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement | null)?.isContentEditable) {
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        seekToPly(effectivePly - 1);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        seekToPly(effectivePly + 1);
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        seekToPly(0);
+      } else if (e.key === "End") {
+        e.preventDefault();
+        goLive();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [reviewOpen, gameId, gameData.moves, effectivePly, seekToPly, goLive]);
 
   const turn = turnFromFen(gameData.fen);
 
@@ -933,6 +1003,7 @@ function PlayContent() {
     !gameId ||
     gameCompleted ||
     movePending ||
+    isViewingHistory ||
     (!isVoteChess && !isMyTurn);
 
   const applyOptimisticUci = useCallback((uci: string) => {
@@ -1669,12 +1740,14 @@ function PlayContent() {
               enabled={Boolean(isVsAi && gameId && aiCommentsEnabled)}
             />
             <PlayBoardSection
-            fen={gameData.fen}
-            moves={gameData.moves}
+            fen={boardDisplay.fen}
+            clockFen={gameData.fen}
+            moves={isViewingHistory ? (gameData.moves ?? []).slice(0, viewPly ?? 0) : gameData.moves}
+            lastMove={boardDisplay.lastMove}
             orientation={orientation}
             onMove={handleMove}
             onPremove={telemetryEnabled ? notePremove : undefined}
-            enablePremoves={telemetryEnabled && isLiveHuman}
+            enablePremoves={telemetryEnabled && isLiveHuman && !isViewingHistory}
             disabled={boardDisabled}
             playerColor={playerColor as "w" | "b"}
             showClock={Boolean(gameId && gameIsTimed)}
@@ -1689,8 +1762,10 @@ function PlayContent() {
             onFlag={handleClockFlag}
             topPlayer={topPlayerConfig}
             bottomPlayer={bottomPlayerConfig}
-            captured={panelDisplay.captured}
+            captured={boardDisplay.captured}
             blindMode={blindMode}
+            playSoundOnFenChange={allowFenSound && !isViewingHistory}
+            areArrowsAllowed
           />
           </div>
           {gameCompleted &&
@@ -2001,6 +2076,13 @@ function PlayContent() {
               isCheck={panelDisplay.isCheck}
               turn={panelDisplay.turn}
               openingName={openingName}
+              currentPly={effectivePly}
+              totalPlies={moveCount}
+              isLive={!isViewingHistory}
+              enablePlyNav={Boolean(gameId && moveCount > 0 && !reviewOpen)}
+              viewingHistory={isViewingHistory}
+              onSelectPly={seekToPly}
+              onGoLive={goLive}
             />
             {isVsAi && !gameId && (
               <div className="glass-card p-4 hidden lg:block">

@@ -2,7 +2,12 @@
 
 import clsx from "clsx";
 import { Volume2 } from "lucide-react";
-import { playChessSound, setChessSoundTheme } from "@/lib/chessSounds";
+import {
+  playChessSound,
+  setChessSoundTheme,
+  setChessSoundVolume,
+  setMateSoundTheme,
+} from "@/lib/chessSounds";
 import { SOUND_THEMES, type SoundThemeId } from "@/lib/soundThemes";
 import { usePreferencesStore } from "@/store/preferences";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -18,7 +23,14 @@ export function SoundThemePicker({
   className,
   showHeader = true,
 }: SoundThemePickerProps) {
-  const { soundTheme, setSoundTheme } = usePreferencesStore();
+  const {
+    soundTheme,
+    setSoundTheme,
+    mateSoundTheme,
+    setMateSoundTheme: setMatePref,
+    soundVolume,
+    setSoundVolume,
+  } = usePreferencesStore();
   const { t } = useTranslation();
 
   const select = (id: SoundThemeId) => {
@@ -28,6 +40,27 @@ export function SoundThemePicker({
       playChessSound("move", true);
     }
   };
+
+  const selectMate = (id: SoundThemeId | null) => {
+    setMatePref(id);
+    setMateSoundTheme(id);
+    if (id !== "silent" && (id != null || soundTheme !== "silent")) {
+      playChessSound("checkmate", true);
+    }
+  };
+
+  const onVolume = (value: number) => {
+    setSoundVolume(value);
+    setChessSoundVolume(value);
+  };
+
+  const mateOptions: Array<{ id: SoundThemeId | null; label: string }> = [
+    { id: null, label: t("sound.mate.inherit") },
+    ...SOUND_THEMES.map((theme) => ({
+      id: theme.id as SoundThemeId,
+      label: t(theme.labelKey),
+    })),
+  ];
 
   return (
     <div className={className}>
@@ -41,6 +74,33 @@ export function SoundThemePicker({
           </p>
         </>
       )}
+
+      <div className={clsx("mb-3", compact ? "space-y-1" : "space-y-2")}>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="sound-volume" className={clsx("opacity-70", compact ? "text-xs" : "text-sm")}>
+            {t("sound.volume")}
+          </label>
+          <span className="text-[11px] font-mono opacity-50 tabular-nums">
+            {Math.round(soundVolume * 100)}%
+          </span>
+        </div>
+        <input
+          id="sound-volume"
+          type="range"
+          min={0}
+          max={100}
+          step={5}
+          value={Math.round(soundVolume * 100)}
+          onChange={(e) => onVolume(Number(e.target.value) / 100)}
+          onMouseUp={() => {
+            if (soundTheme !== "silent") playChessSound("move", true);
+          }}
+          onTouchEnd={() => {
+            if (soundTheme !== "silent") playChessSound("move", true);
+          }}
+          className="w-full accent-africhess-gold"
+        />
+      </div>
 
       <div
         className={clsx(
@@ -80,6 +140,68 @@ export function SoundThemePicker({
             </button>
           );
         })}
+      </div>
+
+      <div className={clsx(compact ? "mt-3" : "mt-4")}>
+        <p className={clsx("font-medium mb-1.5", compact ? "text-xs" : "text-sm")}>
+          {t("sound.mate.title")}
+        </p>
+        <p className={clsx("opacity-55 mb-2", compact ? "text-[10px]" : "text-xs")}>
+          {t("sound.mate.hint")}
+        </p>
+        <div
+          className={clsx(
+            "grid gap-1.5",
+            compact ? "grid-cols-3 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-3"
+          )}
+          role="listbox"
+          aria-label={t("sound.mate.title")}
+        >
+          {mateOptions.map((opt) => {
+            const selected = mateSoundTheme === opt.id;
+            return (
+              <button
+                key={opt.id ?? "inherit"}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                onClick={() => selectMate(opt.id)}
+                className={clsx(
+                  "rounded-lg border px-2 py-1.5 text-left transition-colors",
+                  compact ? "text-[10px]" : "text-xs",
+                  selected
+                    ? "border-africhess-terracotta bg-africhess-terracotta/15 text-africhess-terracotta"
+                    : "border-white/12 hover:border-white/25 opacity-90"
+                )}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => playChessSound("move", true)}
+            className="text-[11px] px-2 py-1 rounded-md border border-white/15 hover:border-africhess-gold/40"
+          >
+            {t("sound.preview.move")}
+          </button>
+          <button
+            type="button"
+            onClick={() => playChessSound("check", true)}
+            className="text-[11px] px-2 py-1 rounded-md border border-white/15 hover:border-africhess-gold/40"
+          >
+            {t("sound.preview.check")}
+          </button>
+          <button
+            type="button"
+            onClick={() => playChessSound("checkmate", true)}
+            className="text-[11px] px-2 py-1 rounded-md border border-white/15 hover:border-africhess-terracotta/50"
+          >
+            {t("sound.preview.mate")}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -11,7 +11,7 @@ import { initAiSpeech } from "@/lib/aiSpeech";
 import { hydrateClientStoresFromStorage } from "@/lib/clientHydration";
 import { refreshAuthTokens } from "@/lib/api";
 import { JWT_REFRESH_HTTPONLY } from "@/lib/authConfig";
-import { setChessSoundTheme } from "@/lib/chessSounds";
+import { setChessSoundTheme, setChessSoundVolume, setMateSoundTheme } from "@/lib/chessSounds";
 import { unlockLogoLandAudio } from "@/lib/logoIntroSound";
 import { usePreferencesStore } from "@/store/preferences";
 import Cookies from "js-cookie";
@@ -19,6 +19,8 @@ import Cookies from "js-cookie";
 export function Providers({ children }: { children: React.ReactNode }) {
   const { fetchProfile, darkMode, lowBandwidth, locale, logout } = useAuthStore();
   const soundTheme = usePreferencesStore((s) => s.soundTheme);
+  const mateSoundTheme = usePreferencesStore((s) => s.mateSoundTheme);
+  const soundVolume = usePreferencesStore((s) => s.soundVolume);
 
   useLayoutEffect(() => {
     hydrateClientStoresFromStorage();
@@ -75,6 +77,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setChessSoundTheme(soundTheme);
   }, [soundTheme]);
+
+  useEffect(() => {
+    setMateSoundTheme(mateSoundTheme);
+  }, [mateSoundTheme]);
+
+  useEffect(() => {
+    setChessSoundVolume(soundVolume);
+  }, [soundVolume]);
 
   useEffect(() => {
     initAiSpeech();

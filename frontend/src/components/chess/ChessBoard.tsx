@@ -440,23 +440,32 @@ function ChessBoardInner({
 
   const onBoardKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (disabled) return;
+      if (disabled && !blindMode) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          clearAnnotations();
+        }
+        return;
+      }
       const file = focusSquare.charCodeAt(0) - 97;
       const rank = parseInt(focusSquare[1], 10) - 1;
 
-      if (e.key === "ArrowLeft" && file > 0) {
+      /* Flèches clavier = navigation des coups (page play) sauf mode aveugle. */
+      const arrowNav = blindMode;
+      if (arrowNav && e.key === "ArrowLeft" && file > 0) {
         e.preventDefault();
         setFocusSquare(`${String.fromCharCode(97 + file - 1)}${rank + 1}` as Square);
-      } else if (e.key === "ArrowRight" && file < 7) {
+      } else if (arrowNav && e.key === "ArrowRight" && file < 7) {
         e.preventDefault();
         setFocusSquare(`${String.fromCharCode(97 + file + 1)}${rank + 1}` as Square);
-      } else if (e.key === "ArrowUp" && rank < 7) {
+      } else if (arrowNav && e.key === "ArrowUp" && rank < 7) {
         e.preventDefault();
         setFocusSquare(`${focusSquare[0]}${rank + 2}` as Square);
-      } else if (e.key === "ArrowDown" && rank > 0) {
+      } else if (arrowNav && e.key === "ArrowDown" && rank > 0) {
         e.preventDefault();
         setFocusSquare(`${focusSquare[0]}${rank}` as Square);
       } else if (e.key === "Enter" || e.key === " ") {
+        if (disabled) return;
         e.preventDefault();
         onSquareClick(focusSquare);
       } else if (e.key === "Escape") {
@@ -466,7 +475,7 @@ function ChessBoardInner({
         clearAnnotations();
       }
     },
-    [disabled, focusSquare, onSquareClick, clearAnnotations]
+    [disabled, focusSquare, onSquareClick, clearAnnotations, blindMode]
   );
 
   const customSquareStyles = useMemo(() => {
