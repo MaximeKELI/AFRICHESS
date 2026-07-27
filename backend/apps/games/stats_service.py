@@ -14,14 +14,31 @@ from apps.ratings.models import PlayerRating, RatingHistory
 
 from .models import Game, GameAnalysis
 
-def opening_from_moves(sans: list[str]) -> str:
-    """Nom français de l'ouverture, reconnu via le livre complet (~3800 lignes)."""
+def _is_defense_name_fr(name: str) -> bool:
+    return "défense" in name.strip().lower()
+
+
+def _lookup_opening_name_fr(sans: list[str]) -> tuple[str, str]:
     from .openings_data import lookup_opening
 
+    info = lookup_opening(sans, locale="fr")
+    return str(info.get("name") or ""), str(info.get("eco") or "")
+
+
+def opening_from_moves(sans: list[str]) -> str:
+    """Nom français de l'ouverture, reconnu via le livre complet (~3800 lignes)."""
     if not sans:
         return "Position initiale"
-    name = lookup_opening(sans, locale="fr").get("name")
-    return name or (f"Après {sans[0]}" if sans else "Milieu de partie")
+    name, _eco = _lookup_opening_name_fr(sans)
+    if not name:
+        return f"Après {sans[0]}" if sans else "Milieu de partie"
+
+    # Affiche aussi l'ouverture blanche quand la ligne reconnue est une défense noire.
+    if len(sans) >= 2 and _is_defense_name_fr(name):
+        first_name, _ = _lookup_opening_name_fr([sans[0]])
+        if first_name and first_name != name:
+            return f"{first_name} • {name}"
+    return name
 
 
 def effective_cadence(game: Game) -> str:

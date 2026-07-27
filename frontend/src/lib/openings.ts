@@ -32,6 +32,24 @@ function normalizedMoves(moves: string[]): string[] {
   return moves.map(normSan).filter(Boolean);
 }
 
+function lookupLongestName(
+  norm: string[],
+  locale: "fr" | "en"
+): { name: string; eco: string } | null {
+  for (let i = norm.length; i > 0; i -= 1) {
+    const entry = byKey.get(norm.slice(0, i).join(" "));
+    if (entry) {
+      return { name: locale === "fr" ? entry.fr : entry.en || entry.fr, eco: entry.eco };
+    }
+  }
+  return null;
+}
+
+function isDefenseName(name: string, locale: "fr" | "en"): boolean {
+  const n = name.trim().toLowerCase();
+  return locale === "fr" ? n.includes("défense") : n.includes("defense");
+}
+
 /** Retourne le nom + ECO de l'ouverture reconnue (plus long préfixe nommé). */
 export function openingInfoFromMoves(
   moves: string[],
@@ -41,11 +59,17 @@ export function openingInfoFromMoves(
   if (norm.length === 0) {
     return { name: locale === "fr" ? "Position initiale" : "Starting position", eco: "" };
   }
-  for (let i = norm.length; i > 0; i -= 1) {
-    const entry = byKey.get(norm.slice(0, i).join(" "));
-    if (entry) {
-      return { name: locale === "fr" ? entry.fr : entry.en || entry.fr, eco: entry.eco };
+  const full = lookupLongestName(norm, locale);
+  if (full) {
+    // Pour éviter l'impression "uniquement ouvertures noires", on affiche
+    // aussi l'ouverture blanche de départ quand le nom principal est une défense.
+    if (norm.length >= 2 && isDefenseName(full.name, locale)) {
+      const first = lookupLongestName([norm[0]], locale);
+      if (first && first.name && first.name !== full.name) {
+        return { name: `${first.name} • ${full.name}`, eco: full.eco };
+      }
     }
+    return full;
   }
   const first = norm[0];
   return { name: first.length <= 4 ? `Après ${first}` : "Milieu de partie", eco: "" };

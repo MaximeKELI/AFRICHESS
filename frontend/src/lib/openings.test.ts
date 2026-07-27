@@ -7,7 +7,7 @@ describe("openingNameFromMoves", () => {
   });
 
   it("detects sicilian", () => {
-    expect(openingNameFromMoves(["e4", "c5"])).toBe("Défense sicilienne");
+    expect(openingNameFromMoves(["e4", "c5"])).toBe("Partie du pion roi • Défense sicilienne");
   });
 
   it("detects the Queen's Gambit Declined by full line", () => {
@@ -25,7 +25,7 @@ describe("openingNameFromMoves", () => {
   });
 
   it("supports English names", () => {
-    expect(openingNameFromMoves(["e4", "c5"], "en")).toBe("Sicilian Defense");
+    expect(openingNameFromMoves(["e4", "c5"], "en")).toBe("King's Pawn Game • Sicilian Defense");
   });
 
   it("falls back gracefully for an unknown token", () => {

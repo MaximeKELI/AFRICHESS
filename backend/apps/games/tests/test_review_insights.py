@@ -66,7 +66,9 @@ class OpeningFromMovesTests(SimpleTestCase):
         self.assertIn("oiseau", opening_from_moves(["f4"]).lower())
 
     def test_sicilian_named(self):
-        self.assertIn("sicil", opening_from_moves(["e4", "c5"]).lower())
+        name = opening_from_moves(["e4", "c5"]).lower()
+        self.assertIn("sicil", name)
+        self.assertIn("pion roi", name)
 
     def test_queens_gambit_named(self):
         name = opening_from_moves(["d4", "d5", "c4"]).lower()

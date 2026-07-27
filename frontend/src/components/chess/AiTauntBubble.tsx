@@ -13,7 +13,7 @@ export function AiTauntBubble({ comment, enabled }: AiTauntBubbleProps) {
   if (!enabled || !comment?.byAi) return null;
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-center px-2 pt-1">
+    <div className="pointer-events-none absolute right-0 top-0 z-20 flex justify-end px-2 pt-1">
       <AnimatePresence mode="wait">
         <motion.div
           key={`${comment.moveNumber}-${comment.san}`}
