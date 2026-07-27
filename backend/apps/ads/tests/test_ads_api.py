@@ -47,8 +47,10 @@ class AdSlideApiTests(TestCase):
         )
         res = self.client.get("/api/ads/active/")
         self.assertEqual(res.status_code, 200)
-        titles = [s["title"] for s in res.data]
+        titles = [s["title"] for s in res.data["slides"]]
         self.assertEqual(titles, ["Live"])
+        self.assertIn("settings", res.data)
+        self.assertTrue(res.data["settings"]["enabled"])
 
     def test_staff_can_create_anonymous_cannot(self):
         res = self.client.post(

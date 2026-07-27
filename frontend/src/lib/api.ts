@@ -406,33 +406,79 @@ export const adminApi = {
   adsDelete: (id: number) => api.delete(`/ads/admin/slides/${id}/`),
   adsReorder: (order: number[]) =>
     api.post("/ads/admin/slides/reorder/", { order }),
+  adsBulk: (action: "activate" | "deactivate" | "delete", ids: number[]) =>
+    api.post("/ads/admin/slides/bulk/", { action, ids }),
+  adsDuplicate: (id: number) =>
+    api.post<AdSlideAdmin>(`/ads/admin/slides/${id}/duplicate/`),
+  adsSummary: () => api.get<AdsSummary>("/ads/admin/summary/"),
+  adsSettings: () => api.get<AdCarouselSettings>("/ads/admin/settings/"),
+  adsSettingsUpdate: (body: Partial<AdCarouselSettings>) =>
+    api.patch<AdCarouselSettings>("/ads/admin/settings/", body),
 };
 
 export interface AdSlidePublic {
   id: number;
   title: string;
+  alt: string;
   image_url: string;
   link_url: string;
+  open_in_new_tab: boolean;
+  sponsor_label: string;
+  duration_ms: number | null;
   order: number;
 }
 
 export interface AdSlideAdmin {
   id: number;
   title: string;
+  alt_text: string;
   image_url: string | null;
   link_url: string;
+  open_in_new_tab: boolean;
+  sponsor_label: string;
+  notes: string;
   is_active: boolean;
   order: number;
+  duration_ms: number | null;
   starts_at: string | null;
   ends_at: string | null;
+  click_count: number;
+  impression_count: number;
+  schedule_status: "inactive" | "scheduled" | "live" | "expired";
+  is_live: boolean;
   created_by: number | null;
   created_by_username: string | null;
   created_at: string;
   updated_at: string;
 }
 
+export interface AdCarouselSettings {
+  enabled: boolean;
+  default_duration_ms: number;
+  pause_on_hover: boolean;
+  show_dots: boolean;
+  show_arrows: boolean;
+  max_height_px: number;
+  updated_at?: string;
+}
+
+export interface AdsSummary {
+  total: number;
+  active: number;
+  inactive: number;
+  live: number;
+  scheduled: number;
+  expired: number;
+  clicks: number;
+  impressions: number;
+  carousel_enabled: boolean;
+}
+
 export const adsApi = {
-  active: () => api.get<AdSlidePublic[]>("/ads/active/"),
+  active: () =>
+    api.get<{ settings: AdCarouselSettings; slides: AdSlidePublic[] }>("/ads/active/"),
+  trackClick: (id: number) => api.post(`/ads/track/click/${id}/`),
+  trackImpressions: (ids: number[]) => api.post("/ads/track/impressions/", { ids }),
 };
 
 export const ratingsApi = {
