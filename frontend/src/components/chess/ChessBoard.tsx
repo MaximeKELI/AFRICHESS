@@ -738,7 +738,8 @@ function ChessBoardInner({
       style={{
         touchAction: "manipulation",
         WebkitTapHighlightColor: "transparent",
-        width: "100%",
+        /* Largeur fixe (préférence utilisateur) — pas de 100% qui suit le layout. */
+        width: boardWidth > 0 ? boardWidth : "100%",
         maxWidth: boardWidth > 0 ? boardWidth : undefined,
       }}
     >
@@ -750,7 +751,6 @@ function ChessBoardInner({
         style={{
           width: boardWidth,
           height: boardWidth,
-          maxWidth: "100%",
           ...(lowBandwidth
             ? undefined
             : theme.wood?.glossy
