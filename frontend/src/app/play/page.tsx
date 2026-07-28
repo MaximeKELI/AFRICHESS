@@ -183,6 +183,10 @@ function PlayContent() {
   const [allowFenSound, setAllowFenSound] = useState(true);
   /** Remount du plateau après reprise live (évite un board coincé après seek). */
   const [boardResetKey, setBoardResetKey] = useState(0);
+  /** Indice moteur (partie vs IA) — flèche verte. */
+  const [hintArrow, setHintArrow] = useState<{ from: string; to: string } | null>(null);
+  const [hintLoading, setHintLoading] = useState(false);
+  const [hintSan, setHintSan] = useState<string | null>(null);
   /** UCI en attente (prémove) — envoyé dès que c'est mon tour. */
   const [premoveUci, setPremoveUci] = useState<string | null>(null);
   const premoveUciRef = useRef<string | null>(null);
@@ -486,6 +490,8 @@ function PlayContent() {
     setAllowFenSound(true);
     setPremoveUci(null);
     premoveUciRef.current = null;
+    setHintArrow(null);
+    setHintSan(null);
   }, [gameId]);
 
   /** Remount unique du plateau à la sortie de l'historique (évite un board coincé). */
@@ -1314,11 +1320,20 @@ function PlayContent() {
     try {
       const { data } = await gamesApi.undo(gameId);
       applyGameResponse(data);
+      setHintArrow(null);
+      setHintSan(null);
       setStatus(t("play.status.undoDone"));
     } catch {
       setStatus(t("play.status.undoFailed"));
     }
   };
+
+  useEffect(() => {
+    if (!isMyTurn) {
+      setHintArrow(null);
+      setHintSan(null);
+    }
+  }, [isMyTurn, gameData.fen]);
 
   const crazyhousePockets = useMemo(
     () =>
@@ -1331,6 +1346,8 @@ function PlayContent() {
   const handleMove = useCallback(
     async (uci: string) => {
       if (!gameId || gameCompleted) return;
+      setHintArrow(null);
+      setHintSan(null);
       if (isVoteChess) {
         if (movePending) return;
         setMovePending(true);
@@ -1938,6 +1955,7 @@ function PlayContent() {
             onGoLive={goLive}
             boardResetKey={boardResetKey}
             showAnnotationToolbar={Boolean(gameId && gameActive)}
+            hintArrow={hintArrow}
           />
           </div>
           {gameCompleted &&
@@ -2210,6 +2228,18 @@ function PlayContent() {
           )}
           {isVsAi && gameActive && (
             <>
+              <button
+                type="button"
+                onClick={() => void requestHint()}
+                disabled={!isMyTurn || hintLoading || isViewingHistory}
+                className="w-full block py-2 text-sm rounded-lg border border-africhess-gold/50 text-africhess-gold hover:bg-africhess-gold/10 disabled:opacity-40"
+              >
+                {hintLoading
+                  ? t("play.hint.loading")
+                  : hintSan
+                    ? t("play.hint.again", { move: hintSan })
+                    : t("play.hint.request")}
+              </button>
               <button
                 type="button"
                 onClick={handleUndo}
