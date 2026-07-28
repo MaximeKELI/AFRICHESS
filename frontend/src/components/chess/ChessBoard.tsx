@@ -775,6 +775,10 @@ function ChessBoardInner({
                   boxShadow: `0 8px 24px -6px rgb(0 0 0 / 0.25), 0 0 0 1px ${accentRgba(theme.accent, 0.25)}`,
                 }),
         }}
+        onPointerDown={onBoardPointerDown}
+        onPointerMove={onBoardPointerMove}
+        onPointerUp={onBoardPointerUp}
+        onPointerCancel={onBoardPointerUp}
       >
         <Chessboard
           boardWidth={boardWidth}
@@ -795,10 +799,10 @@ function ChessBoardInner({
           customBoardStyle={boardStyle}
           customNotationStyle={notationStyle}
           animationDuration={pieceAnimMs}
-          arePiecesDraggable={!disabled}
+          arePiecesDraggable={!disabled && annotationTool === "move"}
           areArrowsAllowed={areArrowsAllowed}
           customArrowColor={arrowBrush}
-          {...(customArrows?.length ? { customArrows } : {})}
+          customArrows={mergedCustomArrows.length ? mergedCustomArrows : undefined}
           autoPromoteToQueen={false}
           showBoardNotation={true}
           snapToCursor={!isCoarse}
@@ -820,6 +824,18 @@ function ChessBoardInner({
           />
         )}
       </div>
+      {showAnnotationToolbar && areArrowsAllowed && (
+        <div className="mt-2 space-y-1">
+          <BoardAnnotationToolbar
+            tool={annotationTool}
+            arrowColor={arrowColorId}
+            onToolChange={setAnnotationTool}
+            onArrowColorChange={setArrowColorId}
+            onClear={clearAnnotations}
+          />
+          <p className="text-[10px] opacity-55 px-0.5">{t("chess.arrows.hint")}</p>
+        </div>
+      )}
       <p className="sr-only" aria-live="polite" aria-atomic="true">
         {boardStatus}
         {blindMode ? ` ${t("chess.board.focus")} ${focusSquare}` : ""}
