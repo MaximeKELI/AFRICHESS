@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useState, useRef } from "react";
+import clsx from "clsx";
 import { Chessboard } from "react-chessboard";
 import type { Arrow, CustomSquareProps } from "react-chessboard/dist/chessboard/types";
 import { Chess, Square } from "chess.js";
@@ -120,8 +121,7 @@ function ChessBoardInner({
   const [arrowColorId, setArrowColorId] = useState<ArrowBrushId>("orange");
   const [annotationTool, setAnnotationTool] = useState<BoardAnnotationTool>("move");
   const [userArrows, setUserArrows] = useState<Arrow[]>([]);
-  const [arrowPreview, setArrowPreview] = useState<Arrow | null>(null);
-  const arrowDrawingFrom = useRef<Square | null>(null);
+  const [arrowFromSquare, setArrowFromSquare] = useState<Square | null>(null);
   const arrowBrush = ARROW_BRUSHES[arrowColorId];
   const [markedSquares, setMarkedSquares] = useState<Record<string, string>>({});
   const theme = getBoardTheme(boardThemeId);
@@ -151,11 +151,13 @@ function ChessBoardInner({
   }, [soundsOn]);
 
   useEffect(() => {
-    if (!areArrowsAllowed) return;
+    if (!areArrowsAllowed || annotationTool !== "move") return;
     const syncBrush = (e: KeyboardEvent | MouseEvent) => {
-      if (annotationTool !== "move") return;
-      const id = brushIdFromModifiers(e);
-      setArrowColorId(id);
+      const color = arrowBrushFromModifiers(e);
+      const entry = (Object.entries(ARROW_BRUSHES) as [ArrowBrushId, string][]).find(
+        ([, v]) => v === color
+      );
+      if (entry) setArrowColorId(entry[0]);
     };
     window.addEventListener("keydown", syncBrush);
     window.addEventListener("keyup", syncBrush);
@@ -170,29 +172,28 @@ function ChessBoardInner({
   const clearAnnotations = useCallback(() => {
     setMarkedSquares({});
     setUserArrows([]);
-    setArrowPreview(null);
-    arrowDrawingFrom.current = null;
+    setArrowFromSquare(null);
   }, []);
 
-  function brushIdFromModifiers(e: {
-    shiftKey: boolean;
-    altKey: boolean;
-    ctrlKey: boolean;
-    metaKey: boolean;
-  }): ArrowBrushId {
-    const color = arrowBrushFromModifiers(e);
-    const entry = (Object.entries(ARROW_BRUSHES) as [ArrowBrushId, string][]).find(
-      ([, v]) => v === color
-    );
-    return entry?.[0] ?? "green";
-  }
+  const selectAnnotationTool = useCallback((tool: BoardAnnotationTool) => {
+    setAnnotationTool(tool);
+    setArrowFromSquare(null);
+    setSelectedSquare(null);
+    setLegalTargets([]);
+  }, []);
 
-  function squareFromEventTarget(target: EventTarget | null): Square | null {
-    const el = (target as HTMLElement | null)?.closest?.("[data-square]");
-    const sq = el?.getAttribute("data-square");
-    if (!sq || sq.length !== 2) return null;
-    return sq as Square;
-  }
+  const commitArrow = useCallback(
+    (from: Square, to: Square) => {
+      if (from === to) return;
+      const color = ARROW_BRUSHES[arrowColorId];
+      setUserArrows((prev) => {
+        const exists = prev.some((a) => a[0] === from && a[1] === to);
+        if (exists) return prev.filter((a) => !(a[0] === from && a[1] === to));
+        return [...prev, [from, to, color]];
+      });
+    },
+    [arrowColorId]
+  );
 
   const toggleCircle = useCallback(
     (square: Square) => {
@@ -207,57 +208,6 @@ function ChessBoardInner({
     [arrowColorId]
   );
 
-  const commitArrow = useCallback((from: Square, to: Square) => {
-    if (from === to) return;
-    const color = ARROW_BRUSHES[arrowColorId];
-    setUserArrows((prev) => {
-      const exists = prev.some((a) => a[0] === from && a[1] === to);
-      if (exists) return prev.filter((a) => !(a[0] === from && a[1] === to));
-      return [...prev, [from, to, color]];
-    });
-  }, [arrowColorId]);
-
-  const onBoardPointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      if (!areArrowsAllowed || annotationTool !== "arrow") return;
-      if (e.button !== 0) return;
-      const sq = squareFromEventTarget(e.target);
-      if (!sq) return;
-      e.preventDefault();
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-      arrowDrawingFrom.current = sq;
-      setArrowPreview([sq, sq, ARROW_BRUSHES[arrowColorId]]);
-    },
-    [areArrowsAllowed, annotationTool, arrowColorId]
-  );
-
-  const onBoardPointerMove = useCallback(
-    (e: React.PointerEvent) => {
-      const from = arrowDrawingFrom.current;
-      if (!from) return;
-      const sq = squareFromEventTarget(e.target) ?? from;
-      setArrowPreview([from, sq, ARROW_BRUSHES[arrowColorId]]);
-    },
-    [arrowColorId]
-  );
-
-  const onBoardPointerUp = useCallback(
-    (e: React.PointerEvent) => {
-      const from = arrowDrawingFrom.current;
-      if (!from) return;
-      const to = squareFromEventTarget(e.target) ?? from;
-      commitArrow(from, to);
-      arrowDrawingFrom.current = null;
-      setArrowPreview(null);
-      try {
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-      } catch {
-        /* déjà relâché */
-      }
-    },
-    [commitArrow]
-  );
-
   const onSquareRightClick = useCallback(
     (square: Square) => {
       if (premove) {
@@ -265,7 +215,7 @@ function ChessBoardInner({
         return;
       }
       if (!areArrowsAllowed) return;
-      const color = arrowBrush;
+      const color = ARROW_BRUSHES[arrowColorId];
       setMarkedSquares((prev) => {
         const next = { ...prev };
         if (next[square] === color) delete next[square];
@@ -273,7 +223,7 @@ function ChessBoardInner({
         return next;
       });
     },
-    [areArrowsAllowed, arrowBrush, premove, onClearPremove]
+    [areArrowsAllowed, arrowColorId, premove, onClearPremove]
   );
 
   const squareBase = useMemo(() => getThemedSquareStyles(theme), [theme]);
@@ -313,15 +263,13 @@ function ChessBoardInner({
   useEffect(() => {
     setMarkedSquares({});
     setUserArrows([]);
-    setArrowPreview(null);
-    arrowDrawingFrom.current = null;
+    setArrowFromSquare(null);
   }, [displayFen]);
 
   const mergedCustomArrows = useMemo(() => {
     const extra = customArrows ?? [];
-    const preview = arrowPreview ? [arrowPreview] : [];
-    return [...extra, ...userArrows, ...preview];
-  }, [customArrows, userArrows, arrowPreview]);
+    return [...extra, ...userArrows];
+  }, [customArrows, userArrows]);
 
   const positionChess = useMemo(() => chessFromDisplayFen(displayFen), [displayFen]);
   /** En mode puzzle (serverValidated), le FEN affiché est la source de vérité — évite le décalage au 2e puzzle. */
@@ -527,13 +475,24 @@ function ChessBoardInner({
 
   const onSquareClick = useCallback(
     (square: Square) => {
-      if (annotationTool === "circle" && areArrowsAllowed) {
+      if (areArrowsAllowed && annotationTool === "circle") {
         toggleCircle(square);
         return;
       }
-      if (annotationTool === "arrow") return;
 
-      if (Object.keys(markedSquares).length) {
+      if (areArrowsAllowed && annotationTool === "arrow") {
+        if (!arrowFromSquare) {
+          setArrowFromSquare(square);
+          return;
+        }
+        commitArrow(arrowFromSquare, square);
+        setArrowFromSquare(null);
+        /* Reprendre le jeu immédiatement après une flèche (évite le blocage). */
+        setAnnotationTool("move");
+        return;
+      }
+
+      if (Object.keys(markedSquares).length || userArrows.length) {
         clearAnnotations();
       }
       if (disabled) return;
@@ -573,19 +532,25 @@ function ChessBoardInner({
       pendingDrop,
       onDropAtSquare,
       markedSquares,
+      userArrows.length,
       clearAnnotations,
       annotationTool,
       areArrowsAllowed,
       toggleCircle,
+      arrowFromSquare,
+      commitArrow,
     ]
   );
 
   const onDrop = useCallback(
     (sourceSquare: Square, targetSquare: Square) => {
-      if (disabled || annotationTool !== "move") return false;
+      if (disabled) return false;
+      if (annotationTool !== "move") {
+        selectAnnotationTool("move");
+      }
       return applyMove(sourceSquare, targetSquare);
     },
-    [disabled, applyMove, annotationTool]
+    [disabled, applyMove, annotationTool, selectAnnotationTool]
   );
 
   const onBoardKeyDown = useCallback(
@@ -622,11 +587,21 @@ function ChessBoardInner({
         e.preventDefault();
         setSelectedSquare(null);
         setLegalTargets([]);
+        setArrowFromSquare(null);
+        selectAnnotationTool("move");
         clearAnnotations();
         onClearPremove?.();
       }
     },
-    [disabled, focusSquare, onSquareClick, clearAnnotations, blindMode, onClearPremove]
+    [
+      disabled,
+      focusSquare,
+      onSquareClick,
+      clearAnnotations,
+      blindMode,
+      onClearPremove,
+      selectAnnotationTool,
+    ]
   );
 
   const customSquareStyles = useMemo(() => {
@@ -679,6 +654,14 @@ function ChessBoardInner({
       };
     }
 
+    if (arrowFromSquare) {
+      styles[arrowFromSquare] = {
+        ...styles[arrowFromSquare],
+        boxShadow: `inset 0 0 0 3px ${ARROW_BRUSHES[arrowColorId]}`,
+        background: `radial-gradient(circle at center, ${ARROW_BRUSHES[arrowColorId]} 0%, transparent 55%)`,
+      };
+    }
+
     if (selectedSquare) {
       styles[selectedSquare] = { ...squareStyles.selected };
     }
@@ -710,7 +693,7 @@ function ChessBoardInner({
     }
 
     return styles;
-  }, [lastMove, premove, reviewHighlight, selectedSquare, legalTargets, activeChess, squareStyles, lowBandwidth, focusSquare, disabled, theme.accent, isCoarse, markedSquares]);
+  }, [lastMove, premove, reviewHighlight, selectedSquare, legalTargets, activeChess, squareStyles, lowBandwidth, focusSquare, disabled, theme.accent, isCoarse, markedSquares, arrowFromSquare, arrowColorId]);
 
   const notationStyle = useMemo(
     () => ({
@@ -760,7 +743,10 @@ function ChessBoardInner({
       }}
     >
       <div
-        className="chess-board-frame mx-auto rounded-lg overflow-hidden shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold relative"
+        className={clsx(
+          "chess-board-frame mx-auto rounded-lg overflow-hidden shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-africhess-gold relative",
+          annotationTool === "arrow" && areArrowsAllowed && "cursor-crosshair"
+        )}
         style={{
           width: boardWidth,
           height: boardWidth,
@@ -775,10 +761,6 @@ function ChessBoardInner({
                   boxShadow: `0 8px 24px -6px rgb(0 0 0 / 0.25), 0 0 0 1px ${accentRgba(theme.accent, 0.25)}`,
                 }),
         }}
-        onPointerDown={onBoardPointerDown}
-        onPointerMove={onBoardPointerMove}
-        onPointerUp={onBoardPointerUp}
-        onPointerCancel={onBoardPointerUp}
       >
         <Chessboard
           boardWidth={boardWidth}
@@ -799,10 +781,10 @@ function ChessBoardInner({
           customBoardStyle={boardStyle}
           customNotationStyle={notationStyle}
           animationDuration={pieceAnimMs}
-          arePiecesDraggable={!disabled && annotationTool === "move"}
+          arePiecesDraggable={!disabled}
           areArrowsAllowed={areArrowsAllowed}
           customArrowColor={arrowBrush}
-          customArrows={mergedCustomArrows.length ? mergedCustomArrows : undefined}
+          {...(mergedCustomArrows.length ? { customArrows: mergedCustomArrows } : {})}
           autoPromoteToQueen={false}
           showBoardNotation={true}
           snapToCursor={!isCoarse}
@@ -829,11 +811,15 @@ function ChessBoardInner({
           <BoardAnnotationToolbar
             tool={annotationTool}
             arrowColor={arrowColorId}
-            onToolChange={setAnnotationTool}
+            onToolChange={selectAnnotationTool}
             onArrowColorChange={setArrowColorId}
             onClear={clearAnnotations}
           />
-          <p className="text-[10px] opacity-55 px-0.5">{t("chess.arrows.hint")}</p>
+          <p className="text-[10px] opacity-55 px-0.5">
+            {annotationTool === "arrow"
+              ? t("chess.arrows.hintArrowMode")
+              : t("chess.arrows.hint")}
+          </p>
         </div>
       )}
       <p className="sr-only" aria-live="polite" aria-atomic="true">

@@ -108,6 +108,8 @@ export interface PlayBoardCoreProps {
   areArrowsAllowed?: boolean;
   premove?: { from: string; to: string } | null;
   onClearPremove?: () => void;
+  showAnnotationToolbar?: boolean;
+  hintArrow?: { from: string; to: string } | null;
 }
 
 function PlayBoardCoreInner({
@@ -128,6 +130,8 @@ function PlayBoardCoreInner({
   areArrowsAllowed = true,
   premove = null,
   onClearPremove,
+  showAnnotationToolbar = false,
+  hintArrow = null,
 }: PlayBoardCoreProps) {
   return (
     <ChessBoard
@@ -148,6 +152,8 @@ function PlayBoardCoreInner({
       areArrowsAllowed={areArrowsAllowed}
       premove={premove}
       onClearPremove={onClearPremove}
+      showAnnotationToolbar={showAnnotationToolbar}
+      hintArrow={hintArrow}
     />
   );
 }

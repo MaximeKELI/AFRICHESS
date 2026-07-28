@@ -241,6 +241,7 @@ REST_FRAMEWORK = {
         "anon": "300/hour",
         "user": "5000/hour",
         "engine_eval": "120/hour",
+        "engine_hint": "600/hour",
         "auth": "20/hour",
         "login_burst": "10/minute",
         "analyze": "30/hour",

@@ -1937,6 +1937,7 @@ function PlayContent() {
             viewingHistory={isViewingHistory}
             onGoLive={goLive}
             boardResetKey={boardResetKey}
+            showAnnotationToolbar={Boolean(gameId && gameActive)}
           />
           </div>
           {gameCompleted &&

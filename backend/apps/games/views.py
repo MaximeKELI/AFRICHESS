@@ -42,7 +42,7 @@ from .game_access import can_analyze_game, can_play_game, can_view_game, user_is
 from .variant_utils import legal_moves_uci, parse_pockets
 from apps.common.throttles import AnalyzeThrottle
 
-from .throttling import EngineEvalThrottle
+from .throttling import EngineEvalThrottle, EngineHintThrottle
 from .services import GameService, MatchmakingService
 from .tts import synthesize_wav
 
@@ -314,6 +314,52 @@ class UndoMoveView(APIView):
             return Response(result, status=400)
         game.refresh_from_db()
         return Response(GameSerializer(game).data)
+
+
+@extend_schema(summary="Indice moteur (parties vs IA, illimité)")
+class GameHintView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [EngineHintThrottle]
+
+    def post(self, request, game_id):
+        try:
+            game = Game.objects.select_related("bot").get(id=game_id)
+        except Game.DoesNotExist:
+            return Response({"error": "Game not found"}, status=404)
+        if not can_play_game(request.user, game):
+            return Response({"error": "Forbidden"}, status=403)
+        if not game.is_vs_ai:
+            return Response({"error": "Hints only available vs AI"}, status=400)
+        if game.status != Game.Status.ACTIVE:
+            return Response({"error": "Game is not active"}, status=400)
+
+        is_white = game.white_player_id == request.user.id
+        try:
+            side = game.fen.split()[1]
+            board_turn_white = side == "w"
+        except (IndexError, AttributeError):
+            board_turn_white = True
+        if is_white != board_turn_white:
+            return Response({"error": "Not your turn"}, status=400)
+
+        target_elo = getattr(game, "ai_target_elo", None) or 2200
+        # Indice = meilleur coup (fort), pas le niveau du bot
+        move = ChessEngineService().get_best_move(
+            game.fen,
+            difficulty=18,
+            target_elo=max(int(target_elo), 2200),
+            variant=getattr(game, "variant", None) or "standard",
+        )
+        if not move or not move.uci or len(move.uci) < 4:
+            return Response({"error": "No hint available"}, status=503)
+        return Response(
+            {
+                "uci": move.uci,
+                "san": move.san,
+                "from": move.uci[:2],
+                "to": move.uci[2:4],
+            }
+        )
 
 
 @api_view(["GET"])

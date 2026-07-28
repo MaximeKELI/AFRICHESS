@@ -46,6 +46,7 @@ urlpatterns = [
     path("<uuid:game_id>/legal-moves/", views.legal_moves, name="game-legal-moves"),
     path("<uuid:game_id>/move/", views.MakeMoveView.as_view(), name="game-move"),
     path("<uuid:game_id>/undo/", views.UndoMoveView.as_view(), name="game-undo"),
+    path("<uuid:game_id>/hint/", views.GameHintView.as_view(), name="game-hint"),
     path("<uuid:game_id>/analyze/", views.AnalyzeGameView.as_view(), name="game-analyze"),
     path("<uuid:game_id>/analyze/async/", views.AnalyzeGameAsyncView.as_view(), name="game-analyze-async"),
     path("<uuid:game_id>/analyze/status/", views.AnalyzeGameStatusView.as_view(), name="game-analyze-status"),

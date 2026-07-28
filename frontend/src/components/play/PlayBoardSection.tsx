@@ -10,7 +10,6 @@ import {
 } from "@/components/play/LiveClockBoard";
 import type { ApiMove, CapturedState } from "@/lib/chessDisplay";
 import { lastMoveFromMoves, turnFromFen } from "@/lib/gameDisplayFast";
-import { useTranslation } from "@/hooks/useTranslation";
 
 export interface PlayerStripConfig {
   player: import("@/lib/gamePlayers").PlayerDisplayInfo;
@@ -58,6 +57,9 @@ interface PlayBoardSectionProps {
   onGoLive?: () => void;
   /** Force un remount du plateau (évite un react-chessboard coincé après seek). */
   boardResetKey?: number;
+  /** Barre d’outils flèches / cercles sous le plateau. */
+  showAnnotationToolbar?: boolean;
+  hintArrow?: { from: string; to: string } | null;
 }
 
 function PlayBoardSectionInner({
@@ -96,8 +98,9 @@ function PlayBoardSectionInner({
   viewingHistory = false,
   onGoLive,
   boardResetKey = 0,
+  showAnnotationToolbar = false,
+  hintArrow = null,
 }: PlayBoardSectionProps) {
-  const { t } = useTranslation();
   const turn = turnFromFen(clockFen ?? fen);
   const lastMove = useMemo(
     () => lastMoveProp ?? lastMoveFromMoves(moves),
@@ -135,7 +138,7 @@ function PlayBoardSectionInner({
               key={boardResetKey}
               fen={fen}
               orientation={orientation}
-              disabled={disabled || viewingHistory}
+              disabled={disabled}
               playerColor={playerColor}
               onMove={onMove}
               onPremove={onPremove}
@@ -147,24 +150,12 @@ function PlayBoardSectionInner({
               lastMove={lastMove}
               blindMode={blindMode}
               playSoundOnFenChange={playSoundOnFenChange}
-              areArrowsAllowed={areArrowsAllowed && !viewingHistory}
+              areArrowsAllowed={areArrowsAllowed}
               premove={viewingHistory ? null : premove}
               onClearPremove={onClearPremove}
+              showAnnotationToolbar={showAnnotationToolbar}
+              hintArrow={hintArrow}
             />
-            {viewingHistory && onGoLive && (
-              <button
-                type="button"
-                className="absolute inset-0 z-20 cursor-pointer rounded-sm bg-transparent"
-                aria-label={t("chess.moves.goLive")}
-                onClick={onGoLive}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onGoLive();
-                  }
-                }}
-              />
-            )}
           </div>
           {bottomPlayer && (
             <ClockedPlayerStrip

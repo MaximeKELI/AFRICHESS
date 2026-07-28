@@ -17,7 +17,7 @@ interface BoardAnnotationToolbarProps {
   compact?: boolean;
 }
 
-const COLOR_KEYS: ArrowBrushId[] = ["green", "red", "blue", "yellow"];
+const COLOR_KEYS: ArrowBrushId[] = ["orange", "green", "red", "blue", "yellow"];
 
 export const BoardAnnotationToolbar = memo(function BoardAnnotationToolbar({
   tool,
