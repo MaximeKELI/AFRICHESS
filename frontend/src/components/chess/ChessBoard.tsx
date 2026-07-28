@@ -11,8 +11,9 @@ import {
   soundForMove,
 } from "@/lib/chessSounds";
 import { accentRgba, getBoardTheme, getThemedSquareStyles, themeHasTexturedSquares } from "@/lib/boardThemes";
-import { ARROW_BRUSHES, arrowBrushFromModifiers } from "@/lib/boardArrows";
+import { ARROW_BRUSHES, arrowBrushFromModifiers, type ArrowBrushId } from "@/lib/boardArrows";
 import { premoveDestinations } from "@/lib/premove";
+import { BoardAnnotationToolbar, type BoardAnnotationTool } from "@/components/chess/BoardAnnotationToolbar";
 import { useAuthStore } from "@/store/auth";
 import { customPiecesForSet } from "@/lib/pieceSets";
 import { isPawnPromotion } from "@/lib/promotion";
@@ -70,6 +71,8 @@ interface ChessBoardProps {
   areArrowsAllowed?: boolean;
   /** Flèches contrôlées (ex. revue) — fusionnées avec le dessin libre. */
   customArrows?: Arrow[];
+  /** Barre flèche / cercle / curseur au-dessus du plateau. */
+  showAnnotationToolbar?: boolean;
 }
 
 function normalizeFenForDisplay(fen: string): string {
@@ -108,12 +111,18 @@ function ChessBoardInner({
   blindMode = false,
   areArrowsAllowed = true,
   customArrows,
+  showAnnotationToolbar = false,
 }: ChessBoardProps) {
   const { t } = useTranslation();
   const { lowBandwidth } = useAuthStore();
   const boardThemeId = usePreferencesStore((s) => s.boardTheme);
   const pieceSet = usePreferencesStore((s) => s.pieceSet);
-  const [arrowBrush, setArrowBrush] = useState<string>(ARROW_BRUSHES.green);
+  const [arrowColorId, setArrowColorId] = useState<ArrowBrushId>("orange");
+  const [annotationTool, setAnnotationTool] = useState<BoardAnnotationTool>("move");
+  const [userArrows, setUserArrows] = useState<Arrow[]>([]);
+  const [arrowPreview, setArrowPreview] = useState<Arrow | null>(null);
+  const arrowDrawingFrom = useRef<Square | null>(null);
+  const arrowBrush = ARROW_BRUSHES[arrowColorId];
   const [markedSquares, setMarkedSquares] = useState<Record<string, string>>({});
   const theme = getBoardTheme(boardThemeId);
   const soundsOn = !lowBandwidth;
@@ -144,7 +153,9 @@ function ChessBoardInner({
   useEffect(() => {
     if (!areArrowsAllowed) return;
     const syncBrush = (e: KeyboardEvent | MouseEvent) => {
-      setArrowBrush(arrowBrushFromModifiers(e));
+      if (annotationTool !== "move") return;
+      const id = brushIdFromModifiers(e);
+      setArrowColorId(id);
     };
     window.addEventListener("keydown", syncBrush);
     window.addEventListener("keyup", syncBrush);
@@ -154,11 +165,98 @@ function ChessBoardInner({
       window.removeEventListener("keyup", syncBrush);
       window.removeEventListener("mousedown", syncBrush);
     };
-  }, [areArrowsAllowed]);
+  }, [areArrowsAllowed, annotationTool]);
 
   const clearAnnotations = useCallback(() => {
     setMarkedSquares({});
+    setUserArrows([]);
+    setArrowPreview(null);
+    arrowDrawingFrom.current = null;
   }, []);
+
+  function brushIdFromModifiers(e: {
+    shiftKey: boolean;
+    altKey: boolean;
+    ctrlKey: boolean;
+    metaKey: boolean;
+  }): ArrowBrushId {
+    const color = arrowBrushFromModifiers(e);
+    const entry = (Object.entries(ARROW_BRUSHES) as [ArrowBrushId, string][]).find(
+      ([, v]) => v === color
+    );
+    return entry?.[0] ?? "green";
+  }
+
+  function squareFromEventTarget(target: EventTarget | null): Square | null {
+    const el = (target as HTMLElement | null)?.closest?.("[data-square]");
+    const sq = el?.getAttribute("data-square");
+    if (!sq || sq.length !== 2) return null;
+    return sq as Square;
+  }
+
+  const toggleCircle = useCallback(
+    (square: Square) => {
+      const color = ARROW_BRUSHES[arrowColorId];
+      setMarkedSquares((prev) => {
+        const next = { ...prev };
+        if (next[square] === color) delete next[square];
+        else next[square] = color;
+        return next;
+      });
+    },
+    [arrowColorId]
+  );
+
+  const commitArrow = useCallback((from: Square, to: Square) => {
+    if (from === to) return;
+    const color = ARROW_BRUSHES[arrowColorId];
+    setUserArrows((prev) => {
+      const exists = prev.some((a) => a[0] === from && a[1] === to);
+      if (exists) return prev.filter((a) => !(a[0] === from && a[1] === to));
+      return [...prev, [from, to, color]];
+    });
+  }, [arrowColorId]);
+
+  const onBoardPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (!areArrowsAllowed || annotationTool !== "arrow") return;
+      if (e.button !== 0) return;
+      const sq = squareFromEventTarget(e.target);
+      if (!sq) return;
+      e.preventDefault();
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      arrowDrawingFrom.current = sq;
+      setArrowPreview([sq, sq, ARROW_BRUSHES[arrowColorId]]);
+    },
+    [areArrowsAllowed, annotationTool, arrowColorId]
+  );
+
+  const onBoardPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      const from = arrowDrawingFrom.current;
+      if (!from) return;
+      const sq = squareFromEventTarget(e.target) ?? from;
+      setArrowPreview([from, sq, ARROW_BRUSHES[arrowColorId]]);
+    },
+    [arrowColorId]
+  );
+
+  const onBoardPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      const from = arrowDrawingFrom.current;
+      if (!from) return;
+      const to = squareFromEventTarget(e.target) ?? from;
+      commitArrow(from, to);
+      arrowDrawingFrom.current = null;
+      setArrowPreview(null);
+      try {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch {
+        /* déjà relâché */
+      }
+    },
+    [commitArrow]
+  );
 
   const onSquareRightClick = useCallback(
     (square: Square) => {
@@ -211,10 +309,19 @@ function ChessBoardInner({
 
   const displayFen = normalizeFenForDisplay(fen);
 
-  /** Nouvelle position → efface cercles (les flèches sont déjà vidées par react-chessboard). */
+  /** Nouvelle position → efface cercles et flèches dessinées. */
   useEffect(() => {
     setMarkedSquares({});
+    setUserArrows([]);
+    setArrowPreview(null);
+    arrowDrawingFrom.current = null;
   }, [displayFen]);
+
+  const mergedCustomArrows = useMemo(() => {
+    const extra = customArrows ?? [];
+    const preview = arrowPreview ? [arrowPreview] : [];
+    return [...extra, ...userArrows, ...preview];
+  }, [customArrows, userArrows, arrowPreview]);
 
   const positionChess = useMemo(() => chessFromDisplayFen(displayFen), [displayFen]);
   /** En mode puzzle (serverValidated), le FEN affiché est la source de vérité — évite le décalage au 2e puzzle. */
@@ -420,6 +527,12 @@ function ChessBoardInner({
 
   const onSquareClick = useCallback(
     (square: Square) => {
+      if (annotationTool === "circle" && areArrowsAllowed) {
+        toggleCircle(square);
+        return;
+      }
+      if (annotationTool === "arrow") return;
+
       if (Object.keys(markedSquares).length) {
         clearAnnotations();
       }
@@ -461,15 +574,18 @@ function ChessBoardInner({
       onDropAtSquare,
       markedSquares,
       clearAnnotations,
+      annotationTool,
+      areArrowsAllowed,
+      toggleCircle,
     ]
   );
 
   const onDrop = useCallback(
     (sourceSquare: Square, targetSquare: Square) => {
-      if (disabled) return false;
+      if (disabled || annotationTool !== "move") return false;
       return applyMove(sourceSquare, targetSquare);
     },
-    [disabled, applyMove]
+    [disabled, applyMove, annotationTool]
   );
 
   const onBoardKeyDown = useCallback(
