@@ -4,6 +4,8 @@ export const ARROW_BRUSHES = {
   red: "rgba(136, 32, 32, 0.85)",
   blue: "rgba(0, 48, 136, 0.85)",
   yellow: "rgba(230, 143, 0, 0.9)",
+  /** Orange Lichess / stream (flèches d’analyse). */
+  orange: "rgba(255, 170, 0, 0.88)",
 } as const;
 
 export type ArrowBrushId = keyof typeof ARROW_BRUSHES;
