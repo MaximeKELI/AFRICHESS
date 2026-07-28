@@ -334,8 +334,15 @@ class GameHintView(APIView):
             return Response({"error": "Game is not active"}, status=400)
 
         is_white = game.white_player_id == request.user.id
+        is_black = game.black_player_id == request.user.id
+        if not is_white and not is_black:
+            return Response({"error": "Forbidden"}, status=403)
+
+        fen = (game.fen or "").strip()
+        if not fen or fen == "start":
+            fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         try:
-            side = game.fen.split()[1]
+            side = fen.split()[1]
             board_turn_white = side == "w"
         except (IndexError, AttributeError):
             board_turn_white = True
@@ -343,19 +350,28 @@ class GameHintView(APIView):
             return Response({"error": "Not your turn"}, status=400)
 
         target_elo = getattr(game, "ai_target_elo", None) or 2200
-        # Indice = meilleur coup (fort), pas le niveau du bot
-        move = ChessEngineService().get_best_move(
-            game.fen,
-            difficulty=18,
-            target_elo=max(int(target_elo), 2200),
-            variant=getattr(game, "variant", None) or "standard",
-        )
-        if not move or not move.uci or len(move.uci) < 4:
+        variant = getattr(game, "variant", None) or "standard"
+        try:
+            move = ChessEngineService().get_best_move(
+                fen,
+                difficulty=18,
+                target_elo=max(int(target_elo), 2200),
+                variant=variant,
+            )
+        except Exception:
+            logger = __import__("logging").getLogger(__name__)
+            logger.exception("hint engine failed for game %s", game_id)
+            return Response({"error": "No hint available"}, status=503)
+
+        if not move or not getattr(move, "uci", None) or len(move.uci) < 4:
             return Response({"error": "No hint available"}, status=503)
         return Response(
             {
                 "uci": move.uci,
                 "san": move.san,
+                "from_square": move.uci[:2],
+                "to_square": move.uci[2:4],
+                # aliases for older clients
                 "from": move.uci[:2],
                 "to": move.uci[2:4],
             }

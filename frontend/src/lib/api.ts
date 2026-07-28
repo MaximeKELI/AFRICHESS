@@ -277,7 +277,14 @@ export const gamesApi = {
     ),
   cancelLobbySeek: (id: number) => api.delete<GameChallenge>(`/games/lobby/${id}/`),
   hint: (id: string) =>
-    api.post<{ uci: string; san: string; from: string; to: string }>(`/games/${id}/hint/`),
+    api.post<{
+      uci: string;
+      san: string;
+      from_square?: string;
+      to_square?: string;
+      from?: string;
+      to?: string;
+    }>(`/games/${id}/hint/`),
   analyze: (id: string) => api.post(`/games/${id}/analyze/`),
   analyzeAsync: (id: string) => api.post(`/games/${id}/analyze/async/`),
   analyzeStatus: (id: string) => api.get(`/games/${id}/analyze/status/`),

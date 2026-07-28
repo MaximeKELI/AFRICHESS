@@ -1328,6 +1328,28 @@ function PlayContent() {
     }
   };
 
+  const requestHint = useCallback(async () => {
+    if (!gameId || !isVsAi || !gameActive || !isMyTurn || hintLoading) return;
+    if (isViewingHistory) {
+      setStatus(t("play.hint.needLive"));
+      return;
+    }
+    setHintLoading(true);
+    try {
+      const { data } = await gamesApi.hint(gameId);
+      const from = data.from_square || data.from;
+      const to = data.to_square || data.to;
+      if (!from || !to) throw new Error("bad hint payload");
+      setHintArrow({ from, to });
+      setHintSan(data.san);
+      setStatus(t("play.hint.ready", { move: data.san }));
+    } catch (err) {
+      setStatus(formatApiError(err, t("play.hint.failed")));
+    } finally {
+      setHintLoading(false);
+    }
+  }, [gameId, isVsAi, gameActive, isMyTurn, hintLoading, isViewingHistory, t]);
+
   useEffect(() => {
     if (!isMyTurn) {
       setHintArrow(null);

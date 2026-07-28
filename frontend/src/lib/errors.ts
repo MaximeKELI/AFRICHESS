@@ -91,6 +91,10 @@ export function formatApiError(
       "username required": "errors.usernameRequired",
       "fen required": "errors.fenRequired",
       Empty: "errors.empty",
+      "Hints only available vs AI": "play.hint.vsAiOnly",
+      "Not your turn": "play.hint.notYourTurn",
+      "Game is not active": "play.hint.notActive",
+      "No hint available": "play.hint.failed",
     };
     const key = ERROR_MAP[errMsg];
     if (key) return translate(locale, key);
