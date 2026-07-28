@@ -10,6 +10,7 @@ import {
 } from "@/components/play/LiveClockBoard";
 import type { ApiMove, CapturedState } from "@/lib/chessDisplay";
 import { lastMoveFromMoves, turnFromFen } from "@/lib/gameDisplayFast";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export interface PlayerStripConfig {
   player: import("@/lib/gamePlayers").PlayerDisplayInfo;
@@ -52,6 +53,11 @@ interface PlayBoardSectionProps {
   onClearPremove?: () => void;
   /** Masque le sélecteur de taille pendant une partie active. */
   hideBoardSizePicker?: boolean;
+  /** Consultation de l'historique — un clic sur le plateau revient au live. */
+  viewingHistory?: boolean;
+  onGoLive?: () => void;
+  /** Force un remount du plateau (évite un react-chessboard coincé après seek). */
+  boardResetKey?: number;
 }
 
 function PlayBoardSectionInner({
@@ -87,7 +93,11 @@ function PlayBoardSectionInner({
   premove = null,
   onClearPremove,
   hideBoardSizePicker = false,
+  viewingHistory = false,
+  onGoLive,
+  boardResetKey = 0,
 }: PlayBoardSectionProps) {
+  const { t } = useTranslation();
   const turn = turnFromFen(clockFen ?? fen);
   const lastMove = useMemo(
     () => lastMoveProp ?? lastMoveFromMoves(moves),
@@ -120,26 +130,41 @@ function PlayBoardSectionInner({
               outcome={topOutcome}
             />
           )}
-          <div className="play-board-frame">
+          <div className="play-board-frame relative">
             <PlayBoardCore
+              key={boardResetKey}
               fen={fen}
               orientation={orientation}
-              disabled={disabled}
+              disabled={disabled || viewingHistory}
               playerColor={playerColor}
               onMove={onMove}
               onPremove={onPremove}
-              enablePremoves={enablePremoves}
+              enablePremoves={enablePremoves && !viewingHistory}
               serverValidated={serverValidated}
-              pendingDrop={pendingDrop}
+              pendingDrop={viewingHistory ? null : pendingDrop}
               onDropAtSquare={onDropAtSquare}
               extraBottom={extraBottom}
               lastMove={lastMove}
               blindMode={blindMode}
               playSoundOnFenChange={playSoundOnFenChange}
-              areArrowsAllowed={areArrowsAllowed}
-              premove={premove}
+              areArrowsAllowed={areArrowsAllowed && !viewingHistory}
+              premove={viewingHistory ? null : premove}
               onClearPremove={onClearPremove}
             />
+            {viewingHistory && onGoLive && (
+              <button
+                type="button"
+                className="absolute inset-0 z-20 cursor-pointer rounded-sm bg-transparent"
+                aria-label={t("chess.moves.goLive")}
+                onClick={onGoLive}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onGoLive();
+                  }
+                }}
+              />
+            )}
           </div>
           {bottomPlayer && (
             <ClockedPlayerStrip

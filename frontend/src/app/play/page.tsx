@@ -181,6 +181,8 @@ function PlayContent() {
   /** null = suivre la partie en direct ; sinon nombre de demi-coups affichés. */
   const [viewPly, setViewPly] = useState<number | null>(null);
   const [allowFenSound, setAllowFenSound] = useState(true);
+  /** Remount du plateau après reprise live (évite un board coincé après seek). */
+  const [boardResetKey, setBoardResetKey] = useState(0);
   /** UCI en attente (prémove) — envoyé dès que c'est mon tour. */
   const [premoveUci, setPremoveUci] = useState<string | null>(null);
   const premoveUciRef = useRef<string | null>(null);
@@ -486,6 +488,19 @@ function PlayContent() {
     premoveUciRef.current = null;
   }, [gameId]);
 
+  /** Remount unique du plateau à la sortie de l'historique (évite un board coincé). */
+  const wasViewingHistoryRef = useRef(false);
+  useEffect(() => {
+    if (isViewingHistory) {
+      wasViewingHistoryRef.current = true;
+      return;
+    }
+    if (wasViewingHistoryRef.current) {
+      wasViewingHistoryRef.current = false;
+      setBoardResetKey((k) => k + 1);
+    }
+  }, [isViewingHistory]);
+
   useEffect(() => {
     if (gameCompleted || isViewingHistory) {
       setPremoveUci(null);
@@ -518,10 +533,17 @@ function PlayContent() {
   );
 
   useEffect(() => {
-    if (viewPly != null && viewPly > moveCount) {
+    if (viewPly != null && viewPly >= moveCount) {
       setViewPly(null);
     }
   }, [moveCount, viewPly]);
+
+  /** Filet de sécurité : un movePending coincé ne doit pas bloquer la partie. */
+  useEffect(() => {
+    if (!movePending) return;
+    const id = window.setTimeout(() => setMovePending(false), 45_000);
+    return () => window.clearTimeout(id);
+  }, [movePending]);
 
   useEffect(() => {
     if (!allowFenSound) {
@@ -1912,6 +1934,9 @@ function PlayContent() {
             premove={premoveHighlight}
             onClearPremove={clearPremove}
             hideBoardSizePicker={Boolean(gameId && gameActive)}
+            viewingHistory={isViewingHistory}
+            onGoLive={goLive}
+            boardResetKey={boardResetKey}
           />
           </div>
           {gameCompleted &&
