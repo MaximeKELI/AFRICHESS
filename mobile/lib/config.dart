@@ -23,3 +23,5 @@ class AppConfig {
   static String get apiOrigin =>
       apiUrl.replaceFirst(RegExp(r'/api/?$'), '');
 }
+
+
