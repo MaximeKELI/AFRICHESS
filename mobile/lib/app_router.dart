@@ -601,3 +601,4 @@ class AfrichessApp extends ConsumerWidget {
 }
 
 
+
