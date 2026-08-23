@@ -599,3 +599,4 @@ class AfrichessApp extends ConsumerWidget {
     );
   }
 }
+
