@@ -17,3 +17,4 @@ def africhess_exception_handler(exc, context):
         response.data = {"detail": detail}
     return response
 
+
