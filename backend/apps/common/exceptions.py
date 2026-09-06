@@ -16,3 +16,4 @@ def africhess_exception_handler(exc, context):
             detail = "Trop de tentatives. Attendez quelques instants puis réessayez."
         response.data = {"detail": detail}
     return response
+
