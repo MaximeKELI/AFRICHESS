@@ -192,3 +192,4 @@ def observe_db(alias: str = "default"):
 
 def prometheus_metrics_body() -> bytes:
     return generate_latest()
+
