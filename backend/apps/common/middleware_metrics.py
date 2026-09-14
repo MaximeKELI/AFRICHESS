@@ -36,3 +36,4 @@ class PrometheusMiddleware(MiddlewareMixin):
         if metrics_enabled():
             request._prom_start = time.perf_counter()  # noqa: SLF001
         return None
+
