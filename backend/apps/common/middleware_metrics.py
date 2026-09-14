@@ -37,3 +37,4 @@ class PrometheusMiddleware(MiddlewareMixin):
             request._prom_start = time.perf_counter()  # noqa: SLF001
         return None
 
+
