@@ -26,3 +26,4 @@ def validate_user_text(value: str, *, max_len: int, field: str = "content") -> s
     if _UNSAFE.search(text):
         raise serializers.ValidationError("Balises ou scripts HTML non autorisés.")
     return text
+
